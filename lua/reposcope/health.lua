@@ -1,7 +1,9 @@
 local health = vim.health or require("health")
 local checks = require("reposcope.utils.checks")
 
-return function()
+local M = {}
+
+function M.check()
   health.start("Checking reposcope.nvim environment")
 
   health.info("At least one of: gh, curl, or wget must be available")
@@ -18,7 +20,9 @@ return function()
     health.error("No usable request tool found")
   end
 
-  checks.check_env("GITHUB_TOKEN")
+  checks.has_env("GITHUB_TOKEN")
 
   health.ok("reposcope.nvim ready (basic check)")
 end
+
+return M

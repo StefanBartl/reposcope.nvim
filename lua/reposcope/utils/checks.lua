@@ -26,7 +26,7 @@ end
 end
 
 function M.has_env(name)
-  return vim.env[name] and #vim.env[name] > 0 then
+  return vim.env[name] and #vim.env[name] > 0
 end
 
 return M
