@@ -4,17 +4,17 @@ local M = {}
 ---@type number
 M.height = 1
 
----Magnifying glass symbol fpr the ui-prompt
 ---@type string Unicode
-M.magnifier = "\u{f002}"
+---@private Magnifying glass symbol fpr the ui-prompt
+local magnifier = "\u{f002}"
 
----Prefix for the ui-prompt
 ---@type string (concated)
-M.prompt_prefix = " " .. M.magnifier .. "   "
+---@private Prefix for the ui-prompt
+local prompt_prefix = " " .. magnifier .. "   "
 
----Prompt length with respect to special characters in the ui-prompt prefix
 ---@type number
-M.len = vim.fn.strdisplaywidth(M.prompt_prefix)
+---@private Prompt length with respect to special characters in the ui-prompt prefix 
+local len = vim.fn.strdisplaywidth(prompt_prefix)
 
 ---Set highlight fot the prompt (background)
 ---@param win number
@@ -30,8 +30,8 @@ end
 ---@param win number
 ---@return nil
 function M.apply_prompt_prefix(buf, win)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { M.prompt_prefix })
-  vim.api.nvim_win_set_cursor(win, { 1, M.len })
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { prompt_prefix })
+  vim.api.nvim_win_set_cursor(win, { 1, len })
 end
 
 ---Apply the prompt config
