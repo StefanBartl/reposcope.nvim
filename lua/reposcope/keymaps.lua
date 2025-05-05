@@ -45,7 +45,6 @@ function map_over_bufs(modes, lhs, rhs, bufs, opts, tag)
         buffer = buf,
         tag = tag,
       })
-      vim.notify(string.format("[reposcope] keymap set for buf %d: %s", buf, lhs), vim.log.levels.DEBUG)
     end
   end
 end
