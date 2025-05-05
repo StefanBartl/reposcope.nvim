@@ -13,8 +13,7 @@ function M.open_ui()
   preview.open_preview()
   prompt.open_prompt()
   list.open_list()
-  keymaps.set_prompt_keymaps()
-  keymaps.set_close_ui_keymaps()
+  keymaps.set_ui_keymaps()
 end
 
 function M.close_ui()
@@ -38,14 +37,8 @@ function M.close_ui()
     end
   end
 
-   keymaps.unset_prompt_keymaps()
-   keymaps.unset_close_ui_keymaps()
+   keymaps.unset_ui_keymaps()
 end
-
-
-
-
-
 
 --NOTE: move
 vim.api.nvim_create_user_command("ReposcopeUIclose", function(_)
