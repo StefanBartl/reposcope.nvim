@@ -79,7 +79,7 @@ function set_prompt_keymaps()
       lhs = "<CR>",
       rhs = function()
         local input = vim.api.nvim_get_current_line()
-        require("reposcope.ui.prompt.logic").on_enter(input)
+        require("reposcope.ui.prompt.input").on_enter(input)
       end,
     },
   }
@@ -106,7 +106,7 @@ function set_close_ui_keymaps()
     { "i", "n", "t" },
     "<Esc>",
     function()
-      require("reposcope.ui.start").close_ui()
+      require("reposcope.init").close_ui()
     end,
     {
       state.buffers.backg,

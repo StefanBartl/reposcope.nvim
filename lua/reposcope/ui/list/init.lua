@@ -1,14 +1,7 @@
----@description Creates and manages the floating repository list window in the Reposcope UI.
----@see reposcope.ui.state
----@see reposcope.utils.protection
----@see reposcope.ui.config
----@see reposcope.ui.preview
----@see reposcope.ui.prompt.config
-
 --- @desc forward declarations
 local default
 
---- @class UIList
+--- @class UIList Creates and manages the floating repository list window in the Reposcope UI.
 --- @field open_list fun(): nil Creates a scratch buffer named `reposcope://list`, fills it with  predefined repository line and opens the repository floating list window in the Reposcope UI
 --- @field private default fun(): nil Creates the default floating list window
 --- @field private list_height integer Height of the list window
@@ -22,7 +15,8 @@ local state = require("reposcope.ui.state")
 local protected = require("reposcope.utils.protection")
 
 local list_height = math.floor(ui_config.height * 0.6)
-local list_row = ui_config.row + require("reposcope.ui.preview.init").height + require("reposcope.ui.prompt.config").height + 2
+local list_row = ui_config.row + require("reposcope.ui.preview.init").height +
+require("reposcope.ui.prompt.config").height + 2
 local list_lines = {
   "some/repo_1: Hier steht die Kurzbeschreibung.",
   "some/repo_2: Hier steht die Kurzbeschreibung.",
