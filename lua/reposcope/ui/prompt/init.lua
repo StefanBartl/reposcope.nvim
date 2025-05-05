@@ -10,7 +10,7 @@ require("reposcope.ui.prompt.prompt_keymaps")
 ---Opens the ui-prompt
 ---@return nil
 function M.open_prompt()
-  buffers.prompt = vim.api.nvim_create_buf(false, true)
+  buffers.prompt = require("reposcope.utils.protection").create_named_buffer("reposcope://prompt")
   windows.prompt = vim.api.nvim_open_win(buffers.prompt, true, {
     relative = "editor",
     row = ui_config.row + preview.height, -- TODO: This will change to new path pf preview config

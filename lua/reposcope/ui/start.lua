@@ -6,6 +6,7 @@ local buffers = require("reposcope.ui.state").buffers
 local windows = require("reposcope.ui.state").windows
 local previous = require("reposcope.ui.state").previous
 local ui_config = require("reposcope.ui.config")
+local protected = require("reposcope.utils.protection")
 local preview = require("reposcope.ui.preview.preview")
 local prompt = require("reposcope.ui.prompt.init")
 local prompt_config = require("reposcope.ui.prompt.config")
@@ -29,13 +30,13 @@ function M.open_ui()
   previous.cursor.col =  caller_cursor[2]
 
   M.open_backgd()
-  --M.open_preview()
+  M.open_preview()
   prompt.open_prompt()
   M.open_list()
 end
 
 function M.open_backgd()
-  buffers.backg = vim.api.nvim_create_buf(false, true)
+  buffers.backg = protected.create_named_buffer("reposcope://backg")
   vim.api.nvim_buf_set_lines(buffers.backg, 0, -1, false, {})
 
   windows.backg = vim.api.nvim_open_win(buffers.backg, false, {
@@ -58,14 +59,14 @@ function M.open_backgd()
 end
 
 function M.open_preview()
-  buffers.preview = vim.api.nvim_create_buf(false, true)
+  buffers.preview = protected.create_named_buffer("reposcope://preview")
   vim.api.nvim_buf_set_lines(buffers.preview, 0, -1, false, { preview.lines })
 
   windows.preview = vim.api.nvim_open_win(buffers.preview, false, {
     relative = 'editor',
     col = ui_config.col + ui_config.padding,
     row = ui_config.row + ui_config.padding,
-    height = preview.preview_height - ui_config.padding,
+    height = preview.height - ui_config.padding,
     width = ui_config.width - ui_config.padding,
     border = "none",
     title = "Preview",
@@ -76,7 +77,7 @@ function M.open_preview()
 end
 
 function M.open_list()
-  buffers.list = vim.api.nvim_create_buf(false, true)
+  buffers.list = protected.create_named_buffer("reposcope://list")
   vim.api.nvim_buf_set_lines(buffers.list, 0, -1, false, list_lines)
 
   windows.list = vim.api.nvim_open_win(buffers.list, false, {
@@ -94,24 +95,27 @@ end
 
 function M.close_ui()
   print("[debug-ui-start]: close_ui() started")
-  vim.api.nvim_set_current_win(previous.win)
-  vim.api.nvim_win_set_cursor(previous.win, { previous.cursor.row, previous.cursor.col })
 
-  for name, win in pairs(require("reposcope.ui.state").windows) do
-    if vim.api.nvim_win_is_valid(win) then
-      local ok, err = pcall(vim.api.nvim_win_close, win, true)
-      if not ok then
-        print("[debug-ui-error]: failed to close window [" .. name .. "]: " .. err)
-      else
-        print("[debug-ui-start]: closed window [" .. name .. "]")
-      end
-    else
-      print("[debug-ui-start]: window [" .. name .. "] is not valid")
-    end
-
+  -- Fokus verschieben
+  if vim.api.nvim_win_is_valid(previous.win) then
+    vim.api.nvim_set_current_win(previous.win)
+    vim.api.nvim_win_set_cursor(previous.win, {
+      previous.cursor.row,
+      previous.cursor.col,
+    })
   end
 
---  vim.api.nvim_set_cursor(previous.previous, { previous.previous_cursor.row, previous.previous_cursor.col })
+  for _, win in ipairs(vim.api.nvim_list_wins()) do
+    local ok_buf, buf = pcall(vim.api.nvim_win_get_buf, win)
+    if ok_buf and vim.api.nvim_buf_is_valid(buf) then
+      local name = vim.api.nvim_buf_get_name(buf)
+      print("name: ", name)
+      if name:find("^reposcope://") then
+        vim.api.nvim_win_close(win, true)
+      end
+    end
+  end
+
 end
 
 
@@ -127,12 +131,17 @@ end, {
   }, { silent = true }
 )
 
-vim.api.nvim_create_user_command("ReposcopeUIclose", function()
-  require("reposcope.ui.start").close_ui()
+vim.api.nvim_create_user_command("ReposcopeUIclose", function(_)
+  local ok, err = pcall(function()
+    require("reposcope.ui.start").close_ui()
+  end)
+  if not ok then
+    vim.notify("Fehler beim Schließen der UI: " .. err, vim.log.levels.ERROR)
+  end
 end, {
-   desc = "Close UI"
-  }
-)
+  desc = "Close the Reposcope UI",
+})
+
 
 M.open_ui()
 
