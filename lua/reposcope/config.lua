@@ -5,6 +5,7 @@ M.options = {
   preferred_requesters = { "gh", "curl", "wget" },
   request_tool = "gh",
   preview_limit = 200,
+  layout = "default",
   dev_mode = false
 }
 

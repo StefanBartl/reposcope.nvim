@@ -1,11 +1,12 @@
+
+--- @class UIProtectPrompt
+--- @field protect fun(buf: number, prompt_len: number): nil Provide functionality to protect cursor from getting before prompt prefix
 local M = {}
+
 local prompt_config = require("reposcope.ui.prompt.config")
 
 --BUG: In normal mode there also be some protection
---Provide functionality to protect cursor from getting before prompt prefix
----@param buf number
----@param prompt_len number
----@return nil
+
 function M.protect(buf, prompt_len)
 
   -- === Block Left before prompt begin ====

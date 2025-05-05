@@ -1,3 +1,9 @@
+--- @class ReposcopeDebug Debug utilities for inspecting UI-related buffers and windows.
+--- @field print_invocation_state fun(): nil Prints the current UI invocation context (window and cursor).
+--- @field print_windows fun(): nil Prints all registered window handles in the UI state.
+--- @field print_buffers fun(): nil Prints all registered buffer handles in the UI state.
+--- @field debug_window fun(win: integer): nil Prints detailed information about a specific window.
+--- @field debug_buffer fun(buf: integer): nil Prints detailed information about a specific buffer.
 local M = {}
 
 --- Prints out all values from invocation state table (reflects local caller of the ui) which are not nil
