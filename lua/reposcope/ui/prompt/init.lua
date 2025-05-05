@@ -12,7 +12,6 @@ local protect_prompt = require("reposcope.ui.prompt.protect_prompt_input")
 local prompt_config = require("reposcope.ui.prompt.config")
 local preview = require("reposcope.ui.preview.init")
 local state = require("reposcope.ui.state")
-require("reposcope.ui.prompt.prompt_keymaps") -- applies mappings globally when required
 
 --- Opens the user input prompt window in the Reposcope UI.
 ---
@@ -43,6 +42,7 @@ function M.open_prompt()
   -- protect user input from accidental deletion
   protect_prompt.protect(state.buffers.prompt, prompt_config.len)
 
+ 
   -- enter insert mode after window appears
   vim.schedule(function()
     vim.cmd("startinsert")

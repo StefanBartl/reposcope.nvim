@@ -5,6 +5,7 @@ local background = require("reposcope.ui.background")
 local preview = require("reposcope.ui.preview.init")
 local list = require("reposcope.ui.list.init")
 local prompt = require("reposcope.ui.prompt.init")
+local keymaps =  require("reposcope.keymaps")
 
 function M.open_ui()
   --DEBUG: Neccesary?
@@ -19,10 +20,11 @@ function M.open_ui()
   prompt.open_prompt()
   list.open_list()
 
+  keymaps.set_prompt_keymaps()
 end
 
 function M.close_ui()
-  -- Fokus verschieben
+  -- set focus back to caller position
   if vim.api.nvim_win_is_valid(previous.win) then
     vim.api.nvim_set_current_win(previous.win)
     vim.api.nvim_win_set_cursor(previous.win, {
@@ -31,6 +33,7 @@ function M.close_ui()
     })
   end
 
+  -- close all windows
   for _, win in ipairs(vim.api.nvim_list_wins()) do
     local ok_buf, buf = pcall(vim.api.nvim_win_get_buf, win)
     if ok_buf and vim.api.nvim_buf_is_valid(buf) then
@@ -41,10 +44,13 @@ function M.close_ui()
     end
   end
 
+   keymaps.unset_prompt_keymaps()
 end
 
--- Keymaps for all Buffers
-local map =  require("reposcope.utils.keymap").map_over_bufs
+
+
+-- Keymaps for all Buffers NOTE: move
+local map =  require("reposcope.keymaps").map_over_bufs
 map({ "i", "n" }, "<C-c>", function()
   require("reposcope.ui.start").close_ui()
 end, {
@@ -55,6 +61,7 @@ end, {
   }, { silent = true }
 )
 
+--NOTE: move
 vim.api.nvim_create_user_command("ReposcopeUIclose", function(_)
   local ok, err = pcall(function()
     require("reposcope.ui.start").close_ui()
