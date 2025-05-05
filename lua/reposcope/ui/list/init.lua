@@ -5,11 +5,10 @@
 ---@see reposcope.ui.preview
 ---@see reposcope.ui.prompt.config
 
-local state = require("reposcope.ui.state")
-
 local M = {}
 
-local protected = require("reposcope.utils.protection") --DEBUG: If only in open_list, move inside
+local state = require("reposcope.ui.state")
+local protected = require("reposcope.utils.protection")
 local ui_config = require("reposcope.ui.config")
 
 --- @type integer
@@ -41,8 +40,8 @@ function M.open_list()
   state.windows.list = vim.api.nvim_open_win(state.buffers.list, false, {
     relative = "editor",
     row = list_row,
-    col = ui_config.col,
-    width = ui_config.width,
+    col = ui_config.col + ui_config.padding,
+    width = ui_config.width - ui_config.padding,
     height = list_height,
     title = "Repositories",
     title_pos = "left",

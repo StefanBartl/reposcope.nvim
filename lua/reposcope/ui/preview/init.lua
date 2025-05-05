@@ -35,7 +35,7 @@ function M.open_preview()
   state.windows.preview = vim.api.nvim_open_win(state.buffers.preview, false, {
     relative = "editor",
     col = ui_config.col + ui_config.padding,
-    row = ui_config.row + ui_config.padding,
+    row = ui_config.row + 1,
     height = M.height - ui_config.padding,
     width = ui_config.width - ui_config.padding,
     border = "none",
