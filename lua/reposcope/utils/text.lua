@@ -1,3 +1,5 @@
+--- @class UtilsText
+--- @field center_text fun(text: string, width: number): string Centers given text input and returns it
 local M = {}
 
 function M.center_text(text, width)

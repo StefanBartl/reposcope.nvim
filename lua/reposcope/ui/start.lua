@@ -1,11 +1,15 @@
+
+---  @class UIStart Functions to start and close the Reposcope UI
+--- @field open_ui fun(): nil Opens the Reposcope UI: Captures caller position, calls the window factory functions and sets keymaps
+--- @field close_ui fun(): nil Closes the Reposcope UI: Set focus back to caller position, close all windows and unset keymaps
 local M = {}
+
 local state = require("reposcope.ui.state")
 local background = require("reposcope.ui.background")
 local preview = require("reposcope.ui.preview.init")
 local list = require("reposcope.ui.list.init")
 local prompt = require("reposcope.ui.prompt.init")
 local keymaps =  require("reposcope.keymaps")
-
 
 function M.open_ui()
   state.capture_invocation_state()
