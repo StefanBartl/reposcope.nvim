@@ -42,7 +42,7 @@ function M.open_prompt()
   -- protect user input from accidental deletion
   protect_prompt.protect(state.buffers.prompt, prompt_config.len)
 
- 
+
   -- enter insert mode after window appears
   vim.schedule(function()
     vim.cmd("startinsert")

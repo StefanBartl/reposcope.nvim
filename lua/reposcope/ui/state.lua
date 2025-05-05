@@ -1,7 +1,5 @@
---REF: Get rid of the long names
-
 --- @class UIState
---- @field previous UIStatePrevious previous editor state before UI activation
+--- @field invocation UIStateInvocation invocation editor state before UI activation
 --- @field fers UIStateBuffers buffer handles by role
 --- @field windows UIStateWindows window handles by role
 --- @brief Tracks plugin-local fer and window handles for UI elements.
@@ -11,7 +9,7 @@
 --- list, and background. These handles allow coordinated lifecycle management
 --- (creation, update, teardown) of UI components.
 
---- @class UIStatePrevious
+--- @class UIStateInvocation
 --- @field win integer|nil window ID before UI was opened
 --- @field cursor UIStateCursor cursor position before UI was opened
 
@@ -33,9 +31,8 @@
 
 local M = {}
 
-
----@type UIStatePrevious
-M.previous = {
+---@type UIStateInvocation
+M.invocation = {
   win = nil,
   cursor = {
     col = nil,
@@ -59,8 +56,15 @@ M.windows = {
   list = nil,
 }
 
+--- Capture the current window and cursor position for later restoration.
+--- @return nil
+function M.capture_invocation_state()
+  M.invocation.win = vim.api.nvim_get_current_win()
+  M.invocation.cursor.row, M.invocation.cursor.col = unpack(vim.api.nvim_win_get_cursor(M.invocation.win))
+end
+
 --- Reset part or all of the UI state
---- @param tbl? "buffers"|"windows"|"previous" optional table to reset; if nil, all will be reset
+--- @param tbl? "buffers"|"windows"|"invocation" optional table to reset; if nil, all will be reset
 function M.reset(tbl)
   if tbl == nil or tbl == "buffers" then
     for k in pairs(M.buffers) do
@@ -76,50 +80,85 @@ function M.reset(tbl)
     print("windows reset")
   end
 
-  if tbl == nil or tbl == "previous" then
-    M.previous.win = nil
-    M.previous.cursor.row = nil
-    M.previous.cursor.col = nil
-    print("previous reset")
+  if tbl == nil or tbl == "invocation" then
+    M.invocation.win = nil
+    M.invocation.cursor.row = nil
+    M.invocation.cursor.col = nil
+    print("invocation reset")
   end
 
-  if tbl ~= nil and tbl ~= "buffers" and tbl ~= "windows" and tbl ~= "previous" then
+  if tbl ~= nil and tbl ~= "buffers" and tbl ~= "windows" and tbl ~= "invocation" then
     print("Invalid argument passed to M.reset():", tbl)
   end
 end
 
---- Prints out all windows in state table which are not nil
---- @return nil
-function M.print_windows()
-  print("Window list:")
-  for name, win in pairs(M.windows) do
-    print(name, win)
-  end
-end
-
+--- Returns all window handles in the state table which are not nil
+--- @return number[] | nil
 function M.get_windows()
+  if not M.windows then
+    vim.notify("[reposcope] No state.windows table set", vim.log.levels.DEBUG)
+    return nil
+  end
+
   local wins = {}
   for _, win in pairs(M.windows) do
-    table.insert(wins, win)
+    if type(win) == "number" then
+      table.insert(wins, win)
+    end
   end
+
+  if #wins == 0 then
+    vim.notify("[reposcope] No valid window entries in state.windows", vim.log.levels.DEBUG)
+    return nil
+  end
+
   return wins
 end
 
---- Prints out all buffers in state table which are not nil
---- @return nil
-function M.print_buffers()
-  print("Buffer list:")
-  for name, buf in pairs(M.buffers) do
-    print(name, buf)
+
+--- Returns all buffer handles in the state table which are not nil
+--- @return number[] | nil
+function M.get_buffers()
+  if not M.buffers then
+    vim.notify("[reposcope] No state.buffers table set", vim.log.levels.DEBUG)
+    return nil
   end
+
+  local bufs = {}
+  for _, buf in pairs(M.buffers) do
+    if type(buf) == "number" then
+      table.insert(bufs, buf)
+    end
+  end
+
+  if #bufs == 0 then
+    vim.notify("[reposcope] No valid buffer entries in state.buffers", vim.log.levels.DEBUG)
+    return nil
+  end
+
+  return bufs
 end
 
---- Prints out all values from previous state table (reflects local caller of the ui) which are not nil
---- @return nil
-function M.print_previous()
-  print("Previous list:")
-  print("Window:", M.previous.win)
-  print("Cursor row/col:", M.previous.cursor.row, M.previous.cursor.col)
+
+--- Return the window of the invocation state
+--- @return number | nil
+function M.get_invocation_win()
+  if not M.invocation or not M.invocation.win then
+    vim.notify("[reposcope] No invocation window set", vim.log.levels.DEBUG)
+    return nil
+  end
+  return M.invocation.win
 end
+
+--- Returns the cursor of the invocation state
+--- @return number[] | nil
+function M.get_invocation_cursor()
+  if not M.invocation or not M.invocation.cursor then
+    vim.notify("[reposcope] No invocation cursor set", vim.log.levels.DEBUG)
+    return nil
+  end
+  return M.invocation.cursor
+end
+
 
 return M
