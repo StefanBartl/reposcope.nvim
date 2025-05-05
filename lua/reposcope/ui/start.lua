@@ -14,6 +14,7 @@ function M.open_ui()
   prompt.open_prompt()
   list.open_list()
   keymaps.set_prompt_keymaps()
+  keymaps.set_close_ui_keymaps()
 end
 
 function M.close_ui()
@@ -38,21 +39,13 @@ function M.close_ui()
   end
 
    keymaps.unset_prompt_keymaps()
+   keymaps.unset_close_ui_keymaps()
 end
 
 
 
--- Keymaps for all Buffers NOTE: move
-local map =  require("reposcope.keymaps").map_over_bufs
-map({ "i", "n" }, "<C-c>", function()
-  require("reposcope.ui.start").close_ui()
-end, {
-    state.buffers.backg,
-    state.buffers.preview,
-    state.buffers.prompt,
-    state.buffers.list
-  }, { silent = true }
-)
+
+
 
 --NOTE: move
 vim.api.nvim_create_user_command("ReposcopeUIclose", function(_)
