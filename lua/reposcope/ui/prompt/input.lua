@@ -18,7 +18,8 @@ function M.on_enter(input)
 end
 
 function github(input)
-  print(input)
+  --print(input)
+  require("reposcope.providers.github.search_repositories").init("", true)
 end
 
 function no_provider(input)

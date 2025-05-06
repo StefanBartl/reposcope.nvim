@@ -17,6 +17,7 @@ local legend = "<Esc>: Quit   <Enter>: Search  <C-r>: Readme  <?>: Keybindings"
 function M.open_backgd()
   state.buffers.backg = protected.create_named_buffer("reposcope://backg")
   vim.api.nvim_buf_set_lines(state.buffers.backg, 0, -1, false, {})
+  vim.bo[state.buffers.backg].modifiable = false
 
   if config.options.layout == "default" then
     default()
