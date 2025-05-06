@@ -4,6 +4,7 @@ M.options = {
   provider = "github",
   preferred_requesters = { "gh", "curl", "wget" },
   request_tool = "gh",
+  results_limit = 25, -- Github search api can return max 100 results without pagination
   preview_limit = 200,
   layout = "default",
   dev_mode = false

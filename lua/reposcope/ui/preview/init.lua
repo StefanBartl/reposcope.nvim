@@ -26,6 +26,7 @@ M.height = protected.count_or_default(M.lines, 6)
 function M.open_preview()
   state.buffers.preview = protected.create_named_buffer("reposcope://preview")
   vim.api.nvim_buf_set_lines(state.buffers.preview, 0, -1, false, lines)
+  vim.bo[state.buffers.preview].modifiable = false
 
   if config.options.layout == "default" then
     default()

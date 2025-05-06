@@ -66,7 +66,7 @@ use {
     "nvim-telescope/telescope.nvim",
   },
   config = function()
-    require("reposcope").setup()
+    require("reposcope.init").setup()
   end,
 }
 ```
@@ -75,19 +75,26 @@ use {
 
 ## Usage
 
-After installing and configuring, launch the picker:
+After installing and configuring, launch the UI via command:
 
-```lua
-:lua require("reposcope.ui.picker").open()
+```vim
+:ReposcopeStart
 ```
 
-Or map it in your Neovim config, default is:
+Or map it in your Neovim config:
 
 ```lua
-vim.keymap.set("n", "<leader>sr", function()
-  require("reposcope.ui.picker").open()
+vim.keymap.set("n", "<leader>rs", function()
+  vim.cmd("ReposcopeStart")
 end, { desc = "Search GitHub repositories" })
 ```
+
+### Closing the UI
+
+The UI can be closed via:
+
+* `<Esc>` (in any prompt or list window)
+* `:ReposcopeClose` command
 
 ---
 
@@ -102,6 +109,14 @@ export GITHUB_TOKEN=ghp_your_token_here
 This will be used internally for GitHub API access.
 
 ---
+
+## Architecture
+
+* `reposcope/init.lua` handles UI lifecycle: `setup`, `open_ui`, `close_ui`
+* `reposcope/ui/*` contains modular window components (background, prompt, list, preview)
+* Keymaps are centrally managed and tracked in `reposcope/keymaps.lua`
+* User commands are registered via `reposcope/usercommands.lua`
+* Provider logic is located in `reposcope/ui/prompt/input.lua`
 
 ## License
 

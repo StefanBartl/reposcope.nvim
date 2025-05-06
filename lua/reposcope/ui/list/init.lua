@@ -17,15 +17,10 @@ local protected = require("reposcope.utils.protection")
 local list_height = math.floor(ui_config.height * 0.6)
 local list_row = ui_config.row + require("reposcope.ui.preview.init").height +
 require("reposcope.ui.prompt.config").height + 2
-local list_lines = {
-  "some/repo_1: Hier steht die Kurzbeschreibung.",
-  "some/repo_2: Hier steht die Kurzbeschreibung.",
-  "some/repo_3: Hier steht die Kurzbeschreibung"
-}
 
 function M.open_list()
   state.buffers.list = protected.create_named_buffer("reposcope://list")
-  vim.api.nvim_buf_set_lines(state.buffers.list, 0, -1, false, list_lines)
+  vim.bo[state.buffers.list].modifiable = false
 
   if config.options.layout == "default" then
     default()
@@ -44,7 +39,7 @@ function default()
     title = "Repositories",
     title_pos = "left",
     border = "none",
-    style = "minimal",
+    style = "minimal"
   })
 end
 

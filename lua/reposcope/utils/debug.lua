@@ -89,7 +89,7 @@ function M.debug_buffer(buf)
   print("  Line count:    " .. line_count)
 end
 
-function M.test_input(provider, query)
+function M.test_prompt_input(provider, query)
   require("reposcope.config").options.provider = provider
   print(string.format("[test] Using provider: %s", provider))
   require("reposcope.ui.prompt.input").on_enter(query)
