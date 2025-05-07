@@ -28,19 +28,6 @@ function M.protect(buf, prefix_len)
     end
   end, { buffer = buf, expr = true, silent = true })
 
-  -- === Block Word back before prompt begin === NOTE: throwed error in debugging esc 
-  --[[
-  vim.keymap.set("i", "<C-w>", function()
-    local _, prompt_col = unpack(vim.api.nvim_win_get_cursor(0))
-    if prompt_col <= prefix_len then
-      return ""  -- nichts löschen
-    else
-      return "<C-w>"
-    end
-  end, { buffer = buf, expr = true, silent = true })
-   ]]--
-
-
   -- === Overwrite Home to prompt begin ===
   vim.keymap.set("i", "<Home>", function()
     return string.format("<Cmd>call cursor(1, %d)<CR>", prefix_len + 1)

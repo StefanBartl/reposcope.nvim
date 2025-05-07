@@ -20,6 +20,13 @@ end
 function github(input)
   --print(input)
   require("reposcope.providers.github.repositories").init("", true)
+  local testrepo = require("reposcope.core.json").read_and_parse_file("/media/steve/Depot/MyGithub/reposcope.nvim/debug/gh_test_response.json")
+  if not testrepo then
+    vim.notify("[reposcope] Error parsing testrepo", vim.log.levels.ERROR)
+  else
+    require("reposcope.state.repositories").repositories = testrepo
+  end
+  require("reposcope.ui.list.repositories").display()
 end
 
 function no_provider(input)

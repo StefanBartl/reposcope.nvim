@@ -49,7 +49,7 @@ function default()
     title = "Preview",
     title_pos = "center",
     style = "minimal",
-    focusable = true,
+    focusable = false,
     noautocmd = true,
   })
   apply_preview_highlight(ui_state.windows.preview)

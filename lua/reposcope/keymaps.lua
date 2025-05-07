@@ -1,6 +1,7 @@
 local M = {}
 
 local state = require("reposcope.state.ui")
+local navigate_list = require("reposcope.ui.prompt.navigate_list")
 
 local _registry = {}
 local map_over_bufs
@@ -63,7 +64,7 @@ function unmap_over_bufs(mode, lhs, bufs)
 end
 
 
---- Set prompt-specific <CR> keymap and register manually
+--- Set prompt-specific <CR> and arrow key keymaps
 --- @private
 --- @return nil
 function set_prompt_keymaps()
@@ -82,6 +83,20 @@ function set_prompt_keymaps()
         require("reposcope.ui.prompt.input").on_enter(input)
       end,
     },
+    {
+      mode = "i",
+      lhs = "<Up>",
+      rhs = function()
+        navigate_list.navigate_list_in_prompt("up")
+      end,
+    },
+    {
+      mode = "i",
+      lhs = "<Down>",
+      rhs = function()
+        navigate_list.navigate_list_in_prompt("down")
+      end,
+    }
   }
 
   for _, map in ipairs(mappings) do
@@ -131,7 +146,9 @@ function set_close_ui_keymaps()
     "reposcope_ui"
   )
 
-  -- Insert, Visual & Terminal Mode: <C-w> -> Change to normal mode and apply window change
+  --NOTE: maybe not needed
+
+  --[[ Insert, Visual & Terminal Mode: <C-w> -> Change to normal mode and apply window change
   map_over_bufs(
     { "i", "t", "v" }, "<C-w>",
     "<C-\\><C-n><C-w>",
@@ -139,6 +156,7 @@ function set_close_ui_keymaps()
     { silent = true, noremap = true },
     "reposcope_ui"
   )
+  ]]
 end
 
 

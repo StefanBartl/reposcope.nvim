@@ -1,6 +1,6 @@
 local M = {}
 
-local state = require("reposcope.state.repositories")
+local repositories = require("reposcope.state.repositories")
 local json = require("reposcope.core.json")
 local list = require("reposcope.ui.list.repositories")
 local testjson = "/media/steve/Depot/MyGithub/reposcope.nvim/debug/gh_test_response.json"
@@ -14,17 +14,15 @@ local testjson = "/media/steve/Depot/MyGithub/reposcope.nvim/debug/gh_test_respo
 ---@param debug? boolean
 function M.init(query, debug)
   if debug then
-    -- Test-JSON lesen und parsen (aktueller Stand)
-    state.repositories = json.read_and_parse_file(testjson)
-
-    if state.repositories then
-      list.display(state.repositories)
+    local parsed = json.read_and_parse_file(testjson)
+    if parsed then
+      repositories.set_repositories(parsed)
+      list.display()
     else
       vim.notify("Failed to load test JSON", vim.log.levels.ERROR)
     end
   else
     -- TODO: Echte GH-API-Request hier ausführen
-    -- state.repositories = <API-Response>
   end
 end
 
