@@ -16,7 +16,7 @@ function M.display(json)
     if not desc == "No description" then
       desc = text_utils.cut_text_for_line(#name, ui_config.width - ui_config.padding, desc)
     end
-    table.insert(lines, "- " .. name .. desc)
+    table.insert(lines, name .. desc)
   end
 
   if #lines == 0 then

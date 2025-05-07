@@ -97,27 +97,50 @@ end
 
 
 --- Apply all keymaps for closing the UI to the relevant buffers.
---- These include `<Esc>` in insert, normal and terminal mode.
+--- These include `<Esc>` in normal mode for closing the UI.
+--- `<Esc>` in insert and terminal mode switches to normal mode.
+--- `<C-w>` in insert/terminal mode switches to normal mode and moves windows.
 --- Registered keymaps are tagged as 'reposcope_ui' for later cleanup.
 --- @private
 --- @return nil
 function set_close_ui_keymaps()
+  local buffers = {
+    state.buffers.backg,
+    state.buffers.preview,
+    state.buffers.prompt,
+    state.buffers.list
+  }
+
+  -- Normal mode: <Esc> close UI
   map_over_bufs(
-    { "i", "n", "t" },
-    "<Esc>",
+    "n", "<Esc>",
     function()
       require("reposcope.init").close_ui()
     end,
-    {
-      state.buffers.backg,
-      state.buffers.preview,
-      state.buffers.prompt,
-      state.buffers.list
-    },
+    buffers,
     { silent = true },
     "reposcope_ui"
   )
+
+  -- Insert, Visual & Terminal Mode: <Esc> -> Normal Mode
+  map_over_bufs(
+    { "i", "t", "v" }, "<Esc>",
+    "<C-\\><C-n>",
+    buffers,
+    { silent = true },
+    "reposcope_ui"
+  )
+
+  -- Insert, Visual & Terminal Mode: <C-w> -> Change to normal mode and apply window change
+  map_over_bufs(
+    { "i", "t", "v" }, "<C-w>",
+    "<C-\\><C-n><C-w>",
+    buffers,
+    { silent = true, noremap = true },
+    "reposcope_ui"
+  )
 end
+
 
 --- Clear all registered keymaps with optional tag.
 --- If no tag is provided, only 'reposcope_'-prefixed tags are accepted.
