@@ -1,6 +1,6 @@
 local M = {}
 
-local state = require("reposcope.ui.state")
+local state = require("reposcope.state.ui")
 
 local _registry = {}
 local map_over_bufs
@@ -67,7 +67,7 @@ end
 --- @private
 --- @return nil
 function set_prompt_keymaps()
-  local prompt_buf = require("reposcope.ui.state").buffers.prompt
+  local prompt_buf = require("reposcope.state.ui").buffers.prompt
   if type(prompt_buf) ~= "number" or not vim.api.nvim_buf_is_valid(prompt_buf) then
     vim.notify("[reposcope] prompt buffer invalid in set_prompt_keymaps()", vim.log.levels.DEBUG)
     return

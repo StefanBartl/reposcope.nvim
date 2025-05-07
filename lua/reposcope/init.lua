@@ -6,7 +6,7 @@ local M = {}
 
 local config = require("reposcope.config")
 local checks = require("reposcope.utils.checks")
-local state = require("reposcope.ui.state")
+local ui_state = require("reposcope.state.ui")
 local background = require("reposcope.ui.background")
 local preview = require("reposcope.ui.preview.init")
 local list = require("reposcope.ui.list.init")
@@ -27,7 +27,7 @@ function M.setup(opts)
 end
 
 function M.open_ui()
-  state.capture_invocation_state()
+  ui_state.capture_invocation_state()
   background.open_backgd()
   preview.open_preview()
   prompt.open_prompt()
@@ -37,11 +37,11 @@ end
 
 function M.close_ui()
   -- set focus back to caller position
-  if vim.api.nvim_win_is_valid(state.invocation.win) then
-    vim.api.nvim_set_current_win(state.invocation.win)
-    vim.api.nvim_win_set_cursor(state.invocation.win, {
-      state.invocation.cursor.row,
-      state.invocation.cursor.col,
+  if vim.api.nvim_win_is_valid(ui_state.invocation.win) then
+    vim.api.nvim_set_current_win(ui_state.invocation.win)
+    vim.api.nvim_win_set_cursor(ui_state.invocation.win, {
+      ui_state.invocation.cursor.row,
+      ui_state.invocation.cursor.col,
     })
   end
 

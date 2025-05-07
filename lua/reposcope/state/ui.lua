@@ -1,8 +1,8 @@
 --- @class UIState
 --- @field invocation UIStateInvocation invocation editor state before UI activation
---- @field fers UIStateBuffers buffer handles by role
+--- @field buffers UIStateBuffers buffer handles by role
 --- @field windows UIStateWindows window handles by role
---- @brief Tracks plugin-local fer and window handles for UI elements.
+--- @brief Tracks plugin-local buffer and window handles for UI elements.
 --- @description
 --- The UIState module maintains references to buffer and window IDs
 --- used by different parts of the user interface such as preview, prompt,
@@ -28,6 +28,7 @@
 --- @field preview integer|nil
 --- @field prompt integer|nil
 --- @field list integer|nil
+
 
 local M = {}
 
@@ -55,6 +56,8 @@ M.windows = {
   prompt = nil,
   list = nil,
 }
+
+--TODO: put in ui/utils
 
 --- Capture the current window and cursor position for later restoration.
 --- @return nil

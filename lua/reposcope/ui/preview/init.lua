@@ -10,7 +10,7 @@ local M = {}
 
 local config = require("reposcope.config")
 local ui_config = require("reposcope.ui.config")
-local state = require("reposcope.ui.state")
+local ui_state = require("reposcope.state.ui")
 local protected = require("reposcope.utils.protection")
 
 local lines = {
@@ -24,11 +24,11 @@ local lines = {
 M.height = protected.count_or_default(M.lines, 6)
 
 function M.open_preview()
-  state.buffers.preview = protected.create_named_buffer("reposcope://preview")
-  vim.api.nvim_buf_set_lines(state.buffers.preview, 0, -1, false, lines)
-  vim.bo[state.buffers.preview].modifiable = false
-  vim.bo[state.buffers.preview].readonly = true
-  vim.bo[state.buffers.preview].buftype = "nofile"
+  ui_state.buffers.preview = protected.create_named_buffer("reposcope://preview")
+  vim.api.nvim_buf_set_lines(ui_state.buffers.preview, 0, -1, false, lines)
+  vim.bo[ui_state.buffers.preview].modifiable = false
+  vim.bo[ui_state.buffers.preview].readonly = true
+  vim.bo[ui_state.buffers.preview].buftype = "nofile"
 
   if config.options.layout == "default" then
     default()
@@ -38,9 +38,8 @@ function M.open_preview()
 end
 
 --ADD: Inject repo infos or/and readme
---ADD: Ability to scroll
 function default()
-  state.windows.preview = vim.api.nvim_open_win(state.buffers.preview, false, {
+  ui_state.windows.preview = vim.api.nvim_open_win(ui_state.buffers.preview, false, {
     relative = "editor",
     col = ui_config.col + (ui_config.width / 2) + 1,
     row = ui_config.row,
@@ -53,7 +52,7 @@ function default()
     focusable = true,
     noautocmd = true,
   })
-  apply_preview_highlight(state.windows.preview)
+  apply_preview_highlight(ui_state.windows.preview)
 end
 
 function apply_preview_highlight(win)

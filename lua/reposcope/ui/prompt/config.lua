@@ -1,4 +1,3 @@
-
 --- @class UIPromptConfig
 local M = {}
 

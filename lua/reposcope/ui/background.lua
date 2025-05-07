@@ -9,17 +9,17 @@ local M = {}
 
 local config = require("reposcope.config")
 local ui_config = require("reposcope.ui.config")
-local state = require("reposcope.ui.state")
+local ui_state = require("reposcope.state.ui")
 local protected = require("reposcope.utils.protection")
 
 function M.open_backgd()
-  state.buffers.backg = protected.create_named_buffer("reposcope://backg")
-  vim.api.nvim_buf_set_lines(state.buffers.backg, 0, -1, false, {})
-  vim.bo[state.buffers.backg].modifiable = false
-  vim.bo[state.buffers.backg].readonly = true
-  vim.bo[state.buffers.backg].buftype = "nofile"
-  vim.bo[state.buffers.backg].bufhidden = "wipe"
-  vim.bo[state.buffers.backg].swapfile = false
+  ui_state.buffers.backg = protected.create_named_buffer("reposcope://backg")
+  vim.api.nvim_buf_set_lines(ui_state.buffers.backg, 0, -1, false, {})
+  vim.bo[ui_state.buffers.backg].modifiable = false
+  vim.bo[ui_state.buffers.backg].readonly = true
+  vim.bo[ui_state.buffers.backg].buftype = "nofile"
+  vim.bo[ui_state.buffers.backg].bufhidden = "wipe"
+  vim.bo[ui_state.buffers.backg].swapfile = false
 
   if config.options.layout == "default" then
     default()
@@ -30,7 +30,7 @@ end
 
 
 function default()
-  state.windows.backg = vim.api.nvim_open_win(state.buffers.backg, false, {
+  ui_state.windows.backg = vim.api.nvim_open_win(ui_state.buffers.backg, false, {
     relative = "editor",
     col = ui_config.col,
     row = ui_config.row,
@@ -42,7 +42,7 @@ function default()
     focusable = false,
     noautocmd = true,
   })
-  apply_backgr_highlight(state.windows.backg)
+  apply_backgr_highlight(ui_state.windows.backg)
 end
 
 function apply_backgr_highlight(win)

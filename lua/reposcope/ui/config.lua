@@ -4,6 +4,7 @@
 --- @field padding number Standard padding of the UI
 --- @field col number Vertical center of the UI
 --- @field row number Horizontal center of the UI
+
 local M = {}
 
 M.width = math.floor(vim.o.columns * 0.8)
