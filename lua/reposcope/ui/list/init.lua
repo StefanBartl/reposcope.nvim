@@ -7,6 +7,7 @@ local default, apply_list_highlight
 --- @field private list_height integer Height of the list window
 --- @field private list_row integer Row postion of the list window
 --- @field private list_lines string[] Content of the list window
+
 local M = {}
 
 local config = require("reposcope.config")
@@ -37,7 +38,9 @@ function default()
     --title = "Repositories",
     --title_pos = "left",
     border = "none",
-    style = "minimal"
+    style = "minimal",
+    focusable = false,
+    noautocmd = true,
   })
   apply_list_highlight(ui_state.windows.list)
 end
@@ -46,6 +49,13 @@ function apply_list_highlight(win)
   local ns = vim.api.nvim_create_namespace("reposcope_list")
   vim.api.nvim_set_hl(ns, "Normal", { bg =  ui_config.colortheme.backg })
   vim.api.nvim_win_set_hl_ns(win, ns)
+
+  vim.api.nvim_set_hl(0, "ReposcopeListHighlight", {
+    bg = "#44475a",  -- Hintergrundfarbe für die hervorgehobene Zeile
+    fg = "#ffffff",  -- Textfarbe
+    bold = true,
+  })
+
 end
 
 return M
