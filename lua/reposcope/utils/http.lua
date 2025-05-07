@@ -4,6 +4,7 @@ local M = {}
 
 local uv = vim.loop
 local notify = require("reposcope.utils.debug").notify
+local profiler = require("reposcope.utils.debug")
 
 ---Performs an HTTP GET request and returns the response.
 ---@param url string The URL for the HTTP request
@@ -16,13 +17,21 @@ function M.get(url, callback, debug)
   local stderr_data = {}
   local stdout_done = false
   local stderr_done = false
+  local request_successful = false  -- Track success to avoid double counting
+  local request_failed = false     -- Track failure to avoid double counting
 
   ---Checks if both stdout and stderr have finished processing.
   local function check_done()
     if stdout_done and stderr_done then
       if #response_data == 0 then
+        if not request_successful and not request_failed then  --HACK:
+          request_failed = true
+        end
         callback(nil)
       else
+        if not request_successful then
+          request_successful = true
+        end
         callback(table.concat(response_data))
       end
     end
@@ -35,6 +44,10 @@ function M.get(url, callback, debug)
     if code ~= 0 then
       vim.schedule(function()
         notify("[reposcope] Curl process failed with code: " .. code, vim.log.levels.ERROR)
+        if not request_successful and not request_failed then
+          profiler.increase_failed()
+          request_failed = true
+        end
       end)
     end
     stdout_done = true
@@ -45,16 +58,27 @@ function M.get(url, callback, debug)
   if not handle then
     vim.schedule(function()
       notify("[reposcope] Failed to start curl process", vim.log.levels.ERROR)
+      if not request_failed then
+        profiler.increase_failed()
+        request_failed = true
+      end
     end)
     callback(nil)
     return
   end
+
+  -- If curl started successfully, increase the request count
+  profiler.increase_req()
 
   ---Reads the standard output (response content)
   stdout:read_start(function(err, data)
     if err then
       vim.schedule(function()
         notify("[reposcope] Error reading curl stdout: " .. err, vim.log.levels.ERROR)
+        if not request_successful and not request_failed then
+          profiler.increase_failed()
+          request_failed = true
+        end
       end)
       stdout_done = true
       check_done()
@@ -74,6 +98,10 @@ function M.get(url, callback, debug)
     if err then
       vim.schedule(function()
         notify("[reposcope] Error reading curl stderr: " .. err, vim.log.levels.ERROR)
+        if not request_successful and not request_failed then
+          profiler.increase_failed()
+          request_failed = true
+        end
       end)
     elseif data and debug then
       vim.schedule(function()

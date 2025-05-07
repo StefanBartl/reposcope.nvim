@@ -9,7 +9,7 @@ local notify = require("reposcope.utils.debug").notify
 ---Caches the README for a repository directly in RAM
 ---@param repo_name string The name of the repository
 ---@param readme_text string The content of the README file
-function cache_readme(repo_name, readme_text)
+function M.cache_readme(repo_name, readme_text)
   local repo = repositories.get_repository(repo_name)
   if repo then
     repo.readme_cache = readme_text
@@ -20,13 +20,9 @@ end
 
 ---Returns the cached README if available
 ---@param repo_name string The name of the repository
-function get_readme(repo_name)
+function M.get_readme(repo_name)
   local repo = repositories.get_repository(repo_name)
   return repo and repo.readme_cache or nil
 end
-
--- Assign functions to the M table
-M.cache_readme = cache_readme
-M.get_readme = get_readme
 
 return M
