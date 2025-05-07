@@ -1,13 +1,26 @@
---- @class ReposcopeDebug Debug utilities for inspecting UI-related buffers and windows.
---- @field print_invocation_state fun(): nil Prints the current UI invocation context (window and cursor).
---- @field print_windows fun(): nil Prints all registered window handles in the UI state.
---- @field print_buffers fun(): nil Prints all registered buffer handles in the UI state.
---- @field debug_window fun(win: integer): nil Prints detailed information about a specific window.
---- @field debug_buffer fun(buf: integer): nil Prints detailed information about a specific buffer.
---- @field test_prompt_input fun(provider: string, query: string) Manually test the input router, either "github" or other (for fallback)
-
+---@class ReposcopeDebug Debug utilities for inspecting UI-related buffers and windows.
+---@field notify fun(message: string, level?: number): nil Sends a notification message with an optional log level.
+---@field print_invocation_state fun(): nil Prints the current UI invocation context (window and cursor).
+---@field print_windows fun(): nil Prints all registered window handles in the UI state.
+---@field print_buffers fun(): nil Prints all registered buffer handles in the UI state.
+---@field debug_window fun(win: integer): nil Prints detailed information about a specific window.
+---@field debug_buffer fun(buf: integer): nil Prints detailed information about a specific buffer.
+---@field test_prompt_input fun(provider: string, query: string) Manually test the input router, either "github" or other (for fallback)
 local M = {}
 
+local config = require("reposcope.config")
+
+---Sends a notification message with an optional log level.
+---@param message string The notification message
+---@param level? number Optional vim.log.levels (default: INFO)
+function M.notify(message, level)
+  level = level or vim.log.levels.INFO
+  if config.is_dev_mode() or level >= vim.log.levels.WARN then
+    vim.notify(message, level)
+  end
+end
+
+---Prints the current UI invocation context (window and cursor).
 function M.print_invocation_state()
   local state = require("reposcope.state.ui")
   print("invocation list:")
@@ -15,6 +28,7 @@ function M.print_invocation_state()
   print("Cursor row/col:", state.invocation.cursor.row, state.invocation.cursor.col)
 end
 
+---Prints all registered window handles in the UI state.
 function M.print_windows()
   print("Window list:")
   local state = require("reposcope.state.ui")
@@ -23,6 +37,7 @@ function M.print_windows()
   end
 end
 
+---Prints all registered buffer handles in the UI state.
 function M.print_buffers()
   print("Buffer list:")
   local state = require("reposcope.state.ui")
@@ -31,6 +46,8 @@ function M.print_buffers()
   end
 end
 
+---Prints detailed information about a specific window.
+---@param win integer The window ID to inspect
 function M.debug_window(win)
   if not win or not vim.api.nvim_win_is_valid(win) then
     vim.notify("[reposcope][debug] Invalid window handle", vim.log.levels.DEBUG)
@@ -62,6 +79,8 @@ function M.debug_window(win)
   print("  Window config: " .. vim.inspect(config))
 end
 
+---Prints detailed information about a specific buffer.
+---@param buf integer The buffer ID to inspect
 function M.debug_buffer(buf)
   if not buf or not vim.api.nvim_buf_is_valid(buf) then
     vim.notify("[reposcope][debug] Invalid buffer handle", vim.log.levels.DEBUG)
@@ -89,6 +108,9 @@ function M.debug_buffer(buf)
   print("  Line count:    " .. line_count)
 end
 
+---Manually test the input router with a specified provider and query.
+---@param provider string The provider to test (e.g., "github")
+---@param query string The search query for the provider
 function M.test_prompt_input(provider, query)
   require("reposcope.config").options.provider = provider
   print(string.format("[test] Using provider: %s", provider))

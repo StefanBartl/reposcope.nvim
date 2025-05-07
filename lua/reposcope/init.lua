@@ -1,7 +1,7 @@
---- @class UIStart Functions to start and close the Reposcope UI
---- @field setup fun(opts: table|nil): nil Initializes the UI and performs prechecks
---- @field open_ui fun(): nil Opens the Reposcope UI: Captures caller position, calls the window factory functions and sets keymaps
---- @field close_ui fun(): nil Closes the Reposcope UI: Set focus back to caller position, close all windows and unset keymaps
+---@class UIStart Functions to start and close the Reposcope UI
+---@field setup fun(opts: table|nil): nil Initializes the UI and performs prechecks
+---@field open_ui fun(): nil Opens the Reposcope UI: Captures caller position, calls the window factory functions and sets keymaps
+---@field close_ui fun(): nil Closes the Reposcope UI: Set focus back to caller position, close all windows and unset keymaps
 local M = {}
 
 local config = require("reposcope.config")
@@ -11,21 +11,21 @@ local background = require("reposcope.ui.background")
 local preview = require("reposcope.ui.preview.init")
 local list = require("reposcope.ui.list.init")
 local prompt = require("reposcope.ui.prompt.init")
-local keymaps =  require("reposcope.keymaps")
+local keymaps = require("reposcope.keymaps")
+
 -- Ensure user commands are registered
 require("reposcope.usercommands")
 
-
---- Initializes the Reposcope UI by applying user options and performing tool checks.
---- This function should be called once during plugin setup.
----
---- @param opts table|nil Optional configuration options to override defaults
---- @return nil
+---Initializes the Reposcope UI by applying user options and performing tool checks.
+---This function should be called once during plugin setup.
+---@param opts table|nil Optional configuration options to override defaults
 function M.setup(opts)
   config.setup(opts or {})
   checks.resolve_request_tool()
 end
 
+---Opens the Reposcope UI.
+---Captures caller position, creates background, preview, list, and prompt windows, and sets keymaps.
 function M.open_ui()
   ui_state.capture_invocation_state()
   background.open_backgd()
@@ -35,6 +35,8 @@ function M.open_ui()
   keymaps.set_ui_keymaps()
 end
 
+---Closes the Reposcope UI.
+---Restores the caller window, closes all Reposcope windows, and unsets keymaps.
 function M.close_ui()
   -- set focus back to caller position
   if vim.api.nvim_win_is_valid(ui_state.invocation.win) then
@@ -56,8 +58,8 @@ function M.close_ui()
     end
   end
 
-   keymaps.unset_ui_keymaps()
-   vim.cmd("stopinsert")
+  keymaps.unset_ui_keymaps()
+  vim.cmd("stopinsert")
 end
 
 return M

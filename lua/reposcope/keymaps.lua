@@ -1,7 +1,11 @@
+---@class UIKeymaps
+---@field set_ui_keymaps fun(): nil Applies all UI-related keymaps
+---@field unset_ui_keymaps fun(): nil Removes all UI-related keymaps
 local M = {}
 
 local state = require("reposcope.state.ui")
 local navigate_list = require("reposcope.ui.prompt.navigate_list")
+local notify = require("reposcope.utils.debug").notify
 
 local _registry = {}
 local map_over_bufs
@@ -12,29 +16,26 @@ local clear_registered_keymaps
 local unset_prompt_keymaps
 local unset_close_ui_keymaps
 
---- Apply all UI-related keymaps
---- @return nil
+---Apply all UI-related keymaps
 function M.set_ui_keymaps()
   set_close_ui_keymaps()
   set_prompt_keymaps()
 end
 
---- Remove all UI-related keymaps
---- @return nil
+---Remove all UI-related keymaps
 function M.unset_ui_keymaps()
   unset_close_ui_keymaps()
   unset_prompt_keymaps()
 end
 
-
---- Register and set keymap on multiple buffers
---- @param modes string|string[]
---- @param lhs string
---- @param rhs function|string
---- @param bufs number[]
---- @param opts table|nil
---- @param tag string|nil optional grouping tag
---- @private
+---Register and set keymap on multiple buffers
+---@param modes string|string[]
+---@param lhs string
+---@param rhs function|string
+---@param bufs number[]
+---@param opts table|nil
+---@param tag string|nil optional grouping tag
+---@private
 function map_over_bufs(modes, lhs, rhs, bufs, opts, tag)
   opts = opts or {}
   for _, buf in ipairs(bufs) do
@@ -50,11 +51,11 @@ function map_over_bufs(modes, lhs, rhs, bufs, opts, tag)
   end
 end
 
---- Unset a keymap from multiple buffers
---- @param mode string|string[]
---- @param lhs string
---- @param bufs number[]
---- @private
+---Unset a keymap from multiple buffers
+---@param mode string|string[]
+---@param lhs string
+---@param bufs number[]
+---@private
 function unmap_over_bufs(mode, lhs, bufs)
   for _, buf in ipairs(bufs) do
     if type(buf) == "number" and vim.api.nvim_buf_is_valid(buf) then
@@ -63,14 +64,12 @@ function unmap_over_bufs(mode, lhs, bufs)
   end
 end
 
-
---- Set prompt-specific <CR> and arrow key keymaps
---- @private
---- @return nil
+---Set prompt-specific <CR> and arrow key keymaps
+---@private
 function set_prompt_keymaps()
   local prompt_buf = require("reposcope.state.ui").buffers.prompt
   if type(prompt_buf) ~= "number" or not vim.api.nvim_buf_is_valid(prompt_buf) then
-    vim.notify("[reposcope] prompt buffer invalid in set_prompt_keymaps()", vim.log.levels.DEBUG)
+    notify("[reposcope] prompt buffer invalid in set_prompt_keymaps()", vim.log.levels.DEBUG)
     return
   end
 
@@ -96,6 +95,13 @@ function set_prompt_keymaps()
       rhs = function()
         navigate_list.navigate_list_in_prompt("down")
       end,
+    },
+    {
+      mode = "i",
+      lhs = "<C-r>",
+      rhs = function()
+        require("reposcope.providers.github.readme").fetch_readme_for_selected()
+      end,
     }
   }
 
@@ -110,14 +116,12 @@ function set_prompt_keymaps()
   end
 end
 
-
---- Apply all keymaps for closing the UI to the relevant buffers.
---- These include `<Esc>` in normal mode for closing the UI.
---- `<Esc>` in insert and terminal mode switches to normal mode.
---- `<C-w>` in insert/terminal mode switches to normal mode and moves windows.
---- Registered keymaps are tagged as 'reposcope_ui' for later cleanup.
---- @private
---- @return nil
+---Apply all keymaps for closing the UI to the relevant buffers.
+---These include `<Esc>` in normal mode for closing the UI.
+---`<Esc>` in insert and terminal mode switches to normal mode.
+---`<C-w>` in insert/terminal mode switches to normal mode and moves windows.
+---Registered keymaps are tagged as 'reposcope_ui' for later cleanup.
+---@private
 function set_close_ui_keymaps()
   local buffers = {
     state.buffers.backg,
@@ -159,14 +163,13 @@ function set_close_ui_keymaps()
   ]]
 end
 
-
---- Clear all registered keymaps with optional tag.
---- If no tag is provided, only 'reposcope_'-prefixed tags are accepted.
---- @param tag string|nil
---- @private
+---Clear all registered keymaps with optional tag.
+---If no tag is provided, only 'reposcope_'-prefixed tags are accepted.
+---@param tag string|nil
+---@private
 function clear_registered_keymaps(tag)
   if not tag or not tag:find("^reposcope_") then
-    vim.notify(
+    notify(
       "[reposcope] Refusing to clear keymaps without valid reposcope_* tag",
       vim.log.levels.WARN
     )
@@ -177,7 +180,7 @@ function clear_registered_keymaps(tag)
   for _, map in ipairs(_registry) do
     if map.tag == tag then
       unmap_over_bufs(map.mode, map.lhs, { map.buffer })
-      vim.notify(string.format("[reposcope] cleared keymap %s from buf %d", map.lhs, map.buffer), vim.log.levels.DEBUG)
+      notify(string.format("[reposcope] cleared keymap %s from buf %d", map.lhs, map.buffer), vim.log.levels.DEBUG)
     else
       table.insert(remaining, map)
     end
@@ -185,17 +188,14 @@ function clear_registered_keymaps(tag)
   _registry = remaining
 end
 
-
---- Remove all prompt-specific keymaps
---- @private
---- @return nil
+---Remove all prompt-specific keymaps
+---@private
 function unset_prompt_keymaps()
   clear_registered_keymaps("reposcope_prompt")
 end
 
---- Remove all ui-specific keymaps
---- @private
---- @return nil
+---Remove all ui-specific keymaps
+---@private
 function unset_close_ui_keymaps()
   clear_registered_keymaps("reposcope_ui")
 end

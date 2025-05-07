@@ -1,11 +1,10 @@
---- @desc forward declarations
+---@desc forward declarations
 local default, apply_preview_highlight
 
---- @class UIPreview
---- @field open_preview fun(): nil Creates a scratch buffer named `reposcope://preview` and opens the preview window in the Reposcope UI
---- @field default fun(): nil Creates the default floating preview window
---- @field private lines string[] Preview content to display in the buffer
---- @field height number Height of the preview window
+---@class UIPreview
+---@field open_preview fun(): nil Creates a scratch buffer named `reposcope://preview` and opens the preview window in the Reposcope UI
+---@field default fun(): nil Creates the default floating preview window
+---@field height number Height of the preview window
 local M = {}
 
 local config = require("reposcope.config")
@@ -21,8 +20,10 @@ local lines = {
   "fünfte previw"
 }
 
-M.height = protected.count_or_default(M.lines, 6)
+---Height of the preview window
+M.height = protected.count_or_default(lines, 6)
 
+---Creates a scratch buffer named `reposcope://preview` and opens the preview window in the Reposcope UI
 function M.open_preview()
   ui_state.buffers.preview = protected.create_named_buffer("reposcope://preview")
   vim.api.nvim_buf_set_lines(ui_state.buffers.preview, 0, -1, false, lines)

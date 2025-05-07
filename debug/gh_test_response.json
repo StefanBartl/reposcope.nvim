@@ -69,8 +69,8 @@
       "language": "Lua",
       "forks_count": 0,
       "open_issues_count": 0,
-      "master_branch": "master",
-      "default_branch": "master",
+      "master_branch": "main",
+      "default_branch": "main",
       "score": 1,
       "forks": 1,
       "open_issues": 1,
@@ -109,8 +109,8 @@
       "language": "Javascript",
       "forks_count": 0,
       "open_issues_count": 0,
-      "master_branch": "master",
-      "default_branch": "master",
+      "master_branch": "main",
+      "default_branch": "main",
       "score": 1,
       "forks": 1,
       "open_issues": 1,
@@ -149,8 +149,8 @@
       "language": "Lua",
       "forks_count": 0,
       "open_issues_count": 0,
-      "master_branch": "master",
-      "default_branch": "master",
+      "master_branch": "main",
+      "default_branch": "main",
       "score": 1,
       "forks": 1,
       "open_issues": 1,
@@ -164,4 +164,3 @@
     }
   ]
 }
-

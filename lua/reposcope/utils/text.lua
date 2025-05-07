@@ -4,7 +4,9 @@
 ---@field gen_padded_lines fun(height: number, content: string|string[]): string[]
 local M = {}
 
---- Centers given text input and returns it
+local notify = require("reposcope.utils.debug").notify
+
+---Centers given text input and returns it
 ---@param text string
 ---@param width number
 function M.center_text(text, width)
@@ -12,7 +14,7 @@ function M.center_text(text, width)
   return string.rep(" ", math.max(pad, 0)) .. text
 end
 
---- Cuts given input to fit in 1 row and postfix it with '...'
+---Cuts given input to fit in 1 row and postfix it with '...'
 ---@param offset integer Number of characters before the actual text (e.g. indent)
 ---@param width integer Total allowed width
 ---@param input string Text to shorten if needed
@@ -24,10 +26,9 @@ function M.cut_text_for_line(offset, width, input)
   return string.sub(input, 1, max_length) .. "..."
 end
 
---- Pads or trims content to a specific number of lines
+---Pads or trims content to a specific number of lines
 ---@param height number
 ---@param content string|string[]
----@return string[]
 function M.gen_padded_lines(height, content)
   local lines = {}
 
@@ -39,7 +40,7 @@ function M.gen_padded_lines(height, content)
   elseif type(content) == "table" then
     lines = vim.deepcopy(content)
   else
-    error("content must be a string or a table")
+    notify("Content must be a string or a table", vim.log.levels.INFO)
   end
 
   -- Adjust to desired height
@@ -52,4 +53,3 @@ function M.gen_padded_lines(height, content)
 end
 
 return M
-

@@ -1,9 +1,9 @@
---- @desc Forward declarations
+---@desc Forward declarations
 local default
 
---- @class UIPrompt Opens and initializes the prompt input window in the Reposcope UI.
---- @field open_prompt fun(): nil Opens the user input prompt window in the Reposcope UI
---- @field default fun(): nil Default layout for the prompt
+---@class UIPrompt Opens and initializes the prompt input window in the Reposcope UI.
+---@field open_prompt fun(): nil Opens the user input prompt window in the Reposcope UI
+---@field default fun(): nil Default layout for the prompt
 local M = {}
 
 local config = require("reposcope.config")
@@ -11,22 +11,21 @@ local ui_config = require("reposcope.ui.config")
 local prompt_config = require("reposcope.ui.prompt.config")
 local ui_state = require("reposcope.state.ui")
 local protect_prompt = require("reposcope.ui.prompt.protect_prompt_input")
+local notify = require("reposcope.utils.debug").notify
 
---- Creates a scratch buffer named `reposcope://prompt` and opens it in a
---- floating window directly below the preview window. Configures input protection,
---- applies input-specific window options and sets mode to insert.
+---Opens the user input prompt window in the Reposcope UI
 function M.open_prompt()
   ui_state.buffers.prompt = require("reposcope.utils.protection")
-   .create_named_buffer("reposcope://prompt")
+      .create_named_buffer("reposcope://prompt")
 
   if config.options.layout == "default" then
     default()
   else
-    vim.notify("Unsupported layout: " .. config.options.layout, vim.log.levels.ERROR)
+    notify("Unsupported layout: " .. config.options.layout, vim.log.levels.ERROR)
   end
 
   prompt_config.init_prompt_layout(ui_state.buffers.prompt, ui_state.windows.prompt, " prompt ")
-  protect_prompt.protect(ui_state.buffers.prompt, prompt_config.prefix_len )
+  protect_prompt.protect(ui_state.buffers.prompt, prompt_config.prefix_len)
   vim.schedule(function()
     vim.cmd("startinsert")
   end)
@@ -42,6 +41,5 @@ function default()
     style = "minimal"
   })
 end
-
 
 return M
