@@ -1,5 +1,5 @@
 --- @desc forward declarations
-local default
+local default, apply_preview_highlight
 
 --- @class UIPreview
 --- @field open_preview fun(): nil Creates a scratch buffer named `reposcope://preview` and opens the preview window in the Reposcope UI
@@ -27,6 +27,8 @@ function M.open_preview()
   state.buffers.preview = protected.create_named_buffer("reposcope://preview")
   vim.api.nvim_buf_set_lines(state.buffers.preview, 0, -1, false, lines)
   vim.bo[state.buffers.preview].modifiable = false
+  vim.bo[state.buffers.preview].readonly = true
+  vim.bo[state.buffers.preview].buftype = "nofile"
 
   if config.options.layout == "default" then
     default()
@@ -40,15 +42,24 @@ end
 function default()
   state.windows.preview = vim.api.nvim_open_win(state.buffers.preview, false, {
     relative = "editor",
-    col = ui_config.col + ui_config.padding,
-    row = ui_config.row + 1,
-    height = M.height - ui_config.padding,
-    width = ui_config.width - ui_config.padding,
+    col = ui_config.col + (ui_config.width / 2) + 1,
+    row = ui_config.row,
+    height = ui_config.height,
+    width = (ui_config.width / 2) + 2,
     border = "none",
     title = "Preview",
     title_pos = "center",
     style = "minimal",
+    focusable = true,
+    noautocmd = true,
   })
+  apply_preview_highlight(state.windows.preview)
+end
+
+function apply_preview_highlight(win)
+  local ns = vim.api.nvim_create_namespace("reposcope_preview")
+  vim.api.nvim_set_hl(ns, "Normal", { bg = ui_config.colortheme.backg })
+  vim.api.nvim_win_set_hl_ns(win, ns)
 end
 
 return M
