@@ -31,7 +31,7 @@ function default()
   state.windows.list = vim.api.nvim_open_win(state.buffers.list, false, {
     relative = "editor",
     row = ui_config.row + prompt_config.height,
-    col = ui_config.col,
+    col = ui_config.col + 1,
     width = (ui_config.width / 2),
     height = ui_config.height - prompt_config.height,
     --title = "Repositories",
