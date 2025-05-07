@@ -8,6 +8,8 @@ local set_state_path
 ---@field is_debug_mode fun(): boolean Checks if debug mode is enabled
 ---@field get_state_path fun(): string Returns the current state path
 ---@field get_cache_path fun(): string Returns the current cache path
+---@field toggle_dev_mode fun(): nil Toggle dev mode (standard: false)
+---@field toggle_debug_mode fun(): nil Toggle debug mode (standard: false)
 local M = {}
 
 --- Configuration options for Reposcope
@@ -15,6 +17,7 @@ local M = {}
 ---@field provider string The API provider to be used (default: "github")
 ---@field preferred_requesters string[] List of preferred tools for making HTTP requests (default: {"gh", "curl", "wget"})
 ---@field request_tool string Default request tool (default: "gh")
+---@field github_token string  Github authorization token (for higher request limits)
 ---@field results_limit number Maximum number of results returned in search queries (default: 25)
 ---@field preview_limit number Maximum number of lines shown in preview (default: 200)
 ---@field layout string UI layout type (default: "default")
@@ -26,6 +29,7 @@ M.options = {
   provider = "github", -- Default provider for Reposcope (GitHub)
   preferred_requesters = { "gh", "curl", "wget" }, -- Preferred tools for API requests
   request_tool = "gh", -- Default request tool (GitHub CLI)
+  github_token = "", -- Github authorization token (for higher request limits)
   results_limit = 25, -- Default result limit for search queries
   preview_limit = 200, -- Default preview limit for displayed results
   layout = "default", -- Default UI layout
@@ -81,6 +85,16 @@ end
 ---@return string The current cache path
 function M.get_cache_path()
   return M.options.g_cache_path
+end
+
+---Toggle dev mode config option 
+function M.toggle_dev_mode()
+  M.options.dev_mode = not M.options.dev_mode
+end
+
+---Toggel debug mode config option
+function M.toggle_debug_node()
+   M.options.debug_mode = not M.options.debug_mode 
 end
 
 return M

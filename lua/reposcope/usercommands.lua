@@ -47,3 +47,8 @@ end, { desc = "Toggle Reposcope Dev Mode" })
 vim.api.nvim_create_user_command("ReposcopeToggleDebug", function()
   require("reposcope.config").toggle_debug_mode()
 end, { desc = "Toggle Reposcope Debug Mode" })
+
+--- Command to show statistics directly with :ReposcopeStats
+vim.api.nvim_create_user_command("ReposcopeStats", function()
+  require("reposcope.utils.stats").show_stats()
+end, {})
