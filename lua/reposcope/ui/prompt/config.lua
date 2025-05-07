@@ -1,33 +1,50 @@
 
 --- @class UIPromptConfig
---- @field apply_prompt_highlight fun(win: number): nil Set highlight fot the prompt (background)
---- @field apply_prompt_prefix fun(buf: number, win: number): nil Writes the prompt-prefix and sets the cursor after it 
---- @field apply_prompt_config fun(buf: number, win: number): nil Apply the prompt config
---- @field private magnifier string # Unicode U+F002 magnifying glass symbol for prompt
---- @field private prompt_prefix string Prefix for the prompt
---- @field len number Prompt length with respect to special characters in the ui-prompt prefix 
---- @field height number Height of the prompt
 local M = {}
 
-local magnifier = "\u{f002}"
-local prompt_prefix = " " .. magnifier .. "   "
-M.len = vim.fn.strdisplaywidth(prompt_prefix)
-M.height = 1
+M.height = 3
+M.prefix = " " .. "\u{f002}" .. "   "
+M.prefix_len = vim.fn.strdisplaywidth(M.prefix)
 
-function M.apply_prompt_highlight(win)
-  local ns = vim.api.nvim_create_namespace("reposcope_prompt") --TODO: Auslagern ?
-  vim.api.nvim_set_hl(ns, "Normal", { background = '#8092b5', bg = '#252931' })
-  vim.api.nvim_win_set_hl_ns(win, ns)
-end
+--NOTE: Should bei in layout not in config
 
-function M.apply_prompt_prefix(buf, win)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { prompt_prefix })
-  vim.api.nvim_win_set_cursor(win, { 1, M.len })
-end
+--- Initialisiert Prompt UI mit Titel, Prefix und vollständigem Highlight
+---@param buf number
+---@param win number
+---@param title string
+function M.init_prompt_layout(buf, win, title)
+  local title_text = " " .. title .. " "
 
-function M.apply_prompt_config(buf, win)
-  M.apply_prompt_highlight(win)
-  M.apply_prompt_prefix(buf, win)
+  local width = vim.api.nvim_win_get_width(win)
+  local col = math.max(math.floor((width - #title_text) / 2), 0)
+
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+    string.rep(" ", width),         -- Zeile 0: virt_text für Titel
+    M.prefix      -- Zeile 1: Prompt-Zeile mit Prefix
+  })
+
+  vim.api.nvim_win_set_cursor(win, { 2, M.prefix_len })
+
+  local ns_bg = vim.api.nvim_create_namespace("reposcope_prompt_bg")
+  vim.api.nvim_set_hl(ns_bg, "ReposcopePromptNormal", {
+    bg = require("reposcope.ui.config").colortheme.prompt,
+    fg = require("reposcope.ui.config").colortheme.foreground,
+  })
+  vim.api.nvim_win_set_hl_ns(win, ns_bg)
+
+  local ns_title = vim.api.nvim_create_namespace("reposcope_prompt_title")
+  vim.api.nvim_set_hl(0, "reposcope_prompt_title", {
+    bg = require("reposcope.ui.config").colortheme.accent_1,
+    fg = require("reposcope.ui.config").colortheme.backg,
+    bold = true,
+  })
+
+  -- Titel in Zeile 0 als virt_text anzeigen
+  vim.api.nvim_buf_set_extmark(buf, ns_title, 0, col, {
+    virt_text = { { title_text, "reposcope_prompt_title" } },
+    virt_text_pos = "overlay",
+    hl_mode = "combine",
+  })
 end
 
 return M

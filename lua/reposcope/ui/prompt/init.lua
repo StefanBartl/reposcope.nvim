@@ -11,7 +11,6 @@ local ui_config = require("reposcope.ui.config")
 local prompt_config = require("reposcope.ui.prompt.config")
 local state = require("reposcope.ui.state")
 local protect_prompt = require("reposcope.ui.prompt.protect_prompt_input")
-local preview = require("reposcope.ui.preview.init")
 
 --- Creates a scratch buffer named `reposcope://prompt` and opens it in a
 --- floating window directly below the preview window. Configures input protection,
@@ -26,9 +25,8 @@ function M.open_prompt()
     vim.notify("Unsupported layout: " .. config.options.layout, vim.log.levels.ERROR)
   end
 
-  prompt_config.apply_prompt_config(state.buffers.prompt, state.windows.prompt)
-  protect_prompt.protect(state.buffers.prompt, prompt_config.len)
-
+  prompt_config.init_prompt_layout(state.buffers.prompt, state.windows.prompt, " prompt ")
+  protect_prompt.protect(state.buffers.prompt, prompt_config.prefix_len )
   vim.schedule(function()
     vim.cmd("startinsert")
   end)
@@ -37,15 +35,13 @@ end
 function default()
   state.windows.prompt = vim.api.nvim_open_win(state.buffers.prompt, true, {
     relative = "editor",
-    row = ui_config.row + preview.height,
-    col = ui_config.col + 1,
-    width = ui_config.width - 2,
+    row = ui_config.row,
+    col = ui_config.col,
+    width = (ui_config.width / 2),
     height = prompt_config.height,
-    border = "single",
-    title = "Search Repositories",
-    title_pos = "center",
-    style = "minimal",
+    style = "minimal"
   })
 end
+
 
 return M

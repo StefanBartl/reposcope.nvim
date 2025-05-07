@@ -1,5 +1,5 @@
 ---@desc forward declaratioms
-local default
+local default, apply_backgr_highlight
 
 --- @class UIBackground
 --- @field open_backgd fun(): nil Opens a large floating window and creates a named scratch buffer (`reposcope://backg`)  which serves as the UI backdrop. It includes a footer legend and centers the title
@@ -12,12 +12,14 @@ local ui_config = require("reposcope.ui.config")
 local state = require("reposcope.ui.state")
 local protected = require("reposcope.utils.protection")
 
-local legend = "<Esc>: Quit   <Enter>: Search  <C-r>: Readme  <?>: Keybindings"
-
 function M.open_backgd()
   state.buffers.backg = protected.create_named_buffer("reposcope://backg")
   vim.api.nvim_buf_set_lines(state.buffers.backg, 0, -1, false, {})
   vim.bo[state.buffers.backg].modifiable = false
+  vim.bo[state.buffers.backg].readonly = true
+  vim.bo[state.buffers.backg].buftype = "nofile"
+  vim.bo[state.buffers.backg].bufhidden = "wipe"
+  vim.bo[state.buffers.backg].swapfile = false
 
   if config.options.layout == "default" then
     default()
@@ -34,16 +36,19 @@ function default()
     row = ui_config.row,
     height = ui_config.height,
     width = ui_config.width,
-    title = "repocope.nvim",
-    title_pos = "center",
-    border = "rounded",
+    border = "none",
     style = "minimal",
-    noautocmd = true,
     zindex = 10,
-    footer = legend,
-    footer_pos = "center",
-    focusable = false
+    focusable = false,
+    noautocmd = true,
   })
+  apply_backgr_highlight(state.windows.backg)
+end
+
+function apply_backgr_highlight(win)
+  local ns = vim.api.nvim_create_namespace("reposcope_backgr")
+  vim.api.nvim_set_hl(ns, "Normal", { bg = ui_config.colortheme.backg, fg ="none" })
+  vim.api.nvim_win_set_hl_ns(win, ns)
 end
 
 return M
