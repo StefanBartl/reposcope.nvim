@@ -11,13 +11,13 @@ local M = {}
 
 local config = require("reposcope.config")
 local ui_config = require("reposcope.ui.config")
-local state = require("reposcope.ui.state")
+local ui_state = require("reposcope.state.ui")
 local protected = require("reposcope.utils.protection")
 local prompt_config = require("reposcope.ui.prompt.config")
 
 function M.open_list()
-  state.buffers.list = protected.create_named_buffer("reposcope://list")
-  vim.bo[state.buffers.list].modifiable = false
+  ui_state.buffers.list = protected.create_named_buffer("reposcope://list")
+  vim.bo[ui_state.buffers.list].modifiable = false
 
   if config.options.layout == "default" then
     default()
@@ -28,7 +28,7 @@ function M.open_list()
 end
 
 function default()
-  state.windows.list = vim.api.nvim_open_win(state.buffers.list, false, {
+  ui_state.windows.list = vim.api.nvim_open_win(ui_state.buffers.list, false, {
     relative = "editor",
     row = ui_config.row + prompt_config.height,
     col = ui_config.col + 1,
@@ -39,7 +39,7 @@ function default()
     border = "none",
     style = "minimal"
   })
-  apply_list_highlight(state.windows.list)
+  apply_list_highlight(ui_state.windows.list)
 end
 
 function apply_list_highlight(win)

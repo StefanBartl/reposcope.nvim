@@ -1,4 +1,3 @@
-
 --- @class UtilsProtection Utility functions related to value normalization and scratch buffer management.
 --- @field count_or_default fun(val: table|number|string, default: number): number Returns the item count if `val` is a table, the number if `val` is a number, or `default` otherwise.
 --- @field create_named_buffer fun(name: string): integer Creates a named scratch buffer, replacing any existing one with the same name.

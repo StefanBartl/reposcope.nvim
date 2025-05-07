@@ -19,7 +19,7 @@ end
 
 function github(input)
   --print(input)
-  require("reposcope.providers.github.search_repositories").init("", true)
+  require("reposcope.providers.github.repositories").init("", true)
 end
 
 function no_provider(input)

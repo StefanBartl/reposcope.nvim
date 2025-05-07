@@ -1,4 +1,3 @@
-
 --- @class UIProtectPrompt
 --- @field protect fun(buf: number, prefix_len: number): nil Provide functionality to protect cursor from getting before prompt prefix
 local M = {}

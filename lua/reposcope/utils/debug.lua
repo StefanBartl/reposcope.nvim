@@ -9,7 +9,7 @@
 local M = {}
 
 function M.print_invocation_state()
-  local state = require("reposcope.ui.state")
+  local state = require("reposcope.state.ui")
   print("invocation list:")
   print("Window:", state.invocation.win)
   print("Cursor row/col:", state.invocation.cursor.row, state.invocation.cursor.col)
@@ -17,7 +17,7 @@ end
 
 function M.print_windows()
   print("Window list:")
-  local state = require("reposcope.ui.state")
+  local state = require("reposcope.state.ui")
   for name, win in pairs(state.windows) do
     print(name, win)
   end
@@ -25,7 +25,7 @@ end
 
 function M.print_buffers()
   print("Buffer list:")
-  local state = require("reposcope.ui.state")
+  local state = require("reposcope.state.ui")
   for name, buf in pairs(state.buffers) do
     print(name, buf)
   end
