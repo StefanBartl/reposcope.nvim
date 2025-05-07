@@ -87,6 +87,7 @@ function set_prompt_keymaps()
       lhs = "<Up>",
       rhs = function()
         navigate_list.navigate_list_in_prompt("up")
+        require("reposcope.providers.github.readme").fetch_readme_for_selected()
       end,
     },
     {
@@ -94,6 +95,7 @@ function set_prompt_keymaps()
       lhs = "<Down>",
       rhs = function()
         navigate_list.navigate_list_in_prompt("down")
+        require("reposcope.providers.github.readme").fetch_readme_for_selected()
       end,
     },
     {

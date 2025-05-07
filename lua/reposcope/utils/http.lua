@@ -4,7 +4,7 @@ local M = {}
 
 local uv = vim.loop
 local notify = require("reposcope.utils.debug").notify
-local profiler = require("reposcope.utils.debug")
+local profiler = require("reposcope.utils.metrics")
 
 ---Performs an HTTP GET request and returns the response.
 ---@param url string The URL for the HTTP request
