@@ -1,10 +1,10 @@
---- @class UIConfiguration
---- @field width number Total width of UI
---- @field height number Total height of UI
---- @field padding number Standard padding of the UI
---- @field col number Vertical center of the UI
---- @field row number Horizontal center of the UI
-
+---@class UIConfiguration
+---@field width number Total width of UI
+---@field height number Total height of UI
+---@field padding number Standard padding of the UI
+---@field col number Vertical center of the UI
+---@field row number Horizontal center of the UI
+---@field colortheme table<string, string> Color theme settings for the UI
 local M = {}
 
 M.width = math.floor(vim.o.columns * 0.8)

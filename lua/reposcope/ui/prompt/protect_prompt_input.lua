@@ -1,18 +1,20 @@
---- @class UIProtectPrompt
---- @field protect fun(buf: number, prefix_len: number): nil Provide functionality to protect cursor from getting before prompt prefix
+---@class UIProtectPrompt
+---@field protect fun(buf: number, prefix_len: number): nil Provide functionality to protect cursor from getting before prompt prefix
 local M = {}
 
 local prompt_config = require("reposcope.ui.prompt.config")
 
 --BUG: In normal mode there also be some protection
 
+---Provides functionality to protect cursor from moving before the prompt prefix
+---@param buf number The buffer ID of the prompt
+---@param prefix_len number The length of the prompt prefix
 function M.protect(buf, prefix_len)
-
   -- === Block Left before prompt begin ====
   vim.keymap.set("i", "<Left>", function()
     local _, prompt_col = unpack(vim.api.nvim_win_get_cursor(0))
     if prompt_col <= prompt_config.prefix_len then
-      return ""  -- blockiere Bewegung in den statischen Bereich
+      return "" -- blockiere Bewegung in den statischen Bereich
     else
       return "<Left>"
     end
@@ -22,7 +24,7 @@ function M.protect(buf, prefix_len)
   vim.keymap.set("i", "<BS>", function()
     local _, prompt_col = unpack(vim.api.nvim_win_get_cursor(0))
     if prompt_col <= prompt_config.prefix_len then
-      return ""  -- nichts löschen
+      return "" -- nichts löschen
     else
       return "<BS>"
     end
@@ -37,8 +39,6 @@ function M.protect(buf, prefix_len)
   vim.keymap.set("n", "0", function()
     vim.api.nvim_win_set_cursor(0, { 1, prefix_len })
   end, { buffer = buf, silent = true })
-
-
 end
 
 return M

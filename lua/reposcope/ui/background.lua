@@ -1,17 +1,20 @@
 ---@desc forward declaratioms
 local default, apply_backgr_highlight
 
---- @class UIBackground
---- @field open_backgd fun(): nil Opens a large floating window and creates a named scratch buffer (`reposcope://backg`)  which serves as the UI backdrop. It includes a footer legend and centers the title
---- @field default fun(): nil Creates the default floating background window
---- @field private legend string Apply a legend of the available keymaps for Reposcope
+---@class UIBackground
+---@field open_backgd fun(): nil Opens a large floating window and creates a named scratch buffer (`reposcope://backg`) which serves as the UI backdrop. It includes a footer legend and centers the title.
+---@field default fun(): nil Creates the default floating background window.
+---@field private apply_backgr_highlight fun(win: number): nil Applies the background highlight settings.
 local M = {}
 
 local config = require("reposcope.config")
 local ui_config = require("reposcope.ui.config")
 local ui_state = require("reposcope.state.ui")
 local protected = require("reposcope.utils.protection")
+local notify = require("reposcope.utils.debug").notify
 
+---Opens a large floating window and creates a named scratch buffer (`reposcope://backg`)
+---which serves as the UI backdrop. It includes a footer legend and centers the title.
 function M.open_backgd()
   ui_state.buffers.backg = protected.create_named_buffer("reposcope://backg")
   vim.api.nvim_buf_set_lines(ui_state.buffers.backg, 0, -1, false, {})
@@ -24,11 +27,11 @@ function M.open_backgd()
   if config.options.layout == "default" then
     default()
   else
-    vim.notify("Unknown layout: " .. config.options.layout, vim.log.levels.WARN)
+    notify("Unknown layout: " .. config.options.layout, vim.log.levels.WARN)
   end
 end
 
-
+---Creates the default floating background window
 function default()
   ui_state.windows.backg = vim.api.nvim_open_win(ui_state.buffers.backg, false, {
     relative = "editor",
@@ -45,9 +48,11 @@ function default()
   apply_backgr_highlight(ui_state.windows.backg)
 end
 
+---Applies the background highlight settings to the window
+---@param win number The window ID of the background window
 function apply_backgr_highlight(win)
   local ns = vim.api.nvim_create_namespace("reposcope_backgr")
-  vim.api.nvim_set_hl(ns, "Normal", { bg = ui_config.colortheme.backg, fg ="none" })
+  vim.api.nvim_set_hl(ns, "Normal", { bg = ui_config.colortheme.backg, fg = "none" })
   vim.api.nvim_win_set_hl_ns(win, ns)
 end
 

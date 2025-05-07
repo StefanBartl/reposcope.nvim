@@ -1,31 +1,49 @@
---- Create the user command `:ReposcopeStart`
---- This command safely starts the Reposcope UI by calling `require("reposcope.init").open_ui()`
---- and logs an error notification if an exception occurs.
+local notify = require("reposcope.utils.debug").notify
+
+---Create the user command `:ReposcopeStart`
+---This command safely starts the Reposcope UI by calling `require("reposcope.init").open_ui()`
+---and logs an error notification if an exception occurs.
 ---
---- @command ReposcopeStart
+---@command ReposcopeStart
 vim.api.nvim_create_user_command("ReposcopeStart", function(_)
   local ok, err = pcall(function()
     require("reposcope.init").open_ui()
   end)
   if not ok then
-    vim.notify("Error while opening reposcope: " .. err, vim.log.levels.ERROR)
+    notify("Error while opening reposcope: " .. err, vim.log.levels.ERROR)
   end
 end, {
   desc = "Open Reposcope",
 })
 
---- Create the user command `:ReposcopeClose`
---- This command safely closes the Reposcope UI by calling `require("reposcope.init").close_ui()`
---- and logs an error notification if an exception occurs.
+---Create the user command `:ReposcopeClose`
+---This command safely closes the Reposcope UI by calling `require("reposcope.init").close_ui()`
+---and logs an error notification if an exception occurs.
 ---
---- @command ReposcopeClose
+---@command ReposcopeClose
 vim.api.nvim_create_user_command("ReposcopeClose", function(_)
   local ok, err = pcall(function()
     require("reposcope.init").close_ui()
   end)
   if not ok then
-    vim.notify("Error while closing reposcope: " .. err, vim.log.levels.ERROR)
+    notify("Error while closing reposcope: " .. err, vim.log.levels.ERROR)
   end
 end, {
   desc = "Close reposcope",
 })
+
+---Creates the user command `:ReposcopeToggleDev`
+---This command toggles the developer mode for Reposcope.
+---
+---@command ReposcopeToggleDev
+vim.api.nvim_create_user_command("ReposcopeToggleDev", function()
+  require("reposcope.config").toggle_dev_mode()
+end, { desc = "Toggle Reposcope Dev Mode" })
+
+---Creates the user command `:ReposcopeToggleDebug`
+---This command toggles the debug mode for Reposcope.
+---
+---@command ReposcopeToggleDebug
+vim.api.nvim_create_user_command("ReposcopeToggleDebug", function()
+  require("reposcope.config").toggle_debug_mode()
+end, { desc = "Toggle Reposcope Debug Mode" })
