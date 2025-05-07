@@ -30,12 +30,16 @@ function M.test_prompt_input(provider, query)
   require("reposcope.ui.prompt.input").on_enter(query)
 end
 
-M.count = {
+---@class req_count Counts api requests for profiling purpose
+---@field requests number Stores api request count for current session 
+M.req_count = {
   requests = 0
 }
 
-function M.increase()
-  M.count = count + 1
+--require("reposcope.config").options.
+
+function M.increase_req()
+  M.req_count.requests = count + 1
 
   local state_path = ""
 end
