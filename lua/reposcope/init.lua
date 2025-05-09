@@ -20,7 +20,6 @@ require("reposcope.usercommands")
 ---This function should be called once during plugin setup.
 ---@param opts table|nil Optional configuration options to override defaults
 function M.setup(opts)
-  require("reposcope.utils.utils").detect_os()
   config.setup(opts or {})
   checks.resolve_request_tool()
 end

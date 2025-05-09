@@ -104,7 +104,17 @@ function set_prompt_keymaps()
       rhs = function()
         require("reposcope.providers.github.readme").fetch_readme_for_selected()
       end,
+    },
+    {
+      mode = "i",
+      lhs = "<C-c>",
+      rhs = function()
+        vim.schedule(function()
+          require("reposcope.providers.github.clone").init()
+        end)
+      end,
     }
+
   }
 
   for _, map in ipairs(mappings) do
