@@ -20,7 +20,9 @@ local M = {}
 ---@field preview_limit number Maximum number of lines shown in preview (default: 200)
 ---@field layout string UI layout type (default: "default")
 ---@field g_state_path string Path for Reposcope state data (default: OS-dependent)
----@field g_cache_path string Path for Reposcope cache data (default: OS-dependent)
+---@field g_cache_path string Path for Reposcope cache data (default: OS-dependent) 
+---@field log_format string Log format ("json" or "xml")
+---@field log_file string Full path to the log file (determined dynamically)
 ---@field clone CloneOptions Options to configure cloning repositories
 M.options = {
   provider = "github", -- Default provider for Reposcope (GitHub)
@@ -30,9 +32,10 @@ M.options = {
   results_limit = 25, -- Default result limit for search queries
   preview_limit = 200, -- Default preview limit for displayed results
   layout = "default", -- Default UI layout
-
   g_state_path = "", -- Path for Reposcope state data
   g_cache_path = "", -- Cache path, determined in setup
+  log_format = "json", -- Log format ("json" or "xml")
+  log_file = "", -- Full path to the log file (determined dynamically)
   clone = {
     std_dir = "~/temp",  -- Standard path for cloning repositories
     type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
@@ -52,9 +55,17 @@ function M.setup(opts)
   M.options.g_state_path = vim.fn.fnameescape(
     (M.options.g_state_path ~= "" and M.options.g_state_path) or vim.fn.expand("~/.local/state/nvim/reposcope") --NOTE: not win conform
   )
+
+  -- Set the cache path
   M.options.g_cache_path = vim.fn.fnameescape(
     (M.options.g_cache_path ~= "" and M.options.g_cache_path) or (M.options.g_state_path .. "/cache")
   )
+
+  -- Set the log file path dynamically based on format
+  local path_check =  require("reposcope.utils.protection").is_valid_path
+  if not M.options.log_file or not path_check(M.options.log_file) then
+    M.options.log_file = vim.fn.fnameescape(M.options.g_state_path .. "/request_log." .. M.options.log_format)
+  end
 end
 
 ---Returns the current state path
