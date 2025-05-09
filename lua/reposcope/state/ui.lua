@@ -22,12 +22,14 @@
 ---@field preview integer|nil
 ---@field prompt integer|nil
 ---@field list integer|nil
+---@field clone integer|nil
 
 ---@class UIStateWindows
 ---@field backg integer|nil
 ---@field preview integer|nil
 ---@field prompt integer|nil
 ---@field list integer|nil
+---@field clone integer|nil
 
 ---@class UIStateManager
 ---@field capture_invocation_state fun(): nil Captures the current window and cursor position for later restoration
@@ -64,6 +66,8 @@ M.windows = {
   prompt = nil,
   list = nil,
 }
+
+
 
 --TODO: put in ui/utils
 

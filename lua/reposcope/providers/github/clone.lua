@@ -1,55 +1,56 @@
 ---DEBUG:
----clone should create a folder for repo
 ---enter during auto-suggestion?
 ---hardening
 
-local M = {}
-local config = require("reposcope.config")
+---@desc forward decalarations
+local create_win, get_clone_informations
 
--- TODO: Outsource keymaps
-local keymaps = require("reposcope.keymaps")
+local M = {}
+
+local config = require("reposcope.config")
+local state = require("reposcope.state.popups")
 
 function M.init()
-  --unset_prompt_keymaps()
-  M.create_win()
+  require("reposcope.keymaps").unset_prompt_keymaps()
+  create_win()
 end
 
 function  M.close()
-  vim.api.nvim_win_close(M.win, true)
-  M.unset_clone_keymaps()
- -- set_prompt_keymaps()
+  vim.api.nvim_win_close(state.clone.win, true)
+  require("reposcope.keymaps").unset_clone_keymaps()
+  require("reposcope.keymaps").set_prompt_keymaps()
 end
 
-function M.create_win()
-  M.buf = vim.api.nvim_create_buf(false, true)
+---@private
+function create_win()
+  state.clone.buf = vim.api.nvim_create_buf(false, true)
   local width = math.min(vim.o.columns, 80)
   local heigth = 1
   local row = math.floor((vim.o.lines / 2) - (heigth / 2))
   local col = math.floor((vim.o.columns / 2) - (width / 2))
-  local instruction = " Enter path for cloning "
 
-  M.win = vim.api.nvim_open_win(M.buf, true, {
+  state.clone.win = vim.api.nvim_open_win(state.clone.buf, true, {
     relative = "editor",
     row = row,
     col = col,
     width = width,
     height = heigth,
     border = "single",
-    title = instruction,
+    title = " Enter path for cloning ",
     title_pos = "center",
     style = "minimal",
   })
 
   local dir = config.get_clone_dir()
 
-  vim.api.nvim_buf_set_lines(M.buf, 0, -1, false, { dir })
-  vim.api.nvim_set_current_win(M.win)
-  vim.api.nvim_win_set_cursor(M.win, {1, #dir})
+  vim.api.nvim_buf_set_lines(state.clone.buf, 0, -1, false, { dir })
+  vim.api.nvim_set_current_win(state.clone.win)
+  vim.api.nvim_win_set_cursor(state.clone.win, {1, #dir})
   vim.defer_fn(function()
     vim.cmd("startinsert!")
   end, 10)
 
-  M.set_clone_keymaps()
+  require("reposcope.keymaps").set_clone_keymaps()
 end
 
 ---@class CloneInfo
@@ -57,8 +58,9 @@ end
 ---@field url string The URL of the repository
 
 ---Retrieves clone information for the selected repository
+---@private
 ---@return CloneInfo|nil clone_info The directory, name, and URL of the repository for cloning
-function M.get_clone_informations()
+function get_clone_informations()
   local repo = require("reposcope.state.repositories").get_selected_repo()
   if not repo then
     vim.notify("[reposcope] Error cloning: Repository is nil", vim.log.levels.ERROR)
@@ -84,6 +86,7 @@ function M.get_clone_informations()
   return { name = repo_name, url = repo_url }
 end
 
+--REF: pcall()
 function M.clone_repository(path)
   if not path or not vim.fn.isdirectory(path) then
     vim.notify("[reposcope] Error cloning: invalid path", vim.log.levels.ERROR)
@@ -91,7 +94,7 @@ function M.clone_repository(path)
   end
 
   local clone_type = config.options.clone.type
-  local infos = M.get_clone_informations()
+  local infos = get_clone_informations()
   if not infos then
     vim.notify("[reposcope] Cloning aborted", vim.log.levels.ERROR)
     return
@@ -105,7 +108,6 @@ function M.clone_repository(path)
 
   local output_dir = vim.fn.fnameescape(path .. repo_name)
 
-  -- Ensure the target directory exists
   if not vim.fn.isdirectory(output_dir) then
     vim.fn.mkdir(output_dir, "p")
   end
@@ -132,40 +134,6 @@ function M.clone_repository(path)
 
   vim.notify("Repository cloned to: " .. output_dir, vim.log.levels.INFO)
   M.close()
-end
-
-
-function M.set_clone_keymaps()
-  if M.buf and vim.api.nvim_buf_is_valid(M.buf) then
-    vim.keymap.set("n", "<CR>", function()
-      local path = vim.api.nvim_buf_get_lines(M.buf, 0, 1, false)[1]
-      M.clone_repository(path)
-    end, { buffer = M.buf, noremap = true, silent = true })
-
-    vim.keymap.set("i", "<CR>", function()
-      local path = vim.api.nvim_buf_get_lines(M.buf, 0, 1, false)[1]
-      M.clone_repository(path)
-    end, { buffer = M.buf, noremap = true, silent = true })
-
-    vim.keymap.set("n", "<C-q>", function()
-      M.close()
-    end, { buffer = M.buf, noremap = true, silent = true })
-
-    vim.keymap.set("i", "<C-q>", function()
-      M.close()
-    end, { buffer = M.buf, noremap = true, silent = true })
-  else
-    vim.notify("No buffer to set keymaps", vim.log.levels.DEBUG)
-  end
-end
-
-function M.unset_clone_keymaps()
-  if M.buf and vim.api.nvim_buf_is_valid(M.buf) then
-    pcall(vim.keymap.del, "n", "<CR>", { buffer = M.buf })
-    pcall(vim.keymap.del, "i", "<CR>", { buffer = M.buf })
-    pcall(vim.keymap.del, "n", "<C-q>", { buffer = M.buf })
-    pcall(vim.keymap.del, "i", "<C-q>", { buffer = M.buf })
-  end
 end
 
 return M

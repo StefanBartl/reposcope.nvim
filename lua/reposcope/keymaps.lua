@@ -1,11 +1,17 @@
 ---@class UIKeymaps
 ---@field set_ui_keymaps fun(): nil Applies all UI-related keymaps
 ---@field unset_ui_keymaps fun(): nil Removes all UI-related keymaps
+---@field set_prompt_keymaps fun(): nil Applies all prompt-related keymaps
+---@field unset_ui_keymaps fun(): nil Removes all prompt-related keymaps
+---@field set_clone_keymaps fun(): nil Applies all clone-related keymaps
+---@field unset_clone_keymaps fun(): nil Removes all clone-related keymaps
 local M = {}
 
-local state = require("reposcope.state.ui")
+local ui_state = require("reposcope.state.ui")
+local pops_state = require("reposcope.state.popups")
 local navigate_list = require("reposcope.ui.prompt.navigate_list")
-local notify = require("reposcope.utils.debug").notify
+local notify = require("reposcope.utils.debug").notify -- HACK: remove notify
+local clone = require("reposcope.providers.github.clone")
 
 local _registry = {}
 local map_over_bufs
@@ -18,14 +24,14 @@ local unset_close_ui_keymaps
 
 ---Apply all UI-related keymaps
 function M.set_ui_keymaps()
-  set_close_ui_keymaps()
-  set_prompt_keymaps()
+  M.set_close_ui_keymaps()
+  M.set_prompt_keymaps()
 end
 
 ---Remove all UI-related keymaps
 function M.unset_ui_keymaps()
-  unset_close_ui_keymaps()
-  unset_prompt_keymaps()
+  M.unset_close_ui_keymaps()
+  M.unset_prompt_keymaps()
 end
 
 ---Register and set keymap on multiple buffers
@@ -65,8 +71,7 @@ function unmap_over_bufs(mode, lhs, bufs)
 end
 
 ---Set prompt-specific <CR> and arrow key keymaps
----@private
-function set_prompt_keymaps()
+function M.set_prompt_keymaps()
   local prompt_buf = require("reposcope.state.ui").buffers.prompt
   if type(prompt_buf) ~= "number" or not vim.api.nvim_buf_is_valid(prompt_buf) then
     notify("[reposcope] prompt buffer invalid in set_prompt_keymaps()", vim.log.levels.DEBUG)
@@ -133,13 +138,12 @@ end
 ---`<Esc>` in insert and terminal mode switches to normal mode.
 ---`<C-w>` in insert/terminal mode switches to normal mode and moves windows.
 ---Registered keymaps are tagged as 'reposcope_ui' for later cleanup.
----@private
-function set_close_ui_keymaps()
+function M.set_close_ui_keymaps()
   local buffers = {
-    state.buffers.backg,
-    state.buffers.preview,
-    state.buffers.prompt,
-    state.buffers.list
+    ui_state.buffers.backg,
+    ui_state.buffers.preview,
+    ui_state.buffers.prompt,
+    ui_state.buffers.list
   }
 
   -- Normal mode: <Esc> close UI
@@ -201,15 +205,50 @@ function clear_registered_keymaps(tag)
 end
 
 ---Remove all prompt-specific keymaps
----@private
-function unset_prompt_keymaps()
+function M.unset_prompt_keymaps()
   clear_registered_keymaps("reposcope_prompt")
 end
 
 ---Remove all ui-specific keymaps
----@private
-function unset_close_ui_keymaps()
+function M.unset_close_ui_keymaps()
   clear_registered_keymaps("reposcope_ui")
+end
+
+---REF: apply to _registry and map over
+
+---Applies all clone-related keymaps
+function M.set_clone_keymaps()
+  if pops_state.clone.buf and vim.api.nvim_buf_is_valid(pops_state.clone.buf) then
+    vim.keymap.set("n", "<CR>", function()
+      local path = vim.api.nvim_buf_get_lines(pops_state.clone.buf, 0, 1, false)[1]
+      clone.clone_repository(path)
+    end, { buffer = pops_state.clone.buf, noremap = true, silent = true })
+
+    vim.keymap.set("i", "<CR>", function()
+      local path = vim.api.nvim_buf_get_lines(pops_state.clone.buf, 0, 1, false)[1]
+      clone.clone_repository(path)
+    end, { buffer = pops_state.clone.buf, noremap = true, silent = true })
+
+    vim.keymap.set("n", "<C-q>", function()
+      clone.close()
+    end, { buffer = pops_state.clone.buf, noremap = true, silent = true })
+
+    vim.keymap.set("i", "<C-q>", function()
+      clone.close()
+    end, { buffer = pops_state.clone.buf, noremap = true, silent = true })
+  else
+    vim.notify("No buffer to set keymaps", vim.log.levels.DEBUG)
+  end
+end
+
+---Removes all clone-related keymaps
+function M.unset_clone_keymaps()
+  if pops_state.clone.buf and vim.api.nvim_buf_is_valid(pops_state.clone.buf) then
+    pcall(vim.keymap.del, "n", "<CR>", { buffer = pops_state.clone.buf })
+    pcall(vim.keymap.del, "i", "<CR>", { buffer = pops_state.clone.buf })
+    pcall(vim.keymap.del, "n", "<C-q>", { buffer = pops_state.clone.buf })
+    pcall(vim.keymap.del, "i", "<C-q>", { buffer = pops_state.clone.buf })
+  end
 end
 
 return M
