@@ -42,7 +42,7 @@ M.options = {
   g_cache_path = "", -- Cache path, determined in setup
   clone = {
     std_dir = "~/temp",  -- Standard path for cloning repositories
-    type = "wget", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
+    type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
   }
 }
 
