@@ -1,12 +1,8 @@
 ---@class ReposcopeConfig
 ---@field options ConfigOptions Configuration options for Reposcope
 ---@field setup fun(opts: table): nil Setup function for user configuration
----@field is_dev_mode fun(): boolean Checks if developer mode is enabled
----@field is_debug_mode fun(): boolean Checks if debug mode is enabled
 ---@field get_state_path fun(): string Returns the current state path
 ---@field get_cache_path fun(): string Returns the current cache path
----@field toggle_dev_mode fun(): nil Toggle dev mode (standard: false)
----@field toggle_debug_mode fun(): nil Toggle debug mode (standard: false)
 ---@field get_clone_dir fun(): string Returns the standard clone directory
 local M = {}
 
@@ -23,8 +19,6 @@ local M = {}
 ---@field results_limit number Maximum number of results returned in search queries (default: 25)
 ---@field preview_limit number Maximum number of lines shown in preview (default: 200)
 ---@field layout string UI layout type (default: "default")
----@field dev_mode boolean Enables developer mode (default: false)
----@field debug_mode boolean Enables debug mode (default: false)
 ---@field g_state_path string Path for Reposcope state data (default: OS-dependent)
 ---@field g_cache_path string Path for Reposcope cache data (default: OS-dependent)
 ---@field clone CloneOptions Options to configure cloning repositories
@@ -36,8 +30,7 @@ M.options = {
   results_limit = 25, -- Default result limit for search queries
   preview_limit = 200, -- Default preview limit for displayed results
   layout = "default", -- Default UI layout
-  dev_mode = false, -- Developer mode flag
-  debug_mode = false, -- Debug mode flag
+
   g_state_path = "", -- Path for Reposcope state data
   g_cache_path = "", -- Cache path, determined in setup
   clone = {
@@ -64,16 +57,6 @@ function M.setup(opts)
   )
 end
 
----Checks if dev mode is enabled
-function M.is_dev_mode()
-  return M.options.dev_mode
-end
-
----Checks if debug mode is enabled
-function M.is_debug_mode()
-  return M.options.debug_mode
-end
-
 ---Returns the current state path
 ---@return string The current state path
 function M.get_state_path()
@@ -84,16 +67,6 @@ end
 ---@return string The current cache path
 function M.get_cache_path()
   return M.options.g_cache_path
-end
-
----Toggle dev mode config option 
-function M.toggle_dev_mode()
-  M.options.dev_mode = not M.options.dev_mode
-end
-
----Toggle debug mode config option
-function M.toggle_debug_node()
-   M.options.debug_mode = not M.options.debug_mode
 end
 
 ---DEBUG: branches
