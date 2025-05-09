@@ -1,6 +1,3 @@
----@desc forward declaration
-local set_state_path
-
 ---@class ReposcopeConfig
 ---@field options ConfigOptions Configuration options for Reposcope
 ---@field setup fun(opts: table): nil Setup function for user configuration
@@ -11,6 +8,10 @@ local set_state_path
 ---@field toggle_dev_mode fun(): nil Toggle dev mode (standard: false)
 ---@field toggle_debug_mode fun(): nil Toggle debug mode (standard: false)
 local M = {}
+
+---@class CloneOptions 
+---@field std_dir string Standardth for cloning repositories
+---@field type string Tool for cloning repositories
 
 --- Configuration options for Reposcope
 ---@class ConfigOptions
@@ -25,6 +26,7 @@ local M = {}
 ---@field debug_mode boolean Enables debug mode (default: false)
 ---@field g_state_path string Path for Reposcope state data (default: OS-dependent)
 ---@field g_cache_path string Path for Reposcope cache data (default: OS-dependent)
+---@field clone CloneOptions Options to configure cloning repositories
 M.options = {
   provider = "github", -- Default provider for Reposcope (GitHub)
   preferred_requesters = { "gh", "curl", "wget" }, -- Preferred tools for API requests
@@ -37,6 +39,10 @@ M.options = {
   debug_mode = false, -- Debug mode flag
   g_state_path = "", -- Path for Reposcope state data
   g_cache_path = "", -- Cache path, determined in setup
+  clone = {
+    std_dir = "",  -- Standard path for cloning repositories
+    type = "", -- Tool for cloning repositories
+  }
 }
 
 ---Setup function for configuration
@@ -45,24 +51,16 @@ function M.setup(opts)
   -- Merge user-provided options with default options
   M.options = vim.tbl_deep_extend("force", M.options, opts or {})
 
+  -- Set the clone type based on the request tool
+  M.options.clone.type = M.options.clone.type ~= "" and M.options.clone.type or M.options.request_tool
+
   -- Set and ensure the state path is properly set
   M.options.g_state_path = vim.fn.fnameescape(
-    (M.options.g_state_path ~= "" and M.options.g_state_path) or set_state_path()
+    (M.options.g_state_path ~= "" and M.options.g_state_path) or vim.fn.expand("~/.local/state/nvim/reposcope") --NOTE: not win conform
   )
   M.options.g_cache_path = vim.fn.fnameescape(
     (M.options.g_cache_path ~= "" and M.options.g_cache_path) or (M.options.g_state_path .. "/cache")
   )
-end
-
----Detects and sets the correct state path based on the OS
----Uses the detected OS in the system state to determine the default path
----@return string The state path for Reposcope
-function set_state_path()
-  if require("reposcope.state.system").os == "unix" then
-    return vim.fn.expand("~/.local/state/nvim/reposcope")
-  else
-    return vim.fn.expand("~/AppData/Local/nvim-data/reposcope")
-  end
 end
 
 ---Checks if dev mode is enabled
@@ -94,7 +92,7 @@ end
 
 ---Toggel debug mode config option
 function M.toggle_debug_node()
-   M.options.debug_mode = not M.options.debug_mode 
+   M.options.debug_mode = not M.options.debug_mode
 end
 
 return M
