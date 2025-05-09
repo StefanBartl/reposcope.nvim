@@ -5,14 +5,11 @@
 
 local M = {}
 local config = require("reposcope.config")
-local repository = require("reposcope.state.repositories")
-local debug = require("reposcope.utils.debug")
 
 -- TODO: Outsource keymaps
 local keymaps = require("reposcope.keymaps")
 
 function M.init()
-  debug.temprint("init clone")
   --unset_prompt_keymaps()
   M.create_win()
 end
@@ -43,7 +40,8 @@ function M.create_win()
     style = "minimal",
   })
 
-  local dir = M.get_std_dir()
+  local dir = config.get_clone_dir()
+
   vim.api.nvim_buf_set_lines(M.buf, 0, -1, false, { dir })
   vim.api.nvim_set_current_win(M.win)
   vim.api.nvim_win_set_cursor(M.win, {1, #dir})
@@ -54,60 +52,99 @@ function M.create_win()
   M.set_clone_keymaps()
 end
 
-function M.clone_repository(dir)
-  local repo = require("reposcope.state.repositories").get_selected_repo()
-  local repo_url = repo.html_url
-  local clone_type = config.options.clone.type
+---@class CloneInfo
+---@field name string The name of the repository
+---@field url string The URL of the repository
 
+---Retrieves clone information for the selected repository
+---@return CloneInfo|nil clone_info The directory, name, and URL of the repository for cloning
+function M.get_clone_informations()
+  local repo = require("reposcope.state.repositories").get_selected_repo()
+  if not repo then
+    vim.notify("[reposcope] Error cloning: Repository is nil", vim.log.levels.ERROR)
+    return nil
+  end
+
+  local repo_name = ""
+  if repo.name and repo.name ~= "" then
+    repo_name = repo.name
+  else
+    vim.notify("[reposcope] Error cloning: Repository name is invalid", vim.log.levels.ERROR)
+    return nil
+  end
+
+  local repo_url = ""
+  if repo.html_url and repo.html_url ~= "" then
+    repo_url = repo.html_url
+  else
+    vim.notify("[reposcope] Error cloning: Repository url is invalid", vim.log.levels.ERROR)
+    return nil
+  end
+
+  return { name = repo_name, url = repo_url }
+end
+
+function M.clone_repository(path)
+  if not path or not vim.fn.isdirectory(path) then
+    vim.notify("[reposcope] Error cloning: invalid path", vim.log.levels.ERROR)
+    return
+  end
+
+  local clone_type = config.options.clone.type
+  local infos = M.get_clone_informations()
+  if not infos then
+    vim.notify("[reposcope] Cloning aborted", vim.log.levels.ERROR)
+    return
+  end
+
+  local repo_name = infos.name
+  local repo_url = infos.url
+
+  -- Normalize the path (remove trailing slashes and add one)
+  path = path:gsub("/+$", "") .. "/"
+
+  local output_dir = vim.fn.fnameescape(path .. repo_name)
+
+  -- Ensure the target directory exists
+  if not vim.fn.isdirectory(output_dir) then
+    vim.fn.mkdir(output_dir, "p")
+  end
 
   if clone_type == "gh" then
     -- GitHub CLI Clone
-    vim.fn.system(string.format("gh repo clone %s %s", repo_url, dir))
+    vim.fn.system(string.format("gh repo clone %s %s", repo_url, output_dir))
   elseif clone_type == "curl" then
     -- Download via curl (ZIP)
     local zip_url = repo_url:gsub("%.git$", "/archive/refs/heads/main.zip")
-    local output_path = dir .. "/" .. repo_url:match("([^/]+)%.git") .. ".zip"
-    vim.fn.system(string.format("curl -L -o %s %s", output_path, zip_url))
-    vim.fn.system(string.format("unzip %s -d %s", output_path, dir))
+    local output_zip = output_dir .. ".zip"
+    vim.fn.system(string.format("curl -L -o %s %s", output_zip, zip_url))
+    vim.notify("Repository downloaded as ZIP: " .. output_zip, vim.log.levels.INFO)
   elseif clone_type == "wget" then
     -- Download via wget (ZIP)
     local zip_url = repo_url:gsub("%.git$", "/archive/refs/heads/main.zip")
-    local output_path = dir .. "/" .. repo_url:match("([^/]+)%.git") .. ".zip"
-    vim.fn.system(string.format("wget -O %s %s", output_path, zip_url))
-    vim.fn.system(string.format("unzip %s -d %s", output_path, dir))
+    local output_zip = output_dir .. ".zip"
+    vim.fn.system(string.format("wget -O %s %s", output_zip, zip_url))
+    vim.notify("Repository downloaded as ZIP: " .. output_zip, vim.log.levels.INFO)
   else
     -- Standard Git Clone
-    vim.fn.system(string.format("git clone %s %s", repo_url, dir))
+    vim.fn.system(string.format("git clone %s %s", repo_url, output_dir))
   end
 
-  print("Repository cloned to:", dir)
+  vim.notify("Repository cloned to: " .. output_dir, vim.log.levels.INFO)
+  M.close()
 end
 
-function M.get_std_dir()
-  if config.options.clone.std_dir ~= "" and config.options.clone.std_dir then
-    return config.options.clone.std_dir
-  else
-    local is_windows = vim.loop.os_uname().sysname:match("Windows")
-    if is_windows then
-      return os.getenv("USERPROFILE") or "./"
-    else
-      return os.getenv("HOME") or "./"
-    end
-  end
-end
 
 function M.set_clone_keymaps()
   if M.buf and vim.api.nvim_buf_is_valid(M.buf) then
     vim.keymap.set("n", "<CR>", function()
       local path = vim.api.nvim_buf_get_lines(M.buf, 0, 1, false)[1]
-      print("Selected Path:", path)
-      M.close()
+      M.clone_repository(path)
     end, { buffer = M.buf, noremap = true, silent = true })
 
     vim.keymap.set("i", "<CR>", function()
       local path = vim.api.nvim_buf_get_lines(M.buf, 0, 1, false)[1]
       M.clone_repository(path)
-      M.close()
     end, { buffer = M.buf, noremap = true, silent = true })
 
     vim.keymap.set("n", "<C-q>", function()
