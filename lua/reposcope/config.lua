@@ -7,11 +7,12 @@
 ---@field get_cache_path fun(): string Returns the current cache path
 ---@field toggle_dev_mode fun(): nil Toggle dev mode (standard: false)
 ---@field toggle_debug_mode fun(): nil Toggle debug mode (standard: false)
+---@field get_clone_dir fun(): string Returns the standard clone directory
 local M = {}
 
 ---@class CloneOptions 
 ---@field std_dir string Standardth for cloning repositories
----@field type string Tool for cloning repositories
+---@field type string Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
 
 --- Configuration options for Reposcope
 ---@class ConfigOptions
@@ -40,8 +41,8 @@ M.options = {
   g_state_path = "", -- Path for Reposcope state data
   g_cache_path = "", -- Cache path, determined in setup
   clone = {
-    std_dir = "",  -- Standard path for cloning repositories
-    type = "", -- Tool for cloning repositories
+    std_dir = "~/temp",  -- Standard path for cloning repositories
+    type = "wget", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
   }
 }
 
@@ -73,13 +74,13 @@ function M.is_debug_mode()
   return M.options.debug_mode
 end
 
----Gets the current state path
+---Returns the current state path
 ---@return string The current state path
 function M.get_state_path()
   return M.options.g_state_path
 end
 
----Gets the current cache path
+---Returns the current cache path
 ---@return string The current cache path
 function M.get_cache_path()
   return M.options.g_cache_path
@@ -90,9 +91,24 @@ function M.toggle_dev_mode()
   M.options.dev_mode = not M.options.dev_mode
 end
 
----Toggel debug mode config option
+---Toggle debug mode config option
 function M.toggle_debug_node()
    M.options.debug_mode = not M.options.debug_mode
+end
+
+---DEBUG: branches
+---Returns the standard directory for cloning
+function M.get_clone_dir()
+  if M.options.clone.std_dir ~= "" and M.options.clone.std_dir and vim.fn.isdirectory(M.options.clone.std_dir) then
+    return M.options.clone.std_dir
+  else
+    local is_windows = vim.loop.os_uname().sysname:match("Windows")
+    if is_windows then
+      return os.getenv("USERPROFILE") or "./"
+    else
+      return os.getenv("HOME") or "./"
+    end
+  end
 end
 
 return M
