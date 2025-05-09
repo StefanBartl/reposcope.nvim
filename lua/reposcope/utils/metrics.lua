@@ -178,7 +178,7 @@ function M.check_rate_limit()
      end)
     elseif core_usage >= 0.75 then
       vim.schedule(function()
-        vim.notify("[Reposcope] INFO: GitHub API Core limit approaching (" .. core_used .. "/" .. M.rate_limits.core.limit .. ")", vim.log.levels.INFO) 
+        vim.notify("[Reposcope] INFO: GitHub API Core limit approaching (" .. core_used .. "/" .. M.rate_limits.core.limit .. ")", vim.log.levels.INFO)
       end)
     end
     return
