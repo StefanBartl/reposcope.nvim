@@ -8,15 +8,15 @@ local M = {}
 local api = require("reposcope.utils.api")
 local repositories = require("reposcope.state.repositories")
 local list = require("reposcope.ui.list.repositories")
-local config = require("reposcope.config")
-local notify = require("reposcope.utils.debug").notify
+local debug = require("reposcope.utils.debug")
+local notify = debug.notify
 
 -- Default path for test JSON
 local testjson = "/media/steve/Depot/MyGithub/reposcope.nvim/debug/gh_test_response.json"
 
 --- Initializes the repository list with a query
-function M.init(query, debug)
-  if debug or config.is_debug_mode() then
+function M.init(query, debug_mode)
+  if debug_mode or debug.is_debug_mode() then
     M.load_test_json()
   else
     M.fetch_github_repositories(query)

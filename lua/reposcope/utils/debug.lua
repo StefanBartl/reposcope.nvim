@@ -1,24 +1,51 @@
 ---@class ReposcopeDebug Debug utilities for inspecting UI-related buffers and windows.
+---@field options DebugOptions Configurations options for debugging of reposcope
 ---@field notify fun(message: string, level?: number): nil Sends a notification message with an optional log level.
----@field temprint fun(message: string): nil Prints a temporary message which is marked for fast deletion
 ---@field test_prompt_input fun(provider: string, query: string) Manually test the input router, either "github" or other (for fallback)
+---@field toggle_dev_mode fun(): nil Toggle dev mode (standard: false)
+---@field toggle_debug_mode fun(): nil Toggle debug mode (standard: false)
+---@field is_dev_mode fun(): boolean Checks if developer mode is enabled
+---@field is_debug_mode fun(): boolean Checks if debug mode is enabled
 local M = {}
 
-local config = require("reposcope.config")
+---WATCH: Anything new to mention here?
+
+---@class DebugOptions
+---@field dev_mode boolean Enables developer mode (default: false)
+---@field debug_mode boolean Enables debug mode (default: false)
+M.options = {
+  dev_mode = false, -- Print all notifys  
+  debug_mode = false, -- Set to true for using test data for debugging instead of provider requests
+}
+
+---Toggle dev mode config option 
+function M.toggle_dev_mode()
+  M.options.dev_mode = not M.options.dev_mode
+end
+
+---Toggle options mode config option
+function M.toggle_options_node()
+  M.options.options_mode = not M.options.options_mode
+end
+
+---Checks if dev mode is enabled
+function M.is_dev_mode()
+  return M.options.dev_mode
+end
+
+---Checks if options mode is enabled
+function M.is_options_mode()
+  return M.options.options_mode
+end
 
 ---Sends a notification message with an optional log level.
 ---@param message string The notification message
 ---@param level? number Optional vim.log.levels (default: INFO)
 function M.notify(message, level)
   level = level or vim.log.levels.INFO
-  if config.is_dev_mode() or level >= vim.log.levels.WARN then
+  if M.is_dev_mode() or level >= vim.log.levels.WARN then
     vim.notify(message, level)
   end
-end
-
----@param message string The notification message
-function M.temprint(message)
-  print(message)
 end
 
 ---Manually test the input router with a specified provider and query.

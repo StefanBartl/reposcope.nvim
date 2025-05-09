@@ -16,11 +16,7 @@ local clone = require("reposcope.providers.github.clone")
 local _registry = {}
 local map_over_bufs
 local unmap_over_bufs
-local set_prompt_keymaps
-local set_close_ui_keymaps
 local clear_registered_keymaps
-local unset_prompt_keymaps
-local unset_close_ui_keymaps
 
 ---Apply all UI-related keymaps
 function M.set_ui_keymaps()
