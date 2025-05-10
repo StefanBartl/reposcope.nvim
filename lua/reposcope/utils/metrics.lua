@@ -3,10 +3,10 @@
 ---@class ReposcopeMetrics
 ---@field req_count ReqCount Stores API request count for profiling purposes
 ---@field rate_limits RateLimits Stores the rate limits for the GitHub API (Core and Search)
----@field increase_req fun(query: string, source: string): nil Increases the request count for the current session and logs it
----@field increase_success fun(query: string, source: string, duration_ms: number, status_code: number): nil Increases the successful request count and logs it
----@field increase_failed fun(query: string, source: string, duration_ms: number, status_code: number, error: string): nil Increases the failed request count and logs it
----@field increase_cache_hit fun(query: string, source: string): nil Increases the cache hit count and logs it
+---@field increase_req fun(query: string, source: string, contex: string): nil Increases the request count for the current session and logs it
+---@field increase_success fun(query: string, source: string, context: string, duration_ms: number, status_code: number): nil Increases the successful request count and logs it
+---@field increase_failed fun(query: string, source: string, context: string, duration_ms: number, status_code: number, error: string): nil Increases the failed request count and logs it
+---@field increase_cache_hit fun(query: string, source: string, context: string): nil Increases the cache hit count and logs it
 ---@field get_session_requests fun(): { total: number, successful: number, failed: number, cache_hitted: number } Retrieves the current session request count
 ---@field get_total_requests fun(): { total: number, successful: number, failed: number, cache_hitted: number } Retrieves the total request count from the file
 ---@field check_rate_limit fun(): nil Checks the current GitHub rate limit and displays a warning if low
@@ -127,37 +127,40 @@ local function log_request(data)
 end
 
 --- Increases the total request count for the current session and logs
-function M.increase_req(query, source)
+function M.increase_req(query, source, context)
   M.req_count.requests = M.req_count.requests + 1
   log_request({
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
     type = "api_request",
     query = query,
     source = source,
+    context = context,
   })
 end
 
 --- Increases the successful request count
-function M.increase_success(query, source, duration_ms, status_code)
+function M.increase_success(query, source, context, duration_ms, status_code)
   M.req_count.successful = M.req_count.successful + 1
   log_request({
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
     type = "api_success",
     query = query,
     source = source,
+    context = context,
     duration_ms = duration_ms,
     status_code = status_code
   })
 end
 
 --- Increases the failed request count
-function M.increase_failed(query, source, duration_ms, status_code, error)
+function M.increase_failed(query, source, context, duration_ms, status_code, error)
   M.req_count.failed = M.req_count.failed + 1
   log_request({
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
     type = "api_failed",
     query = query,
     source = source,
+    context = context,
     duration_ms = duration_ms,
     status_code = status_code,
     error_message = error
@@ -165,13 +168,14 @@ function M.increase_failed(query, source, duration_ms, status_code, error)
 end
 
 --- Increases the cache hit count
-function M.increase_cache_hit(query, source)
+function M.increase_cache_hit(query, source, context)
   M.req_count.cache_hitted = M.req_count.cache_hitted + 1
   log_request({
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
     type = "cache_hit",
     query = query,
-    source = source
+    source = source,
+    context = context,
   })
 end
 
