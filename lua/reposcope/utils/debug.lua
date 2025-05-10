@@ -18,8 +18,8 @@ M.options = {
 --- The metatable ensures that access to debug_mode always returns the current value
 setmetatable(M, {
   __index = function(_, key)
-    -- If the requested key is 'debug_mode', return the current dev_mode value
-    if key == "debug_mode" then
+    -- If the requested key is 'dev_mode', return the current dev_mode value
+    if key == "dev_mode" then
       return M.options.dev_mode
     end
   end
