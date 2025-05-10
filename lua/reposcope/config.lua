@@ -4,6 +4,7 @@
 ---@field get_state_path fun(): string Returns the current state path
 ---@field get_cache_path fun(): string Returns the current cache path
 ---@field get_clone_dir fun(): string Returns the standard clone directory
+---@field get_log_path fun(): string|nil Check if log options are set and returns it
 local M = {}
 
 ---@class CloneOptions 
@@ -23,6 +24,7 @@ local M = {}
 ---@field g_cache_path string Path for Reposcope cache data (default: OS-dependent) 
 ---@field log_format string Log format ("json" or "xml")
 ---@field log_file string Full path to the log file (determined dynamically)
+---@field log_max number Controls the size of the log file
 ---@field clone CloneOptions Options to configure cloning repositories
 M.options = {
   provider = "github", -- Default provider for Reposcope (GitHub)
@@ -36,6 +38,7 @@ M.options = {
   g_cache_path = "", -- Cache path, determined in setup
   log_format = "json", -- Log format ("json" or "xml")
   log_file = "", -- Full path to the log file (determined dynamically)
+  log_max = 1000, -- Controls the size of the log file
   clone = {
     std_dir = "~/temp",  -- Standard path for cloning repositories
     type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
@@ -63,8 +66,15 @@ function M.setup(opts)
 
   -- Set the log file path dynamically based on format
   local path_check =  require("reposcope.utils.protection").is_valid_path
-  if not M.options.log_file or not path_check(M.options.log_file) then
+  -- Wenn der Log-Pfad nicht existiert oder ungültig ist, wird er neu gesetzt
+  if not M.options.log_file or not path_check(M.options.log_file, false) then
     M.options.log_file = vim.fn.fnameescape(M.options.g_state_path .. "/request_log." .. M.options.log_format)
+    vim.notify("Log path set:" .. M.options.log_file, vim.log.levels.INFO)
+  end
+
+  -- Debugging: Ausgabe des gesetzten Pfads
+  if not path_check(M.options.log_file, true) then
+    vim.notify("[reposcope] Error: Log file path could not be set or is invalid.", vim.log.levels.ERROR)
   end
 end
 
@@ -93,6 +103,17 @@ function M.get_clone_dir()
       return os.getenv("HOME") or "./"
     end
   end
+end
+
+---Check if log options are set and return them
+function M.get_log_path()
+  -- Bedingung korrekt formuliert: Pfad muss existieren und darf nicht leer sein
+  if not M.options.log_file or M.options.log_file == "" then
+    require("reposcope.utils.debug").notify("[reposcope] No log file path set. No logging possible", vim.log.levels.WARN)
+    return nil
+  end
+
+  return M.options.log_file
 end
 
 return M

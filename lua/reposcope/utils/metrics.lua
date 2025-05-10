@@ -12,6 +12,10 @@
 ---@field check_rate_limit fun(): nil Checks the current GitHub rate limit and displays a warning if low
 local M = {}
 
+local uuid = require("reposcope.utils.debug").generate_uuid
+local config = require("reposcope.config")
+
+
 ---@class ReqCount Counts API requests for profiling purposes
 ---@field requests number Stores the total API request count for the current session
 ---@field successful number Stores the count of successful API requests for the current session
@@ -58,19 +62,19 @@ end
 --- Retrieves the total request counts from the file
 ---@return { total: number, successful: number, failed: number, cache_hitted: number }
 function M.get_total_requests()
-  local state_path = require("reposcope.config").get_state_path()
-  local file_path = vim.fn.fnameescape(state_path .. "/request_log.json")
+  local log_path = config.get_log_path()
+  print("total requests log path:", log_path)
 
-  if not vim.fn.filereadable(file_path) then
+  if not vim.fn.filereadable(log_path) then
     return { total = 0, successful = 0, failed = 0, cache_hitted = 0 }
   end
 
-  local raw = vim.fn.readfile(file_path)
+  local raw = vim.fn.readfile(log_path)
   local json_data = vim.json.decode(table.concat(raw, "\n")) or {}
 
   local total, successful, failed, cache_hitted = 0, 0, 0, 0
 
-  for _, log in ipairs(json_data) do
+  for _, log in pairs(json_data) do
     if log.type == "api_success" then
       successful = successful + 1
     elseif log.type == "api_failed" then
@@ -89,31 +93,36 @@ function M.get_total_requests()
   }
 end
 
---- Logs request details to request_log.json
+--- Logs request details to request_log.json in JSON object format
 ---@param data table The request data to log
 local function log_request(data)
-  local state_path = require("reposcope.config").get_state_path()
-  local file_path = vim.fn.fnameescape(state_path .. "/request_log.json")
+  local log_max = config.options.log_max or 1000
+  local log_path = config.get_log_path()
+  print("log req log path:", log_path)
 
   vim.schedule(function()
-    vim.fn.mkdir(state_path, "p")
 
     local logs = {}
-    if vim.fn.filereadable(file_path) == 1 then
-      local raw = vim.fn.readfile(file_path)
+    if vim.fn.filereadable(log_path) == 1 then
+      local raw = vim.fn.readfile(log_path)
       if raw and not vim.tbl_isempty(raw) then
-        logs = vim.fn.json_decode(table.concat(raw, "\n"))
+        logs = vim.json.decode(table.concat(raw, "\n"))
       end
     end
 
-    table.insert(logs, data)
+    local log_id = uuid()
+    logs[log_id] = data
 
-    -- Optional: Log rotieren, wenn zu groß
-    if #logs > 1000 then
-      table.remove(logs, 1)
+    -- removes oldest entry if to much logs exist
+    if vim.tbl_count(logs) > log_max then
+      local oldest_key = next(logs)
+      if oldest_key then
+        logs[oldest_key] = nil
+      end
     end
 
-    vim.fn.writefile({ vim.json.encode(logs) }, file_path)
+    local formatted_json = vim.json.encode(logs, { indent = true })
+    vim.fn.writefile(vim.split(formatted_json, "\n"), log_path)
   end)
 end
 
@@ -168,25 +177,54 @@ end
 
 --- Checks the current GitHub rate limit and displays a warning if low
 function M.check_rate_limit()
-  if M.rate_limits.core.limit > 0 then
+  -- Prüft, ob die Rate Limits bereits gesetzt sind
+  if M.rate_limits.core.limit > 0 and M.rate_limits.search.limit > 0 then
+    -- Prüft Core Rate Limit
     local core_used = M.req_count.requests
-    local core_usage = core_used / M.rate_limits.core.limit
+    local core_remaining = M.rate_limits.core.remaining
+    local core_usage = 1 - (core_remaining / M.rate_limits.core.limit)
 
     if core_usage >= 0.9 then
-     vim.schedule(function()
-       vim.notify("[Reposcope] WARNING: GitHub API Core limit critical (" .. core_used .. "/" .. M.rate_limits.core.limit .. ")", vim.log.levels.WARN)
-     end)
+      vim.schedule(function()
+        vim.notify(string.format(
+          "[Reposcope] WARNING: GitHub API Core limit critical (%d/%d, remaining: %d)",
+          core_used, M.rate_limits.core.limit, core_remaining
+        ), vim.log.levels.WARN)
+      end)
     elseif core_usage >= 0.75 then
       vim.schedule(function()
-        vim.notify("[Reposcope] INFO: GitHub API Core limit approaching (" .. core_used .. "/" .. M.rate_limits.core.limit .. ")", vim.log.levels.INFO)
+        vim.notify(string.format(
+          "[Reposcope] INFO: GitHub API Core limit approaching (%d/%d, remaining: %d)",
+          core_used, M.rate_limits.core.limit, core_remaining
+        ), vim.log.levels.INFO)
       end)
     end
+
+    -- Prüft Search Rate Limit
+    local search_remaining = M.rate_limits.search.remaining
+    local search_usage = 1 - (search_remaining / M.rate_limits.search.limit)
+
+    if search_usage >= 0.9 then
+      vim.schedule(function()
+        vim.notify(string.format(
+          "[Reposcope] WARNING: GitHub API Search limit critical (remaining: %d)",
+          search_remaining
+        ), vim.log.levels.WARN)
+      end)
+    elseif search_usage >= 0.75 then
+      vim.schedule(function()
+        vim.notify(string.format(
+          "[Reposcope] INFO: GitHub API Search limit approaching (remaining: %d)",
+          search_remaining
+        ), vim.log.levels.INFO)
+      end)
+    end
+
     return
   end
 
-  -- If limits not set, fetch from API
+  -- Wenn Limits nicht gesetzt sind, API abfragen
   local http = require("reposcope.utils.http")
-  local config = require("reposcope.config")
   local token = config.options.github_token
 
   local headers = { "Accept: application/vnd.github+json" }
@@ -205,7 +243,13 @@ function M.check_rate_limit()
     local data = vim.json.decode(response)
     if data and data.resources then
       M.rate_limits.core.limit = data.resources.core.limit
+      M.rate_limits.core.remaining = data.resources.core.remaining
+      M.rate_limits.core.reset = data.resources.core.reset
+
       M.rate_limits.search.limit = data.resources.search.limit
+      M.rate_limits.search.remaining = data.resources.search.remaining
+      M.rate_limits.search.reset = data.resources.search.reset
+
       vim.schedule(function()
         vim.notify("[Reposcope] GitHub Rate Limits loaded.", vim.log.levels.INFO)
       end)

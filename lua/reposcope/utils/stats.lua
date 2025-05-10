@@ -51,8 +51,7 @@ end
 --- Calculates the average duration and most frequent query
 ---@return number, string The average duration and most frequent query
 function M.calculate_extended_stats()
-  local state_path = require("reposcope.config").get_state_path()
-  local file_path = vim.fn.fnameescape(state_path .. "/request_log.json")
+  local file_path = require("reposcope.config").get_log_path()
 
   if not vim.fn.filereadable(file_path) then
     return 0, "N/A"
@@ -67,7 +66,7 @@ function M.calculate_extended_stats()
   local total_duration = 0
   local query_count = {}
 
-  for _, log in ipairs(logs) do
+  for _, log in pairs(logs) do
     if log.duration_ms then
       total_duration = total_duration + log.duration_ms
     end
@@ -77,11 +76,13 @@ function M.calculate_extended_stats()
     end
   end
 
-  local average_duration = #logs > 0 and (total_duration / #logs) or 0
+  local total_requests = vim.tbl_count(logs)
+  local average_duration = total_requests > 0 and (total_duration / total_requests) or 0
   local most_frequent_query = M.get_most_frequent_query(query_count)
 
   return average_duration, most_frequent_query
 end
+
 
 --- Determines the most frequent query from a query count table
 ---@param query_count table<string, number> Table of query counts
