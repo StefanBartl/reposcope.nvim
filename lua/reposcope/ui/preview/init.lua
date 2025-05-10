@@ -11,18 +11,13 @@ local config = require("reposcope.config")
 local ui_config = require("reposcope.ui.config")
 local ui_state = require("reposcope.state.ui")
 local protected = require("reposcope.utils.protection")
-local text = require("reposcope.utils.text")
-
-M.preview_width = (ui_config.width / 2) + 2
-local lines = {
-  text.center_text("No preview available", M.preview_width)
-}
-M.height = protected.count_or_default(lines, 1)
+local preview_width = ui_config.preview_width
+local banner = require("reposcope.ui.preview.banner").get_banner
 
 ---Creates a scratch buffer named `reposcope://preview` and opens the preview window in the Reposcope UI
 function M.open_preview()
   ui_state.buffers.preview = protected.create_named_buffer("reposcope://preview")
-  vim.api.nvim_buf_set_lines(ui_state.buffers.preview, 0, -1, false, lines)
+  vim.api.nvim_buf_set_lines(ui_state.buffers.preview, 0, -1, false, banner(preview_width))
   vim.bo[ui_state.buffers.preview].modifiable = false
   vim.bo[ui_state.buffers.preview].readonly = true
   vim.bo[ui_state.buffers.preview].buftype = "nofile"
@@ -41,7 +36,7 @@ function default()
     col = ui_config.col + (ui_config.width / 2) + 1,
     row = ui_config.row,
     height = ui_config.height,
-    width = M.preview_width,
+    width = ui_config.preview_width,
     border = "none",
     title = "Preview",
     title_pos = "center",

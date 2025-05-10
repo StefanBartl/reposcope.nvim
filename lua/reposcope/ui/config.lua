@@ -10,6 +10,7 @@ M.width = math.floor(vim.o.columns * 0.8)
 M.height = math.floor(vim.o.lines * 0.8)
 M.col = math.floor((vim.o.columns - M.width) / 2)
 M.row = math.floor((vim.o.lines - M.height) / 2)
+M.preview_width = (M.width / 2) + 2
 M.colortheme = {
   backg = "#322931",
   prompt = "#7B7B7B",

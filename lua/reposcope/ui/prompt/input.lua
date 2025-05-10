@@ -30,8 +30,7 @@ end
 ---Fallback function when no provider is configured
 ---@param input string The user input in the prompt
 function no_provider(input)
-  print(input)
-  print("[reposcope] Error no provider configured")
+  notify("[reposcope] Error: no valid provider in /reposcope/configs options table configured: " .. input .. " - default should be 'github'", vim.log.levels.ERROR)
 end
 
 return M
