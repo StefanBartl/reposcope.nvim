@@ -1,6 +1,7 @@
 ---@class RepositoryManager
 ---@field init fun(query: string, debug?: boolean): nil Initializes the repository list with a query
 ---@field load_test_json fun(): nil Loads repositories from the test JSON file for debugging
+---@field urlencode fun(query: string): string Encodes a string for safe URL usage
 ---@field fetch_github_repositories fun(query: string): nil Fetches repositories from GitHub API based on a query
 ---@field build_cmd fun(query: string): string[] Builds the API request for GitHub repo search
 local M = {}
@@ -16,11 +17,11 @@ local testjson = "/media/steve/Depot/MyGithub/reposcope.nvim/debug/gh_test_respo
 
 --- Initializes the repository list with a query
 function M.init(query, debug_mode)
-  if debug_mode or debug.is_debug_mode() then
-    M.load_test_json()
-  else
+  --if debug_mode or debug.is_debug_mode() then
+  --  M.load_test_json()
+  --else
     M.fetch_github_repositories(query)
-  end
+  --end
 end
 
 --- Loads repositories from the test JSON file for debugging
@@ -41,13 +42,52 @@ function M.load_test_json()
   notify("[reposcope] Loaded test JSON data.", vim.log.levels.INFO)
 end
 
+--- Encodes a string for safe URL usage
+---@param str string The string to encode
+---@return string The URL-encoded string
+function M.urlencode(str)
+  -- Replace newline characters with CRLF for URL encoding
+  local crlf_encoded = str:gsub("\n", "\r\n")
+
+  -- Convert all other special characters to percent-encoded form
+  local url_encoded = crlf_encoded:gsub("([^%w%-_.~])", function(char)
+    return string.format("%%%02X", string.byte(char))
+  end)
+
+  return url_encoded
+end
+
 --- Fetches repositories from GitHub API
 function M.fetch_github_repositories(query)
-  local url = string.format("https://api.github.com/search/repositories?q=%s", vim.fn.escape(query, " "))
+  if query == "" then
+    notify("[reposcope] Error: Search query is empty.", vim.log.levels.ERROR)
+    return
+  end
+
+  local encoded_query = M.urlencode(query)
+  vim.schedule(function()
+    print("ecoded input:", encoded_query)
+  end)
+  local url = string.format("https://api.github.com/search/repositories?q=%s", encoded_query)
+  if debug.options.dev_mode == true then
+    vim.schedule(function()
+      notify("[reposcope] urlencoded url: " .. url, vim.log.levels.DEBUG)
+    end)
+  end
+
+
+
   api.get(url, function(response)
     if not response then
       notify("[reposcope] No response from GitHub API.", vim.log.levels.ERROR)
       return
+    end
+
+    -- Print raw api response
+    if debug.options.dev_mode == true then
+      vim.schedule(function()
+        notify("[reposcope] Raw API Response: " .. response, vim.log.levels.DEBUG)
+      end)
     end
 
     local parsed = vim.json.decode(response)

@@ -7,7 +7,6 @@
 ---@field is_dev_mode fun(): boolean Checks if developer mode is enabled
 ---@field is_debug_mode fun(): boolean Checks if debug mode is enabled
 local M = {}
-local uv = vim.loop
 
 ---WATCH: Anything new to mention here?
 
@@ -15,8 +14,8 @@ local uv = vim.loop
 ---@field dev_mode boolean Enables developer mode (default: false)
 ---@field debug_mode boolean Enables debug mode (default: false)
 M.options = {
-  dev_mode = false, -- Print all notifys  
-  debug_mode = false, -- Set to true for using test data for debugging instead of provider requests
+  dev_mode = true, -- Print all notifys  
+  debug_mode = true, -- Set to true for using test data for debugging instead of provider requests
 }
 
 ---Toggle dev mode config option 

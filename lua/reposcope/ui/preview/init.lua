@@ -11,17 +11,13 @@ local config = require("reposcope.config")
 local ui_config = require("reposcope.ui.config")
 local ui_state = require("reposcope.state.ui")
 local protected = require("reposcope.utils.protection")
+local text = require("reposcope.utils.text")
 
+M.preview_width = (ui_config.width / 2) + 2
 local lines = {
-  "Ab hier Previewline",
-  "Lorem preview ips",
-  "Lorem pre",
-  "ipsum ipsm",
-  "fünfte previw"
+  text.center_text("No preview available", M.preview_width)
 }
-
----Height of the preview window
-M.height = protected.count_or_default(lines, 6)
+M.height = protected.count_or_default(lines, 1)
 
 ---Creates a scratch buffer named `reposcope://preview` and opens the preview window in the Reposcope UI
 function M.open_preview()
@@ -45,7 +41,7 @@ function default()
     col = ui_config.col + (ui_config.width / 2) + 1,
     row = ui_config.row,
     height = ui_config.height,
-    width = (ui_config.width / 2) + 2,
+    width = M.preview_width,
     border = "none",
     title = "Preview",
     title_pos = "center",

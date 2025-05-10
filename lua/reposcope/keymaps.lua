@@ -80,7 +80,9 @@ function M.set_prompt_keymaps()
       lhs = "<CR>",
       rhs = function()
         local input = vim.api.nvim_get_current_line()
-        require("reposcope.ui.prompt.input").on_enter(input)
+        -- Removes magnifyer and trims spaces
+        local sanitized_query = input:gsub("[\u{f002}]", ""):gsub("^%s*(.-)%s*$", "%1")
+        require("reposcope.ui.prompt.input").on_enter(sanitized_query)
       end,
     },
     {

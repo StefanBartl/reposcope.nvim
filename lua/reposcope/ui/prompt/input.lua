@@ -24,7 +24,7 @@ end
 ---@param input string The user input in the prompt
 function github(input)
   --print(input)
-  require("reposcope.providers.github.repositories").init("", true)  ---DEBUG: debug_mode == true
+  require("reposcope.providers.github.repositories").init(input, false)  ---DEBUG: debug_mode == true
   local testrepo = require("reposcope.core.json").read_and_parse_file(
     "/media/steve/Depot/MyGithub/reposcope.nvim/debug/gh_test_response.json")
   if not testrepo then
