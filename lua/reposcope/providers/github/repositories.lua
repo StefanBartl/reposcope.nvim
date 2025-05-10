@@ -59,7 +59,7 @@ function M.fetch_github_repositories(query)
     repositories.set_repositories(parsed)
     list.display()
     notify("[reposcope] Loaded repositories from GitHub API.", vim.log.levels.INFO)
-  end)
+  end, nil, nil, "fetch_repositories")
 end
 
 return M

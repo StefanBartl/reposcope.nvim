@@ -51,7 +51,7 @@ function M.try_fetch_readme(raw_url, api_url, repo_name)
       notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", vim.log.levels.WARN)
       M.fetch_readme_from_api(api_url, repo_name)
     end
-  end)
+  end, nil, nil, "fetch_readme")
 end
 
 --- Fetches the README using the GitHub API (fallback)
@@ -70,7 +70,7 @@ function M.fetch_readme_from_api(api_url, repo_name)
     else
       notify("[reposcope] Failed to fetch README via API", vim.log.levels.ERROR)
     end
-  end)
+  end, nil, nil, "fetch_readme")
 end
 
 --- Decodes a Base64-encoded string (compatible with Lua)
