@@ -3,6 +3,8 @@
 ---@class ReposcopeMetrics
 ---@field req_count ReqCount Stores API request count for profiling purposes
 ---@field rate_limits RateLimits Stores the rate limits for the GitHub API (Core and Search)
+---@field generate_uuid fun(): string  Creates a UUID based on actual timestamp
+---@field log_request fun(data: table): nil Logs request details to request_log.json in JSON object format
 ---@field increase_req fun(query: string, source: string, contex: string): nil Increases the request count for the current session and logs it
 ---@field increase_success fun(query: string, source: string, context: string, duration_ms: number, status_code: number): nil Increases the successful request count and logs it
 ---@field increase_failed fun(query: string, source: string, context: string, duration_ms: number, status_code: number, error: string): nil Increases the failed request count and logs it
@@ -12,9 +14,8 @@
 ---@field check_rate_limit fun(): nil Checks the current GitHub rate limit and displays a warning if low
 local M = {}
 
-local uuid = require("reposcope.utils.debug").generate_uuid
 local config = require("reposcope.config")
-
+local uv = vim.loop
 
 ---@class ReqCount Counts API requests for profiling purposes
 ---@field requests number Stores the total API request count for the current session
@@ -110,7 +111,7 @@ local function log_request(data)
       end
     end
 
-    local log_id = uuid()
+    local log_id = M.generate_uuid()
     logs[log_id] = data
 
     -- removes oldest entry if to much logs exist
@@ -124,6 +125,19 @@ local function log_request(data)
     local formatted_json = vim.json.encode(logs, { indent = true })
     vim.fn.writefile(vim.split(formatted_json, "\n"), log_path)
   end)
+end
+
+--- Creates a UUID based on actual timestamp
+function M.generate_uuid()
+  local random = math.random
+  return string.format(
+    "%08x-%04x-%04x-%04x-%012x",
+    uv.now(),
+    random(0, 0xffff),
+    random(0, 0xffff),
+    random(0, 0xffff),
+    random(0, 0xffffffffffff)
+  )
 end
 
 --- Increases the total request count for the current session and logs
@@ -228,7 +242,7 @@ function M.check_rate_limit()
   end
 
   -- Wenn Limits nicht gesetzt sind, API abfragen
-  local http = require("reposcope.utils.http")
+  local http = require("reposcope.network.http")
   local token = config.options.github_token
 
   local headers = { "Accept: application/vnd.github+json" }
