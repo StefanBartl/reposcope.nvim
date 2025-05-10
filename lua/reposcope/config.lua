@@ -66,10 +66,8 @@ function M.setup(opts)
 
   -- Set the log file path dynamically based on format
   local path_check =  require("reposcope.utils.protection").is_valid_path
-  -- Wenn der Log-Pfad nicht existiert oder ungültig ist, wird er neu gesetzt
   if not M.options.log_file or not path_check(M.options.log_file, false) then
     M.options.log_file = vim.fn.fnameescape(M.options.g_state_path .. "/request_log." .. M.options.log_format)
-    require("reposcope.utils.debug").notify("Log path set:" .. M.options.log_file, vim.log.levels.INFO)
   end
 
   -- Debugging: Ausgabe des gesetzten Pfads

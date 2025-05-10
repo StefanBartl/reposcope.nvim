@@ -5,6 +5,8 @@ local M = {}
 local http = require("reposcope.network.http")
 local metrics = require("reposcope.utils.metrics")
 local notify = require("reposcope.utils.debug").notify
+local generate_uuid = require("reposcope.utils.metrics").generate_uuid
+local active_requests = {}
 
 ---Sends a generalized API request (GET, POST, etc.)
 ---@param method string The HTTP method (e.g., GET, POST)
@@ -14,6 +16,18 @@ local notify = require("reposcope.utils.debug").notify
 ---@param debug? boolean Optional debug flag for debugging output
 ---@param context? string Optional context identifier (e.g., "fetch_repo", "fetch_readme", "clone_repo")
 function M.request(method, url, callback, headers, debug, context)
+  -- Set default context if not provided
+  context = context or "general"
+
+  local uuid = generate_uuid()
+  -- Prüfen, ob bereits eine aktive Anfrage für diesen Kontext läuft
+  if active_requests[uuid] then
+    notify("[reposcope] Request already in progress for context: " .. context, vim.log.levels.WARN)
+    return
+  end
+
+  active_requests[uuid] = true
+
   -- Extract source from URL (for better logging)
   local source
   if url:match("https://api%.github%.com/") then
@@ -33,15 +47,13 @@ function M.request(method, url, callback, headers, debug, context)
     source = "unknown"
   end
 
-  -- Set default context if not provided
-  context = context or "general"
 
   local query = url:match("q=([^&]+)") or "none"
 
   local start_time = vim.loop.hrtime() -- Start time for duration calculation
 
   -- Increase request counter and check rate limit
-  metrics.increase_req(query, source, context)
+  metrics.increase_req(uuid, query, source, context)
   metrics.check_rate_limit()
 
   -- Build HTTP request with headers (if provided)
@@ -55,19 +67,18 @@ function M.request(method, url, callback, headers, debug, context)
     vim.schedule(function()
       notify("[reposcope] Unsupported HTTP method: " .. method, vim.log.levels.ERROR)
     end)
-    metrics.increase_failed(query, source, context, 0, 405, "Method Not Allowed")
     callback(nil)
     return
   end
 
   -- Send HTTP request
-  http.get(url, function(response)
+  http.get(url, function(response, error_msg)
     local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- Calculate duration in milliseconds
     if response then
-      metrics.increase_success(query, source, context, duration_ms, 200)
+      metrics.increase_success(uuid, query, source, context, duration_ms, 200)
       callback(response)
     else
-      metrics.increase_failed(query, source, context, duration_ms, 500, "Request failed")
+      metrics.increase_failed(uuid, query, source, context, duration_ms, 500, error_msg)
       callback(nil)
     end
   end, debug)
