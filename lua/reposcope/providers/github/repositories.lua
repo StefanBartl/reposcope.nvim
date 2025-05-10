@@ -12,34 +12,9 @@ local debug = require("reposcope.utils.debug")
 local notify = debug.notify
 local urlencode = require("reposcope.network.http").urlencode
 
--- Default path for test JSON
-local testjson = "/media/steve/Depot/MyGithub/reposcope.nvim/debug/gh_test_response.json"
-
 --- Initializes the repository list with a query
-function M.init(query, debug_mode)
-  --if debug_mode or debug.is_debug_mode() then
-  --  M.load_test_json()
-  --else
+function M.init(query)
     M.fetch_github_repositories(query)
-  --end
-end
-
---- Loads repositories from the test JSON file for debugging
-function M.load_test_json()
-  local parsed = require("reposcope.core.json").read_and_parse_file(testjson)
-  if not parsed then
-    notify("[reposcope] Failed to load test JSON", vim.log.levels.ERROR)
-    return
-  end
-
-  if not parsed.items then
-    notify("[reposcope] Invalid JSON format in test file.", vim.log.levels.ERROR)
-    return
-  end
-
-  repositories.set_repositories(parsed)
-  list.display()
-  notify("[reposcope] Loaded test JSON data.", vim.log.levels.INFO)
 end
 
 --- Fetches repositories from GitHub API
