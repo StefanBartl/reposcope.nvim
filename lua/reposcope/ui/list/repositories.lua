@@ -45,12 +45,14 @@ function M.display()
     return
   end
 
-  vim.api.nvim_buf_set_option(buf, "modifiable", true)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.api.nvim_buf_set_option(buf, "modifiable", false)
+  vim.schedule(function()
+    vim.api.nvim_buf_set_option(buf, "modifiable", true)
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+    vim.api.nvim_buf_set_option(buf, "modifiable", false)
 
-  -- Set initial highlight
-  M.update_highlight()
+    -- Set initial highlight
+    M.update_highlight()
+  end)
 end
 
 ---Configures the list buffer (no editing, restricted keymaps)
