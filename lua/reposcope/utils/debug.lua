@@ -1,8 +1,9 @@
 ---@class ReposcopeDebug Debug utilities for inspecting UI-related buffers and windows.
 ---@field options DebugOptions Configurations options for debugging of reposcope
----@field notify fun(message: string, level?: number): nil Sends a notification message with an optional log level.
----@field toggle_dev_mode fun(): nil Toggle dev mode (standard: false)
 ---@field is_dev_mode fun(): boolean Checks if developer mode is enabled
+---@field set_dev_mode fun(value: boolean): nil Sets the debug mode to a specific value
+---@field toggle_dev_mode fun(): nil Toggle dev mode (standard: false)
+---@field notify fun(message: string, level?: number): nil Sends a notification message with an optional log level.
 local M = {}
 
 ---WATCH: Anything new to mention here?
@@ -13,14 +14,30 @@ M.options = {
   dev_mode = true, -- Print all notifys  
 }
 
+--- Dynamically provides access to debug_mode value via metatable.
+--- The metatable ensures that access to debug_mode always returns the current value
+setmetatable(M, {
+  __index = function(_, key)
+    -- If the requested key is 'debug_mode', return the current dev_mode value
+    if key == "debug_mode" then
+      return M.options.dev_mode
+    end
+  end
+})
+
+---Checks if dev mode is enabled
+function M.is_dev_mode()
+  return M.options.dev_mode
+end
+
 ---Toggle dev mode config option 
 function M.toggle_dev_mode()
   M.options.dev_mode = not M.options.dev_mode
 end
 
----Checks if dev mode is enabled
-function M.is_dev_mode()
-  return M.options.dev_mode
+--- Sets the debug mode to a specific value
+function M.set_dev_mode(value)
+  M.options.dev_mode = value
 end
 
 ---Sends a notification message with an optional log level.
