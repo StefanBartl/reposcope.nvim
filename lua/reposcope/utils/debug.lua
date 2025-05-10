@@ -6,7 +6,6 @@
 ---@field toggle_debug_mode fun(): nil Toggle debug mode (standard: false)
 ---@field is_dev_mode fun(): boolean Checks if developer mode is enabled
 ---@field is_debug_mode fun(): boolean Checks if debug mode is enabled
----@field generate_uuid fun(): string  Creates a UUID based on actual timestamp
 local M = {}
 local uv = vim.loop
 
@@ -59,20 +58,6 @@ function M.test_prompt_input(provider, query)
   require("reposcope.config").options.provider = provider
   print(string.format("[test] Using provider: %s", provider))
   require("reposcope.ui.prompt.input").on_enter(query)
-end
-
-
---- Creates a UUID based on actual timestamp
-function M.generate_uuid()
-  local random = math.random
-  return string.format(
-    "%08x-%04x-%04x-%04x-%012x",
-    uv.now(),
-    random(0, 0xffff),
-    random(0, 0xffff),
-    random(0, 0xffff),
-    random(0, 0xffffffffffff)
-  )
 end
 
 return M

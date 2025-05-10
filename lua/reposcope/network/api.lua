@@ -2,7 +2,7 @@
 ---@field request fun(method: string, url: string, callback: fun(response: string|nil), headers?: table, debug?: boolean, context?: string): nil Sends an API request using HTTP module
 local M = {}
 
-local http = require("reposcope.utils.http")
+local http = require("reposcope.network.http")
 local metrics = require("reposcope.utils.metrics")
 local notify = require("reposcope.utils.debug").notify
 

@@ -5,7 +5,7 @@
 ---@field build_cmd fun(query: string): string[] Builds the API request for GitHub repo search
 local M = {}
 
-local api = require("reposcope.utils.api")
+local api = require("reposcope.network.api")
 local repositories = require("reposcope.state.repositories")
 local list = require("reposcope.ui.list.repositories")
 local debug = require("reposcope.utils.debug")

@@ -6,7 +6,7 @@
 ---@field private decode_base64 fun(encoded: string): string Decodes a Base64-encoded string (compatible with Lua)
 local M = {}
 
-local api = require("reposcope.utils.api")
+local api = require("reposcope.network.api")
 local readme = require("reposcope.state.readme")
 local repositories = require("reposcope.state.repositories")
 local preview = require("reposcope.ui.preview.inject")
