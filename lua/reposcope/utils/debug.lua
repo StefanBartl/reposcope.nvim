@@ -1,7 +1,6 @@
 ---@class ReposcopeDebug Debug utilities for inspecting UI-related buffers and windows.
 ---@field options DebugOptions Configurations options for debugging of reposcope
 ---@field notify fun(message: string, level?: number): nil Sends a notification message with an optional log level.
----@field test_prompt_input fun(provider: string, query: string) Manually test the input router, either "github" or other (for fallback)
 ---@field toggle_dev_mode fun(): nil Toggle dev mode (standard: false)
 ---@field is_dev_mode fun(): boolean Checks if developer mode is enabled
 local M = {}
@@ -34,15 +33,6 @@ function M.notify(message, level)
       vim.notify(message, level)
     end)
   end
-end
-
----Manually test the input router with a specified provider and query.
----@param provider string The provider to test (e.g., "github")
----@param query string The search query for the provider
-function M.test_prompt_input(provider, query)
-  require("reposcope.config").options.provider = provider
-  print(string.format("[test] Using provider: %s", provider))
-  require("reposcope.ui.prompt.input").on_enter(query)
 end
 
 return M
