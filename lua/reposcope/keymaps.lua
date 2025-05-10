@@ -194,7 +194,6 @@ function clear_registered_keymaps(tag)
   for _, map in ipairs(_registry) do
     if map.tag == tag then
       unmap_over_bufs(map.mode, map.lhs, { map.buffer })
-      notify(string.format("[reposcope] cleared keymap %s from buf %d", map.lhs, map.buffer), vim.log.levels.DEBUG)
     else
       table.insert(remaining, map)
     end

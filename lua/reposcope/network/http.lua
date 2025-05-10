@@ -1,14 +1,14 @@
 ---@class HTTPModule
----@field get fun(url: string, callback: fun(response: string|nil), debug?: boolean): nil Executes an HTTP GET request using curl
+---@field get fun(url: string, callback: fun(response: string|nil, error_msg?: string|nil), debug?: boolean): nil Executes an HTTP GET request using curl
+---@field urlencode fun(str: string): string Encodes a string for safe URL usage
 local M = {}
 
 local uv = vim.loop
 local notify = require("reposcope.utils.debug").notify
-local profiler = require("reposcope.utils.metrics")
 
----Performs an HTTP GET request and returns the response.
+--- HTTP GET Request with secure callback handling
 ---@param url string The URL for the HTTP request
----@param callback fun(response: string|nil) Callback function with the response content (string) or nil on failure
+---@param callback fun(response: string|nil, error_msg?: string) Callback function with the response content (string) or nil on failure
 ---@param debug? boolean Optional debug flag for stderr output
 function M.get(url, callback, debug)
   local stdout = uv.new_pipe(false)
@@ -17,22 +17,23 @@ function M.get(url, callback, debug)
   local stderr_data = {}
   local stdout_done = false
   local stderr_done = false
-  local request_successful = false  -- Track success to avoid double counting
-  local request_failed = false     -- Track failure to avoid double counting
+  local callback_called = false -- NEW FLAG
+
+  ---Secure Callback Execution
+  local function secure_callback(response, error_msg)
+    if not callback_called then
+      callback(response, error_msg)
+      callback_called = true -- Mark callback as called
+    end
+  end
 
   ---Checks if both stdout and stderr have finished processing.
   local function check_done()
     if stdout_done and stderr_done then
       if #response_data == 0 then
-        if not request_successful and not request_failed then  --HACK:
-          request_failed = true
-        end
-        callback(nil)
+        secure_callback(nil, #stderr_data > 0 and table.concat(stderr_data) or "Request failed")
       else
-        if not request_successful then
-          request_successful = true
-        end
-        callback(table.concat(response_data))
+        secure_callback(table.concat(response_data), #stderr_data > 0 and table.concat(stderr_data) or nil)
       end
     end
   end
@@ -44,10 +45,6 @@ function M.get(url, callback, debug)
     if code ~= 0 then
       vim.schedule(function()
         notify("[reposcope] Curl process failed with code: " .. code, vim.log.levels.ERROR)
-        if not request_successful and not request_failed then
-          profiler.increase_failed()
-          request_failed = true
-        end
       end)
     end
     stdout_done = true
@@ -58,27 +55,16 @@ function M.get(url, callback, debug)
   if not handle then
     vim.schedule(function()
       notify("[reposcope] Failed to start curl process", vim.log.levels.ERROR)
-      if not request_failed then
-        profiler.increase_failed()
-        request_failed = true
-      end
     end)
-    callback(nil)
+    secure_callback(nil, "Failed to start curl process")
     return
   end
-
-  -- If curl started successfully, increase the request count
-  profiler.increase_req()
 
   ---Reads the standard output (response content)
   stdout:read_start(function(err, data)
     if err then
       vim.schedule(function()
         notify("[reposcope] Error reading curl stdout: " .. err, vim.log.levels.ERROR)
-        if not request_successful and not request_failed then
-          profiler.increase_failed()
-          request_failed = true
-        end
       end)
       stdout_done = true
       check_done()
@@ -98,10 +84,6 @@ function M.get(url, callback, debug)
     if err then
       vim.schedule(function()
         notify("[reposcope] Error reading curl stderr: " .. err, vim.log.levels.ERROR)
-        if not request_successful and not request_failed then
-          profiler.increase_failed()
-          request_failed = true
-        end
       end)
     elseif data and debug then
       vim.schedule(function()
@@ -113,6 +95,19 @@ function M.get(url, callback, debug)
       check_done()
     end
   end)
+end
+
+
+function M.urlencode(str)
+  -- Replace newline characters with CRLF for URL encoding
+  local crlf_encoded = str:gsub("\n", "\r\n")
+
+  -- Convert all other special characters to percent-encoded form
+  local url_encoded = crlf_encoded:gsub("([^%w%-_.~])", function(char)
+    return string.format("%%%02X", string.byte(char))
+  end)
+
+  return url_encoded
 end
 
 return M

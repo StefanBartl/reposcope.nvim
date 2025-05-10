@@ -30,6 +30,29 @@ M.repositories = { total_count = 0, items = {} } -- Global cache for JSON respon
 function M.set_repositories(json)
   M.repositories.total_count = json.total_count or 0
   M.repositories.items = json.items or {}
+
+  ---DEBUG: proof and securing repository fields
+  -- Problem: `userdata` type in API data causes errors when concatenated.  
+  -- Solution: Ensure all API fields are strings, using `tostring()` if needed.
+  for _, repo in ipairs(M.repositories.items) do
+    if type(repo.name) ~= "string" then
+      notify("[reposcope] Warning: Repository name is not a string. Type: " .. type(repo.name), vim.log.levels.WARN)
+      repo.name = tostring(repo.name or "No name")
+    end
+
+    if type(repo.description) ~= "string" and repo.description ~= nil then
+      notify("[reposcope] Warning: Repository description is not a string. Type: " .. type(repo.description), vim.log.levels.WARN)
+      repo.description = tostring(repo.description or "No description")
+    end
+
+    if type(repo.owner) == "table" and type(repo.owner.login) ~= "string" then
+      notify("[reposcope] Warning: Repository owner login is not a string. Type: " .. type(repo.owner.login), vim.log.levels.WARN)
+      repo.owner.login = tostring(repo.owner.login or "Unknown")
+    elseif type(repo.owner) ~= "table" then
+      notify("[reposcope] Warning: Repository owner is not a table. Type: " .. type(repo.owner), vim.log.levels.WARN)
+      repo.owner = { login = "Unknown" }
+    end
+  end
 end
 
 ---Returns the cached JSON response
