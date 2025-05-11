@@ -7,7 +7,7 @@ local M = {}
 ---@param win integer The window ID to inspect
 function M.debug_window(win)
   if not win or not vim.api.nvim_win_is_valid(win) then
-    vim.notify("[reposcope][debug] Invalid window handle", vim.log.levels.DEBUG)
+    vim.notify("[reposcope][debug] Invalid window handle", 1)
     return
   end
 
@@ -40,7 +40,7 @@ end
 ---@param buf integer The buffer ID to inspect
 function M.debug_buffer(buf)
   if not buf or not vim.api.nvim_buf_is_valid(buf) then
-    vim.notify("[reposcope][debug] Invalid buffer handle", vim.log.levels.DEBUG)
+    vim.notify("[reposcope][debug] Invalid buffer handle", 1)
     return
   end
 

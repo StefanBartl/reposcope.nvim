@@ -22,7 +22,7 @@ function M.request(method, url, callback, headers, debug, context)
   local uuid = generate_uuid()
   -- Prüfen, ob bereits eine aktive Anfrage für diesen Kontext läuft
   if active_requests[uuid] then
-    notify("[reposcope] Request already in progress for context: " .. context, vim.log.levels.WARN)
+    notify("[reposcope] Request already in progress for context: " .. context, 3)
     return
   end
 
@@ -65,7 +65,7 @@ function M.request(method, url, callback, headers, debug, context)
   -- Check if the method is supported (currently only GET)
   if method ~= "GET" then
     vim.schedule(function()
-      notify("[reposcope] Unsupported HTTP method: " .. method, vim.log.levels.ERROR)
+      notify("[reposcope] Unsupported HTTP method: " .. method, 4)
     end)
     callback(nil)
     return

@@ -1,10 +1,11 @@
 ---@class ReposcopeConfig
 ---@field options ConfigOptions Configuration options for Reposcope
 ---@field setup fun(opts: table): nil Setup function for user configuration
----@field get_state_path fun(): string Returns the current state path
----@field get_cache_path fun(): string Returns the current cache path
+---@field get_cache_dir fun(): string Returns the current cache path
 ---@field get_clone_dir fun(): string Returns the standard clone directory
 ---@field get_log_path fun(): string|nil Check if log options are set and returns it
+---@field init_cache_dir fun(): nil Initialize cache path
+---@field init_log_path fun(): nil Initialize log path for persistent log files
 local M = {}
 
 ---@class CloneOptions 
@@ -20,10 +21,9 @@ local M = {}
 ---@field results_limit number Maximum number of results returned in search queries (default: 25)
 ---@field preview_limit number Maximum number of lines shown in preview (default: 200)
 ---@field layout string UI layout type (default: "default")
----@field g_state_path string Path for Reposcope state data (default: OS-dependent)
----@field g_cache_path string Path for Reposcope cache data (default: OS-dependent) 
+---@field cache_dir string Path for Reposcope cache data (default: OS-dependent) 
 ---@field log_format string Log format ("json" or "xml")
----@field log_file string Full path to the log file (determined dynamically)
+---@field log_filepath string Full path to the log file (determined dynamically)
 ---@field log_max number Controls the size of the log file
 ---@field clone CloneOptions Options to configure cloning repositories
 M.options = {
@@ -34,15 +34,15 @@ M.options = {
   results_limit = 25, -- Default result limit for search queries
   preview_limit = 200, -- Default preview limit for displayed results
   layout = "default", -- Default UI layout
-  g_state_path = "", -- Path for Reposcope state data
-  g_cache_path = "", -- Cache path, determined in setup
-  log_format = "json", -- Log format ("json" or "xml")
-  log_file = "", -- Full path to the log file (determined dynamically)
-  log_max = 1000, -- Controls the size of the log file
   clone = {
     std_dir = "~/temp",  -- Standard path for cloning repositories
     type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
-  }
+  },
+  -- Only change following values if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
+  cache_dir = "", -- Cache path for persistent cache files; standard is: vim.fn.stdpath("cache") .. "/reposcope/data"
+  log_filepath = "", -- Full path to the log file; standard is: vim.fn.stdpath("cache") .. "/reposcope/logs/log"
+  log_format = "json", -- Log format ("json" or "xml")
+  log_max = 1000, -- Controls the size of the log file
 }
 
 ---Setup function for configuration
@@ -54,41 +54,87 @@ function M.setup(opts)
   -- Set the clone type based on the request tool
   M.options.clone.type = M.options.clone.type ~= "" and M.options.clone.type or M.options.request_tool
 
-  -- Set and ensure the state path is properly set
-  M.options.g_state_path = vim.fn.fnameescape(
-    (M.options.g_state_path ~= "" and M.options.g_state_path) or vim.fn.expand("~/.local/state/nvim/reposcope") --NOTE: not win conform
-  )
-
-  -- Set the cache path
-  M.options.g_cache_path = vim.fn.fnameescape(
-    (M.options.g_cache_path ~= "" and M.options.g_cache_path) or (M.options.g_state_path .. "/cache")
-  )
-
-  -- Set the log file path dynamically based on format
-  local path_check =  require("reposcope.utils.protection").is_valid_path
-  if not M.options.log_file or not path_check(M.options.log_file, false) then
-    M.options.log_file = vim.fn.fnameescape(M.options.g_state_path .. "/request_log." .. M.options.log_format)
-  end
-
-  -- Debugging: Ausgabe des gesetzten Pfads
-  if not path_check(M.options.log_file, true) then
-    require("reposcope.utils.debug").notify("[reposcope] Error: Log file path could not be set or is invalid.", vim.log.levels.ERROR)
-  end
-end
-
----Returns the current state path
----@return string The current state path
-function M.get_state_path()
-  return M.options.g_state_path
+  M.init_cache_dir()
+  M.init_log_path()
 end
 
 ---Returns the current cache path
 ---@return string The current cache path
-function M.get_cache_path()
-  return M.options.g_cache_path
+function M.get_cache_dir()
+  return M.options.cache_dir
 end
 
----DEBUG: branches
+---Initialize cache path for persistent cached data
+function M.init_cache_dir()
+  local is_valid_path = require("reposcope.utils.protection").is_valid_path
+
+  if M.options.cache_dir and M.options.cache_dir ~= "" then
+    M.options.cache_dir = vim.fn.expand(M.options.cache_dir)
+
+    if not is_valid_path(M.options.cache_dir, false) then
+      M.options.cache_dir = vim.fn.stdpath("cache") .. "/reposcope/data"
+      require("reposcope.utils.protection").safe_mkdir(M.options.cache_dir)
+      require("reposcope.utils.debug").notify("[reposcope] Cache dir set to default " .. M.options.cache_dir, 3)
+    else
+      require("reposcope.utils.debug").notify("[reposcope] Cache dir set to path passed by user: " .. M.options.cache_dir, 2)
+    end
+  else
+    M.options.cache_dir = vim.fn.stdpath("cache") .. "/reposcope/data"
+    require("reposcope.utils.protection").safe_mkdir(M.options.cache_dir)
+    require("reposcope.utils.debug").notify("[reposcope] Cache dir set to default " .. M.options.cache_dir, 3)
+  end
+
+  if not vim.fn.isdirectory(M.options.cache_dir) then
+    require("reposcope.utils.debug").notify("[reposcope] Cache path could not be created: " .. M.options.cache_dir, 4)
+  end
+end
+
+
+---Check if log options are set and return them
+function M.get_log_path()
+  if not M.options.log_filepath or M.options.log_filepath == "" then
+    require("reposcope.utils.debug").notify("[reposcope] No log file path set. No logging possible", 3)
+    return nil
+  end
+
+  return M.options.log_filepath .. "." .. M.options.log_format
+end
+
+
+---Initialize log path for persistent log files
+function M.init_log_path()
+  local is_valid_path = require("reposcope.utils.protection").is_valid_path
+
+  -- Check if the user has set a custom log file path
+  if M.options.log_filepath and M.options.log_filepath ~= "" then
+    local log_filepath = M.get_log_path() or ""
+    if is_valid_path(log_filepath, true) then
+      require("reposcope.utils.debug").notify("[reposcope] User-defined log path valid, set to " .. M.options.log_filepath, 3) --DEBUG: remove
+      return
+    else
+      require("reposcope.utils.debug").notify(
+        "[reposcope] Warning: User-defined log path is invalid. Falling back to default.",
+        3
+      )
+    end
+  end
+
+  -- Use default log path if user-defined path is invalid or not set
+  local log_dir = vim.fn.stdpath("cache") .. "/reposcope/logs"
+  vim.fn.mkdir(log_dir, "p")
+  M.options.log_filepath = vim.fn.fnameescape(log_dir .. "/request_log." .. M.options.log_format)
+
+  -- Final validation and notification
+  if is_valid_path(M.options.log_filepath, true) then
+    require("reposcope.utils.debug").notify("[reposcope] Log path set to " .. M.options.log_filepath, 3)
+  else
+    require("reposcope.utils.debug").notify(
+      "[reposcope] Error: Log file path could not be set or is invalid.",
+      4
+    )
+  end
+end
+
 ---Returns the standard directory for cloning
 function M.get_clone_dir()
   if M.options.clone.std_dir ~= "" and M.options.clone.std_dir and vim.fn.isdirectory(M.options.clone.std_dir) then
@@ -101,17 +147,6 @@ function M.get_clone_dir()
       return os.getenv("HOME") or "./"
     end
   end
-end
-
----Check if log options are set and return them
-function M.get_log_path()
-  -- Bedingung korrekt formuliert: Pfad muss existieren und darf nicht leer sein
-  if not M.options.log_file or M.options.log_file == "" then
-    require("reposcope.utils.debug").notify("[reposcope] No log file path set. No logging possible", vim.log.levels.WARN)
-    return nil
-  end
-
-  return M.options.log_file
 end
 
 return M

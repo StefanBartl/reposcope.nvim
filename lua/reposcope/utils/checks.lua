@@ -30,7 +30,7 @@ function M.resolve_request_tool(requesters)
 
   local req_tool = M.first_available(requesters)
   if not req_tool then
-    notify("[reposcope.nvim]: no request tool available", vim.log.levels.ERROR)
+    notify("[reposcope.nvim]: no request tool available", 4)
   else
     config.options.request_tool = req_tool
   end

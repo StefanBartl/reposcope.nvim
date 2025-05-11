@@ -205,14 +205,14 @@ function M.check_rate_limit()
         vim.notify(string.format(
           "[Reposcope] WARNING: GitHub API Core limit critical (%d/%d, remaining: %d)",
           core_used, M.rate_limits.core.limit, core_remaining
-        ), vim.log.levels.WARN)
+        ), 3)
       end)
     elseif core_usage >= 0.75 then
       vim.schedule(function()
         vim.notify(string.format(
           "[Reposcope] INFO: GitHub API Core limit approaching (%d/%d, remaining: %d)",
           core_used, M.rate_limits.core.limit, core_remaining
-        ), vim.log.levels.INFO)
+        ), 2)
       end)
     end
 
@@ -224,14 +224,14 @@ function M.check_rate_limit()
         vim.notify(string.format(
           "[Reposcope] WARNING: GitHub API Search limit critical (remaining: %d)",
           search_remaining
-        ), vim.log.levels.WARN)
+        ), 3)
       end)
     elseif search_usage >= 0.75 then
       vim.schedule(function()
         vim.notify(string.format(
           "[Reposcope] INFO: GitHub API Search limit approaching (remaining: %d)",
           search_remaining
-        ), vim.log.levels.INFO)
+        ), 2)
       end)
     end
 
@@ -250,7 +250,7 @@ function M.check_rate_limit()
   http.get("https://api.github.com/rate_limit", function(response)
     if not response then
       vim.schedule(function()
-        vim.notify("[Reposcope] Failed to fetch GitHub rate limit.", vim.log.levels.ERROR)
+        vim.notify("[Reposcope] Failed to fetch GitHub rate limit.", 4)
       end)
       return
     end

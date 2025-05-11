@@ -63,7 +63,7 @@ end
 function get_clone_informations()
   local repo = require("reposcope.state.repositories").get_selected_repo()
   if not repo then
-    vim.notify("[reposcope] Error cloning: Repository is nil", vim.log.levels.ERROR)
+    vim.notify("[reposcope] Error cloning: Repository is nil", 4)
     return nil
   end
 
@@ -71,7 +71,7 @@ function get_clone_informations()
   if repo.name and repo.name ~= "" then
     repo_name = repo.name
   else
-    vim.notify("[reposcope] Error cloning: Repository name is invalid", vim.log.levels.ERROR)
+    vim.notify("[reposcope] Error cloning: Repository name is invalid", 4)
     return nil
   end
 
@@ -79,7 +79,7 @@ function get_clone_informations()
   if repo.html_url and repo.html_url ~= "" then
     repo_url = repo.html_url
   else
-    vim.notify("[reposcope] Error cloning: Repository url is invalid", vim.log.levels.ERROR)
+    vim.notify("[reposcope] Error cloning: Repository url is invalid", 4)
     return nil
   end
 
@@ -89,14 +89,14 @@ end
 --REF: pcall()
 function M.clone_repository(path)
   if not path or not vim.fn.isdirectory(path) then
-    vim.notify("[reposcope] Error cloning: invalid path", vim.log.levels.ERROR)
+    vim.notify("[reposcope] Error cloning: invalid path", 4)
     return
   end
 
   local clone_type = config.options.clone.type
   local infos = get_clone_informations()
   if not infos then
-    vim.notify("[reposcope] Cloning aborted", vim.log.levels.ERROR)
+    vim.notify("[reposcope] Cloning aborted", 4)
     return
   end
 
@@ -120,19 +120,19 @@ function M.clone_repository(path)
     local zip_url = repo_url:gsub("%.git$", "/archive/refs/heads/main.zip")
     local output_zip = output_dir .. ".zip"
     vim.fn.system(string.format("curl -L -o %s %s", output_zip, zip_url))
-    vim.notify("Repository downloaded as ZIP: " .. output_zip, vim.log.levels.INFO)
+    vim.notify("Repository downloaded as ZIP: " .. output_zip, 2)
   elseif clone_type == "wget" then
     -- Download via wget (ZIP)
     local zip_url = repo_url:gsub("%.git$", "/archive/refs/heads/main.zip")
     local output_zip = output_dir .. ".zip"
     vim.fn.system(string.format("wget -O %s %s", output_zip, zip_url))
-    vim.notify("Repository downloaded as ZIP: " .. output_zip, vim.log.levels.INFO)
+    vim.notify("Repository downloaded as ZIP: " .. output_zip, 2)
   else
     -- Standard Git Clone
     vim.fn.system(string.format("git clone %s %s", repo_url, output_dir))
   end
 
-  vim.notify("Repository cloned to: " .. output_dir, vim.log.levels.INFO)
+  vim.notify("Repository cloned to: " .. output_dir, 2)
   M.close()
 end
 

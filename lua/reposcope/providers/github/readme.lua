@@ -16,7 +16,7 @@ local notify = require("reposcope.utils.debug").notify
 function M.fetch_readme_for_selected()
   local repo = repositories.get_selected_repo()
   if not repo then
-    notify("[reposcope] No repository selected", vim.log.levels.WARN)
+    notify("[reposcope] No repository selected", 3)
     return
   end
 
@@ -25,7 +25,7 @@ function M.fetch_readme_for_selected()
   local default_branch = repo.default_branch or "main"
 
   if not owner or not repo_name then
-    notify("[reposcope] Invalid repository URL", vim.log.levels.ERROR)
+    notify("[reposcope] Invalid repository URL", 4)
     return
   end
 
@@ -48,7 +48,7 @@ function M.try_fetch_readme(raw_url, api_url, repo_name)
       preview.show_readme(repo_name)
       notify("[reposcope] Successfully fetched README from RAW URL.")
     else
-      notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", vim.log.levels.WARN)
+      notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", 3)
       M.fetch_readme_from_api(api_url, repo_name)
     end
   end, nil, nil, "fetch_readme")
@@ -65,10 +65,10 @@ function M.fetch_readme_from_api(api_url, repo_name)
         preview.show_readme(repo_name)
         notify("[reposcope] Successfully fetched README via API.")
       else
-        notify("[reposcope] Invalid API response for README", vim.log.levels.ERROR)
+        notify("[reposcope] Invalid API response for README", 4)
       end
     else
-      notify("[reposcope] Failed to fetch README via API", vim.log.levels.ERROR)
+      notify("[reposcope] Failed to fetch README via API", 4)
     end
   end, nil, nil, "fetch_readme")
 end

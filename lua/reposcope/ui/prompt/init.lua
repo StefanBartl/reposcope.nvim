@@ -21,7 +21,7 @@ function M.open_prompt()
   if config.options.layout == "default" then
     default()
   else
-    notify("Unsupported layout: " .. config.options.layout, vim.log.levels.ERROR)
+    notify("Unsupported layout: " .. config.options.layout, 4)
   end
 
   prompt_config.init_prompt_layout(ui_state.buffers.prompt, ui_state.windows.prompt, " prompt ")

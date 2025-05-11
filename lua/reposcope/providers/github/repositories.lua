@@ -20,7 +20,7 @@ end
 --- Fetches repositories from GitHub API
 function M.fetch_github_repositories(query)
   if query == "" then
-    notify("[reposcope] Error: Search query is empty.", vim.log.levels.ERROR)
+    notify("[reposcope] Error: Search query is empty.", 4)
     return
   end
 
@@ -29,26 +29,26 @@ function M.fetch_github_repositories(query)
 
   api.get(url, function(response)
     if not response then
-      notify("[reposcope] No response from GitHub API.", vim.log.levels.ERROR)
+      notify("[reposcope] No response from GitHub API.", 4)
       return
     end
 
     -- Print raw api response
     if debug.options.dev_mode == true then
       --vim.schedule(function()
-        --notify("[reposcope] Raw API Response: " .. response, vim.log.levels.DEBUG)
+        --notify("[reposcope] Raw API Response: " .. response, 1)
       --end)
     end
 
     local parsed = vim.json.decode(response)
     if not parsed or not parsed.items then
-      notify("[reposcope] Invalid JSON response from GitHub API.", vim.log.levels.ERROR)
+      notify("[reposcope] Invalid JSON response from GitHub API.", 4)
       return
     end
 
     repositories.set_repositories(parsed)
     list.display()
-    notify("[reposcope] Loaded repositories from GitHub API.", vim.log.levels.INFO)
+    notify("[reposcope] Loaded repositories from GitHub API.", 2)
   end, nil, nil, "fetch_repositories")
 end
 

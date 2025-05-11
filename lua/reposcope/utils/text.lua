@@ -79,7 +79,7 @@ function M.gen_padded_lines(height, content)
   elseif type(content) == "table" then
     lines = vim.deepcopy(content)
   else
-    notify("Content must be a string or a table", vim.log.levels.INFO)
+    notify("Content must be a string or a table", 2)
   end
 
   -- Adjust to desired height

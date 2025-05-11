@@ -22,7 +22,7 @@ function M.display()
   local json_data = repositories.get_repositories()
   if not json_data or not json_data.items then
     vim.schedule(function()
-      notify("[reposcope] No repositories loaded.", vim.log.levels.ERROR)
+      notify("[reposcope] No repositories loaded.", 4)
     end)
     return
   end
@@ -40,7 +40,7 @@ function M.display()
   local buf = ui_state.buffers.list
   if not buf then
     vim.schedule(function()
-      notify("[reposcope] List buffer not found.", vim.log.levels.ERROR)
+      notify("[reposcope] List buffer not found.", 4)
     end)
     return
   end
@@ -60,7 +60,7 @@ function M.configure()
   local buf = ui_state.buffers.list
   if not buf then
     vim.schedule(function()
-      notify("[reposcope] List configure failed", vim.log.levels.ERROR)
+      notify("[reposcope] List configure failed", 4)
     end)
     return
   end
@@ -87,7 +87,7 @@ function M.update_highlight()
   local buf = ui_state.buffers.list
   if not buf or M.current_line < 1 then
     vim.schedule(function()
-      notify("[reposcope] Error: Invalid buffer or line index", vim.log.levels.ERROR)
+      notify("[reposcope] Error: Invalid buffer or line index", 4)
     end)
     return
   end

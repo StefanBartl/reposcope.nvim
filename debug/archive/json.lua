@@ -11,7 +11,7 @@ local notify = require("reposcope.utils.debug").notify
 function M.parse(json_str)
   local ok, json = pcall(vim.json.decode, json_str)
   if not ok or not json.items then
-    notify("[reposcope] Error parsing json response", vim.log.levels.ERROR)
+    notify("[reposcope] Error parsing json response", 4)
     return nil
   end
   return json
@@ -23,7 +23,7 @@ end
 function M.read_and_parse_file(path)
   local ok, lines = pcall(vim.fn.readfile, path)
   if not ok then
-    notify("[reposcope] Failed to read file: " .. path, vim.log.levels.ERROR)
+    notify("[reposcope] Failed to read file: " .. path, 4)
     return nil
   end
 

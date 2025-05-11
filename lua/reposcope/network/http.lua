@@ -44,7 +44,7 @@ function M.get(url, callback, debug)
   }, function(code)
     if code ~= 0 then
       vim.schedule(function()
-        notify("[reposcope] Curl process failed with code: " .. code, vim.log.levels.ERROR)
+        notify("[reposcope] Curl process failed with code: " .. code, 4)
       end)
     end
     stdout_done = true
@@ -54,7 +54,7 @@ function M.get(url, callback, debug)
 
   if not handle then
     vim.schedule(function()
-      notify("[reposcope] Failed to start curl process", vim.log.levels.ERROR)
+      notify("[reposcope] Failed to start curl process", 4)
     end)
     secure_callback(nil, "Failed to start curl process")
     return
@@ -64,7 +64,7 @@ function M.get(url, callback, debug)
   stdout:read_start(function(err, data)
     if err then
       vim.schedule(function()
-        notify("[reposcope] Error reading curl stdout: " .. err, vim.log.levels.ERROR)
+        notify("[reposcope] Error reading curl stdout: " .. err, 4)
       end)
       stdout_done = true
       check_done()
@@ -83,11 +83,11 @@ function M.get(url, callback, debug)
   stderr:read_start(function(err, data)
     if err then
       vim.schedule(function()
-        notify("[reposcope] Error reading curl stderr: " .. err, vim.log.levels.ERROR)
+        notify("[reposcope] Error reading curl stderr: " .. err, 4)
       end)
     elseif data and debug then
       vim.schedule(function()
-        notify("[reposcope] curl stderr data: " .. data, vim.log.levels.DEBUG)
+        notify("[reposcope] curl stderr data: " .. data, 1)
       end)
       table.insert(stderr_data, data)
     elseif not data then

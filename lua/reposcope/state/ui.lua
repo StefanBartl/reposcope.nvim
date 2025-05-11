@@ -109,7 +109,7 @@ end
 ---Returns all window handles in the state table which are not nil
 function M.get_windows()
   if not M.windows then
-    notify("[reposcope] No state.windows table set", vim.log.levels.DEBUG)
+    notify("[reposcope] No state.windows table set", 1)
     return nil
   end
 
@@ -121,7 +121,7 @@ function M.get_windows()
   end
 
   if #wins == 0 then
-    notify("[reposcope] No valid window entries in state.windows", vim.log.levels.DEBUG)
+    notify("[reposcope] No valid window entries in state.windows", 1)
     return nil
   end
 
@@ -131,7 +131,7 @@ end
 ---Returns all buffer handles in the state table which are not nil
 function M.get_buffers()
   if not M.buffers then
-    notify("[reposcope] No state.buffers table set", vim.log.levels.DEBUG)
+    notify("[reposcope] No state.buffers table set", 1)
     return nil
   end
 
@@ -143,7 +143,7 @@ function M.get_buffers()
   end
 
   if #bufs == 0 then
-    notify("[reposcope] No valid buffer entries in state.buffers", vim.log.levels.DEBUG)
+    notify("[reposcope] No valid buffer entries in state.buffers", 1)
     return nil
   end
 
@@ -153,7 +153,7 @@ end
 ---Return the window of the invocation state
 function M.get_invocation_win()
   if not M.invocation or not M.invocation.win then
-    notify("[reposcope] No invocation window set", vim.log.levels.DEBUG)
+    notify("[reposcope] No invocation window set", 1)
     return nil
   end
   return M.invocation.win
@@ -162,7 +162,7 @@ end
 ---Returns the cursor of the invocation state
 function M.get_invocation_cursor()
   if not M.invocation or not M.invocation.cursor then
-    notify("[reposcope] No invocation cursor set", vim.log.levels.DEBUG)
+    notify("[reposcope] No invocation cursor set", 1)
     return nil
   end
   return M.invocation.cursor

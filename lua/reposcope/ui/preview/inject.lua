@@ -12,13 +12,13 @@ local notify = require("reposcope.utils.debug").notify
 function M.show_readme(repo_name, force_markdown)
   local content = readme.get_readme(repo_name)
   if not content then
-    notify("[reposcope] README not cached for: " .. repo_name, vim.log.levels.WARN)
+    notify("[reposcope] README not cached for: " .. repo_name, 3)
     content = "README not cached yet."
   end
 
   local buf = state.buffers.preview
   if not buf then
-    notify("[reposcope] Preview buffer not found.", vim.log.levels.ERROR)
+    notify("[reposcope] Preview buffer not found.", 4)
     return
   end
 
