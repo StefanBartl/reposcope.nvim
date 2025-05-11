@@ -14,7 +14,7 @@ function M.cache_readme(repo_name, readme_text)
   if repo then
     repo.readme_cache = readme_text
   else
-    notify("[reposcope] Repository not found: " .. repo_name, vim.log.levels.ERROR)
+    notify("[reposcope] Repository not found: " .. repo_name, 4)
   end
 end
 

@@ -36,20 +36,20 @@ function M.set_repositories(json)
   -- Solution: Ensure all API fields are strings, using `tostring()` if needed.
   for _, repo in ipairs(M.repositories.items) do
     if type(repo.name) ~= "string" then
-      notify("[reposcope] Warning: Repository name is not a string. Type: " .. type(repo.name), vim.log.levels.WARN)
+      notify("[reposcope] Warning: Repository name is not a string. Type: " .. type(repo.name), 3)
       repo.name = tostring(repo.name or "No name")
     end
 
     if type(repo.description) ~= "string" and repo.description ~= nil then
-      notify("[reposcope] Warning: Repository description is not a string. Type: " .. type(repo.description), vim.log.levels.WARN)
+      notify("[reposcope] Warning: Repository description is not a string. Type: " .. type(repo.description), 3)
       repo.description = tostring(repo.description or "No description")
     end
 
     if type(repo.owner) == "table" and type(repo.owner.login) ~= "string" then
-      notify("[reposcope] Warning: Repository owner login is not a string. Type: " .. type(repo.owner.login), vim.log.levels.WARN)
+      notify("[reposcope] Warning: Repository owner login is not a string. Type: " .. type(repo.owner.login), 3)
       repo.owner.login = tostring(repo.owner.login or "Unknown")
     elseif type(repo.owner) ~= "table" then
-      notify("[reposcope] Warning: Repository owner is not a table. Type: " .. type(repo.owner), vim.log.levels.WARN)
+      notify("[reposcope] Warning: Repository owner is not a table. Type: " .. type(repo.owner), 3)
       repo.owner = { login = "Unknown" }
     end
   end
@@ -92,7 +92,7 @@ function M.get_selected_repo()
   -- Expected format: "username/reponame: description"
   local owner, repo_name = line_text:match("([^/]+)/([^:]+)")
   if not owner or not repo_name then
-    notify("[reposcope] Invalid list format: " .. line_text, vim.log.levels.ERROR)
+    notify("[reposcope] Invalid list format: " .. line_text, 4)
     return nil
   end
 
@@ -103,7 +103,7 @@ function M.get_selected_repo()
     end
   end
 
-  notify("[reposcope] Repository not found: " .. owner .. "/" .. repo_name, vim.log.levels.WARN)
+  notify("[reposcope] Repository not found: " .. owner .. "/" .. repo_name, 3)
   return nil
 end
 

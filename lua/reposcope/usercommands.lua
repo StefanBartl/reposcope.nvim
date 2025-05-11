@@ -7,7 +7,7 @@ vim.api.nvim_create_user_command("ReposcopeStart", function(_)
     require("reposcope.init").open_ui()
   end)
   if not ok then
-    notify("Error while opening reposcope: " .. err, vim.log.levels.ERROR)
+    notify("Error while opening reposcope: " .. err, 4)
   end
 end, {
   desc = "Open Reposcope",
@@ -20,7 +20,7 @@ vim.api.nvim_create_user_command("ReposcopeClose", function(_)
     require("reposcope.init").close_ui()
   end)
   if not ok then
-    notify("Error while closing reposcope: " .. err, vim.log.levels.ERROR)
+    notify("Error while closing reposcope: " .. err, 4)
   end
 end, {
   desc = "Close reposcope",

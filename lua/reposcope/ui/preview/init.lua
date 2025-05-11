@@ -25,7 +25,7 @@ function M.open_preview()
   if config.options.layout == "default" then
     default()
   else
-    vim.notify("Unsupported layout: " .. config.options.layout, vim.log.levels.ERROR)
+    vim.notify("Unsupported layout: " .. config.options.layout, 4)
   end
 end
 

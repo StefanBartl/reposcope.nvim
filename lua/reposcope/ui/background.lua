@@ -27,7 +27,7 @@ function M.open_backgd()
   if config.options.layout == "default" then
     default()
   else
-    notify("Unknown layout: " .. config.options.layout, vim.log.levels.WARN)
+    notify("Unknown layout: " .. config.options.layout, 3)
   end
 end
 
