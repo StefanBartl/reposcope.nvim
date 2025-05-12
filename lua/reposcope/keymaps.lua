@@ -216,14 +216,18 @@ end
 ---Applies all clone-related keymaps
 function M.set_clone_keymaps()
   if pops_state.clone.buf and vim.api.nvim_buf_is_valid(pops_state.clone.buf) then
-    vim.keymap.set("n", "<CR>", function()
+    vim.keymap.set("n", "<M-CR>", function()
       local path = vim.api.nvim_buf_get_lines(pops_state.clone.buf, 0, 1, false)[1]
       clone.clone_repository(path)
     end, { buffer = pops_state.clone.buf, noremap = true, silent = true })
 
-    vim.keymap.set("i", "<CR>", function()
+   vim.keymap.set("i", "<M-CR>", function()
       local path = vim.api.nvim_buf_get_lines(pops_state.clone.buf, 0, 1, false)[1]
       clone.clone_repository(path)
+    end, { buffer = pops_state.clone.buf, noremap = true, silent = true })
+
+    vim.keymap.set("n", "<Esc>", function()
+      clone.close()
     end, { buffer = pops_state.clone.buf, noremap = true, silent = true })
 
     vim.keymap.set("n", "<C-q>", function()
@@ -233,6 +237,7 @@ function M.set_clone_keymaps()
     vim.keymap.set("i", "<C-q>", function()
       clone.close()
     end, { buffer = pops_state.clone.buf, noremap = true, silent = true })
+
   else
     vim.notify("No buffer to set keymaps", 1)
   end
@@ -241,8 +246,9 @@ end
 ---Removes all clone-related keymaps
 function M.unset_clone_keymaps()
   if pops_state.clone.buf and vim.api.nvim_buf_is_valid(pops_state.clone.buf) then
-    pcall(vim.keymap.del, "n", "<CR>", { buffer = pops_state.clone.buf })
-    pcall(vim.keymap.del, "i", "<CR>", { buffer = pops_state.clone.buf })
+    pcall(vim.keymap.del, "n", "<M-CR>", { buffer = pops_state.clone.buf })
+    pcall(vim.keymap.del, "i", "<M-CR>", { buffer = pops_state.clone.buf })
+    pcall(vim.keymap.del, "n", "<Esc>", { buffer = pops_state.clone.buf })
     pcall(vim.keymap.del, "n", "<C-q>", { buffer = pops_state.clone.buf })
     pcall(vim.keymap.del, "i", "<C-q>", { buffer = pops_state.clone.buf })
   end
