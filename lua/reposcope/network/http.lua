@@ -17,13 +17,13 @@ function M.get(url, callback, debug)
   local stderr_data = {}
   local stdout_done = false
   local stderr_done = false
-  local callback_called = false -- NEW FLAG
+  local callback_called = false
 
   ---Secure Callback Execution
   local function secure_callback(response, error_msg)
     if not callback_called then
       callback(response, error_msg)
-      callback_called = true -- Mark callback as called
+      callback_called = true
     end
   end
 

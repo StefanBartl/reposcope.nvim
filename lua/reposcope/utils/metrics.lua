@@ -70,20 +70,15 @@ function M.get_total_requests()
     return { total = 0, successful = 0, failed = 0, cache_hitted = 0 }
   end
 
-  debug.notify("total requests log path: " .. log_path, 1)
-
-  -- Prüfen, ob die Log-Datei existiert und lesbar ist
   if not vim.fn.filereadable(log_path) then
     return { total = 0, successful = 0, failed = 0, cache_hitted = 0 }
   end
 
-  -- Prüfen, ob die Datei leer ist
   local file_stats = vim.loop.fs_stat(log_path)
   if file_stats and file_stats.size == 0 then
     return { total = 0, successful = 0, failed = 0, cache_hitted = 0 }
   end
 
-  -- Datei lesen und JSON-Daten dekodieren
   local raw = vim.fn.readfile(log_path)
   if #raw == 0 then
     return { total = 0, successful = 0, failed = 0, cache_hitted = 0 }
@@ -256,7 +251,7 @@ function M.check_rate_limit()
     return
   end
 
-  -- Wenn Limits nicht gesetzt sind, API abfragen
+  -- If no limits set request api and cache it in ram
   local http = require("reposcope.network.http")
   local token = config.options.github_token
 
