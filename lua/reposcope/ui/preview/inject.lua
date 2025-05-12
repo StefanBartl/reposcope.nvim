@@ -10,7 +10,7 @@ local notify = require("reposcope.utils.debug").notify
 ---@param repo_name string The name of the repository
 ---@param force_markdown? boolean If true, forces Markdown highlighting
 function M.show_readme(repo_name, force_markdown)
-  local content = readme.get_readme(repo_name)
+  local content = readme.get_cached_readme(repo_name)
   if not content then
     notify("[reposcope] README not cached for: " .. repo_name, 3)
     content = "README not cached yet."

@@ -5,9 +5,7 @@
 ---@field rate_limits RateLimits Stores the rate limits for the GitHub API (Core and Search)
 ---@field generate_uuid fun(): string  Creates a UUID based on actual timestamp
 ---@field log_request fun(uuid: string, data: table): nil Logs request details to request_log.json in JSON object format
----@field increase_req fun(uuid: string, query: string, source: string, context: string): nil Increases the request count for the current session and logs it
----@field increase_success fun(uuid: string, query: string, source: string, context: string, duration_ms: number, status_code: number): nil Increases the successful request count and logs it
----@field increase_failed fun(uuid: string, query: string, source: string, context: string, duration_ms: number, status_code: number, error?: string|nil): nil Increases the failed request count and logs it
+---@field increase_failed fun(uuid: string, query: string, source: string, context: string, duration_ms: number, status_code: number, error?: string|nil): nil Increases the failed request count and logs it:
 ---@field increase_cache_hit fun(uuid: string, query: string, source: string, context: string): nil Increases the cache hit count and logs it
 ---@field get_session_requests fun(): { total: number, successful: number, failed: number, cache_hitted: number } Retrieves the current session request count
 ---@field get_total_requests fun(): { total: number, successful: number, failed: number, cache_hitted: number } Retrieves the total request count from the file
@@ -19,12 +17,10 @@ local debug = require("reposcope.utils.debug")
 local uv = vim.loop
 
 ---@class ReqCount Counts API requests for profiling purposes
----@field requests number Stores the total API request count for the current session
 ---@field successful number Stores the count of successful API requests for the current session
 ---@field failed number Stores the count of failed API requests for the current session
 ---@field cache_hitted number Stores the count of cache hits for the current session
 M.req_count = {
-  requests = 0,      -- Total API requests in this session
   successful = 0,    -- Successful API requests in this session
   failed = 0,        -- Failed API requests in this session
   cache_hitted = 0   -- Cache hits in this session
@@ -53,8 +49,9 @@ M.rate_limits = {
 --- Retrieves the current session request counts
 ---@return { total: number, successful: number, failed: number, cache_hitted: number }
 function M.get_session_requests()
+  local total = M.req_count.successful + M.req_count.failed
   return {
-    total = M.req_count.requests,
+    total = total,
     successful = M.req_count.successful,
     failed = M.req_count.failed,
     cache_hitted = M.req_count.cache_hitted
@@ -124,7 +121,8 @@ local function log_request(uuid, data)
       end
     end
 
-    logs[uuid] = data
+    local log_key = uuid .. ":" .. data.type
+    logs[log_key] = data
 
     -- removes oldest entry if to much logs exist
     if vim.tbl_count(logs) > log_max then
@@ -150,18 +148,6 @@ function M.generate_uuid()
     random(0, 0xffff),
     random(0, 0xffffffffffff)
   )
-end
-
---- Increases the total request count for the current session and logs
-function M.increase_req(uuid, query, source, context)
-  M.req_count.requests = M.req_count.requests + 1
-  log_request(uuid, {
-    timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
-    type = "api_request",
-    query = query,
-    source = source,
-    context = context,
-  })
 end
 
 --- Increases the successful request count
@@ -209,7 +195,7 @@ end
 function M.check_rate_limit()
   if M.rate_limits.core.limit > 0 and M.rate_limits.search.limit > 0 then
 
-    local core_used = M.req_count.requests
+    local core_used = M.req_count.successful + M.req_count.failed
     local core_remaining = M.rate_limits.core.remaining
     local core_usage = 1 - (core_remaining / M.rate_limits.core.limit)
 

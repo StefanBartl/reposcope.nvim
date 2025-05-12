@@ -13,16 +13,20 @@ function M.show_stats()
 
   local lines = {
     "Reposcope Request Statistics",
-    "--------------------------------",
+    "================================",
     string.format("Session Requests: %d", session_stats.total),
     string.format(" - Successful: %d", session_stats.successful),
     string.format(" - Failed: %d", session_stats.failed),
-    string.format(" - Cache Hits: %d", session_stats.cache_hitted),
+    "",
+    string.format(" - Session Cache Hits: %d", session_stats.cache_hitted),
+    "--------------------------------",
     "",
     string.format("Total Requests: %d", total_stats.total),
     string.format(" - Successful: %d", total_stats.successful),
     string.format(" - Failed: %d", total_stats.failed),
-    string.format(" - Cache Hits: %d", total_stats.cache_hitted),
+    "",
+    string.format(" - Total Cache Hits: %d", total_stats.cache_hitted),
+    "--------------------------------",
     "",
     string.format("Average Duration (ms): %.2f", average_duration),
     string.format("Most Frequent Query: %s", most_frequent_query or "N/A"),
@@ -65,10 +69,14 @@ function M.calculate_extended_stats()
   local logs = vim.json.decode(table.concat(raw, "\n")) or {}
   local total_duration = 0
   local query_count = {}
+  local success_count = 0
 
   for _, log in pairs(logs) do
-    if log.duration_ms then
-      total_duration = total_duration + log.duration_ms
+    if log.type == "api_success" then
+      if log.duration_ms then
+        total_duration = total_duration + log.duration_ms
+      end
+      success_count = success_count + 1
     end
 
     if log.query then
@@ -76,13 +84,11 @@ function M.calculate_extended_stats()
     end
   end
 
-  local total_requests = vim.tbl_count(logs)
-  local average_duration = total_requests > 0 and (total_duration / total_requests) or 0
+  local average_duration = success_count > 0 and (total_duration / success_count) or 0
   local most_frequent_query = M.get_most_frequent_query(query_count)
 
   return average_duration, most_frequent_query
 end
-
 
 --- Determines the most frequent query from a query count table
 ---@param query_count table<string, number> Table of query counts

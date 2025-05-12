@@ -111,8 +111,6 @@ function M.clone_repository(path)
   local source = "clone_repo"
   local query = repo_name
 
-  metrics.increase_req(uuid, query, source, "clone_repository")
-
   -- Normalize the path (remove trailing slashes and add one)
   path = path:gsub("/+$", "") .. "/"
   local output_dir = vim.fn.fnameescape(path .. repo_name)

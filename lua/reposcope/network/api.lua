@@ -68,13 +68,10 @@ function M.request(method, url, callback, headers, debug, context)
   end
 
   -- Send HTTP request
-  http.get(url, function(response, error_msg)
-    local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- Calculate duration in milliseconds
+  http.get(url, function(response)
     if response then
-      metrics.increase_success(uuid, query, source, context, duration_ms, 200)
       callback(response)
     else
-      metrics.increase_failed(uuid, query, source, context, duration_ms, 500, error_msg)
       callback(nil)
     end
   end, debug)
