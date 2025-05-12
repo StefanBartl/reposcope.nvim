@@ -8,16 +8,16 @@ local M = {}
 
 local api = require("reposcope.network.api")
 local metrics = require("reposcope.utils.metrics")
-local readme = require("reposcope.state.readme")
+local readme_state = require("reposcope.state.readme")
 local repositories = require("reposcope.state.repositories")
 local preview = require("reposcope.ui.preview.inject")
-local notify = require("reposcope.utils.debug").notify
+local debug = require("reposcope.utils.debug")
 
 --- Initiates the README fetch for the currently selected repository
 function M.fetch_readme_for_selected()
   local repo = repositories.get_selected_repo()
   if not repo then
-    notify("[reposcope] No repository selected", 3)
+    debug.notify("[reposcope] No repository selected", 3)
     return
   end
 
@@ -26,7 +26,14 @@ function M.fetch_readme_for_selected()
   local default_branch = repo.default_branch or "main"
 
   if not owner or not repo_name then
-    notify("[reposcope] Invalid repository URL", 4)
+    debug.notify("[reposcope] Invalid repository URL", 4)
+    return
+  end
+
+  if readme_state.get_cached_readme(repo_name) then
+    local uuid = metrics.generate_uuid()
+    metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
+    preview.show_readme(repo_name)
     return
   end
 
@@ -44,23 +51,21 @@ end
 --- Attempts to fetch the README using the RAW URL, then the API as fallback
 function M.try_fetch_readme(raw_url, api_url, repo_name)
   local uuid = metrics.generate_uuid()
-  local start_time = vim.loop.hrtime() -- Start time for duration calculation
+  local start_time = vim.loop.hrtime()
   local query = repo_name
   local source = "raw_readme"
-
-  metrics.increase_req(uuid, query, source, "fetch_readme")
 
   api.get(raw_url, function(response)
     local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- Calculate duration in milliseconds
 
     if response then
       metrics.increase_success(uuid, query, source, "fetch_readme", duration_ms, 200)
-      readme.cache_readme(repo_name, response)
+      readme_state.cache_readme(repo_name, response)
       preview.show_readme(repo_name)
-      notify("[reposcope] Successfully fetched README from RAW URL.")
+      debug.notify("[reposcope] Successfully fetched README from RAW URL.")
     else
       metrics.increase_failed(uuid, query, source, "fetch_readme", duration_ms, 404, "RAW URL failed")
-      notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", 3)
+      debug.notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", 3)
       M.fetch_readme_from_api(api_url, repo_name)
     end
   end, nil, nil, "fetch_readme")
@@ -73,8 +78,6 @@ function M.fetch_readme_from_api(api_url, repo_name)
   local query = repo_name
   local source = "api_readme"
 
-  metrics.increase_req(uuid, query, source, "fetch_readme")
-
   api.get(api_url, function(response)
     local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- Calculate duration in milliseconds
 
@@ -82,17 +85,17 @@ function M.fetch_readme_from_api(api_url, repo_name)
       local decoded = vim.json.decode(response)
       if decoded and decoded.content then
         local content = M.decode_base64(decoded.content)
-        metrics.increase_success(uuid, query, source, "fetch_readme", duration_ms, 200)
-        readme.cache_readme(repo_name, content)
+        metrics.increase_success(uuid, query, source, "fetch_readme_api", duration_ms, 200)
+        readme_state.cache_readme(repo_name, content)
         preview.show_readme(repo_name)
-        notify("[reposcope] Successfully fetched README via API.")
+        debug.notify("[reposcope] Successfully fetched README via API.")
       else
-        metrics.increase_failed(uuid, query, source, "fetch_readme", duration_ms, 500, "Invalid API response")
-        notify("[reposcope] Invalid API response for README", 4)
+        metrics.increase_failed(uuid, query, source, "fetch_readme_api", duration_ms, 500, "Invalid API response")
+        debug.notify("[reposcope] Invalid API response for README", 4)
       end
     else
-      metrics.increase_failed(uuid, query, source, "fetch_readme", duration_ms, 404, "API URL failed")
-      notify("[reposcope] Failed to fetch README via API", 4)
+      metrics.increase_failed(uuid, query, source, "fetch_readme_api", duration_ms, 404, "API URL failed")
+      debug.notify("[reposcope] Failed to fetch README via API", 4)
     end
   end, nil, nil, "fetch_readme")
 end
