@@ -45,42 +45,48 @@ end
 function M.is_valid_path(path, nec_filename)
   path = vim.fn.expand(path)
 
-  -- Extract directory and filename
-  local dir = vim.fn.fnamemodify(path, ":h")
-  local filename = vim.fn.fnamemodify(path, ":t")
+  local filename = nil
+  if nec_filename == true then
+    filename = vim.fn.fnamemodify(path, ":t")
+    print("filename:", filename)
+  elseif not path:match("/$") then  --INFO: This is needed for user safety. `fnamemodify()` doesnt recognizy directories without ending '/'
+    path = path .. "/"
+  end
 
-  M.safe_mkdir(dir)
+  -- Extract directory and filename --REF: outsource
+  local dir = vim.fn.fnamemodify(path, ":h")
+  print("dir:", dir)
+
+  local dir_created = M.safe_mkdir(dir)
+  local dir_ok = M.is_dir_writeable(dir)
+
+  if dir_created == false or dir_ok == false then
+    print("[reposcope] Error with creation of (writeable) directory:", dir)
+    return false
+  end
+
+  if dir_ok and nec_filename == false then
+    print("Directory is valid path:", dir)
+    return true
+  end
 
   ---DEBUG: filename should be tested out
   -- Check if the filename is not empty
-  if filename == "" and nec_filename then
-    debugf("Filename is missing in the path.", 4)
-    return false
-  elseif filename == "" then
-    return false
-  end
-
-  -- Check if the directory is writable
- local testfile = dir .. "/.rs_write_test"
-  local file, err = io.open(testfile, "w")
-  if file then
-    file:close()
-    os.remove(testfile)
+  if dir_ok and nec_filename == true and filename == "" then
+      print("Path is valid bur filename is missing", dir, filename)
+      return false
   else
-    notify(
-      string.format("[reposcope] Error: Directory is not writable (%s). Reason: %s", dir, err),
-      4
-    )
-    return false
+    print("[reposcope] Path with filename ok:", dir, filename)
+    return true
   end
 
-  return true
 end
 
 ---Safely creates a directory (including parent directories)
 ---@param path string The directory path to create
 function M.safe_mkdir(path)
   if vim.fn.isdirectory(path) == 1 then
+    print("directory exists")
     return true
   end
 
@@ -91,11 +97,30 @@ function M.safe_mkdir(path)
   end
 
   if vim.fn.isdirectory(path) == 1 then
+    print("directory succesfully created")
     return true
   else
     vim.notify("[reposcope] Error: Directory was not created, but mkdir did not return an error: " .. path, 4)
     return false
   end
+end
+
+-- Check if the directory is writable
+function M.is_dir_writeable(dir)
+ local testfile = vim.fn.fnameescape(dir .. "/.rs_write_test")
+ local file, err = io.open(testfile, "w")
+ if file then
+   file:close()
+   os.remove(testfile)
+   print("Directory writeable")
+   return true
+ else
+   notify(
+     string.format("[reposcope] Error: Directory is not writable (%s). Reason: %s", dir, err),
+     4
+   )
+   return false
+ end
 end
 
 return M

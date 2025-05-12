@@ -39,7 +39,7 @@ M.options = {
     type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
   },
   -- Only change following values if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
-  cache_dir = "", -- Cache path for persistent cache files; standard is: vim.fn.stdpath("cache") .. "/reposcope/data"
+  cache_dir = "/home/steve/temp/nvim_cache", -- Cache path for persistent cache files; standard is: vim.fn.stdpath("cache") .. "/reposcope/data"
   log_filepath = "", -- Full path to the log file; standard is: vim.fn.stdpath("cache") .. "/reposcope/logs/log"
   log_format = "json", -- Log format ("json" or "xml")
   log_max = 1000, -- Controls the size of the log file
@@ -55,7 +55,7 @@ function M.setup(opts)
   M.options.clone.type = M.options.clone.type ~= "" and M.options.clone.type or M.options.request_tool
 
   M.init_cache_dir()
-  M.init_log_path()
+  --M.init_log_path()
 end
 
 ---Returns the current cache path
@@ -71,17 +71,19 @@ function M.init_cache_dir()
   if M.options.cache_dir and M.options.cache_dir ~= "" then
     M.options.cache_dir = vim.fn.expand(M.options.cache_dir)
 
-    if not is_valid_path(M.options.cache_dir, false) then
+    local test = is_valid_path(M.options.cache_dir, false)
+    print("test:", test)
+    if test == false then
       M.options.cache_dir = vim.fn.stdpath("cache") .. "/reposcope/data"
       require("reposcope.utils.protection").safe_mkdir(M.options.cache_dir)
-      require("reposcope.utils.debug").notify("[reposcope] Cache dir set to default " .. M.options.cache_dir, 3)
+      require("reposcope.utils.debug").notify("[reposcope] Cache dir set to default 1" .. M.options.cache_dir, 3)
     else
       require("reposcope.utils.debug").notify("[reposcope] Cache dir set to path passed by user: " .. M.options.cache_dir, 2)
     end
   else
     M.options.cache_dir = vim.fn.stdpath("cache") .. "/reposcope/data"
     require("reposcope.utils.protection").safe_mkdir(M.options.cache_dir)
-    require("reposcope.utils.debug").notify("[reposcope] Cache dir set to default " .. M.options.cache_dir, 3)
+    require("reposcope.utils.debug").notify("[reposcope] Cache dir set to default 2" .. M.options.cache_dir, 3)
   end
 
   if not vim.fn.isdirectory(M.options.cache_dir) then
