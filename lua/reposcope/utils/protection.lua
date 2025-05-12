@@ -1,6 +1,7 @@
----@class UtilsProtection Utility functions related to value normalization and scratch buffer management.
----@field count_or_default fun(val: table|number|string, default: number): number Returns the item count if `val` is a table, the number if `val` is a number, or `default` otherwise.
----@field create_named_buffer fun(name: string): integer Creates a named scratch buffer, replacing any existing one with the same name.
+---@class UtilsProtection Utility functions related to value normalization and scratch buffer management
+---@field count_or_default fun(val: table|number|string, default: number): number Returns the item count if `val` is a table, the number if `val` is a number, or `default` otherwise
+---@field create_named_buffer fun(name: string): integer Creates a named scratch buffer, replacing any existing one with the same name
+---@field is_valid_filename fun(filename: string|nil): boolean, string Normalizes a value into a non-zero count
 ---@field is_valid_path fun(path: string, nec_filename: boolean): boolean Validates if a given path or optional filepath is a valid and writable file path
 ---@field safe_mkdir fun(path: string): boolean Safely creates a directory (including parent directories)
 local M = {}
@@ -38,6 +39,37 @@ function M.create_named_buffer(name)
   return buf
 end
 
+--- Checks if the given filename is valid according to standard file naming rules.
+--- A valid filename:
+--- - is not nil
+--- - is not empty
+--- - does not contain invalid characters: /, \, ?, *, :, |, ", <, >, and \0 (Nullbyte)
+--- - Does not consist of only whitespace
+--- @param filename string|nil The filename to validate
+--- @return boolean, string Returns true if the filename is valid, false otherwise. 
+function M.is_valid_filename(filename)
+  if filename == nil then
+    return false, "Filename is nil."
+  end
+
+  local invalid_chars = '[\\/:*?"<>|%z]'
+
+  if filename == "" then
+    return false, "Filename is missing."
+  end
+
+  if filename:match("^%s*$") then
+    return false, "Filename is only whitespace."
+  end
+
+  if filename:match(invalid_chars) then
+    return false, "Filename contains invalid characters."
+  end
+
+  return true, ""
+end
+
+
 --- Validates if a given file path is a valid and writable log file path
 --- @desc: creates not existing directory if path is valid
 ---@param path string The full path to the log file
@@ -48,35 +80,29 @@ function M.is_valid_path(path, nec_filename)
   local filename = nil
   if nec_filename == true then
     filename = vim.fn.fnamemodify(path, ":t")
-    print("filename:", filename)
-  elseif not path:match("/$") then  --INFO: This is needed for user safety. `fnamemodify()` doesnt recognizy directories without ending '/'
+  elseif not path:match("/$") then  -- This check is needed for user safety. `fnamemodify()` doesnt recognizy directories without ending '/'
     path = path .. "/"
   end
 
-  -- Extract directory and filename --REF: outsource
+  -- Extract directory and filename
   local dir = vim.fn.fnamemodify(path, ":h")
-  print("dir:", dir)
+  local dir_ok = M.safe_mkdir(dir)
 
-  local dir_created = M.safe_mkdir(dir)
-  local dir_ok = M.is_dir_writeable(dir)
-
-  if dir_created == false or dir_ok == false then
-    print("[reposcope] Error with creation of (writeable) directory:", dir)
+  if dir_ok == false then
+    debugf("[reposcope] Error with creation of (writeable) directory: " .. dir, 3)
     return false
   end
 
   if dir_ok and nec_filename == false then
-    print("Directory is valid path:", dir)
     return true
   end
 
-  ---DEBUG: filename should be tested out
   -- Check if the filename is not empty
-  if dir_ok and nec_filename == true and filename == "" then
-      print("Path is valid bur filename is missing", dir, filename)
-      return false
+  local ok, err = M.is_valid_filename(filename)
+  if not ok then
+    debugf("Path is valid but filename invalid: " .. dir .. "/" .. filename .. " (" .. err .. ")", 3)
+    return false
   else
-    print("[reposcope] Path with filename ok:", dir, filename)
     return true
   end
 
@@ -86,7 +112,6 @@ end
 ---@param path string The directory path to create
 function M.safe_mkdir(path)
   if vim.fn.isdirectory(path) == 1 then
-    print("directory exists")
     return true
   end
 
@@ -97,12 +122,17 @@ function M.safe_mkdir(path)
   end
 
   if vim.fn.isdirectory(path) == 1 then
-    print("directory succesfully created")
-    return true
+    if M.is_dir_writeable(path) then
+      return true
+    else
+      debugf("directory created, but not writeable", 3)
+      return false
+    end
   else
     vim.notify("[reposcope] Error: Directory was not created, but mkdir did not return an error: " .. path, 4)
     return false
   end
+
 end
 
 -- Check if the directory is writable
@@ -112,7 +142,6 @@ function M.is_dir_writeable(dir)
  if file then
    file:close()
    os.remove(testfile)
-   print("Directory writeable")
    return true
  else
    notify(
