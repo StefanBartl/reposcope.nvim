@@ -5,7 +5,7 @@
 ---@field get_clone_dir fun(): string Returns the standard clone directory
 ---@field get_log_path fun(): string|nil Check if log options are set and returns it
 ---@field init_cache_dir fun(): nil Initialize cache path
----@field init_log_path fun(): nil Initialize log path for persistent log files
+---@field init_log_path fun(): nil Initialize log path
 local M = {}
 
 local protection = require("reposcope.utils.protection")
@@ -25,7 +25,6 @@ local debug = require("reposcope.utils.debug")
 ---@field preview_limit number Maximum number of lines shown in preview (default: 200)
 ---@field layout string UI layout type (default: "default")
 ---@field cache_dir string Path for Reposcope cache data (default: OS-dependent) 
----@field log_format string Log format ("json" or "xml")
 ---@field log_filepath string Full path to the log file (determined dynamically)
 ---@field log_max number Controls the size of the log file
 ---@field clone CloneOptions Options to configure cloning repositories
@@ -44,7 +43,6 @@ M.options = {
   -- Only change following values if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
   cache_dir = "", -- Cache path for persistent cache files; standard is: vim.fn.stdpath("cache") .. "/reposcope/data"
   log_filepath = "", -- Full path (without .ext) to the log file; standard is: vim.fn.stdpath("cache") .. "/reposcope/logs/log"
-  log_format = "json", -- Log format ("json" or "xml")
   log_max = 1000, -- Controls the size of the log file
 }
 
@@ -91,11 +89,11 @@ function M.get_log_path()
     return nil
   end
 
-  return M.options.log_filepath .. "." .. M.options.log_format
+  return M.options.log_filepath .. ".json"
 end
 
 
----Initialize log path for persistent log files
+---Initialize log path
 function M.init_log_path()
 
   -- Check if the user has set a custom log file path
@@ -111,11 +109,24 @@ function M.init_log_path()
   -- Use default log path if user-defined path is invalid or not set
   local log_dir = vim.fn.stdpath("cache") .. "/reposcope/logs"
   protection.safe_mkdir(log_dir)
-  M.options.log_filepath = vim.fn.fnameescape(log_dir .. "/request_log." .. M.options.log_format)
+  M.options.log_filepath = vim.fn.fnameescape(log_dir .. "/request_log")
 
   if not protection.is_valid_path(M.options.log_filepath, true) then
     debug.notify("[reposcope] Error: Log file path could not be set or is invalid.", 4)
   end
+
+  local log_file = M.get_log_path()
+  if not log_file then
+      debug.notify("[reposcope] Log file could not be created", 4)
+  else
+    local file, err = io.open(log_file, "w")
+    if err then
+      debug.notify("[reposcope] Log file could not be created", 4)
+    elseif file then
+      io.close(file)
+    end
+  end
+
 end
 
 ---Returns the standard directory for cloning

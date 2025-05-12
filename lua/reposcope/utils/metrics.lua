@@ -15,6 +15,7 @@
 local M = {}
 
 local config = require("reposcope.config")
+local debug = require("reposcope.utils.debug")
 local uv = vim.loop
 
 ---@class ReqCount Counts API requests for profiling purposes
@@ -64,13 +65,30 @@ end
 ---@return { total: number, successful: number, failed: number, cache_hitted: number }
 function M.get_total_requests()
   local log_path = config.get_log_path()
-  print("total requests log path:", log_path)
+  if not log_path then
+    debug.notify("[reposcope] Stats not available, logfile path invalid", 4)
+    return { total = 0, successful = 0, failed = 0, cache_hitted = 0 }
+  end
 
+  debug.notify("total requests log path: " .. log_path, 1)
+
+  -- Prüfen, ob die Log-Datei existiert und lesbar ist
   if not vim.fn.filereadable(log_path) then
     return { total = 0, successful = 0, failed = 0, cache_hitted = 0 }
   end
 
+  -- Prüfen, ob die Datei leer ist
+  local file_stats = vim.loop.fs_stat(log_path)
+  if file_stats and file_stats.size == 0 then
+    return { total = 0, successful = 0, failed = 0, cache_hitted = 0 }
+  end
+
+  -- Datei lesen und JSON-Daten dekodieren
   local raw = vim.fn.readfile(log_path)
+  if #raw == 0 then
+    return { total = 0, successful = 0, failed = 0, cache_hitted = 0 }
+  end
+
   local json_data = vim.json.decode(table.concat(raw, "\n")) or {}
 
   local total, successful, failed, cache_hitted = 0, 0, 0, 0
