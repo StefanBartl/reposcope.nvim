@@ -18,38 +18,41 @@ function M.init(query)
 end
 
 --- Fetches repositories from GitHub API
+--- Fetches repositories from GitHub API
 function M.fetch_github_repositories(query)
   if query == "" then
     notify("[reposcope] Error: Search query is empty.", 4)
     return
   end
 
+  local metrics = require("reposcope.utils.metrics")
   local encoded_query = urlencode(query)
   local url = string.format("https://api.github.com/search/repositories?q=%s", encoded_query)
+  local uuid = metrics.generate_uuid()
+  local start_time = vim.loop.hrtime()
+
+  metrics.increase_req(uuid, query, "search_api", "fetch_repositories")
 
   api.get(url, function(response)
+    local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- from nano to mills
     if not response then
+      metrics.increase_failed(uuid, query, "search_api", "fetch_repositories", duration_ms, 0, "No response")
       notify("[reposcope] No response from GitHub API.", 4)
       return
     end
 
-    -- Print raw api response
-    if debug.options.dev_mode == true then
-      --vim.schedule(function()
-        --notify("[reposcope] Raw API Response: " .. response, 1)
-      --end)
-    end
-
     local parsed = vim.json.decode(response)
     if not parsed or not parsed.items then
+      metrics.increase_failed(uuid, query, "search_api", "fetch_repositories", duration_ms, 0, "Invalid JSON")
       notify("[reposcope] Invalid JSON response from GitHub API.", 4)
       return
     end
 
+    metrics.increase_success(uuid, query, "search_api", "fetch_repositories", duration_ms, 200)
     repositories.set_repositories(parsed)
     list.display()
     notify("[reposcope] Loaded repositories from GitHub API.", 2)
-  end, nil, nil, "fetch_repositories")
+  end)
 end
 
 return M

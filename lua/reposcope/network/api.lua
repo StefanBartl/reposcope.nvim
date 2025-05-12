@@ -52,10 +52,6 @@ function M.request(method, url, callback, headers, debug, context)
 
   local start_time = vim.loop.hrtime() -- Start time for duration calculation
 
-  -- Increase request counter and check rate limit
-  metrics.increase_req(uuid, query, source, context)
-  metrics.check_rate_limit()
-
   -- Build HTTP request with headers (if provided)
   local request_headers = headers or {}
   if debug then
