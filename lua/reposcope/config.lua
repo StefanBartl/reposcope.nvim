@@ -117,14 +117,16 @@ function M.init_log_path()
 
   local log_file = M.get_log_path()
   if not log_file then
-      debug.notify("[reposcope] Log file could not be created", 4)
+      debug.notify("[reposcope] Log file path could not be determined", 4)
   else
-    local file, err = io.open(log_file, "w")
-    if err then
-      debug.notify("[reposcope] Log file could not be created", 4)
-    elseif file then
-      io.close(file)
-    end
+      if not vim.fn.filereadable(log_file) then
+          local file, err = io.open(log_file, "w")
+          if err then
+              debug.notify("[reposcope] Log file could not be created: " .. err, 4)
+          elseif file then
+              io.close(file)
+          end
+      end
   end
 
 end
