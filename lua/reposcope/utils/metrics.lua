@@ -195,7 +195,7 @@ end
 function M.check_rate_limit()
   if M.rate_limits.core.limit > 0 and M.rate_limits.search.limit > 0 then
 
-    local core_used = M.req_count.successful + M.req_count.failed
+    local core_used =  M.req_count.successful + M.req_count.failed
     local core_remaining = M.rate_limits.core.remaining
     local core_usage = 1 - (core_remaining / M.rate_limits.core.limit)
 

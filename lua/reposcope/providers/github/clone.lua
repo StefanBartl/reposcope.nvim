@@ -1,56 +1,28 @@
 ---DEBUG:
 ---enter during auto-suggestion?
 ---hardening
+---Annotation
 
 ---@desc forward decalarations
-local create_win, get_clone_informations
+local get_clone_informations
 
 local M = {}
 
 local config = require("reposcope.config")
 local state = require("reposcope.state.popups")
+local popup = require("reposcope.ui.popups.clone")
+local metrics = require("reposcope.utils.metrics")
+local protection = require("reposcope.utils.protection")
 
 function M.init()
   require("reposcope.keymaps").unset_prompt_keymaps()
-  create_win()
+  popup.open()
 end
 
 function  M.close()
   vim.api.nvim_win_close(state.clone.win, true)
   require("reposcope.keymaps").unset_clone_keymaps()
   require("reposcope.keymaps").set_prompt_keymaps()
-end
-
----@private
-function create_win()
-  state.clone.buf = vim.api.nvim_create_buf(false, true)
-  local width = math.min(vim.o.columns, 80)
-  local heigth = 1
-  local row = math.floor((vim.o.lines / 2) - (heigth / 2))
-  local col = math.floor((vim.o.columns / 2) - (width / 2))
-
-  state.clone.win = vim.api.nvim_open_win(state.clone.buf, true, {
-    relative = "editor",
-    row = row,
-    col = col,
-    width = width,
-    height = heigth,
-    border = "single",
-    title = " Enter path for cloning ",
-    title_pos = "center",
-    style = "minimal",
-  })
-
-  local dir = config.get_clone_dir()
-
-  vim.api.nvim_buf_set_lines(state.clone.buf, 0, -1, false, { dir })
-  vim.api.nvim_set_current_win(state.clone.win)
-  vim.api.nvim_win_set_cursor(state.clone.win, {1, #dir})
-  vim.defer_fn(function()
-    vim.cmd("startinsert!")
-  end, 10)
-
-  require("reposcope.keymaps").set_clone_keymaps()
 end
 
 ---@class CloneInfo
@@ -86,8 +58,6 @@ function get_clone_informations()
   return { name = repo_name, url = repo_url }
 end
 
---REF: pcall()
-local metrics = require("reposcope.utils.metrics")
 
 --- Clones a GitHub repository using various methods (gh, curl, wget, git)
 ---@param path string The local path where the repository should be cloned
@@ -120,38 +90,33 @@ function M.clone_repository(path)
   end
 
   local success = false
-  local error_msg = ""
+  local output, error_msg = "", ""
 
   -- Clone based on selected method
   if clone_type == "gh" then
-    vim.fn.system(string.format("gh repo clone %s %s", repo_url, output_dir))
-    success = vim.v.shell_error == 0
-    error_msg = "GitHub CLI clone failed."
+    success, output = protection.safe_execute_shell(string.format("gh repo clone %s %s", repo_url, output_dir))
+    error_msg = "GitHub CLI clone failed: " .. (output or "")
   elseif clone_type == "curl" then
     local zip_url = repo_url:gsub("%.git$", "/archive/refs/heads/main.zip")
     local output_zip = output_dir .. ".zip"
-    vim.fn.system(string.format("curl -L -o %s %s", output_zip, zip_url))
-    success = vim.v.shell_error == 0
-    error_msg = "Curl download failed."
+    success, output = protection.safe_execute_shell(string.format("curl -L -o %s %s", output_zip, zip_url))
+    error_msg = "Curl download failed: " .. (output or "")
   elseif clone_type == "wget" then
     local zip_url = repo_url:gsub("%.git$", "/archive/refs/heads/main.zip")
     local output_zip = output_dir .. ".zip"
-    vim.fn.system(string.format("wget -O %s %s", output_zip, zip_url))
-    success = vim.v.shell_error == 0
-    error_msg = "Wget download failed."
+    success, output = protection.safe_execute_shell(string.format("wget -O %s %s", output_zip, zip_url))
+    error_msg = "Wget download failed: " .. (output or "")
   else
-    vim.fn.system(string.format(("git clone %s %s"):format(), repo_url, output_dir))
-    success = vim.v.shell_error == 0
-    error_msg = "Git clone failed."
+    success, output = protection.safe_execute_shell(string.format("git clone %s %s", repo_url, output_dir))
+    error_msg = "Git clone failed: " .. (output or "")
   end
-
-  local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- Duration in milliseconds
+    local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- Duration in milliseconds
 
   if success then
     metrics.increase_success(uuid, query, source, "clone_repository", duration_ms, 200)
     vim.notify("Repository cloned to: " .. output_dir, 2)
   else
-    local error_msg = string.format("Failed to clone repository: %s", repo_url)
+    error_msg = string.format("Failed to clone repository: %s", error_msg)
     metrics.increase_failed(uuid, query, source, "clone_repository", duration_ms, 500, error_msg)
     vim.notify(error_msg, 4)
   end

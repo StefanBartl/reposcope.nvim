@@ -4,6 +4,7 @@
 ---@field is_valid_filename fun(filename: string|nil): boolean, string Normalizes a value into a non-zero count
 ---@field is_valid_path fun(path: string, nec_filename: boolean): boolean Validates if a given path or optional filepath is a valid and writable file path
 ---@field safe_mkdir fun(path: string): boolean Safely creates a directory (including parent directories)
+---@field safe_execute_shell fun(command: string): boolean, string Executes a shell command safely and returns the success status and output
 local M = {}
 
 local notify = require("reposcope.utils.debug").notify
@@ -150,6 +151,16 @@ function M.is_dir_writeable(dir)
    )
    return false
  end
+end
+
+---Executes a shell command safely and returns the success status and output
+---@param command string The shell command to be executed
+function M.safe_execute_shell(command)
+  local result = vim.fn.system(command)
+  if vim.v.shell_error ~= 0 then
+    return false, result
+  end
+  return true, result
 end
 
 return M
