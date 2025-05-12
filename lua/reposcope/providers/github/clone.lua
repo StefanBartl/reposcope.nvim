@@ -87,6 +87,10 @@ function get_clone_informations()
 end
 
 --REF: pcall()
+local metrics = require("reposcope.utils.metrics")
+
+--- Clones a GitHub repository using various methods (gh, curl, wget, git)
+---@param path string The local path where the repository should be cloned
 function M.clone_repository(path)
   if not path or not vim.fn.isdirectory(path) then
     vim.notify("[reposcope] Error cloning: invalid path", 4)
@@ -102,37 +106,58 @@ function M.clone_repository(path)
 
   local repo_name = infos.name
   local repo_url = infos.url
+  local uuid = metrics.generate_uuid()
+  local start_time = vim.loop.hrtime()
+  local source = "clone_repo"
+  local query = repo_name
+
+  metrics.increase_req(uuid, query, source, "clone_repository")
 
   -- Normalize the path (remove trailing slashes and add one)
   path = path:gsub("/+$", "") .. "/"
-
   local output_dir = vim.fn.fnameescape(path .. repo_name)
 
   if not vim.fn.isdirectory(output_dir) then
     vim.fn.mkdir(output_dir, "p")
   end
 
+  local success = false
+  local error_msg = ""
+
+  -- Clone based on selected method
   if clone_type == "gh" then
-    -- GitHub CLI Clone
     vim.fn.system(string.format("gh repo clone %s %s", repo_url, output_dir))
+    success = vim.v.shell_error == 0
+    error_msg = "GitHub CLI clone failed."
   elseif clone_type == "curl" then
-    -- Download via curl (ZIP)
     local zip_url = repo_url:gsub("%.git$", "/archive/refs/heads/main.zip")
     local output_zip = output_dir .. ".zip"
     vim.fn.system(string.format("curl -L -o %s %s", output_zip, zip_url))
-    vim.notify("Repository downloaded as ZIP: " .. output_zip, 2)
+    success = vim.v.shell_error == 0
+    error_msg = "Curl download failed."
   elseif clone_type == "wget" then
-    -- Download via wget (ZIP)
     local zip_url = repo_url:gsub("%.git$", "/archive/refs/heads/main.zip")
     local output_zip = output_dir .. ".zip"
     vim.fn.system(string.format("wget -O %s %s", output_zip, zip_url))
-    vim.notify("Repository downloaded as ZIP: " .. output_zip, 2)
+    success = vim.v.shell_error == 0
+    error_msg = "Wget download failed."
   else
-    -- Standard Git Clone
-    vim.fn.system(string.format("git clone %s %s", repo_url, output_dir))
+    vim.fn.system(string.format(("git clone %s %s"):format(), repo_url, output_dir))
+    success = vim.v.shell_error == 0
+    error_msg = "Git clone failed."
   end
 
-  vim.notify("Repository cloned to: " .. output_dir, 2)
+  local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- Duration in milliseconds
+
+  if success then
+    metrics.increase_success(uuid, query, source, "clone_repository", duration_ms, 200)
+    vim.notify("Repository cloned to: " .. output_dir, 2)
+  else
+    local error_msg = string.format("Failed to clone repository: %s", repo_url)
+    metrics.increase_failed(uuid, query, source, "clone_repository", duration_ms, 500, error_msg)
+    vim.notify(error_msg, 4)
+  end
+
   M.close()
 end
 

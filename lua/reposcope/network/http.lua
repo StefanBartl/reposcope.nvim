@@ -7,9 +7,6 @@ local uv = vim.loop
 local notify = require("reposcope.utils.debug").notify
 
 --- HTTP GET Request with secure callback handling
----@param url string The URL for the HTTP request
----@param callback fun(response: string|nil, error_msg?: string) Callback function with the response content (string) or nil on failure
----@param debug? boolean Optional debug flag for stderr output
 function M.get(url, callback, debug)
   local stdout = uv.new_pipe(false)
   local stderr = uv.new_pipe(false)
@@ -17,24 +14,13 @@ function M.get(url, callback, debug)
   local stderr_data = {}
   local stdout_done = false
   local stderr_done = false
-  local callback_called = false
-
-  ---Secure Callback Execution
-  local function secure_callback(response, error_msg)
-    if not callback_called then
-      callback(response, error_msg)
-      callback_called = true
-    end
-  end
 
   ---Checks if both stdout and stderr have finished processing.
   local function check_done()
     if stdout_done and stderr_done then
-      if #response_data == 0 then
-        secure_callback(nil, #stderr_data > 0 and table.concat(stderr_data) or "Request failed")
-      else
-        secure_callback(table.concat(response_data), #stderr_data > 0 and table.concat(stderr_data) or nil)
-      end
+      local response = #response_data > 0 and table.concat(response_data) or nil
+      local error_msg = #stderr_data > 0 and table.concat(stderr_data) or nil
+      callback(response, error_msg)
     end
   end
 
@@ -56,7 +42,7 @@ function M.get(url, callback, debug)
     vim.schedule(function()
       notify("[reposcope] Failed to start curl process", 4)
     end)
-    secure_callback(nil, "Failed to start curl process")
+    callback(nil, "Failed to start curl process")
     return
   end
 
