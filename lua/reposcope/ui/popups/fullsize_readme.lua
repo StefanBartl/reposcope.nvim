@@ -5,7 +5,9 @@ local M = {}
 local debug = require("reposcope.utils.debug")
 local readme_state = require("reposcope.state.readme")
 local repositories = require("reposcope.state.repositories")
+local os = require("reposcope.utils.os")
 
+--REF:
 
 --- Displays the README of the currently selected repository.
 --- If the README contains HTML content, it opens in the default web browser.
@@ -45,7 +47,8 @@ function M.show()
     content:match("<a href=")
   then
     -- If HTML is detected, open the repository page in the default browser
-    vim.cmd("silent !xdg-open https://github.com/" .. repo_name)
+    local url = "https://github.com/" ..repo.owner.login .. "/" .. repo_name
+    os.open_url(url)
     return
   end
 
