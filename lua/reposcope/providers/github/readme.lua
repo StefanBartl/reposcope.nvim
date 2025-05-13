@@ -13,6 +13,8 @@ local repositories = require("reposcope.state.repositories")
 local preview = require("reposcope.ui.preview.inject")
 local debug = require("reposcope.utils.debug")
 
+local active_readme_requests = {}
+
 --- Initiates the README fetch for the currently selected repository
 function M.fetch_readme_for_selected()
   local repo = repositories.get_selected_repo()
@@ -30,19 +32,22 @@ function M.fetch_readme_for_selected()
     return
   end
 
-  -- Check if README is already cached in memory (RAM cache)
-  if readme_state.get_cached_readme(repo_name) then
-    local uuid = metrics.generate_uuid()
-    metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
-    preview.show_readme(repo_name, "cache")
+  -- Check if README is already being fetched
+  if active_readme_requests[repo_name] then
+    debug.notify("[reposcope] README fetch already in progress for: " .. repo_name, 1)
     return
   end
 
-  -- Check if README is available in file cache (persistent cache)
-  local file_cached_readme = readme_state.get_fcached_readme(repo_name)
-  if file_cached_readme then
-    debug.notify("[reposcope] Loaded README from file cache: " .. repo_name, 3)
-    preview.show_readme(repo_name, "file")
+  active_readme_requests[repo_name] = true
+
+  -- Check if README is cached (RAM or File)
+  local is_cached, source = readme_state.has_cached_readme(repo_name)
+  if is_cached then
+    local uuid = metrics.generate_uuid()
+    metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
+    debug.notify("[reposcope] Load README from " .. source .. " cache: " .. repo_name, 1)
+    preview.show_readme(repo_name, source)
+    active_readme_requests[repo_name] = nil
     return
   end
 
@@ -73,13 +78,13 @@ function M.try_fetch_readme(raw_url, api_url, repo_name)
       -- Write to file cache asynchronously (non-blocking)
       vim.schedule(function()
         readme_state.fcache_readme(repo_name, response)
-        debug.notify("[reposcope] README cached to file (async): " .. repo_name, 3)
+        debug.notify("[reposcope] README cached to file (async): " .. repo_name, 1)
       end)
       preview.show_readme(repo_name)
       debug.notify("[reposcope] Successfully fetched README from RAW URL: " .. raw_url)  --REF: remove after debug
     else
       metrics.increase_failed(uuid, query, source, "fetch_readme", duration_ms, 404, "RAW URL failed")
-      debug.notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", 3)
+      debug.notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", 2)
       M.fetch_readme_from_api(api_url, repo_name)
     end
   end, nil, nil, "fetch_readme")
@@ -104,10 +109,10 @@ function M.fetch_readme_from_api(api_url, repo_name)
         -- Write to file cache asynchronously (non-blocking)
         vim.schedule(function()
           readme_state.fcache_readme(repo_name, response)
-          debug.notify("[reposcope] README via API cached to file (async): " .. repo_name, 3)
+          debug.notify("[reposcope] README via API cached to file (async): " .. repo_name, 1)
         end)
         preview.show_readme(repo_name, "cache")
-        debug.notify("[reposcope] Successfully fetched README via API: " .. api_url) --REF: remove after debug
+        debug.notify("[reposcope] Successfully fetched README via API: " .. api_url, 1) --REF: remove after debug
       else
         metrics.increase_failed(uuid, query, source, "fetch_readme_api", duration_ms, 500, "Invalid API response")
         debug.notify("[reposcope] Invalid API response for README", 4)

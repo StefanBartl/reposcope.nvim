@@ -27,6 +27,7 @@ M.repositories = { total_count = 0, items = {} } -- Global cache for JSON respon
 
 ---Stores the JSON response of repositories
 ---@param json RepositoryResponse
+---@return nil
 function M.set_repositories(json)
   M.repositories.total_count = json.total_count or 0
   M.repositories.items = json.items or {}
