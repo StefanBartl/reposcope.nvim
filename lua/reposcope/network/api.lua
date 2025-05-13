@@ -3,9 +3,7 @@
 local M = {}
 
 local http = require("reposcope.network.http")
-local metrics = require("reposcope.utils.metrics")
 local notify = require("reposcope.utils.debug").notify
-local generate_uuid = require("reposcope.utils.metrics").generate_uuid
 local active_requests = {}
 
 ---Sends a generalized API request (GET, POST, etc.)
@@ -19,38 +17,14 @@ function M.request(method, url, callback, headers, debug, context)
   -- Set default context if not provided
   context = context or "general"
 
-  local uuid = generate_uuid()
-  -- Prüfen, ob bereits eine aktive Anfrage für diesen Kontext läuft
-  if active_requests[uuid] then
-    notify("[reposcope] Request already in progress for context: " .. context, 3)
+  -- Prüfen, ob bereits eine aktive Anfrage für diese URL läuft
+  if active_requests[url] then
+    notify("[reposcope] Request already in progress for URL: " .. url, 3)
     return
   end
 
-  active_requests[uuid] = true
-
-  -- Extract source from URL (for better logging)
-  local source
-  if url:match("https://api%.github%.com/") then
-    source = url:match("https://api%.github%.com/([%w_]+)/") or "unknown"
-    if source == "search" then
-      source = "search_api"
-    elseif source == "repos" then
-      source = "core_api"
-    end
-  elseif url:match("https://raw%.githubusercontent%.com/") then
-    source = "raw"
-  elseif url:match("^git clone") or url:match("^gh repo clone") then
-    source = "clone"
-  elseif url:match("^curl") or url:match("^wget") then
-    source = "clone_download"
-  else
-    source = "unknown"
-  end
-
-
-  local query = url:match("q=([^&]+)") or "none"
-
-  local start_time = vim.loop.hrtime() -- Start time for duration calculation
+  -- Markiere URL als aktiv
+  active_requests[url] = true
 
   -- Build HTTP request with headers (if provided)
   local request_headers = headers or {}
@@ -69,6 +43,10 @@ function M.request(method, url, callback, headers, debug, context)
 
   -- Send HTTP request
   http.get(url, function(response)
+    -- Callback und active_requests nur einmal freigeben
+    if not active_requests[url] then return end
+    active_requests[url] = nil
+
     if response then
       callback(response)
     else
@@ -95,3 +73,4 @@ function M.delete(url, callback, headers, debug, context)
 end
 
 return M
+
