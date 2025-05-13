@@ -110,6 +110,13 @@ function M.set_prompt_keymaps()
     },
     {
       mode = "i",
+      lhs = "<C-s>",
+      rhs = function()
+        require("reposcope.ui.popups.fullsize_readme").show()
+      end,
+    },
+    {
+      mode = "i",
       lhs = "<C-c>",
       rhs = function()
         vim.schedule(function()
