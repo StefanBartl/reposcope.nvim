@@ -1,24 +1,46 @@
 ---@class UIPreview
----@field show_readme fun(repo_name: string, force_markdown?: boolean): nil Displays the README of a repository in the preview window
+---@field show_readme fun(repo_name: string, where: "cache"|"file"|nil, force_markdown?: boolean): nil Displays the README of a repository in the preview window
 local M = {}
 
 local readme = require("reposcope.state.readme")
 local state = require("reposcope.state.ui")
-local notify = require("reposcope.utils.debug").notify
+local debug = require("reposcope.utils.debug")
 
----Displays the README of a repository in the preview window
+--- Displays the README of a repository in the preview window
 ---@param repo_name string The name of the repository
----@param force_markdown? boolean If true, forces Markdown highlighting
-function M.show_readme(repo_name, force_markdown)
-  local content = readme.get_cached_readme(repo_name)
+---@param where "cache"|"file"|nil Determines where to load the README from:
+--- - "cache": Loads the README from the in-memory cache.
+--- - "file": Loads the README from the file cache (persistent storage).
+--- - nil: Attempts to load from both (file first, then cache).
+---@param force_markdown? boolean If true, forces Markdown highlighting in the preview
+function M.show_readme(repo_name, where, force_markdown)
+  local content
+
+  -- Attempt to load README from file cache (persistent storage)
+  if where == "file" or where == nil then
+    content = readme.get_fcached_readme(repo_name)
+    if not content then
+      debug.notify("[reposcope] README not filecached for: " .. repo_name, 3)
+    end
+  end
+
+  -- Attempt to load README from in-memory cache
+  if (where == "cache" or where == nil) and not content then
+    content = readme.get_cached_readme(repo_name)
+    if not content then
+      debug.notify("[reposcope] README not cached for: " .. repo_name, 3)
+      content = "README not cached yet."
+    end
+  end
+
   if not content then
-    notify("[reposcope] README not cached for: " .. repo_name, 3)
-    content = "README not cached yet."
+    debug.notify("[reposcope] Np content for show_readme", 4)
+    return
   end
 
   local buf = state.buffers.preview
   if not buf then
-    notify("[reposcope] Preview buffer not found.", 4)
+    debug.notify("[reposcope] Preview buffer not found.", 4)
     return
   end
 

@@ -34,7 +34,7 @@ function M.fetch_readme_for_selected()
   if readme_state.get_cached_readme(repo_name) then
     local uuid = metrics.generate_uuid()
     metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
-    preview.show_readme(repo_name)
+    preview.show_readme(repo_name, "cache")
     return
   end
 
@@ -42,7 +42,7 @@ function M.fetch_readme_for_selected()
   local file_cached_readme = readme_state.get_fcached_readme(repo_name)
   if file_cached_readme then
     debug.notify("[reposcope] Loaded README from file cache: " .. repo_name, 3)
-    preview.show_readme(repo_name)
+    preview.show_readme(repo_name, "file")
     return
   end
 
@@ -106,7 +106,7 @@ function M.fetch_readme_from_api(api_url, repo_name)
           readme_state.fcache_readme(repo_name, response)
           debug.notify("[reposcope] README via API cached to file (async): " .. repo_name, 3)
         end)
-        preview.show_readme(repo_name)
+        preview.show_readme(repo_name, "cache")
         debug.notify("[reposcope] Successfully fetched README via API: " .. api_url) --REF: remove after debug
       else
         metrics.increase_failed(uuid, query, source, "fetch_readme_api", duration_ms, 500, "Invalid API response")
