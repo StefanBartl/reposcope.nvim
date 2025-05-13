@@ -30,9 +30,18 @@ function M.fetch_readme_for_selected()
     return
   end
 
+  -- Check if README is already cached in memory (RAM cache)
   if readme_state.get_cached_readme(repo_name) then
     local uuid = metrics.generate_uuid()
     metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
+    preview.show_readme(repo_name)
+    return
+  end
+
+  -- Check if README is available in file cache (persistent cache)
+  local file_cached_readme = readme_state.get_fcached_readme(repo_name)
+  if file_cached_readme then
+    debug.notify("[reposcope] Loaded README from file cache: " .. repo_name, 3)
     preview.show_readme(repo_name)
     return
   end
@@ -61,8 +70,13 @@ function M.try_fetch_readme(raw_url, api_url, repo_name)
     if response then
       metrics.increase_success(uuid, query, source, "fetch_readme", duration_ms, 200)
       readme_state.cache_readme(repo_name, response)
+      -- Write to file cache asynchronously (non-blocking)
+      vim.schedule(function()
+        readme_state.fcache_readme(repo_name, response)
+        debug.notify("[reposcope] README cached to file (async): " .. repo_name, 3)
+      end)
       preview.show_readme(repo_name)
-      debug.notify("[reposcope] Successfully fetched README from RAW URL.")
+      debug.notify("[reposcope] Successfully fetched README from RAW URL: " .. raw_url)  --REF: remove after debug
     else
       metrics.increase_failed(uuid, query, source, "fetch_readme", duration_ms, 404, "RAW URL failed")
       debug.notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", 3)
@@ -87,8 +101,13 @@ function M.fetch_readme_from_api(api_url, repo_name)
         local content = M.decode_base64(decoded.content)
         metrics.increase_success(uuid, query, source, "fetch_readme_api", duration_ms, 200)
         readme_state.cache_readme(repo_name, content)
+        -- Write to file cache asynchronously (non-blocking)
+        vim.schedule(function()
+          readme_state.fcache_readme(repo_name, response)
+          debug.notify("[reposcope] README via API cached to file (async): " .. repo_name, 3)
+        end)
         preview.show_readme(repo_name)
-        debug.notify("[reposcope] Successfully fetched README via API.")
+        debug.notify("[reposcope] Successfully fetched README via API: " .. api_url) --REF: remove after debug
       else
         metrics.increase_failed(uuid, query, source, "fetch_readme_api", duration_ms, 500, "Invalid API response")
         debug.notify("[reposcope] Invalid API response for README", 4)

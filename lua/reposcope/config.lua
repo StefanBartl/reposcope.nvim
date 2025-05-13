@@ -59,6 +59,12 @@ function M.setup(opts)
   M.init_log_path()
 end
 
+function M.get_readme_fcache_dir()
+  local filecache = M.get_cache_dir()
+  return filecache .. "/readme"
+end
+
+
 ---Returns the current cache path
 ---@return string The current cache path
 function M.get_cache_dir()
