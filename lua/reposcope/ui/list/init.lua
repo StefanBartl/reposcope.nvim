@@ -31,10 +31,10 @@ end
 function default()
   ui_state.windows.list = vim.api.nvim_open_win(ui_state.buffers.list, false, {
     relative = "editor",
-    row = ui_config.row + prompt_config.height,
+    row = ui_config.row + prompt_config.height + 1,
     col = ui_config.col + 1,
-    width = (ui_config.width / 2),
-    height = ui_config.height - prompt_config.height,
+    width = (ui_config.width / 2) - 1,
+    height = ui_config.height - prompt_config.height - 2,
     --title = "Repositories",
     --title_pos = "left",
     border = "none",
@@ -53,8 +53,8 @@ function apply_list_highlight(win)
   vim.api.nvim_win_set_hl_ns(win, ns)
 
   vim.api.nvim_set_hl(0, "ReposcopeListHighlight", {
-    bg = "#44475a", -- Hintergrundfarbe für die hervorgehobene Zeile
-    fg = "#ffffff", -- Textfarbe
+    bg = "#44475a",
+    fg = "#ffffff",
     bold = true,
   })
 end
