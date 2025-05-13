@@ -10,7 +10,7 @@ local M = {}
 local ui_state = require("reposcope.state.ui")
 local pops_state = require("reposcope.state.popups")
 local navigate_list = require("reposcope.ui.prompt.navigate_list")
-local notify = require("reposcope.utils.debug").notify -- HACK: remove notify
+local debug = require("reposcope.utils.debug")
 local clone = require("reposcope.providers.github.clone")
 
 local _registry = {}
@@ -70,7 +70,7 @@ end
 function M.set_prompt_keymaps()
   local prompt_buf = require("reposcope.state.ui").buffers.prompt
   if type(prompt_buf) ~= "number" or not vim.api.nvim_buf_is_valid(prompt_buf) then
-    notify("[reposcope] prompt buffer invalid in set_prompt_keymaps()", 1)
+    debug.notify("[reposcope] prompt buffer invalid in set_prompt_keymaps()", 1)
     return
   end
 
@@ -183,7 +183,7 @@ end
 ---@private
 function clear_registered_keymaps(tag)
   if not tag or not tag:find("^reposcope_") then
-    notify(
+    debug.notify(
       "[reposcope] Refusing to clear keymaps without valid reposcope_* tag",
       3
     )
@@ -239,7 +239,7 @@ function M.set_clone_keymaps()
     end, { buffer = pops_state.clone.buf, noremap = true, silent = true })
 
   else
-    vim.notify("No buffer to set keymaps", 1)
+    vim.debug.notify("No buffer to set keymaps", 1)
   end
 end
 
