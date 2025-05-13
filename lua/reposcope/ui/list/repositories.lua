@@ -11,7 +11,7 @@ local repositories = require("reposcope.state.repositories")
 local text_utils = require("reposcope.utils.text")
 local ui_config = require("reposcope.ui.config")
 local notify = require("reposcope.utils.debug").notify
-local line_width = ui_config.width / 2
+local line_width = (ui_config.width / 2) - 1 -- NOTE: hardcoden
 
 -- Current line index for highlight
 M.current_line = 1

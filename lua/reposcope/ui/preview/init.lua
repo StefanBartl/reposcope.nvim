@@ -33,10 +33,10 @@ end
 function default()
   ui_state.windows.preview = vim.api.nvim_open_win(ui_state.buffers.preview, false, {
     relative = "editor",
-    col = ui_config.col + (ui_config.width / 2) + 1,
-    row = ui_config.row,
-    height = ui_config.height,
-    width = ui_config.preview_width,
+    col = ui_config.col + (ui_config.width / 2) + 2,
+    row = ui_config.row + 1,
+    height = ui_config.height - 2,
+    width = ui_config.preview_width - 3,
     border = "none",
     title = "Preview",
     title_pos = "center",
