@@ -1,5 +1,6 @@
 ---@class UtilsText
 ---@field center_text fun(text: string, width: number): string[] Centers given text input and returns it, splitting lines without breaking words
+---@field center_text_lines fun(lines: string[], width: number): string[] Centers an array of text lines within a specified width
 ---@field cut_text_for_line fun(offset: number, width: number, input: string): string Centers given text input and returns it
 ---@field gen_padded_lines fun(height: number, content: string|string[]): string[] Centers given text input and returns it
 local M = {}
@@ -9,34 +10,25 @@ local notify = require("reposcope.utils.debug").notify
 ---Centers given text input and returns it, splitting lines without breaking words
 ---@param text string The text to be centered
 ---@param width number The maximum width for centering
----@return string[] List of centered text lines (split if necessary)
 function M.center_text(text, width)
-  local lines = {} -- Resulting list of centered text lines
+  local lines = {}
 
-  -- Check if the text is longer than the specified width
   if #text > width then
     local start = 1
 
-    -- Loop to split text into lines
     while start <= #text do
-      -- Extract a segment of the text with the specified width
       local segment = text:sub(start, start + width - 1)
 
       -- Check if the segment is at full width and the next character is not a space
       if #segment == width and text:sub(start + width, start + width):match("%S") then
-        -- Try to find the last space in the segment
         local last_space = segment:match(".*()%s")
         if last_space then
-          -- Adjust the segment to end at the last space
           segment = text:sub(start, start + last_space - 1)
-          -- Start the next line directly after the last word
           start = start + last_space -- Move past the last space
         else
-          -- If no space is found, force a split (word too long)
           start = start + width -- Move to the next segment
         end
       else
-        -- If the segment fits or ends perfectly, move to the next
         start = start + #segment
       end
 
@@ -45,12 +37,27 @@ function M.center_text(text, width)
       table.insert(lines, string.rep(" ", math.max(pad, 0)) .. segment)
     end
 
-    return lines -- Return the list of centered text lines
+    return lines
   end
 
   -- If the text fits within the width, center it directly
   local pad = math.floor((width - #text) / 2)
   return { string.rep(" ", math.max(pad, 0)) .. text }
+end
+
+---Centers an array of text lines within a specified width
+---@param lines string[] List of text lines to be centered
+---@param width number The maximum width for centering
+function M.center_text_lines(lines, width)
+  local centered_lines = {}
+
+  for _, line in ipairs(lines) do
+    for _, centered in ipairs(M.center_text(line, width)) do
+      table.insert(centered_lines, centered)
+    end
+  end
+
+  return centered_lines
 end
 
 ---Cuts given input to fit in 1 row and postfix it with '...'
@@ -82,7 +89,6 @@ function M.gen_padded_lines(height, content)
     notify("Content must be a string or a table", 2)
   end
 
-  -- Adjust to desired height
   local result = {}
   for i = 1, height do
     result[i] = lines[i] or ""

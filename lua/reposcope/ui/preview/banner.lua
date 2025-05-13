@@ -23,27 +23,12 @@ function M.get_banner(preview_width)
   }
 
   -- Center each line and collect results
-  local centered_lines = M.center_text_lines(text_lines, preview_width)
+  local centered_lines = text.center_text_lines(text_lines, preview_width)
 
   -- Apply vertical centering (2/3 height, 1/3 top padding)
   return M.apply_vertical_centering(centered_lines)
 end
 
----Centers an array of text lines within a specified width
----@param lines string[] List of text lines to be centered
----@param width number The width for centering each line
----@return string[] List of centered text lines
-function M.center_text_lines(lines, width)
-  local centered_lines = {}
-
-  for _, line in ipairs(lines) do
-    for _, centered in ipairs(text.center_text(line, width)) do
-      table.insert(centered_lines, centered)
-    end
-  end
-
-  return centered_lines
-end
 
 ---Applies vertical centering to the banner text, maintaining a 2/3 height ratio
 ---@param lines string[] The lines to be vertically centered
