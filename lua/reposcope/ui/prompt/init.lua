@@ -26,6 +26,7 @@ function M.open_prompt()
 
   prompt_config.init_prompt_layout(ui_state.buffers.prompt, ui_state.windows.prompt, " prompt ")
   protect_prompt.protect(ui_state.buffers.prompt, prompt_config.prefix_len)
+
   vim.schedule(function()
     vim.cmd("startinsert")
   end)
