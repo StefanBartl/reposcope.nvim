@@ -79,7 +79,11 @@ function M.get_total_requests()
     return { total = 0, successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
-  local raw = vim.fn.readfile(log_path)
+  local ok, raw = pcall(vim.fn.readfile, log_path)
+  if not ok then
+    debug.notify("[reposcope] Error reading stats file: " .. raw, 4)
+    return { total = 0, successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
+  end
   if #raw == 0 then
     return { total = 0, successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
