@@ -16,25 +16,44 @@ local debug = require("reposcope.utils.debug")
 function M.show_readme(repo_name, source, force_markdown)
   local content
 
-  -- Attempt to load README from file cache (persistent storage)
-  if source == "file" or source == nil then
-    content = readme.get_fcached_readme(repo_name)
-    if not content then
-      debug.notify("[reposcope] README not filecached for: " .. repo_name, 1)
-    end
-  end
-
-  -- Attempt to load README from in-memory cache
-  if (source == "cache" or source == nil) and not content then
+  if source == "cache" then
     content = readme.get_cached_readme(repo_name)
-    if not content then
-      debug.notify("[reposcope] README not cached for: " .. repo_name, 1)
-      content = "README not cached yet."
+    if content then
+      debug.notify("[reposcope] README loaded from RAM cache: " .. repo_name, 1)
+    else
+      debug.notify("[reposcope] README not in RAM cache: " .. repo_name, 1)
+    end
+
+  elseif source == "file" then
+    content = readme.get_fcached_readme(repo_name)
+    if content then
+      debug.notify("[reposcope] README loaded from File cache: " .. repo_name, 1)
+    else
+      debug.notify("[reposcope] README not in File cache: " .. repo_name, 1)
+    end
+
+  else
+
+    -- Prioritize RAM-Cache > Datei-Cache
+    content = readme.get_cached_readme(repo_name)
+    if content then
+      debug.notify("[reposcope] README loaded from RAM cache: " .. repo_name, 1)
+    else
+      debug.notify("[reposcope] README not in RAM cache: " .. repo_name, 1)
+      -- Wenn nicht im RAM, dann Datei-Cache prüfen
+      content = readme.get_fcached_readme(repo_name)
+      if content then
+        debug.notify("[reposcope] README loaded from File cache: " .. repo_name, 1)
+        -- Automatisch in den RAM-Cache laden für schnelleren Zugriff
+        readme.cache_readme(repo_name, content)
+      else
+        debug.notify("[reposcope] README not in File cache: " .. repo_name, 1)
+      end
     end
   end
 
   if not content then
-    debug.notify("[reposcope] Np content for show_readme", 4)
+    debug.notify("[reposcope] No content for show_readme", 4)
     return
   end
 
