@@ -18,6 +18,7 @@
 ---@field get_repositories fun(): RepositoryResponse Returns the cached JSON response
 ---@field get_repository fun(repo_name: string): Repository|nil Returns a repository by its name
 ---@field get_selected_repo fun(): Repository|nil Retrieves the currently selected repository
+---@field are_loaded fun(): boolean Returns, if repositories are loaded in ram cache
 local M = {}
 
 local notify = require("reposcope.utils.debug").notify
@@ -106,6 +107,16 @@ function M.get_selected_repo()
 
   notify("[reposcope] Repository not found: " .. owner .. "/" .. repo_name, 3)
   return nil
+end
+
+---Test function, whih returns if repositories are loaded in RAM
+function M.are_loaded()
+  local json_data = M.get_repositories()
+  if not json_data or not json_data.items then
+    return false
+  end
+
+  return true
 end
 
 return M

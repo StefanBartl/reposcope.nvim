@@ -2,7 +2,7 @@
 ---@field invocation UIStateInvocation invocation editor state before UI activation
 ---@field buffers UIStateBuffers buffer handles by role
 ---@field windows UIStateWindows window handles by role
----@brief Tracks plugin-local buffer and window handles for UI elements.
+---@brief Tracks plugin-local buffer and window handles and also other state for UI elements.
 ---@description
 ---The UIState module maintains references to buffer and window IDs
 ---used by different parts of the user interface such as preview, prompt,
@@ -30,6 +30,9 @@
 ---@field prompt integer|nil
 ---@field list integer|nil
 ---@field clone integer|nil
+
+---@class UIPromptLastInput
+---@field last string|nil Holds state for the prompt input
 
 ---@class UIStateManager
 ---@field capture_invocation_state fun(): nil Captures the current window and cursor position for later restoration
@@ -67,10 +70,15 @@ M.windows = {
   list = nil,
 }
 
+---@type UIPromptLastInput
 M.prompt = {
   last = nil,
 }
 
+---Keep state if the list window was populated with repositories at least one 22:42
+M.list_populated = nil
+---Saves the last slelected line
+M.last_selected_line = nil
 
 --TODO: put in ui/utils
 
