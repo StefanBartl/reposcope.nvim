@@ -84,7 +84,7 @@ function M.set_prompt_keymaps()
       end,
     },
     {
-      mode = "i",
+      mode = {"n", "i"},
       lhs = "<Up>",
       rhs = function()
         navigate_list.navigate_list_in_prompt("up")
@@ -92,7 +92,7 @@ function M.set_prompt_keymaps()
       end,
     },
     {
-      mode = "i",
+      mode = {"n", "i"},
       lhs = "<Down>",
       rhs = function()
         navigate_list.navigate_list_in_prompt("down")
@@ -100,21 +100,21 @@ function M.set_prompt_keymaps()
       end,
     },
    {
-      mode = "i",
+      mode = {"n", "i"},
       lhs = "<C-r>",
       rhs = function()
         require("reposcope.ui.preview.readme_viewer").show()
       end,
     },
    {
-      mode = "i",
+      mode = {"n", "i"},
       lhs = "<C-b>",
       rhs = function()
         require("reposcope.ui.preview.readme_buffer").create()
       end,
     },
     {
-      mode = "i",
+      mode = {"n", "i"},
       lhs = "<C-c>",
       rhs = function()
         vim.schedule(function()
