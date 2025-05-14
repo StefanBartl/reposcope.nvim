@@ -6,6 +6,7 @@ local M = {}
 
 local metrics = require("reposcope.utils.metrics")
 local stats_state = require("reposcope.state.popups").stats
+local debug = require("reposcope.utils.debug")
 
 --- Displays the request statistics in a floating window
 function M.show_stats()
@@ -90,11 +91,18 @@ function M.calculate_extended_stats()
   local file_path = require("reposcope.config").get_log_path()
 
   if not vim.fn.filereadable(file_path) then
+    debug.notify("[reposcope] File not readable or does not exist: " .. file_path, 4)
     return 0, "N/A"
   end
 
-  local raw = vim.fn.readfile(file_path)
+  local ok, raw = pcall(vim.fn.readfile, file_path)
+  if not ok then
+    debug.notify("[reposcope] Error reading file: " .. file_path .. " - " .. raw, 4)
+    return 0, "N/A"
+  end
+
   if not raw or #raw == 0 then
+    debug.notify("[reposcope] File is empty: " .. file_path, 4)
     return 0, "N/A"
   end
 
