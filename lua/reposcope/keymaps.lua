@@ -139,9 +139,8 @@ function M.set_prompt_keymaps()
 end
 
 ---Apply all keymaps for closing the UI to the relevant buffers.
----These include `<Esc>` in normal mode for closing the UI.
----`<Esc>` in insert and terminal mode switches to normal mode.
----`<C-w>` in insert/terminal mode switches to normal mode and moves windows.
+---These include `<Esc>` and `<C-w>` in normal mode for closing the UI.
+---`<Esc>` and `<C-w>` in insert and terminal mode switches to normal mode.
 ---Registered keymaps are tagged as 'reposcope_ui' for later cleanup.
 function M.set_close_ui_keymaps()
   local buffers = {
@@ -162,6 +161,17 @@ function M.set_close_ui_keymaps()
     "reposcope_ui"
   )
 
+  -- Normal mode: <C-w> close UI
+  map_over_bufs(
+    "n", "<C-w>",
+    function()
+      require("reposcope.init").close_ui()
+    end,
+    buffers,
+    { silent = true },
+    "reposcope_ui"
+  )
+
   -- Insert, Visual & Terminal Mode: <Esc> -> Normal Mode
   map_over_bufs(
     { "i", "t", "v" }, "<Esc>",
@@ -171,17 +181,15 @@ function M.set_close_ui_keymaps()
     "reposcope_ui"
   )
 
-  --NOTE: maybe not needed
-
-  --[[ Insert, Visual & Terminal Mode: <C-w> -> Change to normal mode and apply window change
+  --Insert, Visual & Terminal Mode: <C-w> -> No operations
   map_over_bufs(
     { "i", "t", "v" }, "<C-w>",
-    "<C-\\><C-n><C-w>",
+    "<Nop>",
     buffers,
     { silent = true, noremap = true },
     "reposcope_ui"
   )
-  ]]
+
 end
 
 ---Clear all registered keymaps with optional tag.
