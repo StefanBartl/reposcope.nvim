@@ -8,8 +8,8 @@
 ---@field increase_failed fun(uuid: string, query: string, source: string, context: string, duration_ms: number, status_code: number, error?: string|nil): nil Increases the failed request count and logs it:
 ---@field increase_cache_hit fun(uuid: string, query: string, source: string, context: string): nil Increases the cache hit count and logs it
 ---@field increase_fcache_hit fun(uuid: string, query: string, source: string, context: string): nil Increases the filecache hit count and logs it
----@field get_session_requests fun(): { total: number, successful: number, failed: number, cache_hitted: number, fcache_hitted: number } Retrieves the current session request count
----@field get_total_requests fun(): { total: number, successful: number, failed: number, cache_hitted: number, fcache_hitted: number } Retrieves the total request count from the file
+---@field get_session_requests fun(): {successful: number, failed: number, cache_hitted: number, fcache_hitted: number } Retrieves the current session request count
+---@field get_total_requests fun(): { successful: number, failed: number, cache_hitted: number, fcache_hitted: number } Retrieves the total request count from the file
 ---@field check_rate_limit fun(): nil Checks the current GitHub rate limit and displays a warning if low
 local M = {}
 
@@ -21,6 +21,7 @@ local uv = vim.loop
 ---@field successful number Stores the count of successful API requests for the current session
 ---@field failed number Stores the count of failed API requests for the current session
 ---@field cache_hitted number Stores the count of cache hits for the current session
+---@field fcache_hitted number Stores the count of filecache hits for the current session
 M.req_count = {
   successful = 0,    -- Successful API requests in this session
   failed = 0,        -- Failed API requests in this session
@@ -49,11 +50,9 @@ M.rate_limits = {
 }
 
 --- Retrieves the current session request counts
----@return { total: number, successful: number, failed: number, cache_hitted: number, fcache_hitted: number }
+---@return { successful: number, failed: number, cache_hitted: number, fcache_hitted: number }
 function M.get_session_requests()
-  local total = M.req_count.successful + M.req_count.failed
   return {
-    total = total,
     successful = M.req_count.successful,
     failed = M.req_count.failed,
     cache_hitted = M.req_count.cache_hitted,
@@ -62,35 +61,35 @@ function M.get_session_requests()
 end
 
 --- Retrieves the total request counts from the file
----@return { total: number, successful: number, failed: number, cache_hitted: number, fcache_hitted: number }
+---@return { successful: number, failed: number, cache_hitted: number, fcache_hitted: number }
 function M.get_total_requests()
   local log_path = config.get_log_path()
   if not log_path then
     debug.notify("[reposcope] Stats not available, logfile path invalid", 4)
-    return { total = 0, successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
+    return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
   if not vim.fn.filereadable(log_path) then
-    return { total = 0, successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
+    return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
   local file_stats = vim.loop.fs_stat(log_path)
   if file_stats and file_stats.size == 0 then
-    return { total = 0, successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
+    return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
   local ok, raw = pcall(vim.fn.readfile, log_path)
   if not ok then
     debug.notify("[reposcope] Error reading stats file: " .. raw, 4)
-    return { total = 0, successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
+    return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
   if #raw == 0 then
-    return { total = 0, successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
+    return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
   local json_data = vim.json.decode(table.concat(raw, "\n")) or {}
 
-  local total, successful, failed, cache_hitted, fcache_hitted = 0, 0, 0, 0, 0
+  local successful, failed, cache_hitted, fcache_hitted = 0, 0, 0, 0
 
   for _, log in pairs(json_data) do
     if log.type == "api_success" then
@@ -102,11 +101,9 @@ function M.get_total_requests()
     elseif log.type == "filecache_hit" then
       fcache_hitted = fcache_hitted + 1
     end
-    total = total + 1
   end
 
   return {
-    total = total,
     successful = successful,
     failed = failed,
     cache_hitted = cache_hitted,
