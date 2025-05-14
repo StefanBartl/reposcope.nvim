@@ -9,6 +9,7 @@ local M = {}
 local config = require("reposcope.config")
 local checks = require("reposcope.utils.checks")
 local ui_state = require("reposcope.state.ui")
+local repo_state = require("reposcope.state.repositories")
 local background = require("reposcope.ui.background")
 local preview = require("reposcope.ui.preview.init")
 local list = require("reposcope.ui.list.init")
@@ -37,7 +38,13 @@ function M.open_ui()
   preview.open_preview()
   prompt.open_prompt()
   list.open_list()
-  list_repos.display() -- if there are some cached in RAM REF: outsource to open list
+  if ui_state.list_populated == true and ui_state.last_selected_line then -- If ui starts with populated list windows, fetch selected readme
+    list_repos.display() -- if there are some repositories cached in RAM, show them;  REF: outsource to open list
+    vim.schedule(function()
+      list_repos.current_line = ui_state.last_selected_line
+      require("reposcope.providers.github.readme").fetch_readme_for_selected()
+    end)
+  end
   keymaps.set_ui_keymaps()
   M.setup_ui_close()
 end
@@ -49,6 +56,7 @@ function M.close_ui()
   -- Save state of prompt
   local prompt_input = require("reposcope.ui.prompt.input").get_current_prompt_line()
   ui_state.prompt.last = prompt_input
+  ui_state.last_selected_line = list_repos.current_line
 
   -- set focus back to caller position
   if vim.api.nvim_win_is_valid(ui_state.invocation.win) then

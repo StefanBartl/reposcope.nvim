@@ -19,14 +19,14 @@ local ns_id = vim.api.nvim_create_namespace("reposcope_list_highlight")
 
 ---Display the list of repositories
 function M.display()
-  local json_data = repositories.get_repositories()
-  if not json_data or not json_data.items then
+  local check = repositories.are_loaded()
+  if check == false then
     vim.schedule(function()
       notify("[reposcope] No repositories loaded.", 4)
     end)
-    return
   end
 
+  local json_data = repositories.get_repositories()
   local lines = {}
   for _, repo in ipairs(json_data.items) do
     local owner = repo.owner and repo.owner.login or "Unknown"
@@ -52,6 +52,9 @@ function M.display()
 
     -- Set initial highlight
     M.update_highlight()
+
+    -- Set list display's state to true
+   ui_state.list_populated = true
   end)
 end
 
