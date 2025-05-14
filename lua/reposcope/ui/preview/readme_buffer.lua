@@ -1,19 +1,16 @@
 --- @class UIShowReadme
---- @field show fun(): nil Displays the README of the selected repository in either a fullscreen buffer (Markdown) or a browser (HTML)
+--- @field create fun(): nil Displays the README of the selected repository in a hidden Neovim buffer (Markdown) or a browser (HTML)
 local M = {}
 
 local debug = require("reposcope.utils.debug")
 local readme_state = require("reposcope.state.readme")
 local repositories = require("reposcope.state.repositories")
-local keymaps = require("reposcope.keymaps")
 local os = require("reposcope.utils.os")
-
---REF:
 
 --- Displays the README of the currently selected repository.
 --- If the README contains HTML content, it opens in the default web browser.
---- If the README is Markdown, it opens in a fullscreen Neovim buffer.
-function M.show()
+--- If the README is Markdown, it is created as a hidden buffer (background).
+function M.create()
   -- Retrieve the currently selected repository
   local repo = repositories.get_selected_repo()
   if not repo then
@@ -30,10 +27,12 @@ function M.show()
   end
 
   -- Try to load the README from the file cache (persistent)
-  content = readme_state.get_fcached_readme(repo_name)
   if not content then
-    debug.notify("[reposcope] README not filecached for: " .. repo_name, 4)
-    content = "README not cached yet."
+    content = readme_state.get_fcached_readme(repo_name)
+    if not content then
+      debug.notify("[reposcope] README not filecached for: " .. repo_name, 4)
+      content = "README not cached yet."
+    end
   end
 
   -- Check if the README content contains HTML tags (indicative of an HTML README)
@@ -48,27 +47,26 @@ function M.show()
     content:match("<a href=")
   then
     -- If HTML is detected, open the repository page in the default browser
-    local url = "https://github.com/" ..repo.owner.login .. "/" .. repo_name
+    local url = "https://github.com/" .. repo.owner.login .. "/" .. repo_name
     os.open_url(url)
     return
   end
 
-  -- Display the README in a fullscreen Neovim buffer
-  local buf = vim.api.nvim_create_buf(false, true)
+  -- Create a hidden buffer for the README content
+  local buf = vim.api.nvim_create_buf(true, false) -- No window attached
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(content, "\n"))
-  vim.api.nvim_buf_set_option(buf, "filetype", "markdown") -- Set syntax highlighting for Markdown
 
-  -- Open a fullscreen floating window for the README content
-  vim.api.nvim_open_win(buf, true, {
-    relative = "editor",
-    width = vim.o.columns,
-    height = vim.o.lines,
-    col = 0,
-    row = 0,
-    style = "minimal",
-    border = "none",
-  })
+  -- Set the buffer name (pseudo-path)
+  vim.api.nvim_buf_set_name(buf, "reposcope://README.md (" .. repo_name .. ")")
+
+  -- Set buffer options (Markdown format)
+  vim.bo[buf].filetype = "markdown"
+  vim.bo[buf].modifiable = true
+  vim.bo[buf].readonly = false
+  vim.bo[buf].buftype = "" -- Normal buffer type
+
+  -- Debug: Info über den verborgenen Buffer
+  debug.notify("[reposcope] README buffer created: reposcope://README.md (" .. repo_name .. ")", 2)
 end
 
 return M
-
