@@ -4,8 +4,6 @@ local M = {}
 
 local prompt_config = require("reposcope.ui.prompt.config")
 
---BUG: In normal mode there also be some protection
-
 ---Provides functionality to protect cursor from moving before the prompt prefix
 ---@param buf number The buffer ID of the prompt
 ---@param prefix_len number The length of the prompt prefix

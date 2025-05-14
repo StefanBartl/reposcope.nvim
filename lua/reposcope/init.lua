@@ -12,6 +12,7 @@ local ui_state = require("reposcope.state.ui")
 local background = require("reposcope.ui.background")
 local preview = require("reposcope.ui.preview.init")
 local list = require("reposcope.ui.list.init")
+local list_repos = require("reposcope.ui.list.repositories")
 local prompt = require("reposcope.ui.prompt.init")
 local keymaps = require("reposcope.keymaps")
 
@@ -36,6 +37,7 @@ function M.open_ui()
   preview.open_preview()
   prompt.open_prompt()
   list.open_list()
+  list_repos.display() -- if there are some cached in RAM REF: outsource to open list
   keymaps.set_ui_keymaps()
   M.setup_ui_close()
 end
@@ -43,6 +45,11 @@ end
 ---Closes the Reposcope UI.
 ---Restores the caller window, closes all Reposcope windows, and unsets keymaps.
 function M.close_ui()
+
+  -- Save state of prompt
+  local prompt_input = require("reposcope.ui.prompt.input").get_current_prompt_line()
+  ui_state.prompt.last = prompt_input
+
   -- set focus back to caller position
   if vim.api.nvim_win_is_valid(ui_state.invocation.win) then
     vim.api.nvim_set_current_win(ui_state.invocation.win)

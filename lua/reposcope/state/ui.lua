@@ -67,6 +67,9 @@ M.windows = {
   list = nil,
 }
 
+M.prompt = {
+  last = nil,
+}
 
 
 --TODO: put in ui/utils
