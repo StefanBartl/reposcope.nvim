@@ -3,10 +3,17 @@
 ---@field calculate_extended_stats fun(): number, string Calculates the average duration and most frequent query
 ---@field get_most_frequent_query fun(query_count: table<string, number>): string Determines the most frequent query
 local M = {}
+
 local metrics = require("reposcope.utils.metrics")
+local stats_state = require("reposcope.state.popups").stats
 
 --- Displays the request statistics in a floating window
 function M.show_stats()
+  if stats_state.win and vim.api.nvim_win_is_valid(stats_state.win) then
+    vim.api.nvim_set_current_win(stats_state.win)
+    return
+  end
+
   local session_stats = metrics.get_session_requests()
   local total_stats = metrics.get_total_requests()
   local average_duration, most_frequent_query = M.calculate_extended_stats()
@@ -35,23 +42,46 @@ function M.show_stats()
   }
 
   -- Create a floating window for the stats
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+  stats_state.buf = vim.api.nvim_create_buf(false, true)
+  vim.api.nvim_buf_set_lines(stats_state.buf, 0, -1, false, lines)
 
   local width = 50
   local height = #lines
-  vim.api.nvim_open_win(buf, true, {
+  stats_state.win = vim.api.nvim_open_win(stats_state.buf, true, {
     relative = "editor",
     width = width,
     height = height,
     row = math.floor((vim.o.lines - height) / 2),
     col = math.floor((vim.o.columns - width) / 2),
     style = "minimal",
-    border = "rounded"
+    border = "rounded",
   })
 
-  -- Close the window with any key
-  vim.api.nvim_buf_set_keymap(buf, "n", "q", ":bd!<CR>", { noremap = true, silent = true })
+  vim.bo[stats_state.buf].modifiable = false
+
+  vim.keymap.set("n", "q", function()
+    M.close_stats()
+  end, { noremap = true, silent = true, buffer = stats_state.buf })
+
+  vim.keymap.set("n", "<Esc>", function()
+    M.close_stats()
+  end, { noremap = true, silent = true, buffer = stats_state.buf })
+
+end
+
+function M.close_stats()
+  if stats_state.buf and vim.api.nvim_buf_is_valid(stats_state.buf) then
+    vim.api.nvim_buf_del_keymap(stats_state.buf, "n", "<Esc>")
+    vim.api.nvim_buf_del_keymap(stats_state.buf, "n", "q")
+
+    vim.api.nvim_buf_delete(stats_state.buf, { force = true })
+    stats_state.buf = nil
+  end
+
+  if stats_state.win and vim.api.nvim_win_is_valid(stats_state.win) then
+    vim.api.nvim_win_close(stats_state.win, true)
+    stats_state.win = nil
+  end
 end
 
 --- Calculates the average duration and most frequent query
