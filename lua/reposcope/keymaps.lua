@@ -105,13 +105,6 @@ function M.set_prompt_keymaps()
       mode = "i",
       lhs = "<C-r>",
       rhs = function()
-        require("reposcope.providers.github.readme").fetch_readme_for_selected()
-      end,
-    },
-    {
-      mode = "i",
-      lhs = "<C-s>",
-      rhs = function()
         require("reposcope.ui.popups.fullsize_readme").show()
       end,
     },

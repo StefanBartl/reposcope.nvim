@@ -2,6 +2,8 @@
 ---@field setup fun(opts: table|nil): nil Initializes the UI and performs prechecks
 ---@field open_ui fun(): nil Opens the Reposcope UI: Captures caller position, calls the window factory functions and sets keymaps
 ---@field close_ui fun(): nil Closes the Reposcope UI: Set focus back to caller position, close all windows and unset keymaps
+---@field setup_ui_close fun(): nil Sets up an AutoCmd for automatically closing all related UI windows (Reposcope UI)
+---@field remove_ui_autocmd fun(): nil Removes the AutoCmd for automatically closing all related UI windows (Reposcope UI)
 local M = {}
 
 local config = require("reposcope.config")
@@ -15,6 +17,8 @@ local keymaps = require("reposcope.keymaps")
 
 -- Ensure user commands are registered
 require("reposcope.usercommands")
+-- holding state for setup_ui_close and remove_ui_autocmd
+local close_autocmd_id
 
 ---Initializes the Reposcope UI by applying user options and performing tool checks.
 ---This function should be called once during plugin setup.
@@ -33,6 +37,7 @@ function M.open_ui()
   prompt.open_prompt()
   list.open_list()
   keymaps.set_ui_keymaps()
+  M.setup_ui_close()
 end
 
 ---Closes the Reposcope UI.
@@ -59,7 +64,41 @@ function M.close_ui()
   end
 
   keymaps.unset_ui_keymaps()
+  M.remove_ui_autocmd()
+
   vim.cmd("stopinsert")
+end
+
+--- Sets up an AutoCmd for automatically closing all related UI windows (Reposcope UI).
+--- The AutoCmd triggers on `QuitPre` for any window that matches the pattern `reposcope://*`.
+--- If one of these windows is closed (via :q, :q!, or :wq), all related UI windows are closed.
+--- The AutoCmd is stored with an ID (`close_autocmd_id`) for easy removal.
+function M.setup_ui_close()
+  if close_autocmd_id then
+    vim.api.nvim_del_autocmd(close_autocmd_id)
+  end
+
+  close_autocmd_id = vim.api.nvim_create_autocmd("QuitPre", {
+    callback = function()
+      local win = vim.api.nvim_get_current_win()
+      local buf = vim.api.nvim_win_get_buf(win)
+      local buf_name = vim.api.nvim_buf_get_name(buf)
+      if buf_name:find("^reposcope://") then
+        M.close_ui()
+      end
+    end,
+  })
+end
+
+--- Removes the AutoCmd for automatically closing all related UI windows (Reposcope UI).
+--- This prevents the UI from being closed automatically when :q or :q! is used.
+--- The AutoCmd ID is cleared (`close_autocmd_id = nil`) to avoid conflicts.
+function M.remove_ui_autocmd()
+  if close_autocmd_id then
+    vim.api.nvim_del_autocmd(close_autocmd_id)
+    close_autocmd_id = nil
+    vim.notify("[reposcope] AutoCmd for UI close removed", 2)
+  end
 end
 
 return M

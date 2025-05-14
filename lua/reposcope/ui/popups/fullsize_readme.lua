@@ -5,6 +5,7 @@ local M = {}
 local debug = require("reposcope.utils.debug")
 local readme_state = require("reposcope.state.readme")
 local repositories = require("reposcope.state.repositories")
+local keymaps = require("reposcope.keymaps")
 local os = require("reposcope.utils.os")
 
 --REF:
