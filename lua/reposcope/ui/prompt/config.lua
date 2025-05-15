@@ -5,7 +5,7 @@
 ---@field init_prompt_layout fun(buf: number, win: number, title: string): nil Initializes the prompt UI with title, prefix, and complete highlight
 local M = {}
 
-local line_state = require("reposcope.state.ui").prompt
+local ui_state = require("reposcope.state.ui")
 
 M.height = 3
 local w_prefix = false
@@ -14,6 +14,7 @@ M.prefix_len = 0
 if w_prefix == true then
   M.prefix_len = vim.fn.strdisplaywidth(M.prefix)
 end
+M.pos = 1
 
 --NOTE: Should be in layout not in config
 
@@ -26,7 +27,7 @@ function M.init_prompt_layout(buf, win, title)
 
   local width = vim.api.nvim_win_get_width(win)
   local col = math.max(math.floor((width - #title_text) / 2), 0)
-  local line_last = line_state.last or ""
+  local line_last = ui_state.prompt.actual_text
 
   -- Set up the prompt lines
 
@@ -39,14 +40,13 @@ function M.init_prompt_layout(buf, win, title)
 
     vim.defer_fn(function()
       if not line_last or line_last == "" then
-        local pos = M.prefix_len
-        vim.api.nvim_win_set_cursor(win, { 2, pos })
+        M.pos = M.prefix_len
+        vim.api.nvim_win_set_cursor(win, { 2, M.pos })
       else
-        local pos = M.prefix_len + vim.fn.strlen(line_last) + 2
-        vim.api.nvim_win_set_cursor(win, { 2, pos })
+        M.pos = M.prefix_len + vim.fn.strlen(line_last) + 2
+        vim.api.nvim_win_set_cursor(win, { 2, M.pos })
       end
     end, 0)
-
   end
 
   if w_prefix == false then
@@ -57,10 +57,10 @@ function M.init_prompt_layout(buf, win, title)
 
     vim.defer_fn(function()
       if not line_last or line_last == "" then
-        vim.api.nvim_win_set_cursor(win, { 2, 1 })
+        vim.api.nvim_win_set_cursor(win, { 2, M.pos })
       else
-        local pos = vim.fn.strlen(line_last) + 1
-        vim.api.nvim_win_set_cursor(win, { 2, pos })
+        M.pos = vim.fn.strlen(line_last) + 1
+        vim.api.nvim_win_set_cursor(win, { 2, M.pos })
       end
     end, 0)
 

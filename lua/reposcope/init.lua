@@ -9,12 +9,12 @@ local M = {}
 local config = require("reposcope.config")
 local checks = require("reposcope.utils.checks")
 local ui_state = require("reposcope.state.ui")
-local repo_state = require("reposcope.state.repositories")
 local background = require("reposcope.ui.background")
 local preview = require("reposcope.ui.preview.init")
 local list = require("reposcope.ui.list.init")
 local list_repos = require("reposcope.ui.list.repositories")
 local prompt = require("reposcope.ui.prompt.init")
+local prompt_autocmds = require("reposcope.ui.prompt.autocmds")
 local keymaps = require("reposcope.keymaps")
 
 -- Ensure user commands are registered
@@ -54,8 +54,6 @@ end
 function M.close_ui()
 
   -- Save state of prompt
-  local prompt_input = require("reposcope.ui.prompt.input").get_current_prompt_line()
-  ui_state.prompt.last = prompt_input
   ui_state.last_selected_line = list_repos.current_line
 
   -- set focus back to caller position
@@ -78,11 +76,14 @@ function M.close_ui()
     end
   end
 
+  prompt_autocmds.cleanup_autocmds()
   keymaps.unset_ui_keymaps()
   M.remove_ui_autocmd()
 
   vim.cmd("stopinsert")
 end
+
+-- HACK:
 
 --- Sets up an AutoCmd for automatically closing all related UI windows (Reposcope UI).
 --- The AutoCmd triggers on `QuitPre` for any window that matches the pattern `reposcope://*`.
@@ -112,7 +113,6 @@ function M.remove_ui_autocmd()
   if close_autocmd_id then
     vim.api.nvim_del_autocmd(close_autocmd_id)
     close_autocmd_id = nil
-    vim.notify("[reposcope] AutoCmd for UI close removed", 2)
   end
 end
 
