@@ -9,11 +9,8 @@ local ui_state = require("reposcope.state.ui")
 
 M.height = 3
 local w_prefix = false
-M.prefix = " " .. "\u{f002}" .. "   "
-M.prefix_len = 0
-if w_prefix == true then
-  M.prefix_len = vim.fn.strdisplaywidth(M.prefix)
-end
+M.prefix = " " .. "\u{f002}" .. " "
+M.prefix_len = vim.fn.strdisplaywidth(M.prefix)
 M.pos = 1
 
 --NOTE: Should be in layout not in config
