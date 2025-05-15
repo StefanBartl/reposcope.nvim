@@ -1,41 +1,56 @@
 ---@class UIProtectPrompt
----@field protect fun(buf: number, prefix_len: number): nil Provide functionality to protect cursor from getting before prompt prefix
+---@field protect fun(buf: number): nil Provide functionality to protect cursor from getting before prompt prefix
 local M = {}
 
-local prompt_config = require("reposcope.ui.prompt.config")
+--- Protects cursor movement in the prompt window (Normal Mode)
+--- @param buf number The buffer ID of the prompt
+function M.protect(buf)
+  -- Block left movement (h, <Left>) at the start of the second line
+  vim.keymap.set("n", "h", function()
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local row, col = cursor[1], cursor[2]
 
----Provides functionality to protect cursor from moving before the prompt prefix
----@param buf number The buffer ID of the prompt
----@param prefix_len number The length of the prompt prefix
-function M.protect(buf, prefix_len)
-  -- === Block Left before prompt begin ====
-  vim.keymap.set("i", "<Left>", function()
-    local _, prompt_col = unpack(vim.api.nvim_win_get_cursor(0))
-    if prompt_col <= prompt_config.prefix_len then
-      return "" -- blockiere Bewegung in den statischen Bereich
+    -- Block movement if at the start of the second line
+    if row == 2 and col == 0 then
+      return "" -- Prevent movement
     else
-      return "<Left>"
+      return "h" -- Allow normal movement
     end
   end, { buffer = buf, expr = true, silent = true })
 
-  -- === Block Backspace before prompt begin ===
-  vim.keymap.set("i", "<BS>", function()
-    local _, prompt_col = unpack(vim.api.nvim_win_get_cursor(0))
-    if prompt_col <= prompt_config.prefix_len then
-      return "" -- nichts löschen
+  vim.keymap.set("n", "<Left>", function()
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local row, col = cursor[1], cursor[2]
+
+    -- Block movement if at the start of the second line
+    if row == 2 and col == 0 then
+      return "" -- Prevent movement
     else
-      return "<BS>"
+      return "<Left>" -- Allow normal movement
     end
   end, { buffer = buf, expr = true, silent = true })
 
-  -- === Overwrite Home to prompt begin ===
-  vim.keymap.set("i", "<Home>", function()
-    return string.format("<Cmd>call cursor(1, %d)<CR>", prefix_len + 1)
+  -- Block upward movement (k) in the second line
+  vim.keymap.set("n", "k", function()
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    local row = cursor[1]
+
+    -- Prevent moving up if already in the second line
+    if row == 2 then
+      return "" -- Prevent movement
+    else
+      return "k" -- Allow normal movement
+    end
   end, { buffer = buf, expr = true, silent = true })
 
-  -- === Overwrite '0' ===
+  -- Redirect gg to always jump to the start of the second line
+  vim.keymap.set("n", "gg", function()
+    vim.api.nvim_win_set_cursor(0, { 2, 0 }) -- Always second line, start
+  end, { buffer = buf, silent = true })
+
+  -- Redirect 0 to always jump to the start of the second line
   vim.keymap.set("n", "0", function()
-    vim.api.nvim_win_set_cursor(0, { 1, prefix_len })
+    vim.api.nvim_win_set_cursor(0, { 2, 0 }) -- Always second line, start
   end, { buffer = buf, silent = true })
 end
 

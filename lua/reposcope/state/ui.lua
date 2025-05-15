@@ -21,6 +21,7 @@
 ---@field backg integer|nil
 ---@field preview integer|nil
 ---@field prompt integer|nil
+---@field prompt_prefix integer|nil
 ---@field list integer|nil
 ---@field clone integer|nil
 
@@ -28,6 +29,7 @@
 ---@field backg integer|nil
 ---@field preview integer|nil
 ---@field prompt integer|nil
+---@field prompt_prefix integer|nil
 ---@field list integer|nil
 ---@field clone integer|nil
 
@@ -41,6 +43,8 @@
 ---@field get_buffers fun(): number[]|nil Returns all buffer handles in the state table which are not nil
 ---@field get_invocation_win fun(): number|nil Returns the window ID of the invocation state
 ---@field get_invocation_cursor fun(): UIStateCursor|nil Returns the cursor of the invocation state
+---@field print_win_buf_state fun(): nil Prints actual state for debugging to the console
+
 local M = {}
 
 local notify = require("reposcope.utils.debug").notify
@@ -59,6 +63,7 @@ M.buffers = {
   back = nil,
   preview = nil,
   prompt = nil,
+  prompt_prefix = nil,
   list = nil,
 }
 
@@ -67,6 +72,7 @@ M.windows = {
   backg = nil,
   preview = nil,
   prompt = nil,
+  prompt_prefix = nil,
   list = nil,
 }
 
@@ -177,6 +183,13 @@ function M.get_invocation_cursor()
     return nil
   end
   return M.invocation.cursor
+end
+
+
+---Prints actual state for debugging to the console
+function M.print_win_buf_state()
+  print("State Buffers:", vim.inspect(M.get_buffers()))
+  print("State Windows:", vim.inspect(M.get_windows()))
 end
 
 return M

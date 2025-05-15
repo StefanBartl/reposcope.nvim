@@ -116,4 +116,30 @@ function M.remove_ui_autocmd()
   end
 end
 
+
+
+vim.keymap.set("n", "<leader>rs", function()
+  local ok, err = pcall(function()
+    require("reposcope.init").open_ui()
+  end)
+  if not ok then
+    print("Error while opening reposcope: " .. err, 4)
+  end
+end, {
+  desc = "Open Reposcope",
+})
+
+
+vim.keymap.set("n", "<leader>rc", function()
+  local ok, err = pcall(function()
+    require("reposcope.init").close_ui()
+  end)
+  if not ok then
+    print("Error while closing reposcope: " .. err, 4)
+  end
+end, {
+  desc = "close Reposcope",
+})
+
+
 return M
