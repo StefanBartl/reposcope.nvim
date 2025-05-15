@@ -8,16 +8,14 @@ local M = {}
 local line_state = require("reposcope.state.ui").prompt
 
 M.height = 3
-
-local w_prefix = true
+local w_prefix = false
 M.prefix = " " .. "\u{f002}" .. "   "
-
-M.prefix_len = 1
+M.prefix_len = 0
 if w_prefix == true then
   M.prefix_len = vim.fn.strdisplaywidth(M.prefix)
 end
 
---NOTE: Should bei in layout not in config
+--NOTE: Should be in layout not in config
 
 ---Initializes Prompt UI with title, prefix, and full highlight
 ---@param buf number Buffer handle for the prompt
@@ -33,29 +31,39 @@ function M.init_prompt_layout(buf, win, title)
   -- Set up the prompt lines
 
   if w_prefix == true then
+
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
       string.rep(" ", width), -- Line 0: Virtual text for title
       M.prefix .. line_last -- Line 1: Prompt line with prefix and saved input
     })
 
-    local cursor_col = M.prefix_len + vim.fn.strdisplaywidth(line_last) + 2
+    vim.defer_fn(function()
+      if not line_last or line_last == "" then
+        local pos = M.prefix_len
+        vim.api.nvim_win_set_cursor(win, { 2, pos })
+      else
+        local pos = M.prefix_len + vim.fn.strlen(line_last) + 2
+        vim.api.nvim_win_set_cursor(win, { 2, pos })
+      end
+    end, 0)
 
-    -- Set cursor to the end of the prefix
-    vim.api.nvim_win_set_cursor(win, { 2, cursor_col})
   end
-
 
   if w_prefix == false then
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
       string.rep(" ", width), -- Line 0: Virtual text for title
-      " " .. line_last -- Line 1: Prompt line with saved input
+      line_last -- Line 1: Prompt line with saved input
     })
 
-    if not line_last or line_last == "" then
-      vim.api.nvim_win_set_cursor(win, { 2, 1 })
-    else
-      vim.api.nvim_win_set_cursor(win, { 2, #line_last + 1})
-    end
+    vim.defer_fn(function()
+      if not line_last or line_last == "" then
+        vim.api.nvim_win_set_cursor(win, { 2, 1 })
+      else
+        local pos = vim.fn.strlen(line_last) + 1
+        vim.api.nvim_win_set_cursor(win, { 2, pos })
+      end
+    end, 0)
+
   end
 
 
