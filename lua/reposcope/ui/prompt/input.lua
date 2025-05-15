@@ -8,6 +8,7 @@ local github, no_provider
 local M = {}
 
 local config = require("reposcope.config")
+local prompt_config = require("reposcope.ui.prompt.config")
 local notify = require("reposcope.utils.debug").notify
 local state = require("reposcope.state.ui")
 
@@ -34,7 +35,7 @@ function no_provider(input)
   notify("[reposcope] Error: no valid provider in /reposcope/configs options table configured: " .. input .. " - default should be 'github'", 4)
 end
 
----Returns the current text in the prompt buffer without the prefix
+--Returns the current text in the prompt buffer without the prefix
 ---@return string
 function M.get_current_prompt_line()
   local prompt_buf = state.buffers.prompt
@@ -63,5 +64,7 @@ function M.get_current_prompt_line()
 
   return sanitized_query
 end
+
+
 
 return M
