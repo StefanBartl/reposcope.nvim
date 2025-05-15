@@ -9,6 +9,7 @@ local M = {}
 local config = require("reposcope.config")
 local ui_config = require("reposcope.ui.config")
 local prompt_config = require("reposcope.ui.prompt.config")
+local prompt_autocmds = require("reposcope.ui.prompt.autocmds")
 local ui_state = require("reposcope.state.ui")
 local protect_prompt = require("reposcope.ui.prompt.protect_prompt_input")
 local notify = require("reposcope.utils.debug").notify
@@ -26,6 +27,7 @@ function M.open_prompt()
 
   prompt_config.init_prompt_layout(ui_state.buffers.prompt, ui_state.windows.prompt, " prompt ")
   protect_prompt.protect(ui_state.buffers.prompt, prompt_config.prefix_len)
+  prompt_autocmds.setup_autocmds()
 
   vim.schedule(function()
     vim.cmd("startinsert")

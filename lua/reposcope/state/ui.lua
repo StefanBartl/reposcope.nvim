@@ -32,7 +32,7 @@
 ---@field clone integer|nil
 
 ---@class UIPromptLastInput
----@field last string|nil Holds state for the prompt input
+---@field actual_text string  Holds state for the prompt input 
 
 ---@class UIStateManager
 ---@field capture_invocation_state fun(): nil Captures the current window and cursor position for later restoration
@@ -72,7 +72,7 @@ M.windows = {
 
 ---@type UIPromptLastInput
 M.prompt = {
-  last = nil,
+  actual_text = ""
 }
 
 ---Keep state if the list window was populated with repositories at least one 22:42
