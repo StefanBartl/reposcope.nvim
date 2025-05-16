@@ -9,20 +9,22 @@ local get_clone_informations
 local M = {}
 
 local config = require("reposcope.config")
-local state = require("reposcope.state.popups")
-local popup = require("reposcope.ui.popups.clone")
 local metrics = require("reposcope.utils.metrics")
 local protection = require("reposcope.utils.protection")
 
 function M.init()
-  require("reposcope.keymaps").unset_prompt_keymaps()
-  popup.open()
-end
-
-function  M.close()
-  vim.api.nvim_win_close(state.clone.win, true)
-  require("reposcope.keymaps").unset_clone_keymaps()
-  require("reposcope.keymaps").set_prompt_keymaps()
+  local clone_dir = config.get_clone_dir()
+  vim.ui.input({
+    prompt = "Set clone path: ",
+    default = clone_dir,
+    completion = "file",
+  }, function(input)
+    if (input) then
+      M.clone_repository(input)
+    else
+      print("No input, canceled cloning")
+    end
+  end)
 end
 
 ---@class CloneInfo
@@ -57,7 +59,6 @@ function get_clone_informations()
 
   return { name = repo_name, url = repo_url }
 end
-
 
 --- Clones a GitHub repository using various methods (gh, curl, wget, git)
 ---@param path string The local path where the repository should be cloned
@@ -110,18 +111,22 @@ function M.clone_repository(path)
     success, output = protection.safe_execute_shell(string.format("git clone %s %s", repo_url, output_dir))
     error_msg = "Git clone failed: " .. (output or "")
   end
-    local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- Duration in milliseconds
+  local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- Duration in milliseconds
 
   if success then
-    metrics.increase_success(uuid, query, source, "clone_repository", duration_ms, 200)
+    if metrics.record_metrics() then
+      metrics.increase_success(uuid, query, source, "clone_repository", duration_ms, 200)
+    end
     vim.notify("Repository cloned to: " .. output_dir, 2)
+    print("Repository cloned to: " .. output_dir)
   else
     error_msg = string.format("Failed to clone repository: %s", error_msg)
-    metrics.increase_failed(uuid, query, source, "clone_repository", duration_ms, 500, error_msg)
+    if metrics.record_metrics() then
+      metrics.increase_failed(uuid, query, source, "clone_repository", duration_ms, 500, error_msg)
+    end
     vim.notify(error_msg, 4)
+    print(error_msg)
   end
-
-  M.close()
 end
 
 return M
