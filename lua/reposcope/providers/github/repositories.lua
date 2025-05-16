@@ -45,22 +45,26 @@ function M.fetch_github_repositories(query, uuid)
     local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- from nano to mills
 
     if not response then
-      print("Increase failed - No response")
-      metrics.increase_failed(uuid, query, "search_api", "fetch_repositories", duration_ms, 0, "No response")
+      if metrics.record_metrics() then
+        metrics.increase_failed(uuid, query, "search_api", "fetch_repositories", duration_ms, 0, "No response")
+      end
       debug.notify("[reposcope] No response from GitHub API.", 4)
       return
     end
 
     local parsed = vim.json.decode(response)
     if not parsed or not parsed.items then
-      print("Increase failed - Invalid JSON")
-      metrics.increase_failed(uuid, query, "search_api", "fetch_repositories", duration_ms, 0, "Invalid JSON")
+      if metrics.record_metrics() then
+        metrics.increase_failed(uuid, query, "search_api", "fetch_repositories", duration_ms, 0, "Invalid JSON")
+      end
       debug.notify("[reposcope] Invalid JSON response from GitHub API.", 4)
       return
     end
 
     print("Increase success - API success")
-    metrics.increase_success(uuid, query, "search_api", "fetch_repositories", duration_ms, 200)
+    if metrics.record_metrics() then
+      metrics.increase_success(uuid, query, "search_api", "fetch_repositories", duration_ms, 200)
+    end
     repos_state.set_repositories(parsed)
     list.display()
     vim.schedule(function()

@@ -24,6 +24,7 @@ local debug = require("reposcope.utils.debug")
 ---@field results_limit number Maximum number of results returned in search queries (default: 25)
 ---@field preview_limit number Maximum number of lines shown in preview (default: 200)
 ---@field layout string UI layout type (default: "default")
+---@field metrics boolean Controls the state to record metrics
 ---@field cache_dir string Path for Reposcope cache data (default: OS-dependent) 
 ---@field log_filepath string Full path to the log file (determined dynamically)
 ---@field log_max number Controls the size of the log file
@@ -41,6 +42,7 @@ M.options = {
     type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
   },
   -- Only change following values if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
+  metrics = false,
   cache_dir = "", -- Cache path for persistent cache files; standard is: vim.fn.stdpath("cache") .. "/reposcope/data"
   log_filepath = "", -- Full path (without .ext) to the log file; standard is: vim.fn.stdpath("cache") .. "/reposcope/logs/log"
   log_max = 1000, -- Controls the size of the log file
