@@ -74,5 +74,4 @@ function M.fetch_github_repositories(query, uuid)
   end)
 end
 
-
 return M
