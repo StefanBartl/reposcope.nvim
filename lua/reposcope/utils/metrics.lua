@@ -11,6 +11,9 @@
 ---@field get_session_requests fun(): {successful: number, failed: number, cache_hitted: number, fcache_hitted: number } Retrieves the current session request count
 ---@field get_total_requests fun(): { successful: number, failed: number, cache_hitted: number, fcache_hitted: number } Retrieves the total request count from the file
 ---@field check_rate_limit fun(): nil Checks the current GitHub rate limit and displays a warning if low
+---@field record_metrics fun(): boolean Returns state of record metrics boolean variable
+---@field toogle_record_metrics fun(): boolean Toogle the state of record metrics and returns it
+---@field set_record_metrics fun(bool: boolean): boolean Set's the state of record metrics and returns it
 local M = {}
 
 local config = require("reposcope.config")
@@ -25,7 +28,7 @@ local uv = vim.loop
 M.req_count = {
   successful = 0,    -- Successful API requests in this session
   failed = 0,        -- Failed API requests in this session
-  cache_hitted = 0,   -- Cache hits in this session
+  cache_hitted = 0,  -- Cache hits in this session
   fcache_hitted = 0, -- Filecache hits in this session
 }
 
@@ -38,14 +41,14 @@ M.req_count = {
 ---@field reset number The UNIX timestamp when the rate limit will reset
 M.rate_limits = {
   core = {
-    limit = 0,      -- The maximum number of requests allowed for the Core API
-    remaining = 0,  -- The remaining requests available in this session
-    reset = 0       -- The timestamp for rate limit reset (UNIX time)
+    limit = 0,     -- The maximum number of requests allowed for the Core API
+    remaining = 0, -- The remaining requests available in this session
+    reset = 0      -- The timestamp for rate limit reset (UNIX time)
   },
   search = {
-    limit = 0,      -- The maximum number of requests allowed for the Search API
-    remaining = 0,  -- The remaining requests available in this session
-    reset = 0       -- The timestamp for rate limit reset (UNIX time)
+    limit = 0,     -- The maximum number of requests allowed for the Search API
+    remaining = 0, -- The remaining requests available in this session
+    reset = 0      -- The timestamp for rate limit reset (UNIX time)
   }
 }
 
@@ -115,23 +118,45 @@ end
 ---@param uuid string request identifier
 ---@param data table The request data to log
 local function log_request(uuid, data)
+  -- Sicherstellen, dass uuid ein String ist
+  if type(uuid) ~= "string" then
+    vim.notify("[reposcope] Invalid UUID type. Expected string, got " .. type(uuid), vim.log.levels.ERROR)
+    return
+  end
+
   local log_max = config.options.log_max or 1000
   local log_path = config.get_log_path()
 
   vim.schedule(function()
-
     local logs = {}
+
+    -- Read existing log file if available
     if vim.fn.filereadable(log_path) == 1 then
-      local raw = vim.fn.readfile(log_path)
+      local raw = vim.fn.readfile(log_path)      -- string[]
       if raw and not vim.tbl_isempty(raw) then
-        logs = vim.json.decode(table.concat(raw, "\n"))
+        local raw_json = table.concat(raw, "\n") -- string
+        local success, decoded_logs = pcall(function()
+          return vim.json.decode(raw_json)
+        end)
+
+        if success and type(decoded_logs) == "table" then
+          logs = decoded_logs
+        else
+          vim.notify("[reposcope] Invalid JSON format in log file. Starting fresh log.", vim.log.levels.WARN)
+        end
       end
     end
 
-    local log_key = uuid .. ":" .. data.type
+    -- Ensure logs is always a table
+    if type(logs) ~= "table" then
+      logs = {}
+    end
+
+    -- Add new log entry
+    local log_key = uuid .. ":" .. (data.type or "unknown")
     logs[log_key] = data
 
-    -- removes oldest entry if to much logs exist
+    -- Remove oldest entry if too many logs exist
     if vim.tbl_count(logs) > log_max then
       local oldest_key = next(logs)
       if oldest_key then
@@ -139,12 +164,18 @@ local function log_request(uuid, data)
       end
     end
 
-    local formatted_json = vim.json.encode(logs, { indent = true })
+    -- Encode and save logs to file with formatted JSON
+    local formatted_json = vim.json.encode(logs) -- REF: pcall
+    if not formatted_json then
+      debug.notify("[reposcope] Error encoding JSON File", 4)
+      return -- REF: |nil
+    end
     vim.fn.writefile(vim.split(formatted_json, "\n"), log_path)
   end)
 end
 
 --- Creates a UUID based on actual timestamp
+---@return string Unique UUID string
 function M.generate_uuid()
   local random = math.random
   return string.format(
@@ -213,8 +244,7 @@ end
 --- Checks the current GitHub rate limit and displays a warning if low
 function M.check_rate_limit()
   if M.rate_limits.core.limit > 0 and M.rate_limits.search.limit > 0 then
-
-    local core_used =  M.req_count.successful + M.req_count.failed
+    local core_used = M.req_count.successful + M.req_count.failed
     local core_remaining = M.rate_limits.core.remaining
     local core_usage = 1 - (core_remaining / M.rate_limits.core.limit)
 
@@ -284,6 +314,27 @@ function M.check_rate_limit()
       M.rate_limits.search.reset = data.resources.search.reset
     end
   end)
+end
+
+---Returns the current record metrics state
+---@return boolean The current record metrics state
+function M.record_metrics()
+  return config.options.metrics
+end
+
+---Toogle the current record metrics state
+---@return boolean The current record metrics state
+function M.toggle_record_metrics()
+  config.options.metrics = not config.options.metrics
+  return config.options.metrics
+end
+
+---Set the current record metrics state
+---@param bool boolean Boolean value to set record metrics state
+---@return boolean The current record metrics state
+function M.set_record_metrics(bool)
+  config.options.metrics = bool
+  return config.options.metrics
 end
 
 return M
