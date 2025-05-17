@@ -76,6 +76,17 @@ function M.show()
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(content, "\n"))
   vim.bo[buf].modifiable = false
   vim.bo[buf].readonly = true
+  vim.api.nvim_buf_set_name(buf, "reposcope://README.md")
+  vim.bo[buf].filetype = "markdown"
+  vim.bo[buf].syntax = "markdown"
+
+  vim.cmd("syntax enable")
+  vim.cmd("setlocal syntax=markdown")
+  vim.cmd("setlocal ft=markdown")
+
+  if pcall(require, "nvim-treesitter") then
+    vim.cmd("TSBufEnable highlight")
+  end
 
   -- Close existing README Viewer windows, if open
   if ui_state.windows.readme_viewer and vim.api.nvim_win_is_valid(ui_state.windows.readme_viewer) then
@@ -106,12 +117,9 @@ end
 function M.close()
   if ui_state.windows.readme_viewer and vim.api.nvim_win_is_valid(ui_state.windows.readme_viewer) then
     vim.api.nvim_win_close(ui_state.windows.readme_viewer, true)
-    debug.notify("[reposcope] README window closed", 2)
   end
 
   ui_state.windows.readme_viewer = nil
-
-  print("close")
 end
 
 function M.set_viewer_keymap(buf)
@@ -120,13 +128,11 @@ function M.set_viewer_keymap(buf)
     return
   end
 
-  -- Keymap für "q" im README-Viewer setzen
   vim.api.nvim_buf_set_keymap(buf, "n", "q", ":lua require'reposcope.ui.preview.readme_viewer'.close()<CR>", {
     noremap = true,
     silent = true,
     nowait = true
   })
-  debug.notify("[reposcope] Keymap 'q' set for README viewer", 2)
   print("[reposcope] Keymap 'q' for quit README viewer", 2)
 end
 
