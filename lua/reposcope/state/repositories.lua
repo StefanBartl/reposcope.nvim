@@ -76,7 +76,7 @@ end
 ---Retrieves the currently selected repository based on the list entry.
 function M.get_selected_repo()
   local json_data = M.get_repositories()
-  if not json_data or not json_data.items then
+  if not json_data or not json_data.items or json_data.total_count == 0 then
     return nil
   end
 
