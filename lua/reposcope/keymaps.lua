@@ -125,7 +125,22 @@ function M.set_prompt_keymaps()
           require("reposcope.providers.github.clone").init()
         end)
       end,
-    }
+    },
+    {
+      mode = {"n", "i"},
+      lhs = "<BS>",
+      rhs = function()
+        local buf = vim.api.nvim_get_current_buf()
+        local cursor_pos = vim.api.nvim_win_get_cursor(0)
+
+        if buf == prompt_buf and cursor_pos[1] == 2 and cursor_pos[2] == 0 then
+          debug.notify("[reposcope] Backspace disabled in column 0 of line 2", 2)
+          return
+        else
+          vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<BS>", true, false, true), "n", false)
+        end
+      end,
+   }
 
   }
 
