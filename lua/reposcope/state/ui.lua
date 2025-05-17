@@ -2,7 +2,13 @@
 ---@field invocation UIStateInvocation invocation editor state before UI activation
 ---@field buffers UIStateBuffers buffer handles by role
 ---@field windows UIStateWindows window handles by role
----@brief Tracks plugin-local buffer and window handles and also other state for UI elements.
+---@field reset fun(tbl?: "buffers"|"windows"|"invocation"): nil
+---@field get_windows fun(): number[] Returns all window handles in the state table which are not nil
+---@field get_buffers fun(): number[] Returns all buffer handles in the state table which are not nil
+---@field get_invocation_win fun(): number Returns the window of the invocation state
+---@field get_invocation_cursor fun(): table Returns the cursor of the invocation state
+---@field print_win_buf_state fun(): nil Prints all windows and buffers to the console
+---@brief Tracks plugin-local buffer and window handles and also other state for UI elements.   HACK:
 ---@description
 ---The UIState module maintains references to buffer and window IDs
 ---used by different parts of the user interface such as preview, prompt,
@@ -23,7 +29,7 @@
 ---@field prompt integer|nil
 ---@field prompt_prefix integer|nil
 ---@field list integer|nil
----@field clone integer|nil
+---@field readme_viewer integer|nil
 
 ---@class UIStateWindows
 ---@field backg integer|nil
@@ -31,7 +37,7 @@
 ---@field prompt integer|nil
 ---@field prompt_prefix integer|nil
 ---@field list integer|nil
----@field clone integer|nil
+---@field readme_viewer integer|nil
 
 ---@class UIPromptLastInput
 ---@field actual_text string  Holds state for the prompt input 
@@ -47,7 +53,8 @@
 
 local M = {}
 
-local notify = require("reposcope.utils.debug").notify
+local debug = require("reposcope.utils.debug")
+local repo_state = require("reposcope.state.repositories")
 
 ---@type UIStateInvocation
 M.invocation = {
@@ -65,6 +72,7 @@ M.buffers = {
   prompt = nil,
   prompt_prefix = nil,
   list = nil,
+  readme_viewer = nil,
 }
 
 ---@type UIStateWindows
@@ -74,6 +82,7 @@ M.windows = {
   prompt = nil,
   prompt_prefix = nil,
   list = nil,
+  readme_viewer = nil,
 }
 
 ---@type UIPromptLastInput
@@ -83,8 +92,12 @@ M.prompt = {
 
 ---Keep state if the list window was populated with repositories at least one 22:42
 M.list_populated = nil
----Saves the last slelected line
+---Keep state which repositories is currently selected by the user in the repositoriy list by any user action
+M.current_selected_repo_name = nil -- HACK:
+---Saves the last selected line
 M.last_selected_line = nil
+
+--TODO:  print above to values over period and check if the are equal odr defer any time
 
 --TODO: put in ui/utils
 
@@ -101,32 +114,32 @@ function M.reset(tbl)
     for k in pairs(M.buffers) do
       M.buffers[k] = nil
     end
-    notify("buffers reset")
+    debug.notify("buffers reset")
   end
 
   if tbl == nil or tbl == "windows" then
     for k in pairs(M.windows) do
       M.windows[k] = nil
     end
-    notify("windows reset")
+    debug.notify("windows reset")
   end
 
   if tbl == nil or tbl == "invocation" then
     M.invocation.win = nil
     M.invocation.cursor.row = nil
     M.invocation.cursor.col = nil
-    notify("invocation reset")
+    debug.notify("invocation reset")
   end
 
   if tbl ~= nil and tbl ~= "buffers" and tbl ~= "windows" and tbl ~= "invocation" then
-    notify("Invalid argument passed")
+    debug.notify("Invalid argument passed")
   end
 end
 
 ---Returns all window handles in the state table which are not nil
 function M.get_windows()
   if not M.windows then
-    notify("[reposcope] No state.windows table set", 1)
+    debug.notify("[reposcope] No state.windows table set", 1)
     return nil
   end
 
@@ -138,7 +151,7 @@ function M.get_windows()
   end
 
   if #wins == 0 then
-    notify("[reposcope] No valid window entries in state.windows", 1)
+    debug.notify("[reposcope] No valid window entries in state.windows", 1)
     return nil
   end
 
@@ -148,7 +161,7 @@ end
 ---Returns all buffer handles in the state table which are not nil
 function M.get_buffers()
   if not M.buffers then
-    notify("[reposcope] No state.buffers table set", 1)
+    debug.notify("[reposcope] No state.buffers table set", 1)
     return nil
   end
 
@@ -160,7 +173,7 @@ function M.get_buffers()
   end
 
   if #bufs == 0 then
-    notify("[reposcope] No valid buffer entries in state.buffers", 1)
+    debug.notify("[reposcope] No valid buffer entries in state.buffers", 1)
     return nil
   end
 
@@ -170,7 +183,7 @@ end
 ---Return the window of the invocation state
 function M.get_invocation_win()
   if not M.invocation or not M.invocation.win then
-    notify("[reposcope] No invocation window set", 1)
+    debug.notify("[reposcope] No invocation window set", 1)
     return nil
   end
   return M.invocation.win
@@ -179,7 +192,7 @@ end
 ---Returns the cursor of the invocation state
 function M.get_invocation_cursor()
   if not M.invocation or not M.invocation.cursor then
-    notify("[reposcope] No invocation cursor set", 1)
+    debug.notify("[reposcope] No invocation cursor set", 1)
     return nil
   end
   return M.invocation.cursor
