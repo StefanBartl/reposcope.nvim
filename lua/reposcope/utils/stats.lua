@@ -44,7 +44,7 @@ function M.show_stats()
   }
 
   -- Create a floating window for the stats
-  stats_state.buf = vim.api.nvim_create_buf(false, true)
+  stats_state.buf = require("reposcope.utils.protection").create_named_buffer("reposcope://stats")
   vim.api.nvim_buf_set_lines(stats_state.buf, 0, -1, false, lines)
 
   local width = 50
