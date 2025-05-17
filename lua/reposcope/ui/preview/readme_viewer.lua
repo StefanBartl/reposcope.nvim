@@ -53,7 +53,7 @@ function M.show()
   end
 
   -- Display the README in a fullscreen Neovim buffer
-  local buf = vim.api.nvim_create_buf(false, true)
+  local buf = require("reposcope.utils.protection").create_named_buffer("reposcope://readme_viewer")
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(content, "\n"))
   vim.bo[buf].filetype = "Markdown"
 

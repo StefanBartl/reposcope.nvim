@@ -8,10 +8,8 @@
 local M = {}
 
 local ui_state = require("reposcope.state.ui")
-local pops_state = require("reposcope.state.popups")
 local navigate_list = require("reposcope.ui.prompt.navigate_list")
 local debug = require("reposcope.utils.debug")
-local clone = require("reposcope.providers.github.clone")
 
 local _registry = {}
 local map_over_bufs
@@ -105,7 +103,7 @@ function M.set_prompt_keymaps()
     },
    {
       mode = {"n", "i"},
-      lhs = "<C-r>",
+      lhs = "<C-v>",
       rhs = function()
         require("reposcope.ui.preview.readme_viewer").show()
       end,
