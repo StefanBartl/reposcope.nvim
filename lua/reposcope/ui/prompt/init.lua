@@ -11,7 +11,6 @@ local ui_config = require("reposcope.ui.config")
 local prompt_config = require("reposcope.ui.prompt.config")
 local prompt_autocmds = require("reposcope.ui.prompt.autocmds")
 local ui_state = require("reposcope.state.ui")
-local protect_prompt = require("reposcope.ui.prompt.protect_prompt_input")
 local debug = require("reposcope.utils.debug")
 
 ---Opens the user input prompt window in the Reposcope UI
@@ -34,7 +33,6 @@ function M.open_prompt()
   end
 
   prompt_config.init_prompt_layout(ui_state.buffers.prompt, ui_state.windows.prompt, " prompt ")
-  protect_prompt.protect(prompt_buf)
   prompt_autocmds.setup_autocmds()
 
   vim.schedule(function()
