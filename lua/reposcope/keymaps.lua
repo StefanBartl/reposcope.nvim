@@ -80,6 +80,10 @@ function M.set_prompt_keymaps()
       lhs = "<CR>",
       rhs = function()
         local sanitized_query = require("reposcope.ui.prompt.input").get_current_prompt_line()
+        if not sanitized_query or sanitized_query == "" then
+          debug.notify("[reposcope] Empty prompt input", 1)
+          return
+        end
         require("reposcope.ui.prompt.input").on_enter(sanitized_query)
       end,
     },
