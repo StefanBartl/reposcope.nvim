@@ -1,4 +1,5 @@
 ---@class ReadmeCache
+---@field active_readme_requests table Holds state for active requests to README files in repositories
 ---@field has_cached_readme fun(repo_name: string): boolean, string|nil Checks if a README is cached (RAM or File)
 ---@field cache_readme fun(repo_name: string, readme_text: string): nil Caches the README for a repository directly in RAM
 ---@field get_cached_readme fun(repo_name: string): string|nil Returns the cached README if available
@@ -11,6 +12,8 @@ local M = {}
 local config = require("reposcope.config")
 local repo_state = require("reposcope.state.repositories")
 local notify = require("reposcope.utils.debug").notify
+
+M.active_readme_requests = {}
 
 --- Checks if a README is cached (RAM or File)
 ---@param repo_name string The repository name

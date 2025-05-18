@@ -109,7 +109,7 @@ function M.get_selected_repo()
   return nil
 end
 
----Test function, whih returns if repositories are loaded in RAM
+---Test function, which returns true if repositories are loaded in RAM
 function M.are_loaded()
   local json_data = M.get_repositories()
   if not json_data or not json_data.items then
