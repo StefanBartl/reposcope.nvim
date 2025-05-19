@@ -5,8 +5,11 @@
 ---@field has_env fun(name: string): boolean Returns true if the given environment variable is set and non-empty.
 local M = {}
 
+-- Configuration (Global Configuration)
 local config = require("reposcope.config")
+-- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
+
 
 ---Checks if a given binary is available in the system's PATH
 ---@param name string The name of the binary to check

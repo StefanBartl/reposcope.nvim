@@ -7,10 +7,12 @@ local get_clone_informations
 
 local M = {}
 
+-- Project-Specific Config and Utility Modules
 local config = require("reposcope.config")
 local metrics = require("reposcope.utils.metrics")
 local core_utils = require("reposcope.utils.core")
 local protection = require("reposcope.utils.protection")
+
 
 function M.init()
   local clone_dir = config.get_clone_dir()

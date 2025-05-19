@@ -7,12 +7,16 @@
 ---@field display_repositories fun(): nil Displays the list of repositories from state.
 local M = {}
 
+-- UI Components (List Window and Management)
 local list_window = require("reposcope.ui.list.list_window")
 local list_manager = require("reposcope.ui.list.list_manager")
 local list_config = require("reposcope.ui.list.list_config")
+-- State Management (Repositories State)
 local repositories_state = require("reposcope.state.repositories.repositories_state")
+-- Utility Modules (Text Manipulation, Debugging)
 local text_utils = require("reposcope.utils.text")
 local notify = require("reposcope.utils.debug").notify
+
 
 ---Displays the list of repositories from the state.
 ---@return nil

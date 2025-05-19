@@ -2,7 +2,9 @@
 ---@field get_banner fun(preview_width: number): string[] Function to dynamically generate a default, centered preview banner
 local M = {}
 
+-- Text Utilities (Text Manipulation and Display)
 local text = require("reposcope.utils.text")
+
 
 ---Generates a dynamically centered preview banner
 ---@param preview_width number The width of the preview area

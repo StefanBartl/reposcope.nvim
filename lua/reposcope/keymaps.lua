@@ -7,14 +7,19 @@
 ---@field unset_clone_keymaps fun(): nil Removes all clone-related keymaps
 local M = {}
 
+-- State Modules (Managing UI and Prompt State)
 local ui_state = require("reposcope.state.ui.ui_state")
 local prompt_state = require("reposcope.state.ui.prompt_state")
+-- Providers (GitHub-specific Functionality)
 local gh_readme = require("reposcope.providers.github.readme")
 local gh_clone = require("reposcope.providers.github.clone")
+-- UI Components (Preview and Navigation)
 local readme_viewer = require("reposcope.ui.preview.readme_viewer")
 local reame_buffer = require("reposcope.ui.preview.readme_buffer")
 local navigate_list = require("reposcope.ui.prompt.navigate_list")
+-- Utility Modules (Debugging and Notifications)
 local notify = require("reposcope.utils.debug").notify
+
 
 local _registry = {}
 local map_over_bufs

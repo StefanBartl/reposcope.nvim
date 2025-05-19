@@ -13,7 +13,9 @@
 ---@field update_colors fun(bg: string):nil Dynamically updates the background colors
 local M = {}
 
+-- Project-Specific Configuration (Global UI Config)
 local ui_config = require("reposcope.ui.config")
+
 
 M.row = ui_config.row
 M.col = ui_config.col

@@ -5,7 +5,9 @@
 ---@field init_prompt_layout fun(buf: number, win: number, title: string): nil Initializes the prompt UI with title, prefix, and complete highlight
 local M = {}
 
+-- State Management (Prompt State)
 local prompt_state = require("reposcope.state.ui.prompt_state")
+
 
 M.height = 3
 local w_prefix = false

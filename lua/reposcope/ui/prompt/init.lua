@@ -6,12 +6,17 @@ local default
 ---@field default fun(): nil Default layout for the prompt
 local M = {}
 
+-- Configuration (Global and UI-Specific)
 local config = require("reposcope.config")
 local ui_config = require("reposcope.ui.config")
+-- Prompt-Specific Configuration and Autocommands
 local prompt_config = require("reposcope.ui.prompt.config")
 local prompt_autocmds = require("reposcope.ui.prompt.autocmds")
+-- State Management (UI State)
 local ui_state = require("reposcope.state.ui.ui_state")
-local debug = require("reposcope.utils.debug")
+-- Debugging Utility
+local notify = require("reposcope.utils.debug").notify
+
 
 ---Opens the user input prompt window in the Reposcope UI
 function M.open_prompt()
@@ -29,7 +34,7 @@ function M.open_prompt()
   if config.options.layout == "default" then
     default()
   else
-    debug.notify("Unsupported layout: " .. config.options.layout, 4)
+    notify("Unsupported layout: " .. config.options.layout, 4)
   end
 
   prompt_config.init_prompt_layout(ui_state.buffers.prompt, ui_state.windows.prompt, " prompt ")
@@ -65,7 +70,7 @@ end
 ---Initalize buffer for the prefix prompt window
 function M.init_prompt_prefix_buf()
   if not vim.api.nvim_buf_is_valid(ui_state.buffers.prompt_prefix) then
-    debug.notify("[ERROR] Prefix Buffer is not valid", 4)
+    notify("[ERROR] Prefix Buffer is not valid", 4)
     return
   end
 

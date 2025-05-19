@@ -3,9 +3,13 @@
 ---@field set_list_to fun(line: number): nil Sets the list's current linr to given line number
 local M = {}
 
+-- UI Components (List Window)
 local list_window = require("reposcope.ui.list.list_window")
+-- State Management (UI State)
 local ui_state = require("reposcope.state.ui.ui_state")
-local debug = require("reposcope.utils.debug")
+-- Debugging Utility
+local notify = require("reposcope.utils.debug").notify
+
 
 ---Allows navigation within the list directly from the prompt
 ---@param direction "up"|"down" The direction to navigate ("up" or "down")
@@ -31,14 +35,14 @@ end
 ---@param line string
 function M.set_list_to(line)
   if type(line) ~= "number" then
-    debug.notify("[reposcope] Type 'number' is required for argument line, passed " .. type(line), 1)
+    notify("[reposcope] Type 'number' is required for argument line, passed " .. type(line), 1)
     return
   end
 
   local total_lines = #vim.api.nvim_buf_get_lines(ui_state.buffers.list, 0, -1, false)
 
   if line < 1 or line > total_lines then
-    debug.notify("[reposcope] Invalid line value: " .. line, 1)
+    notify("[reposcope] Invalid line value: " .. line, 1)
     return
   end
 

@@ -2,10 +2,13 @@
 ---@field request fun(method: string, url: string, callback: fun(response: string|nil, error_msg?: string|nil), headers?: table, debug?: boolean, metrics_context?: string): nil Executes an HTTP request using curl and records metrics
 local M = {}
 
+-- Low-Level System Modules (Async Operations)
 local uv = vim.loop
+-- Utility Modules (Debugging, Metrics, Core Utilities)
 local notify = require("reposcope.utils.debug").notify
 local metrics = require("reposcope.utils.metrics")
 local core_utils = require("reposcope.utils.core")
+
 
 --- Sends an HTTP request using curl (asynchronous) with optional metrics
 ---@param method string HTTP method (GET, POST, PUT, DELETE)

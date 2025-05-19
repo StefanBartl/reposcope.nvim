@@ -34,9 +34,12 @@
 ---@field is_populated fun(): boolean Returns true, if the repositories table is popoulated
 local M = {}
 
+-- State Management (UI State, List Window)
 local ui_state = require("reposcope.state.ui.ui_state")
 local list_window = require("reposcope.ui.list.list_window")
+-- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
+
 
 ---@type RepositoryResponse
 M.repositories = { total_count = 0, items = {} } -- Global cache for JSON response

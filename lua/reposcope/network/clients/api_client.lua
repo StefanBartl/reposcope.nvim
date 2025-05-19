@@ -2,8 +2,12 @@
 ---@field request fun(method: string, url: string, callback: fun(response: string|nil, error?: string|nil), headers?: table, debug?: boolean, context?: string): nil Sends an API request using HTTP module
 local M = {}
 
+-- HTTP Client (Low-level HTTP Requests)
 local http_client = require("reposcope.network.clients.http_client")
+-- Utility Modules (Debugging)
 local notify = require("reposcope.utils.debug").notify
+
+
 local active_requests = {}
 
 ---Sends a generalized API request (GET, POST, etc.)

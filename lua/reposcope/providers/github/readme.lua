@@ -5,15 +5,22 @@
 ---@field fetch_readme_from_api fun(api_url: string, repo_name: string): nil Fetches the README using the GitHub API (fallback)
 local M = {}
 
+-- API Client (GitHub API Integration)
 local api_client = require("reposcope.network.clients.api_client")
+-- Utility Modules (Metrics, Core Utilities, Encoding)
 local metrics = require("reposcope.utils.metrics")
-local core_utils = require("reposcope.utils.core") 
-local readme_cache = require("reposcope.cache.readme_cache")
-local repositories_state = require("reposcope.state.repositories.repositories_state")
-local cache = require("reposcope.cache.cache_manager")
-local preview = require("reposcope.ui.preview.inject")
-local debug = require("reposcope.utils.debug")
+local core_utils = require("reposcope.utils.core")
 local encoding = require("reposcope.utils.encoding")
+-- Cache Management (Readme Cache)
+local readme_cache = require("reposcope.cache.readme_cache")
+local cache = require("reposcope.cache.cache_manager")
+-- State Management (Repositories)
+local repositories_state = require("reposcope.state.repositories.repositories_state")
+-- UI Components (Preview Injection)
+local preview = require("reposcope.ui.preview.inject")
+-- Debugging Utility
+local debug = require("reposcope.utils.debug")
+
 
 local active_readme_requests = {}
 

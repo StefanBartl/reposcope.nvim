@@ -25,7 +25,9 @@
 
 local M = {}
 
+-- Utility Modules (Debugging)
 local notify = require("reposcope.utils.debug").notify
+
 
 ---@class UIStateInvocation
 ---@field win integer|nil window ID before UI was opened

@@ -17,7 +17,8 @@ local M = {}
 
 -- Project-specific Configuration and Utility Modules
 local config = require("reposcope.config")
-local debug = require("reposcope.utils.debug")
+local notify = require("reposcope.utils.debug").notify
+
 
 ---@class ReqCount Counts API requests for profiling purposes
 ---@field successful number Stores the count of successful API requests for the current session
@@ -67,7 +68,7 @@ end
 function M.get_total_requests()
   local log_path = config.get_log_path()
   if not log_path then
-    debug.notify("[reposcope] Stats not available, logfile path invalid", 4)
+    notify("[reposcope] Stats not available, logfile path invalid", 4)
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
@@ -82,7 +83,7 @@ function M.get_total_requests()
 
   local ok, raw = pcall(vim.fn.readfile, log_path)
   if not ok then
-    debug.notify("[reposcope] Error reading stats file: " .. raw, 4)
+    notify("[reposcope] Error reading stats file: " .. raw, 4)
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
   if #raw == 0 then
@@ -166,7 +167,7 @@ local function log_request(uuid, data)
     -- Encode and save logs to file with formatted JSON
     local formatted_json = vim.json.encode(logs) -- REF: pcall
     if not formatted_json then
-      debug.notify("[reposcope] Error encoding JSON File", 4)
+      notify("[reposcope] Error encoding JSON File", 4)
       return -- REF: |nil
     end
     vim.fn.writefile(vim.split(formatted_json, "\n"), log_path)
