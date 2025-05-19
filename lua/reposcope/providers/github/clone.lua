@@ -34,7 +34,7 @@ end
 ---@private
 ---@return CloneInfo|nil clone_info The directory, name, and URL of the repository for cloning
 function get_clone_informations()
-  local repo = require("reposcope.state.repositories").get_selected_repo()
+  local repo = require("reposcope.state.repositories.repositories_state").get_selected_repo()
   if not repo then
     vim.notify("[reposcope] Error cloning: Repository is nil", 4)
     return nil

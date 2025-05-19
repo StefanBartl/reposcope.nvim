@@ -13,12 +13,25 @@
 ---@field total_count number Total number of repositories found
 ---@field items Repository[] List of repositories
 
----@class RepositoryManager
+---@class RepositoryState
+---@brief Manages the current state of loaded repositories in the application.
+---@description 
+--- The `RepositoryState` module is responsible for managing the active state of repositories
+--- that are loaded in the application. Unlike a cache, this state is not persistent and 
+--- is dynamically updated whenever a new search query is performed. The state is cleared 
+--- or overwritten with each new search result, representing the current, active view 
+--- of repositories in the application.
+---
+--- The module provides functions to set, retrieve, and clear the current state of repositories.
+--- This ensures that the list of repositories always reflects the most recent search result.
+--- Unlike a cache, which might store multiple versions of data for reuse, this state only
+--- stores the current result set.
 ---@field set_repositories fun(json: RepositoryResponse): nil Stores the JSON response of repositories
 ---@field get_repositories fun(): RepositoryResponse Returns the cached JSON response
 ---@field get_repository fun(repo_name: string): Repository|nil Returns a repository by its name
 ---@field get_selected_repo fun(): Repository|nil Retrieves the currently selected repository
----@field are_loaded fun(): boolean Returns, if repositories are loaded in ram cache
+---@field clear_state fun(): nil Clears the repository state
+---@field is_populated fun(): boolean Returns true, if the repositories table is popoulated
 local M = {}
 
 local notify = require("reposcope.utils.debug").notify
@@ -58,6 +71,7 @@ function M.set_repositories(json)
 end
 
 ---Returns the cached JSON response
+---@return RepositoryResponse
 function M.get_repositories()
   return M.repositories
 end
@@ -74,6 +88,8 @@ function M.get_repository(repo_name)
 end
 
 ---Retrieves the currently selected repository based on the list entry.
+---@param repo_name string Repository name to search for
+---@return Repository|nil
 function M.get_selected_repo()
   local json_data = M.get_repositories()
   if not json_data or not json_data.items or json_data.total_count == 0 then
@@ -81,7 +97,7 @@ function M.get_selected_repo()
   end
 
   local lines = require("reposcope.ui.list.repositories")
-  local ui_state = require("reposcope.state.ui")
+  local ui_state = require("reposcope.state.ui.ui_state")
 
   -- Read the currently selected line in the list
   local selected_line = lines.current_line
@@ -109,8 +125,16 @@ function M.get_selected_repo()
   return nil
 end
 
----Test function, which returns true if repositories are loaded in RAM
-function M.are_loaded()
+--- Clears the repository state
+---@return nil
+function M.clear_state()
+  M.repositories = { total_count = 0, items = {} }
+  notify("[reposcope] Repository state cleared.", 2)
+end
+
+---Returns true if repositories table is populated
+---@return boolean
+function M.is_populated()
   local json_data = M.get_repositories()
   if not json_data or not json_data.items then
     return false

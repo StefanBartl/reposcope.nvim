@@ -6,8 +6,8 @@
 ---@field update_highlight fun(): nil Updates the highlight on the current line
 local M = {}
 
-local ui_state = require("reposcope.state.ui")
-local repositories = require("reposcope.state.repositories")
+local ui_state = require("reposcope.state.ui.ui_state")
+local repositories_state = require("reposcope.state.repositories.repositories_state")
 local text_utils = require("reposcope.utils.text")
 local ui_config = require("reposcope.ui.config")
 local notify = require("reposcope.utils.debug").notify
@@ -19,14 +19,14 @@ local ns_id = vim.api.nvim_create_namespace("reposcope_list_highlight")
 
 ---Display the list of repositories
 function M.display()
-  local check = repositories.are_loaded()
+  local check = repositories_state.is_populated()
   if check == false then
     vim.schedule(function()
       notify("[reposcope] No repositories loaded.", 4)
     end)
   end
 
-  local json_data = repositories.get_repositories()
+  local json_data = repositories_state.get_repositories()
   local lines = {}
   for _, repo in ipairs(json_data.items) do
     local owner = repo.owner and repo.owner.login or "Unknown"

@@ -4,13 +4,13 @@
 local M = {}
 
 local list = require("reposcope.ui.list.repositories")
-local state = require("reposcope.state.ui")
+local ui_state = require("reposcope.state.ui.ui_state")
 local debug = require("reposcope.utils.debug")
 
 ---Allows navigation within the list directly from the prompt
 ---@param direction "up"|"down" The direction to navigate ("up" or "down")
 function M.navigate_list_in_prompt(direction)
-  local total_lines = #vim.api.nvim_buf_get_lines(state.buffers.list, 0, -1, false)
+  local total_lines = #vim.api.nvim_buf_get_lines(ui_state.buffers.list, 0, -1, false)
   if total_lines == 0 then return end
 
   list.current_line = list.current_line or 1
@@ -32,7 +32,6 @@ function M.set_list_to(line)
     return
   end
 
-  local ui_state = require("reposcope.state.ui")
   local total_lines = #vim.api.nvim_buf_get_lines(ui_state.buffers.list, 0, -1, false)
 
   if line < 1 or line > total_lines then

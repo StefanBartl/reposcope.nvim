@@ -1,20 +1,21 @@
----@class CacheState
+---@class CacheManager
 ---@field show_cached_readme fun(repo_name: string): boolean Shows README file if available in cache
 ---@field cache_and_show_readme fun(repo_name: string, content: string): nil Caches and displays the fetched README
 local M = {}
 
-local readme_state = require("reposcope.state.readme")
+local readme_cache = require("reposcope.cache.readme_cache")
 local metrics = require("reposcope.utils.metrics")
 local debug = require("reposcope.utils.debug")
-local preview = require("reposcope.ui.preview")
+local preview = require("reposcope.ui.preview.inject")
 
 --- Displays cached README if available
 ---@param repo_name string Name of the repository for which a README file could be cached
 ---@return boolean Returns true if a README file is shown for given repository, false if not
 function M.show_cached_readme(repo_name)
-  local is_cached, source = readme_state.has_cached_readme(repo_name)
+  local is_cached, source = readme_cache.has_cached_readme(repo_name)
   if is_cached then
-    local uuid = metrics.generate_uuid()
+
+    local uuid = metrics.generate_uuid()   --REF: must this be here?
     if metrics.record_metrics() then
       if source == "ram" then
         metrics.increase_cache_hit(uuid, repo_name, repo_name, "fetch_readme")
@@ -22,8 +23,11 @@ function M.show_cached_readme(repo_name)
         metrics.increase_fcache_hit(uuid, repo_name, repo_name, "fetch_readme")
       end
     end
+
     preview.show_readme(repo_name, source)
-    readme_state.active_readme_requests[repo_name] = nil
+
+  readme_cache.active_readme_requests[repo_name] = nil  --REF: must this be here?
+
     return true
   end
   return false
@@ -33,11 +37,11 @@ end
 ---@param repo_name string The name of the repository
 ---@param content string The README content to cache
 function M.cache_and_show_readme(repo_name, content)
-  readme_state.cache_readme(repo_name, content) --NOTE: pcall
+  readme_cache.cache_readme(repo_name, content) --NOTE: pcall
 
   -- Write to file cache asynchronously
   vim.schedule(function()
-    readme_state.fcache_readme(repo_name, content) -- NOTE: pcall
+    readme_cache.fcache_readme(repo_name, content) -- NOTE: pcall
     debug.notify("[reposcope] README cached to file: " .. repo_name, 1)
   end)
 

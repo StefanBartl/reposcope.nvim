@@ -9,8 +9,8 @@ local M = {}
 local GITHUB_API_SEARCH_URL = "https://api.github.com/search/repositories?q=%s"
 
 local api_client = require("reposcope.network.clients.api_client")
-local repos_state = require("reposcope.state.repositories")
-local req_state = require("reposcope.state.requests")
+local repositories_state = require("reposcope.state.repositories.repositories_state")
+local req_state = require("reposcope.state.repositories.requests_state")
 local list = require("reposcope.ui.list.repositories")
 local debug = require("reposcope.utils.debug")
 local core_utils = require("reposcope.utils.core")
@@ -63,7 +63,7 @@ function M.fetch_github_repositories(query, uuid)
       return
     end
 
-    repos_state.set_repositories(parsed)
+    repositories_state.set_repositories(parsed)
     list.display()
 
     -- Automatically load README for the selected repository

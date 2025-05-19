@@ -3,14 +3,15 @@
 ---@field cleanup_autocmds fun(): nil Cleanup for the UI-Prompt
 local M = {}
 
-local ui_state = require("reposcope.state.ui")
+local ui_state = require("reposcope.state.ui.ui_state")
+local prompt_state = require("reposcope.state.ui.prompt_state")
 
 --- Autocommands for the UI-Prompt
 function M.setup_autocmds()
   pcall(vim.api.nvim_del_augroup_by_name, "reposcope_prompt_autocommands")
   vim.api.nvim_create_augroup("reposcope_prompt_autocommands", { clear = true })
 
-  -- AutoCommand for dynamic prompt update
+  -- AutoCommand for dynamic prompt update. Sets sanitized text
   vim.api.nvim_create_autocmd("TextChangedI", {
     group = "reposcope_prompt_autocommands",
     pattern = "*",
@@ -19,7 +20,7 @@ function M.setup_autocmds()
       if ui_state.buffers.prompt and buf == ui_state.buffers.prompt then
         local line_content = vim.api.nvim_buf_get_lines(buf, 1, 2, false)[1] or ""
         line_content = line_content:gsub("[\u{f002}]", ""):gsub("^%s*(.-)%s*$", "%1") -- remove prompt prefix
-        ui_state.prompt.actual_text = line_content
+        prompt_state.set_prompt_text(line_content)
       end
     end,
   })

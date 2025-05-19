@@ -5,6 +5,7 @@
 ---@field toggle_dev_mode fun(): nil Toggle dev mode (standard: false)
 ---@field notify fun(message: string, level?: number): nil Sends a notification message with an optional log level.
 ---@field debugf fun(msg: string, level?: number, log_level?: number, schedule?: boolean): nil Enhanced debugging function for logging
+---@field print_win_buf_state fun(): nil Prints actual state for debugging to the console
 local M = {}
 
 ---WATCH: Anything new to mention here?
@@ -84,6 +85,13 @@ function M.debugf(msg, level, log_level, schedule)
       end)
     end
   end
+end
+
+
+---Prints actual state for debugging to the console
+function M.print_win_buf_state()
+  print("State Buffers:", vim.inspect(require("reposcope.state.ui.ui_state").get_buffers()))
+  print("State Windows:", vim.inspect(require("reposcope.state.ui.ui_state").get_windows()))
 end
 
 return M
