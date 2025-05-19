@@ -2,7 +2,7 @@
 ---@field init_prompt fun(win: number): nil Initializes the Prompt UI with title and title highlight
 local M = {}
 
-local ui_state = require("reposcope.state.ui")
+local ui_state = require("reposcope.state.ui.ui_state")
 local prompt_config = require("reposcope.ui.prompt.config")
 
 ---Initializes Prompt UI with title and highlight

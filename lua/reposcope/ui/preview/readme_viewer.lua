@@ -3,9 +3,9 @@
 local M = {}
 
 local debug = require("reposcope.utils.debug")
-local cache = require("reposcope.state.readme")
-local ui_state = require("reposcope.state.ui")
-local repositories = require("reposcope.state.repositories")
+local readme_cache = require("reposcope.cache.readme_cache")
+local ui_state = require("reposcope.state.ui.ui_state")
+local repositories_state = require("reposcope.state.repositories.repositories_state")
 local os = require("reposcope.utils.os")
 
 --- Displays the README of the currently selected repository.
@@ -15,7 +15,7 @@ function M.show()
 
 -- Get content for the readme viewer
   -- Retrieve the currently selected repository
-  local repo = repositories.get_selected_repo()
+  local repo = repositories_state.get_selected_repo()
   if not repo then
     debug.notify("[reposcope] No selected repository available", 4)
     return
@@ -24,13 +24,13 @@ function M.show()
   local repo_name = repo.name
 
   -- Try to load the README from the in-memory cache
-  local content = cache.get_cached_readme(repo_name)
+  local content = readme_cache.get_cached_readme(repo_name)
   if not content then
     debug.notify("[reposcope] README not cached for: " .. repo_name, 4)
   end
 
   -- Try to load the README from the file cache (persistent)
-  content = cache.get_fcached_readme(repo_name)
+  content = readme_cache.get_fcached_readme(repo_name)
   if not content then
     debug.notify("[reposcope] README not filecached for: " .. repo_name, 4)
     content = "README not cached yet."

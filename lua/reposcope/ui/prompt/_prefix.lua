@@ -1,7 +1,7 @@
 
 local M = {}
 
-local ui_state = require("reposcope.state.ui")
+local ui_state = require("reposcope.state.ui.ui_state")
 local debug = require("reposcope.utils.debug")
 
 local prefix = " " .. "\u{f002}" .. " "

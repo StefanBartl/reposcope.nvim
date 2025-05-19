@@ -5,7 +5,7 @@
 local M = {}
 
 local metrics = require("reposcope.utils.metrics")
-local stats_state = require("reposcope.state.popups").stats
+local stats_state = require("reposcope.state.popups.stats_popup").stats
 local debug = require("reposcope.utils.debug")
 
 --- Displays the request statistics in a floating window

@@ -8,7 +8,7 @@ local M = {}
 
 local config = require("reposcope.config")
 local checks = require("reposcope.utils.checks")
-local ui_state = require("reposcope.state.ui")
+local ui_state = require("reposcope.state.ui.ui_state")
 local background = require("reposcope.ui.background")
 local preview = require("reposcope.ui.preview.init")
 local list = require("reposcope.ui.list.init")

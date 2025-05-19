@@ -5,7 +5,7 @@
 ---@field gen_padded_lines fun(height: number, content: string|string[]): string[] Centers given text input and returns it
 local M = {}
 
-local notify = require("reposcope.utils.debug").notify
+local debug = require("reposcope.utils.debug")
 
 ---Centers given text input and returns it, splitting lines without breaking words
 ---@param text string The text to be centered
@@ -86,7 +86,7 @@ function M.gen_padded_lines(height, content)
   elseif type(content) == "table" then
     lines = vim.deepcopy(content)
   else
-    notify("Content must be a string or a table", 2)
+    debug.notify("Content must be a string or a table", 2)
   end
 
   local result = {}

@@ -10,7 +10,7 @@ local config = require("reposcope.config")
 local ui_config = require("reposcope.ui.config")
 local prompt_config = require("reposcope.ui.prompt.config")
 local prompt_autocmds = require("reposcope.ui.prompt.autocmds")
-local ui_state = require("reposcope.state.ui")
+local ui_state = require("reposcope.state.ui.ui_state")
 local debug = require("reposcope.utils.debug")
 
 ---Opens the user input prompt window in the Reposcope UI

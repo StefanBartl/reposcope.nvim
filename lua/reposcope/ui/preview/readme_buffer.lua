@@ -3,8 +3,8 @@
 local M = {}
 
 local debug = require("reposcope.utils.debug")
-local readme_state = require("reposcope.state.readme")
-local repositories = require("reposcope.state.repositories")
+local readme_cache = require("reposcope.cache.readme_cache")
+local repositories_state = require("reposcope.state.repositories.repositories_state")
 local os = require("reposcope.utils.os")
 
 --- Displays the README of the currently selected repository.
@@ -12,7 +12,7 @@ local os = require("reposcope.utils.os")
 --- If the README is Markdown, it is created as a hidden buffer (background).
 function M.create()
   -- Retrieve the currently selected repository
-  local repo = repositories.get_selected_repo()
+  local repo = repositories_state.get_selected_repo()
   if not repo then
     debug.notify("[reposcope] No selected repository available", 4)
     return
@@ -21,14 +21,14 @@ function M.create()
   local repo_name = repo.name
 
   -- Try to load the README from the in-memory cache
-  local content = readme_state.get_cached_readme(repo_name)
+  local content = readme_cache.get_cached_readme(repo_name)
   if not content then
     debug.notify("[reposcope] README not cached for: " .. repo_name, 4)
   end
 
   -- Try to load the README from the file cache (persistent)
   if not content then
-    content = readme_state.get_fcached_readme(repo_name)
+    content = readme_cache.get_fcached_readme(repo_name)
     if not content then
       debug.notify("[reposcope] README not filecached for: " .. repo_name, 4)
       content = "README not cached yet."

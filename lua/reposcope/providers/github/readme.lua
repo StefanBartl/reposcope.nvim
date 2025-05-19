@@ -7,9 +7,9 @@ local M = {}
 
 local api_client = require("reposcope.network.clients.api_client")
 local metrics = require("reposcope.utils.metrics")
-local readme_state = require("reposcope.state.readme")
-local repositories = require("reposcope.state.repositories")
-local cache = require("reposcope.state.cache")
+local readme_cache = require("reposcope.cache.readme_cache")
+local repositories_state = require("reposcope.state.repositories.repositories_state")
+local cache = require("reposcope.cache.cache_manager")
 local preview = require("reposcope.ui.preview.inject")
 local debug = require("reposcope.utils.debug")
 local encoding = require("reposcope.utils.encoding")
@@ -20,7 +20,7 @@ local active_readme_requests = {}
 ---param NOTE: add params and return annotations
 function M.fetch_readme_for_selected()
 ---REF: Refactore this part to a funtion which doesnt gave nil back
-  local repo = repositories.get_selected_repo()
+  local repo = repositories_state.get_selected_repo()
   if not repo then
     debug.notify("[reposcope] No repository selected", 3)
     return
@@ -37,7 +37,7 @@ function M.fetch_readme_for_selected()
 
   -- Check if README is already being fetched --REF: cache 
   if active_readme_requests[repo_name] then
-    local is_cached, source = readme_state.has_cached_readme(repo_name)
+    local is_cached, source = readme_cache.has_cached_readme(repo_name)
     if is_cached then
       local uuid = metrics.generate_uuid()
       if metrics.record_metrics() then
@@ -56,7 +56,7 @@ function M.fetch_readme_for_selected()
   active_readme_requests[repo_name] = true
 
   -- Check if README is cached (RAM or File) REF:  cache
-  local is_cached, source = readme_state.has_cached_readme(repo_name)
+  local is_cached, source = readme_cache.has_cached_readme(repo_name)
   if is_cached then
     local uuid = metrics.generate_uuid()
     if metrics.record_metrics() then

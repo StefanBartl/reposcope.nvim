@@ -7,9 +7,14 @@
 ---@field unset_clone_keymaps fun(): nil Removes all clone-related keymaps
 local M = {}
 
-local ui_state = require("reposcope.state.ui")
+local ui_state = require("reposcope.state.ui.ui_state")
+local prompt_state = require("reposcope.state.ui.prompt_state")
+local gh_readme = require("reposcope.providers.github.readme")
+local gh_clone = require("reposcope.providers.github.clone")
+local readme_viewer = require("reposcope.ui.preview.readme_viewer")
+local reame_buffer = require("reposcope.ui.preview.readme_buffer")
 local navigate_list = require("reposcope.ui.prompt.navigate_list")
-local debug = require("reposcope.utils.debug")
+local notify = require("reposcope.utils.debug").notify
 
 local _registry = {}
 local map_over_bufs
@@ -66,9 +71,9 @@ end
 
 ---Set prompt-specific <CR> and arrow key keymaps
 function M.set_prompt_keymaps()
-  local prompt_buf = require("reposcope.state.ui").buffers.prompt
+  local prompt_buf = ui_state.buffers.prompt
   if type(prompt_buf) ~= "number" or not vim.api.nvim_buf_is_valid(prompt_buf) then
-    debug.notify("[reposcope] prompt buffer invalid in set_prompt_keymaps()", 1)
+    notify("[reposcope] prompt buffer invalid in set_prompt_keymaps()", 1)
     return
   end
 
@@ -77,12 +82,12 @@ function M.set_prompt_keymaps()
       mode = "i",
       lhs = "<CR>",
       rhs = function()
-        local sanitized_query = require("reposcope.ui.prompt.input").get_current_prompt_line()
-        if not sanitized_query or sanitized_query == "" then
-          debug.notify("[reposcope] Empty prompt input", 1)
+        local query = prompt_state.get_prompt_text()
+        if not query or query == "" then
+          notify("[reposcope] Empty prompt input", 1)
           return
         end
-        require("reposcope.ui.prompt.input").on_enter(sanitized_query)
+        require("reposcope.ui.prompt.input").on_enter(query)
       end,
     },
     {
@@ -90,7 +95,7 @@ function M.set_prompt_keymaps()
       lhs = "<Up>",
       rhs = function()
         navigate_list.navigate_list_in_prompt("up")
-        require("reposcope.providers.github.readme").fetch_readme_for_selected()
+        gh_readme.fetch_readme_for_selected()  -- REF: Refactore if more providers available
       end,
     },
     {
@@ -98,21 +103,21 @@ function M.set_prompt_keymaps()
       lhs = "<Down>",
       rhs = function()
         navigate_list.navigate_list_in_prompt("down")
-        require("reposcope.providers.github.readme").fetch_readme_for_selected()
+        gh_readme.fetch_readme_for_selected()  -- REF: Refactore if more providers available
       end,
     },
    {
       mode = {"n", "i"},
       lhs = "<C-v>",
       rhs = function()
-        require("reposcope.ui.preview.readme_viewer").show()
+        readme_viewer.show()
       end,
     },
    {
       mode = {"n", "i"},
       lhs = "<C-b>",
       rhs = function()
-        require("reposcope.ui.preview.readme_buffer").create()
+        reame_buffer.create()
       end,
     },
     {
@@ -120,7 +125,7 @@ function M.set_prompt_keymaps()
       lhs = "<C-c>",
       rhs = function()
         vim.schedule(function()
-          require("reposcope.providers.github.clone").init()
+          gh_clone.init()  -- REF: Refactore if more providers available
         end)
       end,
     },
@@ -132,7 +137,7 @@ function M.set_prompt_keymaps()
         local cursor_pos = vim.api.nvim_win_get_cursor(0)
 
         if buf == prompt_buf and cursor_pos[1] == 2 and cursor_pos[2] == 0 then
-          debug.notify("[reposcope] Backspace disabled in column 0 of line 2", 2)
+          notify("[reposcope] Backspace disabled in column 0 of line 2", 2)
           return
         else
           vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<BS>", true, false, true), "n", false)
@@ -213,7 +218,7 @@ end
 ---@private
 function clear_registered_keymaps(tag)
   if not tag or not tag:find("^reposcope_") then
-    debug.notify(
+    notify(
       "[reposcope] Refusing to clear keymaps without valid reposcope_* tag",
       3
     )

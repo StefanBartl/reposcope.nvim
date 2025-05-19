@@ -5,7 +5,7 @@
 ---@field init_prompt_layout fun(buf: number, win: number, title: string): nil Initializes the prompt UI with title, prefix, and complete highlight
 local M = {}
 
-local ui_state = require("reposcope.state.ui")
+local prompt_state = require("reposcope.state.ui.prompt_state")
 
 M.height = 3
 local w_prefix = false
@@ -24,7 +24,7 @@ function M.init_prompt_layout(buf, win, title)
 
   local width = vim.api.nvim_win_get_width(win)
   local col = math.max(math.floor((width - #title_text) / 2), 0)
-  local line_last = ui_state.prompt.actual_text
+  local line_last = prompt_state.get_prompt_text()
 
   -- Set up the prompt lines
 

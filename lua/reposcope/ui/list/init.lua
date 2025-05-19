@@ -10,7 +10,7 @@ local M = {}
 
 local config = require("reposcope.config")
 local ui_config = require("reposcope.ui.config")
-local ui_state = require("reposcope.state.ui")
+local ui_state = require("reposcope.state.ui.ui_state")
 local protected = require("reposcope.utils.protection")
 local prompt_config = require("reposcope.ui.prompt.config")
 local notify = require("reposcope.utils.debug").notify
