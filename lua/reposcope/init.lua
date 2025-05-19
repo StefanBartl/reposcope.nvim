@@ -9,7 +9,7 @@ local M = {}
 local config = require("reposcope.config")
 local checks = require("reposcope.utils.checks")
 local ui_state = require("reposcope.state.ui.ui_state")
-local background = require("reposcope.ui.background")
+local background = require("reposcope.ui.background.background_window")
 local preview = require("reposcope.ui.preview.init")
 local list = require("reposcope.ui.list.init")
 local list_repos = require("reposcope.ui.list.repositories")
@@ -34,7 +34,7 @@ end
 ---Captures caller position, creates background, preview, list, and prompt windows, and sets keymaps.
 function M.open_ui()
   ui_state.capture_invocation_state()
-  background.open_backgd()
+  background.open_window()
   preview.open_preview()
   prompt.open_prompt()
   list.open_list()
