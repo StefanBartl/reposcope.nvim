@@ -3,7 +3,6 @@
 ---@class ReposcopeMetrics
 ---@field req_count ReqCount Stores API request count for profiling purposes
 ---@field rate_limits RateLimits Stores the rate limits for the GitHub API (Core and Search)
----@field generate_uuid fun(): string  Creates a UUID based on actual timestamp
 ---@field log_request fun(uuid: string, data: table): nil Logs request details to request_log.json in JSON object format
 ---@field increase_failed fun(uuid: string, query: string, source: string, context: string, duration_ms: number, status_code: number, error?: string|nil): nil Increases the failed request count and logs it:
 ---@field increase_cache_hit fun(uuid: string, query: string, source: string, context: string): nil Increases the cache hit count and logs it
@@ -16,9 +15,9 @@
 ---@field set_record_metrics fun(bool: boolean): boolean Set's the state of record metrics and returns it
 local M = {}
 
+-- Project-specific Configuration and Utility Modules
 local config = require("reposcope.config")
 local debug = require("reposcope.utils.debug")
-local uv = vim.loop
 
 ---@class ReqCount Counts API requests for profiling purposes
 ---@field successful number Stores the count of successful API requests for the current session
@@ -172,20 +171,6 @@ local function log_request(uuid, data)
     end
     vim.fn.writefile(vim.split(formatted_json, "\n"), log_path)
   end)
-end
-
---- Creates a UUID based on actual timestamp
----@return string Unique UUID string
-function M.generate_uuid()
-  local random = math.random
-  return string.format(
-    "%08x-%04x-%04x-%04x-%012x",
-    uv.now(),
-    random(0, 0xffff),
-    random(0, 0xffff),
-    random(0, 0xffff),
-    random(0, 0xffffffffffff)
-  )
 end
 
 --- Increases the successful request count

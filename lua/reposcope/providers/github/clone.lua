@@ -9,6 +9,7 @@ local M = {}
 
 local config = require("reposcope.config")
 local metrics = require("reposcope.utils.metrics")
+local core_utils = require("reposcope.utils.core")
 local protection = require("reposcope.utils.protection")
 
 function M.init()
@@ -76,7 +77,7 @@ function M.clone_repository(path)
 
   local repo_name = infos.name
   local repo_url = infos.url
-  local uuid = metrics.generate_uuid()
+  local uuid = core_utils.generate_uuid()
   local start_time = vim.loop.hrtime()
   local source = "clone_repo"
   local query = repo_name

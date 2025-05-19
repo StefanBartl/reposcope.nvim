@@ -5,6 +5,7 @@ local M = {}
 local uv = vim.loop
 local notify = require("reposcope.utils.debug").notify
 local metrics = require("reposcope.utils.metrics")
+local core_utils = require("reposcope.utils.core")
 
 --- Sends an HTTP request using curl (asynchronous) with optional metrics
 ---@param method string HTTP method (GET, POST, PUT, DELETE)
@@ -18,7 +19,7 @@ function M.request(method, url, callback, headers, debug, metrics_context)
   local stderr = uv.new_pipe(false)
   local response_data = {}
   local stderr_data = {}
-  local uuid = metrics.generate_uuid()
+  local uuid = core_utils.generate_uuid()
   local start_time = vim.loop.hrtime()
 
   local curl_args = { "-s", "-X", method, url }

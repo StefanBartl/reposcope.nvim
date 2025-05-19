@@ -34,6 +34,8 @@
 ---@field is_populated fun(): boolean Returns true, if the repositories table is popoulated
 local M = {}
 
+local ui_state = require("reposcope.state.ui.ui_state")
+local list_window = require("reposcope.ui.list.list_window")
 local notify = require("reposcope.utils.debug").notify
 
 ---@type RepositoryResponse
@@ -95,11 +97,9 @@ function M.get_selected_repo()
     return nil
   end
 
-  local lines = require("reposcope.ui.list.repositories")
-  local ui_state = require("reposcope.state.ui.ui_state")
 
   -- Read the currently selected line in the list
-  local selected_line = lines.current_line
+  local selected_line = list_window.highlighted_line
   if not selected_line then return nil end
 
   -- Read the repository entry in the list (format: "username/reponame: description")

@@ -8,6 +8,7 @@
 ---@field buffers UIStateBuffers buffer handles by role
 ---@field windows UIStateWindows window handles by role
 ---@field get_windows fun(): number[]|nil Returns all window handles in the state table which are not nil
+---@field get_valid_buffer fun(buf_name): number|nil Returns the buffer number for the given buffer name, if it is valid
 ---@field get_buffers fun(): number[]|nil Returns all buffer handles in the state table which are not nil
 ---
 ---@field list UIStateList list handles by role
@@ -24,7 +25,7 @@
 
 local M = {}
 
-local debug = require("reposcope.utils.debug")
+local notify = require("reposcope.utils.debug").notify
 
 ---@class UIStateInvocation
 ---@field win integer|nil window ID before UI was opened
@@ -58,25 +59,25 @@ function M.reset(tbl)
     for k in pairs(M.buffers) do
       M.buffers[k] = nil
     end
-    debug.notify("buffers reset")
+    notify("buffers reset")
   end
 
   if tbl == nil or tbl == "windows" then
     for k in pairs(M.windows) do
       M.windows[k] = nil
     end
-    debug.notify("windows reset")
+    notify("windows reset")
   end
 
   if tbl == nil or tbl == "invocation" then
     M.invocation.win = nil
     M.invocation.cursor.row = nil
     M.invocation.cursor.col = nil
-    debug.notify("invocation reset")
+    notify("invocation reset")
   end
 
   if tbl ~= nil and tbl ~= "buffers" and tbl ~= "windows" and tbl ~= "invocation" then
-    debug.notify("Invalid argument passed")
+    notify("Invalid argument passed")
   end
 end
 
@@ -127,6 +128,20 @@ M.windows = {
   list = nil,
   readme_viewer = nil,
 }
+
+---Returns the buffer number for the given buffer name, if it is valid
+---@param buf_name string The name of the buffer
+---@return number|nil The buffer number if found and valid, or nil if not found or invalid
+function M.get_valid_buffer(buf_name)
+  local buf = M.buffers[buf_name]
+
+  if buf and vim.api.nvim_buf_is_valid(buf) then
+    return buf
+  end
+
+  notify("[reposcope] Buffer '" .. buf_name .. "' is not valid or does not exist.", 3)
+  return nil
+end
 
 ---Returns all buffer handles in the state table which are not nil
 ---@return number[]|nil List of active buffer handles

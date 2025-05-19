@@ -5,6 +5,7 @@ local M = {}
 
 local readme_cache = require("reposcope.cache.readme_cache")
 local metrics = require("reposcope.utils.metrics")
+local core_utils = require("reposcope.utils.core")
 local debug = require("reposcope.utils.debug")
 local preview = require("reposcope.ui.preview.inject")
 
@@ -15,7 +16,7 @@ function M.show_cached_readme(repo_name)
   local is_cached, source = readme_cache.has_cached_readme(repo_name)
   if is_cached then
 
-    local uuid = metrics.generate_uuid()   --REF: must this be here?
+    local uuid = core_utils.generate_uuid()   --REF: must this be here?
     if metrics.record_metrics() then
       if source == "ram" then
         metrics.increase_cache_hit(uuid, repo_name, repo_name, "fetch_readme")
