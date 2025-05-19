@@ -1,6 +1,5 @@
 ---@class GithubRepositories
 ---@field init fun(query: string, debug?: boolean): nil Initializes the repository list with a query
----@field load_test_json fun(): nil Loads repositories from the test JSON file for debugging
 ---@field fetch_github_repositories fun(query: string, uuid: string): nil Fetches repositories from GitHub API based on a query
 ---@field build_cmd fun(query: string): string[] Builds the API request for GitHub repo search
 local M = {}
@@ -11,8 +10,9 @@ local GITHUB_API_SEARCH_URL = "https://api.github.com/search/repositories?q=%s"
 local api_client = require("reposcope.network.clients.api_client")
 local repositories_state = require("reposcope.state.repositories.repositories_state")
 local req_state = require("reposcope.state.repositories.requests_state")
-local list = require("reposcope.ui.list.repositories")
-local debug = require("reposcope.utils.debug")
+local ui_state = require("reposcope.state.ui.ui_state")
+local list_controller = require("reposcope.controllers.list_controller")
+local notify = require("reposcope.utils.debug").notify
 local core_utils = require("reposcope.utils.core")
 local urlencode = require("reposcope.utils.encoding").urlencode
 
@@ -32,45 +32,57 @@ function M.fetch_github_repositories(query, uuid)
   -- Validate UUID
   local check = core_utils.tbl_find(req_state.repositories, uuid)
   if not check then
-    debug.notify("UUID check failed: " .. uuid .. " with query: " .. query, 4)
+    notify("UUID check failed: " .. uuid .. " with query: " .. query, 4)
     return
   else
-    debug.notify("UUID check passed: " .. uuid .. " with query: " .. query, 1)
+    notify("UUID check passed: " .. uuid .. " with query: " .. query, 1)
   end
 
   if query == "" then
-    debug.notify("[reposcope] Error: Search query is empty.", 4)
+    notify("[reposcope] Error: Search query is empty.", 4)
     return
   end
 
   local encoded_query = urlencode(query)
-  local url = string.format(GITHUB_API_SEARCH_URL, encoded_query) -- Using the centralized URL
+  local url = string.format(GITHUB_API_SEARCH_URL, encoded_query)
 
   api_client.request("GET", url, function(response, err)
     if err then
-      debug.notify("[reposcope] No response from GitHub API: " .. err, 4)
+      notify("[reposcope] No response from GitHub API: " .. err, 4)
       return
     end
 
     local ok, parsed = pcall(vim.json.decode, response)
     if not ok then
-      debug.notify("[reposcope] Invalid JSON response from GitHub API: " .. response, 4)
+      notify("[reposcope] Invalid JSON response from GitHub API: " .. response, 4)
       return
     end
 
     if not parsed or not parsed.items then
-      debug.notify("[reposcope] No repositories found in API response.", 4)
+      notify("[reposcope] No repositories found in API response.", 4)
       return
     end
 
+    -- Set repositories in state (cache)
     repositories_state.set_repositories(parsed)
-    list.display()
 
-    -- Automatically load README for the selected repository
+    -- Ensure that the list UI is displayed and populated
     vim.schedule(function()
-      require("reposcope.providers.github.readme").fetch_readme_for_selected()
+      list_controller.display_repositories()
+
+      -- Wait for the list to be populated before selecting a line
+      vim.defer_fn(function()
+        if ui_state.buffers.list and vim.api.nvim_buf_is_valid(ui_state.buffers.list) then
+          ui_state.last_selected_line = 1 -- Default to the first line
+          notify("[reposcope] Default list line set to first entry.", 2)
+
+          -- Automatically load README for the first in the result list
+          require("reposcope.providers.github.readme").fetch_readme_for_selected()
+        else
+          notify("[reposcope] List buffer is not available. README fetch canceled.", 4)
+        end
+      end, 100) -- Delay slightly to ensure list is displayed
     end)
-    debug.notify("[reposcope] Loaded repositories from GitHub API.", 2)
   end, nil, false, "fetch_repositories")
 end
 

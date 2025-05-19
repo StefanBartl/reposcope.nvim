@@ -1,62 +1,90 @@
----@desc forward declarations
-local default, apply_list_highlight
-
----@class UIList Creates and manages the floating repository list window in the Reposcope UI.
----@field open_list fun(): nil Creates a scratch buffer named `reposcope://list`, fills it with predefined repository lines and opens the repository floating list window in the Reposcope UI
----@field private default fun(): nil Creates the default floating list window
----@field private apply_list_highlight fun(win: number): nil Applies highlight settings to the list window
-
+---@class ListUI
+---@brief Initializes and manages the list UI for displaying repositories
+---@description
+--- This module serves as the entry point for the list UI. It integrates the 
+--- list window, list manager, and list configuration, providing a centralized 
+--- interface for displaying and managing the list of repositories.
+---
+--- This ensures that the list UI is modular, flexible, and easily extendable
+---@field initialize fun(): nil Initializes the list UI
+---@field show_list fun(entries: string[]): nil Displays the list with the given entries
+---@field clear_list fun(): nil Clears the list UI and closes the list window
+---@field select_entry fun(index: number): nil Selects a specific list entry  --REF: niuy
+---@field get_selected_entry fun(): string|nil Returns the currently selected list entry  --REF: niuy
 local M = {}
 
-local config = require("reposcope.config")
-local ui_config = require("reposcope.ui.config")
+local list_window = require("reposcope.ui.list.list_window")
+local list_manager = require("reposcope.ui.list.list_manager")
 local ui_state = require("reposcope.state.ui.ui_state")
-local protected = require("reposcope.utils.protection")
-local prompt_config = require("reposcope.ui.prompt.config")
 local notify = require("reposcope.utils.debug").notify
 
----Creates and opens the floating list window for repositories
-function M.open_list()
-  ui_state.buffers.list = protected.create_named_buffer("reposcope://list")
-  vim.bo[ui_state.buffers.list].modifiable = false
-
-  if config.options.layout == "default" then
-    default()
-  else
-    notify("Unknown layout: " .. config.options.layout, 3)
+---Initializes the list UI and dynamically loads if cached repositories exist.
+---@return nil
+function M.initialize()
+  if not list_window.open_window() then
+    notify("[reposcope] List initialization failed.", 4)
+    return
   end
+
+  -- Dynamically show the list if cached repositories exist
+  if ui_state.list_populated and ui_state.last_selected_line then
+    local cached_repos = require("reposcope.state.repositories").get_repositories().items
+    if cached_repos and #cached_repos > 0 then
+      list_manager.set_list(cached_repos)
+      list_window.highlight_selected(ui_state.last_selected_line)
+      notify("[reposcope] List UI initialized with cached repositories.", 2)
+      return
+    end
+  end
+
+  list_manager.clear_list()
+  notify("[reposcope] No repositories loaded. Empty list displayed.", 2)
 end
 
----Creates the default floating list window
-function default()
-  ui_state.windows.list = vim.api.nvim_open_win(ui_state.buffers.list, false, {
-    relative = "editor",
-    row = ui_config.row + prompt_config.height + 1,
-    col = ui_config.col + 1,
-    width = (ui_config.width / 2) - 1,
-    height = ui_config.height - prompt_config.height - 2,
-    --title = "Repositories",
-    --title_pos = "left",
-    border = "none",
-    style = "minimal",
-    focusable = false,
-    noautocmd = true,
-  })
-  apply_list_highlight(ui_state.windows.list)
+---Displays the list with the given entries
+---@param entries string[] The list of repository entries to display
+---@return nil
+function M.show_list(entries)
+  if type(entries) ~= "table" then
+    notify("[reposcope] Invalid list entries (not a table).", 4)
+    return
+  end
+
+  list_manager.set_list(entries)
+  notify("[reposcope] List UI displayed.", 2)
 end
 
----Applies highlight settings to the list window
----@param win number The window ID of the list window
-function apply_list_highlight(win)
-  local ns = vim.api.nvim_create_namespace("reposcope_list")
-  vim.api.nvim_set_hl(ns, "Normal", { bg = ui_config.colortheme.backg })
-  vim.api.nvim_win_set_hl_ns(win, ns)
+---Clears the list UI and closes the list window
+---@return nil
+function M.clear_list()
+  list_manager.clear_list()
+  notify("[reposcope] List UI cleared.", 2)
+end
 
-  vim.api.nvim_set_hl(0, "ReposcopeListHighlight", {
-    bg = "#44475a",
-    fg = "#ffffff",
-    bold = true,
-  })
+---Selects a specific list entry (highlights it)
+---@param index number The index of the entry to select
+---@return nil
+function M.select_entry(index)
+  if type(index) ~= "number" then
+    notify("[reposcope] Invalid index for selection.", 4)
+    return
+  end
+
+  list_window.highlight_selected(index)
+  notify("[reposcope] List entry selected at index: " .. index, 2)
+end
+
+---Returns the currently selected list entry
+---@return string|nil The text of the currently selected list entry
+function M.get_selected_entry()
+  local selected = list_manager.get_selected()
+  if not selected then
+    notify("[reposcope] No list entry selected.", 3)
+    return nil
+  end
+
+  notify("[reposcope] Selected list entry: " .. selected, 2)
+  return selected
 end
 
 return M

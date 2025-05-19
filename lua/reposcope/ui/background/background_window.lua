@@ -15,7 +15,7 @@ local M = {}
 
 local config = require("reposcope.ui.background.background_config")
 local ui_state = require("reposcope.state.ui.ui_state")
-local debug = require("reposcope.utils.debug")
+local notify = require("reposcope.utils.debug").notify
 local protection = require("reposcope.utils.protection")
 
 ---Opens the background window.
@@ -56,7 +56,7 @@ end
 ---@return nil
 function M.apply_layout()
   if not ui_state.windows.backg then
-    debug.notify("[reposcope] Background window not open.", 3)
+    notify("[reposcope] Background window not open.", 3)
     return
   end
 

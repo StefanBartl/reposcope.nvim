@@ -9,6 +9,8 @@ local M = {}
 
 local config = require("reposcope.config")
 local notify = require("reposcope.utils.debug").notify
+local gh_repositories = require("reposcope.providers.github.repositories")
+local list_controller = require("reposcope.controllers.list_controller")
 
 ---Handles the <CR> keymap in the prompt, calling the relevant provider
 ---@param input string The user input in the prompt
@@ -23,8 +25,8 @@ end
 ---Requests the GitHub search API with user input
 ---@param input string The user input in the prompt
 function github(input)
-  require("reposcope.providers.github.repositories").init(input)
-  require("reposcope.ui.list.repositories").display()
+  gh_repositories.init(input)
+  list_controller.display_repositories()
 end
 
 ---Fallback function when no provider is configured

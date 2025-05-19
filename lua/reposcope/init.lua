@@ -6,16 +6,22 @@
 ---@field remove_ui_autocmd fun(): nil Removes the AutoCmd for automatically closing all related UI windows (Reposcope UI)
 local M = {}
 
+-- Project-specific Configuration and Utility Modules
 local config = require("reposcope.config")
 local checks = require("reposcope.utils.checks")
+-- State Modules (State Management)
 local ui_state = require("reposcope.state.ui.ui_state")
+-- UI Components (Core UI Elements)
 local background = require("reposcope.ui.background.background_window")
 local preview = require("reposcope.ui.preview.init")
 local list = require("reposcope.ui.list.init")
-local list_repos = require("reposcope.ui.list.repositories")
 local prompt = require("reposcope.ui.prompt.init")
+-- UI-Specific Functions and Submodules
+local list_window = require("reposcope.ui.list.list_window")
 local prompt_autocmds = require("reposcope.ui.prompt.autocmds")
+-- Keymaps and User Input
 local keymaps = require("reposcope.keymaps")
+
 
 -- Ensure user commands are registered
 require("reposcope.usercommands")
@@ -33,19 +39,25 @@ end
 ---Opens the Reposcope UI.
 ---Captures caller position, creates background, preview, list, and prompt windows, and sets keymaps.
 function M.open_ui()
+  -- Capture users window and cursor for placing him back after closing Reposcope UI 
   ui_state.capture_invocation_state()
+
+  -- Open Background
   background.open_window()
+
+  -- Open Preview
   preview.open_preview()
+
+  -- Open List
+  list.initialize()
+
+  -- Open Prompt
   prompt.open_prompt()
-  list.open_list()
-  if ui_state.list_populated == true and ui_state.last_selected_line then -- If ui starts with populated list windows, fetch selected readme
-    list_repos.display() -- if there are some repositories cached in RAM, show them;  REF: outsource to open list
-    vim.schedule(function()
-      list_repos.current_line = ui_state.last_selected_line
-      require("reposcope.providers.github.readme").fetch_readme_for_selected()
-    end)
-  end
+
+  -- Set Keymaps
   keymaps.set_ui_keymaps()
+
+  -- Setup UI Close Handler
   M.setup_ui_close()
 end
 
@@ -53,8 +65,8 @@ end
 ---Restores the caller window, closes all Reposcope windows, and unsets keymaps.
 function M.close_ui()
 
-  -- Save state of prompt
-  ui_state.last_selected_line = list_repos.current_line
+  -- save row number in list
+  ui_state.last_selected_line = list_window.highlighted_line
 
   -- set focus back to caller position
   if vim.api.nvim_win_is_valid(ui_state.invocation.win) then

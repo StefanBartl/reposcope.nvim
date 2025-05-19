@@ -7,6 +7,7 @@ local M = {}
 
 local api_client = require("reposcope.network.clients.api_client")
 local metrics = require("reposcope.utils.metrics")
+local core_utils = require("reposcope.utils.core") 
 local readme_cache = require("reposcope.cache.readme_cache")
 local repositories_state = require("reposcope.state.repositories.repositories_state")
 local cache = require("reposcope.cache.cache_manager")
@@ -39,7 +40,7 @@ function M.fetch_readme_for_selected()
   if active_readme_requests[repo_name] then
     local is_cached, source = readme_cache.has_cached_readme(repo_name)
     if is_cached then
-      local uuid = metrics.generate_uuid()
+      local uuid = core_utils.generate_uuid()
       if metrics.record_metrics() then
         if source == "ram" then
           metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
@@ -58,7 +59,7 @@ function M.fetch_readme_for_selected()
   -- Check if README is cached (RAM or File) REF:  cache
   local is_cached, source = readme_cache.has_cached_readme(repo_name)
   if is_cached then
-    local uuid = metrics.generate_uuid()
+    local uuid = core_utils.generate_uuid()
     if metrics.record_metrics() then
       if source == "ram" then
         metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
