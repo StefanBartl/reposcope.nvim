@@ -8,8 +8,10 @@
 ---@field init_log_path fun(): nil Initialize log path
 local M = {}
 
+-- Utility Modules (Protection and Debugging)
 local protection = require("reposcope.utils.protection")
-local debug = require("reposcope.utils.debug")
+local notify = require("reposcope.utils.debug").notify
+
 
 ---@class CloneOptions 
 ---@field std_dir string Standardth for cloning repositories
@@ -85,7 +87,7 @@ function M.init_cache_dir()
   end
 
   if not protection.safe_mkdir(M.options.cache_dir) then
-    debug.notify("[reposcope] Cache path could not be created: " .. M.options.cache_dir, 4)
+    notify("[reposcope] Cache path could not be created: " .. M.options.cache_dir, 4)
   end
 end
 
@@ -110,7 +112,7 @@ function M.init_log_path()
     if protection.is_valid_path(log_filepath, true) then
       return
     else
-      debug.notify("[reposcope] Warning: User-defined log path is invalid. Falling back to default.", 3)
+      notify("[reposcope] Warning: User-defined log path is invalid. Falling back to default.", 3)
     end
   end
 
@@ -120,17 +122,17 @@ function M.init_log_path()
   M.options.log_filepath = vim.fn.fnameescape(log_dir .. "/request_log")
 
   if not protection.is_valid_path(M.options.log_filepath, true) then
-    debug.notify("[reposcope] Error: Log file path could not be set or is invalid.", 4)
+    notify("[reposcope] Error: Log file path could not be set or is invalid.", 4)
   end
 
   local log_file = M.get_log_path()
   if not log_file then
-      debug.notify("[reposcope] Log file path could not be determined", 4)
+      notify("[reposcope] Log file path could not be determined", 4)
   else
       if not vim.fn.filereadable(log_file) then
           local file, err = io.open(log_file, "w")
           if err then
-              debug.notify("[reposcope] Log file could not be created: " .. err, 4)
+              notify("[reposcope] Log file could not be created: " .. err, 4)
           elseif file then
               io.close(file)
           end

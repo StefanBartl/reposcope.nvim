@@ -3,7 +3,9 @@
 ---@field generate_uuid fun(): string  Creates a UUID based on actual timestamp
 local M = {}
 
-local uv = vim.loop -- Neovim's built-in libuv module for high-performance timers
+-- Low-Level Utilities (Libuv for High-Performance Timers)
+local uv = vim.loop
+
 
 ---Searches for a value in the table and returns its index.
 ---@param tbl table The table to search in.

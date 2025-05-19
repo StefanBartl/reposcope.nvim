@@ -2,8 +2,11 @@
 ---@field check fun(): nil Performs a health check for reposcope.nvim environment
 local M = {}
 
+-- Health and Diagnostic Modules
 local health = vim.health or require("health")
+-- Utility Modules (Error and Validation Checks)
 local checks = require("reposcope.utils.checks")
+
 
 ---Performs a health check for reposcope.nvim environment
 function M.check()

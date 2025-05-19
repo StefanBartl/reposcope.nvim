@@ -7,12 +7,18 @@ local default, apply_preview_highlight
 ---@field height number Height of the preview window
 local M = {}
 
+-- Configuration (Global and UI-Specific)
 local config = require("reposcope.config")
 local ui_config = require("reposcope.ui.config")
+-- State Management (UI State)
 local ui_state = require("reposcope.state.ui.ui_state")
+-- Protection and Error Handling
 local protected = require("reposcope.utils.protection")
-local preview_width = ui_config.preview_width
+-- Preview UI Components (Banner)
 local banner = require("reposcope.ui.preview.banner").get_banner
+-- Layout (Width Calculation)
+local preview_width = ui_config.preview_width
+
 
 ---Creates a scratch buffer named `reposcope://preview` and opens the preview window in the Reposcope UI
 function M.open_preview()

@@ -7,10 +7,15 @@ local github, no_provider
 ---@field private no_provider fun(input: string): nil Fallback function which prints the user input when no provider is configured
 local M = {}
 
+-- Configuration (Global Configuration)
 local config = require("reposcope.config")
+-- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
+-- Providers (GitHub Repositories)
 local gh_repositories = require("reposcope.providers.github.repositories")
+-- List Controller (Managing List UI)
 local list_controller = require("reposcope.controllers.list_controller")
+
 
 ---Handles the <CR> keymap in the prompt, calling the relevant provider
 ---@param input string The user input in the prompt

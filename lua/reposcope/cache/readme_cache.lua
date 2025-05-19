@@ -11,9 +11,13 @@
 ---@field clear_all_caches fun(): boolean Clears all README caches (RAM and File) for all repositories
 local M = {}
 
+-- Config Module
 local config = require("reposcope.config")
+-- State Management (Repository State)
 local repositories_state = require("reposcope.state.repositories.repositories_state")
-local debug = require("reposcope.utils.debug")
+-- Utility Modules (Debugging)
+local notify = require("reposcope.utils.debug").notify
+
 
 M.active_readme_requests = {}
 
@@ -45,7 +49,7 @@ function M.cache_readme(repo_name, readme_text)
   if repo then
     repo.readme_cache = readme_text
   else
-    debug.notify("[reposcope] Repository not found: " .. repo_name, 4)
+    notify("[reposcope] Repository not found: " .. repo_name, 4)
   end
 end
 
@@ -64,7 +68,7 @@ end
 function M.fcache_readme(repo_name, readme_text)
   local repo = repositories_state.get_repository(repo_name)
   if not repo then
-    debug.notify("[reposcope] Repository not found: " .. repo_name, 4)
+    notify("[reposcope] Repository not found: " .. repo_name, 4)
     return false
   end
 
@@ -76,7 +80,7 @@ function M.fcache_readme(repo_name, readme_text)
   local readmefile = fcache_path .. "/" .. repo_name .. ".md"
 
   if vim.fn.filereadable(readmefile) == 1 then
-    debug.notify("[reposcope] README already cached: " .. readmefile, 2)
+    notify("[reposcope] README already cached: " .. readmefile, 2)
     return false
   end
 
@@ -87,11 +91,11 @@ function M.fcache_readme(repo_name, readme_text)
   end)
 
   if not ok then
-    debug.notify("[reposcope] Error writing README cache: " .. err, 4)
+    notify("[reposcope] Error writing README cache: " .. err, 4)
     return false
   end
 
-  debug.notify("[reposcope] README cached: " .. readmefile, 2)
+  notify("[reposcope] README cached: " .. readmefile, 2)
   return true
 end
 
@@ -103,7 +107,7 @@ function M.get_fcached_readme(repo_name)
   local readmefile = fcache_path .. "/" .. repo_name .. ".md"
 
   if vim.fn.filereadable(readmefile) == 0 then
-    debug.notify("[reposcope] README not cached: " .. readmefile, 2)
+    notify("[reposcope] README not cached: " .. readmefile, 2)
     return nil
   end
 
@@ -115,7 +119,7 @@ function M.get_fcached_readme(repo_name)
   end)
 
   if not ok then
-    debug.notify("[reposcope] Error reading README cache: " .. content, 4)
+    notify("[reposcope] Error reading README cache: " .. content, 4)
     return nil
   end
 
@@ -123,7 +127,7 @@ function M.get_fcached_readme(repo_name)
     M.cache_readme(repo_name, content) -- save in RAM-Cache
   end
 
-  debug.notify("[reposcope] README loaded from file cache: " .. readmefile, 2)
+  notify("[reposcope] README loaded from file cache: " .. readmefile, 2)
   return content
 end
 
@@ -133,14 +137,14 @@ end
 function M.clear_cache(repo_name)
   local repo = repositories_state.get_repository(repo_name)
   if not repo then
-    debug.notify("[reposcope] Repository not found: " .. repo_name, 4)
+    notify("[reposcope] Repository not found: " .. repo_name, 4)
     return false
   end
 
   -- RAM-Cache löschen
   if repo.readme_cache then
     repo.readme_cache = nil
-    debug.notify("[reposcope] README removed from RAM cache: " .. repo_name, 2)
+    notify("[reposcope] README removed from RAM cache: " .. repo_name, 2)
   end
 
   -- Dateicache löschen
@@ -148,7 +152,7 @@ function M.clear_cache(repo_name)
   local readmefile = fcache_path .. "/" .. repo_name .. ".md"
   if vim.fn.filereadable(readmefile) == 1 then
     os.remove(readmefile)
-    debug.notify("[reposcope] README removed from file cache: " .. readmefile, 2)
+    notify("[reposcope] README removed from file cache: " .. readmefile, 2)
   end
 
   return true
@@ -165,7 +169,7 @@ function M.clear_all_caches()
       repo.readme_cache = nil
     end
   end
-  debug.notify("[reposcope] All READMEs removed from RAM cache.", 2)
+  notify("[reposcope] All READMEs removed from RAM cache.", 2)
 
   -- Alle Dateien im Dateicache löschen
   local fcache_path = config.get_readme_fcache_dir()
@@ -176,10 +180,10 @@ function M.clear_all_caches()
   end)
 
   if success then
-    debug.notify("[reposcope] All README files removed from file cache.", 2)
+    notify("[reposcope] All README files removed from file cache.", 2)
     return true
   else
-   debug.notify("[reposcope] Error clearing all file caches: " .. err, 4)
+   notify("[reposcope] Error clearing all file caches: " .. err, 4)
     return false
   end
 end

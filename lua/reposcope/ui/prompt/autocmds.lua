@@ -3,8 +3,10 @@
 ---@field cleanup_autocmds fun(): nil Cleanup for the UI-Prompt
 local M = {}
 
+-- State Management (UI State, Prompt State)
 local ui_state = require("reposcope.state.ui.ui_state")
 local prompt_state = require("reposcope.state.ui.prompt_state")
+
 
 --- Autocommands for the UI-Prompt
 function M.setup_autocmds()

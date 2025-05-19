@@ -13,10 +13,13 @@
 ---@field apply_layout fun(): nil Applies layout and styling to the background window.
 local M = {}
 
+-- Configuration and State Management (Background UI)
 local config = require("reposcope.ui.background.background_config")
 local ui_state = require("reposcope.state.ui.ui_state")
+-- Utility Modules (Debugging, Protection)
 local notify = require("reposcope.utils.debug").notify
 local protection = require("reposcope.utils.protection")
+
 
 ---Opens the background window.
 ---@return nil

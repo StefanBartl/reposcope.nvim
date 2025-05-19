@@ -2,10 +2,15 @@
 --- @field create fun(): nil Displays the README of the selected repository in a hidden Neovim buffer (Markdown) or a browser (HTML)
 local M = {}
 
-local debug = require("reposcope.utils.debug")
+-- Debugging Utility
+local notify = require("reposcope.utils.debug").notify
+-- Caching (Readme Cache Management)
 local readme_cache = require("reposcope.cache.readme_cache")
+-- State Management (Repositories State)
 local repositories_state = require("reposcope.state.repositories.repositories_state")
+-- OS Utilities (Operating System Commands)
 local os = require("reposcope.utils.os")
+
 
 --- Displays the README of the currently selected repository.
 --- If the README contains HTML content, it opens in the default web browser.
@@ -14,7 +19,7 @@ function M.create()
   -- Retrieve the currently selected repository
   local repo = repositories_state.get_selected_repo()
   if not repo then
-    debug.notify("[reposcope] No selected repository available", 4)
+    notify("[reposcope] No selected repository available", 4)
     return
   end
 
@@ -23,14 +28,14 @@ function M.create()
   -- Try to load the README from the in-memory cache
   local content = readme_cache.get_cached_readme(repo_name)
   if not content then
-    debug.notify("[reposcope] README not cached for: " .. repo_name, 4)
+    notify("[reposcope] README not cached for: " .. repo_name, 4)
   end
 
   -- Try to load the README from the file cache (persistent)
   if not content then
     content = readme_cache.get_fcached_readme(repo_name)
     if not content then
-      debug.notify("[reposcope] README not filecached for: " .. repo_name, 4)
+      notify("[reposcope] README not filecached for: " .. repo_name, 4)
       content = "README not cached yet."
     end
   end
@@ -66,7 +71,7 @@ function M.create()
   vim.bo[buf].buftype = "" -- Normal buffer type
 
   -- Debug: Info über den verborgenen Buffer
-  debug.notify("[reposcope] README buffer created: reposcope://README.md (" .. repo_name .. ")", 2)
+  notify("[reposcope] README buffer created: reposcope://README.md (" .. repo_name .. ")", 2)
 end
 
 return M

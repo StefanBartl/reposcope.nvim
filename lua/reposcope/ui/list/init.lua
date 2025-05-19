@@ -13,10 +13,14 @@
 ---@field get_selected_entry fun(): string|nil Returns the currently selected list entry  --REF: niuy
 local M = {}
 
+-- UI Components (List Management and Window)
 local list_window = require("reposcope.ui.list.list_window")
 local list_manager = require("reposcope.ui.list.list_manager")
+-- State Management (UI State)
 local ui_state = require("reposcope.state.ui.ui_state")
+-- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
+
 
 ---Initializes the list UI and dynamically loads if cached repositories exist.
 ---@return nil

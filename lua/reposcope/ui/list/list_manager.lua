@@ -10,9 +10,13 @@
 ---@field get_selected fun(): string|nil Returns the currently selected list entry  --REF: niuy
 local M = {}
 
+-- UI Components (List Window)
 local list_window = require("reposcope.ui.list.list_window")
+-- State Management (UI State)
 local ui_state = require("reposcope.state.ui.ui_state")
+-- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
+
 
 ---Sets the list entries and displays them in the list window
 ---@param entries string[] The list of entries to display

@@ -7,14 +7,19 @@ local M = {}
 -- GitHub API search URL
 local GITHUB_API_SEARCH_URL = "https://api.github.com/search/repositories?q=%s"
 
+-- API Client (GitHub API Integration)
 local api_client = require("reposcope.network.clients.api_client")
+-- State Management (Repositories, Requests, UI)
 local repositories_state = require("reposcope.state.repositories.repositories_state")
 local req_state = require("reposcope.state.repositories.requests_state")
 local ui_state = require("reposcope.state.ui.ui_state")
+-- Controllers (List UI Management)
 local list_controller = require("reposcope.controllers.list_controller")
+-- Utility Modules (Debugging, Core Utilities, Encoding)
 local notify = require("reposcope.utils.debug").notify
 local core_utils = require("reposcope.utils.core")
 local urlencode = require("reposcope.utils.encoding").urlencode
+
 
 --- Initializes the repository list with a query
 ---@param query string The search query for GitHub repositories

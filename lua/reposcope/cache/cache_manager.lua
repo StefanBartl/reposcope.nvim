@@ -3,11 +3,15 @@
 ---@field cache_and_show_readme fun(repo_name: string, content: string): nil Caches and displays the fetched README
 local M = {}
 
+-- Cache Management Modules
 local readme_cache = require("reposcope.cache.readme_cache")
+-- Utility Modules (Metrics, Core Functions, Debugging)
 local metrics = require("reposcope.utils.metrics")
 local core_utils = require("reposcope.utils.core")
-local debug = require("reposcope.utils.debug")
+local notify = require("reposcope.utils.debug").notify
+-- UI Injection (Preview Manipulation)
 local preview = require("reposcope.ui.preview.inject")
+
 
 --- Displays cached README if available
 ---@param repo_name string Name of the repository for which a README file could be cached
@@ -43,11 +47,11 @@ function M.cache_and_show_readme(repo_name, content)
   -- Write to file cache asynchronously
   vim.schedule(function()
     readme_cache.fcache_readme(repo_name, content) -- NOTE: pcall
-    debug.notify("[reposcope] README cached to file: " .. repo_name, 1)
+    notify("[reposcope] README cached to file: " .. repo_name, 1)
   end)
 
   preview.show_readme(repo_name)
-  debug.notify("[reposcope] Successfully fetched README")
+  notify("[reposcope] Successfully fetched README")
 end
 
 return M

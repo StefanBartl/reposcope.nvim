@@ -1,4 +1,6 @@
+-- Project-specific Configuration and Utility Modules
 local notify = require("reposcope.utils.debug").notify
+
 
 ---This command safely starts the reposcope UI by calling `require("reposcope.init").open_ui()`
 ---and logs an error notification if an exception occurs.

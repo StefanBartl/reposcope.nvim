@@ -2,9 +2,13 @@
 ---@field show_readme fun(repo_name: string, where: "cache"|"file"|nil, force_markdown?: boolean): nil Displays the README of a repository in the preview window
 local M = {}
 
+-- Caching (Readme Cache Management)
 local readme_cache = require("reposcope.cache.readme_cache")
+-- State Management (UI State)
 local ui_state = require("reposcope.state.ui.ui_state")
-local debug = require("reposcope.utils.debug")
+-- Debugging Utility
+local notify = require("reposcope.utils.debug").notify
+
 
 --- Displays the README of a repository in the preview window
 ---@param repo_name string The name of the repository
@@ -19,17 +23,17 @@ function M.show_readme(repo_name, source, force_markdown)
   if source == "cache" then
     content = readme_cache.get_cached_readme(repo_name)
     if content then
-      debug.notify("[reposcope] README loaded from RAM cache: " .. repo_name, 1)
+      notify("[reposcope] README loaded from RAM cache: " .. repo_name, 1)
     else
-      debug.notify("[reposcope] README not in RAM cache: " .. repo_name, 1)
+      notify("[reposcope] README not in RAM cache: " .. repo_name, 1)
     end
 
   elseif source == "file" then
     content = readme_cache.get_fcached_readme(repo_name)
     if content then
-      debug.notify("[reposcope] README loaded from File cache: " .. repo_name, 1)
+      notify("[reposcope] README loaded from File cache: " .. repo_name, 1)
     else
-      debug.notify("[reposcope] README not in File cache: " .. repo_name, 1)
+      notify("[reposcope] README not in File cache: " .. repo_name, 1)
     end
 
   else
@@ -37,29 +41,29 @@ function M.show_readme(repo_name, source, force_markdown)
     -- Prioritize RAM-Cache > Datei-Cache
     content = readme_cache.get_cached_readme(repo_name)
     if content then
-      debug.notify("[reposcope] README loaded from RAM cache: " .. repo_name, 1)
+      notify("[reposcope] README loaded from RAM cache: " .. repo_name, 1)
     else
-      debug.notify("[reposcope] README not in RAM cache: " .. repo_name, 1)
+      notify("[reposcope] README not in RAM cache: " .. repo_name, 1)
       -- Wenn nicht im RAM, dann Datei-Cache prüfen
       content = readme_cache.get_fcached_readme(repo_name)
       if content then
-        debug.notify("[reposcope] README loaded from File cache: " .. repo_name, 1)
+        notify("[reposcope] README loaded from File cache: " .. repo_name, 1)
         -- Automatisch in den RAM-Cache laden für schnelleren Zugriff
         readme_cache.cache_readme(repo_name, content)
       else
-        debug.notify("[reposcope] README not in File cache: " .. repo_name, 1)
+        notify("[reposcope] README not in File cache: " .. repo_name, 1)
       end
     end
   end
 
   if not content then
-    debug.notify("[reposcope] No content for show_readme", 4)
+    notify("[reposcope] No content for show_readme", 4)
     return
   end
 
   local buf = ui_state.buffers.preview
   if not buf then
-    debug.notify("[reposcope] Preview buffer not found.", 4)
+    notify("[reposcope] Preview buffer not found.", 4)
     return
   end
 

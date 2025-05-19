@@ -7,7 +7,11 @@
 ---@field safe_execute_shell fun(command: string): boolean, string Executes a shell command safely and returns the success status and output
 local M = {}
 
+-- Debugging Utility (Enhanced Debugging with Formatted Output)
 local debug = require("reposcope.utils.debug")
+local debugf = debug.debugf
+local notify = debug.notify
+
 
 ---Normalizes a value into a non-zero count.
 --- - If `val` is a table, returns its element count (default if empty).
@@ -89,7 +93,7 @@ function M.is_valid_path(path, nec_filename)
   local dir_ok = M.safe_mkdir(dir)
 
   if dir_ok == false then
-    debug.debugf("[reposcope] Error with creation of (writeable) directory: " .. dir, 3)
+    debugf("[reposcope] Error with creation of (writeable) directory: " .. dir, 3)
     return false
   end
 
@@ -100,7 +104,7 @@ function M.is_valid_path(path, nec_filename)
   -- Check if the filename is not empty
   local ok, err = M.is_valid_filename(filename)
   if not ok then
-    debug.debugf("Path is valid but filename invalid: " .. dir .. "/" .. filename .. " (" .. err .. ")", 3)
+    debugf("Path is valid but filename invalid: " .. dir .. "/" .. filename .. " (" .. err .. ")", 3)
     return false
   else
     return true
@@ -117,7 +121,7 @@ function M.safe_mkdir(path)
 
   local created = vim.fn.mkdir(path, "p")
   if created == 0 then
-    debug.notify("[reposcope] Error: Directory could not be created: " .. path, 4)
+    notify("[reposcope] Error: Directory could not be created: " .. path, 4)
     return false
   end
 
@@ -125,11 +129,11 @@ function M.safe_mkdir(path)
     if M.is_dir_writeable(path) then
       return true
     else
-      debug.debugf("directory created, but not writeable", 3)
+      debugf("directory created, but not writeable", 3)
       return false
     end
   else
-    debug.notify("[reposcope] Error: Directory was not created, but mkdir did not return an error: " .. path, 4)
+    notify("[reposcope] Error: Directory was not created, but mkdir did not return an error: " .. path, 4)
     return false
   end
 
@@ -144,7 +148,7 @@ function M.is_dir_writeable(dir)
    os.remove(testfile)
    return true
  else
-   debgug.notify(
+   notify(
      string.format("[reposcope] Error: Directory is not writable (%s). Reason: %s", dir, err),
      4
    )

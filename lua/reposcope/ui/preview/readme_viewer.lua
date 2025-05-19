@@ -2,11 +2,16 @@
 --- @field show fun(): nil Displays the README of the selected repository in either a fullscreen buffer (Markdown) or a browser (HTML)
 local M = {}
 
-local debug = require("reposcope.utils.debug")
+-- Debugging Utility
+local notify = require("reposcope.utils.debug").notify
+-- Caching (Readme Cache Management)
 local readme_cache = require("reposcope.cache.readme_cache")
+-- State Management (UI State, Repositories State)
 local ui_state = require("reposcope.state.ui.ui_state")
 local repositories_state = require("reposcope.state.repositories.repositories_state")
+-- OS Utilities (Operating System Commands)
 local os = require("reposcope.utils.os")
+
 
 --- Displays the README of the currently selected repository.
 --- If the README contains HTML content, it opens in the default web browser.
@@ -17,7 +22,7 @@ function M.show()
   -- Retrieve the currently selected repository
   local repo = repositories_state.get_selected_repo()
   if not repo then
-    debug.notify("[reposcope] No selected repository available", 4)
+    notify("[reposcope] No selected repository available", 4)
     return
   end
 
@@ -26,13 +31,13 @@ function M.show()
   -- Try to load the README from the in-memory cache
   local content = readme_cache.get_cached_readme(repo_name)
   if not content then
-    debug.notify("[reposcope] README not cached for: " .. repo_name, 4)
+    notify("[reposcope] README not cached for: " .. repo_name, 4)
   end
 
   -- Try to load the README from the file cache (persistent)
   content = readme_cache.get_fcached_readme(repo_name)
   if not content then
-    debug.notify("[reposcope] README not filecached for: " .. repo_name, 4)
+    notify("[reposcope] README not filecached for: " .. repo_name, 4)
     content = "README not cached yet."
   end
 
@@ -59,16 +64,16 @@ function M.show()
   if ui_state.buffers.readme_viewer and vim.api.nvim_buf_is_valid(ui_state.buffers.readme_viewer) then
     buf = ui_state.buffers.readme_viewer
     vim.bo[buf].modifiable = true
-    debug.notify("[reposcope] Using existing README buffer", 2)
+    notify("[reposcope] Using existing README buffer", 2)
   else
     buf = require("reposcope.utils.protection").create_named_buffer("reposcope://readme_viewer")
     ui_state.buffers.readme_viewer = buf
-    debug.notify("[reposcope] Created new README buffer", 2)
+    notify("[reposcope] Created new README buffer", 2)
     print("number", buf)
   end
 
   if not buf or not vim.api.nvim_buf_is_valid(buf) then
-    debug.notify("[reposcope] Cannot create valid buffer for readme_viewer", 4)
+    notify("[reposcope] Cannot create valid buffer for readme_viewer", 4)
     return
   end
 
@@ -91,7 +96,7 @@ function M.show()
   -- Close existing README Viewer windows, if open
   if ui_state.windows.readme_viewer and vim.api.nvim_win_is_valid(ui_state.windows.readme_viewer) then
     vim.api.nvim_win_close(ui_state.windows.readme_viewer, true)
-    debug.notify("[reposcope] Closed existing README window", 2)
+    notify("[reposcope] Closed existing README window", 2)
   end
 
   local win = vim.api.nvim_open_win(buf, true, {
@@ -124,7 +129,7 @@ end
 
 function M.set_viewer_keymap(buf)
   if not buf or not vim.api.nvim_buf_is_valid(buf) then
-    debug.notify("[reposcope] Unable to set keymap, buffer is invalid", 3)
+    notify("[reposcope] Unable to set keymap, buffer is invalid", 3)
     return
   end
 

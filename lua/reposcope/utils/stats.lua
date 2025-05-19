@@ -4,9 +4,13 @@
 ---@field get_most_frequent_query fun(query_count: table<string, number>): string Determines the most frequent query
 local M = {}
 
+-- Metrics Management (Tracking Performance and Usage Statistics)
 local metrics = require("reposcope.utils.metrics")
+-- State Management (Stats Popup)
 local stats_state = require("reposcope.state.popups.stats_popup").stats
-local debug = require("reposcope.utils.debug")
+-- Debugging Utility
+local notify = require("reposcope.utils.debug").notify
+
 
 --- Displays the request statistics in a floating window
 function M.show_stats()
@@ -92,18 +96,18 @@ function M.calculate_extended_stats()
   local file_path = require("reposcope.config").get_log_path()
 
   if not vim.fn.filereadable(file_path) then
-    debug.notify("[reposcope] File not readable or does not exist: " .. file_path, 4)
+    notify("[reposcope] File not readable or does not exist: " .. file_path, 4)
     return 0, "N/A"
   end
 
   local ok, raw = pcall(vim.fn.readfile, file_path)
   if not ok then
-    debug.notify("[reposcope] Error reading file: " .. file_path .. " - " .. raw, 4)
+    notify("[reposcope] Error reading file: " .. file_path .. " - " .. raw, 4)
     return 0, "N/A"
   end
 
   if not raw or #raw == 0 then
-    debug.notify("[reposcope] File is empty: " .. file_path, 4)
+    notify("[reposcope] File is empty: " .. file_path, 4)
     return 0, "N/A"
   end
 
