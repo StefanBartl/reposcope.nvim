@@ -88,7 +88,6 @@ function M.get_repository(repo_name)
 end
 
 ---Retrieves the currently selected repository based on the list entry.
----@param repo_name string Repository name to search for
 ---@return Repository|nil
 function M.get_selected_repo()
   local json_data = M.get_repositories()
