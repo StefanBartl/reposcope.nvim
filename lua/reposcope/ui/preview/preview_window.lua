@@ -6,7 +6,7 @@
 ---This window is typically opened alongside the list and prompt components and is non-focusable.
 ---
 ---The layout is defined in `preview_config.lua` and supports dynamic updates
----@field open_window fun(): nil Opens the preview window with layout and banner
+---@field open_window fun(): boolean Opens the preview window with layout and banner and returns true or false
 ---@field close_window fun(): nil Closes the preview window if open
 ---@field apply_layout fun(): nil Applies visual styling (highlight, background) to the preview window
 local M = {}
@@ -19,17 +19,32 @@ local ui_state = require("reposcope.state.ui.ui_state")
 local protection = require("reposcope.utils.protection")
 local notify = require("reposcope.utils.debug").notify
 
+
 ---Opens the preview window and injects the initial banner
+---@return boolean
 function M.open_window()
+  -- Reset buffer and/or if invalid  REF:
+  if ui_state.buffers.preview and not vim.api.nvim_buf_is_valid(ui_state.buffers.preview) then
+    ui_state.buffers.preview = nil
+  end
+  if ui_state.windows.preview and not vim.api.nvim_win_is_valid(ui_state.windows.preview) then
+    ui_state.windows.preview = nil
+  end
+
   if not ui_state.buffers.preview then
     local buf = protection.create_named_buffer("reposcope://preview")
+    if not buf or not vim.api.nvim_buf_is_valid(buf) then
+      notify("[reposcope] Preview buffer cannot be created.", 4)
+      return false
+    end
+
     ui_state.buffers.preview = buf
 
     vim.bo[buf].buftype = "nofile"
     vim.bo[buf].modifiable = true
     vim.bo[buf].bufhidden = "wipe"
 
-    ui_state.windows.preview = vim.api.nvim_open_win(buf, false, {
+    local win = vim.api.nvim_open_win(buf, false, {
       relative = "editor",
       row = preview_config.row,
       col = preview_config.col,
@@ -41,13 +56,21 @@ function M.open_window()
       noautocmd = true,
     })
 
-    M.apply_layout()
+    ui_state.windows.preview = win
 
+    M.apply_layout()
     notify("[reposcope] Preview window initialized.", 2)
+    return true
   else
     notify("[reposcope] Preview window already exists.", 2)
+    print("preview window:", ui_state.windows.preview)
+    print("preview win is valid:", vim.api.nvim_win_is_valid(ui_state.windows.preview))
+    print("preview buf:", ui_state.buffers.preview)
+    print("preview buf is valid:", vim.api.nvim_buf_is_valid(ui_state.buffers.preview))
+    return true
   end
 end
+
 
 ---Closes the preview window
 function M.close_window()
@@ -57,6 +80,7 @@ function M.close_window()
   ui_state.windows.preview = nil
   ui_state.buffers.preview = nil
 end
+
 
 ---Applies layout and highlight styling
 function M.apply_layout()

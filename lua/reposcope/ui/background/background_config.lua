@@ -24,6 +24,7 @@ M.height = ui_config.height
 M.color_bg = ui_config.colortheme.background
 M.border = "none"
 
+
 ---Dynamically updates the background layout settings
 ---@param row? number Optional new row position
 ---@param col? number Optional new column position
@@ -36,6 +37,7 @@ function M.update_layout(row, col, width, height)
   M.width = width or M.width
   M.height = height or M.height
 end
+
 
 ---Dynamically updates the background colors
 ---@param bg? string Optional new background color

@@ -46,6 +46,7 @@ function M.update_preview(repo_name)
   M.inject_content(buf, vim.split(content, "\n", { plain = true }), "markdown")
 end
 
+
 --- Injects arbitrary content into the specified buffer and applies the given filetype.
 ---@param buf integer The buffer handle to inject content into
 ---@param lines string[] The lines to insert
@@ -65,6 +66,7 @@ function M.inject_content(buf, lines, filetype)
 
   notify(string.format("[reposcope] Injected %s into preview buffer", filetype or "text"), 2)
 end
+
 
 ---Injects the default banner into the preview buffer.
 ---@param buf integer The preview buffer handle

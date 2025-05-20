@@ -13,8 +13,6 @@ local config = require("reposcope.config")
 local notify = require("reposcope.utils.debug").notify
 -- Providers (GitHub Repositories)
 local gh_repositories = require("reposcope.providers.github.repositories")
--- List Controller (Managing List UI)
-local list_controller = require("reposcope.controllers.list_controller")
 
 
 ---Handles the <CR> keymap in the prompt, calling the relevant provider
@@ -31,7 +29,6 @@ end
 ---@param input string The user input in the prompt
 function github(input)
   gh_repositories.init(input)
-  list_controller.display_repositories()
 end
 
 ---Fallback function when no provider is configured

@@ -10,6 +10,8 @@ local metrics = require("reposcope.utils.metrics")
 local core_utils = require("reposcope.utils.core")
 
 
+-- REF: too long
+
 --- Sends an HTTP request using curl (asynchronous) with optional metrics
 ---@param method string HTTP method (GET, POST, PUT, DELETE)
 ---@param url string The URL for the HTTP request

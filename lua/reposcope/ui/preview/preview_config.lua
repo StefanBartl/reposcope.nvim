@@ -51,6 +51,7 @@ M.highlight_color = M.layout.Normal.background
 M.normal_color = "#FFFFFF"
 M.border = "none"
 
+
 --- Dynamically update the preview layout
 ---@param width? number
 ---@param height? number
@@ -63,6 +64,7 @@ function M.update_layout(width, height, row, col)
   M.col = col or M.col
 end
 
+
 --- Update preview highlight and text colors
 ---@param highlight_color? string
 ---@param normal_color? string
@@ -70,6 +72,7 @@ function M.update_colors(highlight_color, normal_color)
   M.highlight_color = highlight_color or M.highlight_color
   M.normal_color = normal_color or M.normal_color
 end
+
 
 --- Update border layout
 ---@param border_layout "none"|"single"|"double"
