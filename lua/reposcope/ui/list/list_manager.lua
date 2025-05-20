@@ -8,6 +8,8 @@
 ---@field update_list fun(lines: string[]): nil Updates the list content
 ---@field clear_list fun(): nil Clears the list content
 ---@field get_selected fun(): string|nil Returns the currently selected list entry  --REF: niuy
+---@field select_entry fun(index: number): nil Selects a specific list entry  --REF: niuy
+---@field get_selected_entry fun(): string|nil Returns the currently selected list entry  --REF: niuy
 local M = {}
 
 -- UI Components (List Window)
@@ -60,7 +62,6 @@ function M.clear_list()
   ui_state.list_populated = nil
 end
 
-
 ---Returns the currently selected list entry
 ---@return string|nil The selected list entry text
 function M.get_selected()
@@ -79,6 +80,33 @@ function M.get_selected()
   end
 
   return lines[1]
+end
+
+---Displays the list with the given entries
+---@param entries string[] The list of repository entries to display
+---@return nil
+function M.show_list(entries)
+  if type(entries) ~= "table" then
+    notify("[reposcope] Invalid list entries (not a table).", 4)
+    return
+  end
+
+  M.set_list(entries)
+  notify("[reposcope] List UI displayed.", 2)
+end
+
+
+---Selects a specific list entry (highlights it)
+---@param index number The index of the entry to select
+---@return nil
+function M.select_entry(index)
+  if type(index) ~= "number" then
+    notify("[reposcope] Invalid index for selection.", 4)
+    return
+  end
+
+  list_window.highlight_selected(index)
+  notify("[reposcope] List entry selected at index: " .. index, 2)
 end
 
 return M
