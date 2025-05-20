@@ -14,8 +14,8 @@ local prompt_state = require("reposcope.state.ui.prompt_state")
 local gh_readme = require("reposcope.providers.github.readme")
 local gh_clone = require("reposcope.providers.github.clone")
 -- UI Components (Preview and Navigation)
-local readme_viewer = require("reposcope.ui.preview.readme_viewer")
-local reame_buffer = require("reposcope.ui.preview.readme_buffer")
+local readme_viewer = require("reposcope.ui.actions.readme_viewer")
+local readme_editor = require("reposcope.ui.actions.readme_editor")
 local navigate_list = require("reposcope.ui.prompt.navigate_list")
 -- Utility Modules (Debugging and Notifications)
 local notify = require("reposcope.utils.debug").notify
@@ -115,14 +115,14 @@ function M.set_prompt_keymaps()
       mode = {"n", "i"},
       lhs = "<C-v>",
       rhs = function()
-        readme_viewer.show()
+        readme_viewer.open_viewer()
       end,
     },
    {
       mode = {"n", "i"},
       lhs = "<C-b>",
       rhs = function()
-        reame_buffer.create()
+        readme_editor.open_editor()
       end,
     },
     {
