@@ -10,7 +10,6 @@
 ---@field height number Total height of UI
 ---@field col number Horizontal center of the UI
 ---@field row number Vertical center of the UI
----@field preview_width number Width of the preview section
 ---@field colortheme table<string, string> Color theme settings for the UI
 ---@field update_layout fun(width?: number, height?: number, col?: number, row?: number): nil Dynamically updates the UI layout settings
 ---@field update_theme fun(theme: string): nil Applies a pre-defined theme (e.g., "dark", "light")
@@ -21,9 +20,9 @@ M.width = math.floor(vim.o.columns * 0.8)
 M.height = math.floor(vim.o.lines * 0.8)
 M.col = math.floor((vim.o.columns - M.width) / 2)
 M.row = math.floor((vim.o.lines - M.height) / 2)
-M.preview_width = math.floor(M.width * 0.5)
+--M.preview_width = math.floor(M.width * 0.5)  --REF: Why here? circ dep
 
--- Default Color Theme (Dark)
+-- Default Color Theme (Dark)  TEST:
 M.colortheme = {
   background = "#322931",
   prompt = "#7B7B7B",

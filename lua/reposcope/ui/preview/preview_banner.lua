@@ -1,5 +1,9 @@
----@class DefaultPreviewBanner
+-- Forward declaration
+local apply_vertical_centering
+
+---@class PreviewBanner
 ---@field get_banner fun(preview_width: number): string[] Function to dynamically generate a default, centered preview banner
+---@field private apply_vertical_centering fun(lines: string[]): string[] Applies vertical centering to the banner text, maintaining a 3/3 height ratio 
 local M = {}
 
 -- Text Utilities (Text Manipulation and Display)
@@ -10,7 +14,6 @@ local text = require("reposcope.utils.text")
 ---@param preview_width number The width of the preview area
 ---@return string[] List of centered text lines for the preview
 function M.get_banner(preview_width)
-  -- Core banner text content
   local text_lines = {
     "REPOSCOPE",
     "A versatile plugin for exploring Git-based repositories across various providers like GitHub, GitLab, Codeberg and others.",
@@ -24,18 +27,17 @@ function M.get_banner(preview_width)
     "Thank you for using Reposcope!"
   }
 
-  -- Center each line and collect results
   local centered_lines = text.center_text_lines(text_lines, preview_width)
 
-  -- Apply vertical centering (2/3 height, 1/3 top padding)
-  return M.apply_vertical_centering(centered_lines)
+  return apply_vertical_centering(centered_lines)
 end
 
 
 ---Applies vertical centering to the banner text, maintaining a 2/3 height ratio
 ---@param lines string[] The lines to be vertically centered
 ---@return string[] Vertically centered lines
-function M.apply_vertical_centering(lines)
+---@private
+function apply_vertical_centering(lines)
   local total_lines = #lines
   local preview_height = require("reposcope.ui.config").height
 
@@ -43,12 +45,10 @@ function M.apply_vertical_centering(lines)
   local top_padding = math.max(0, math.floor((preview_height / 3) - (total_lines / 3)))
   local bottom_padding = math.max(0, preview_height - total_lines - top_padding)
 
-  -- Add top padding
   for _ = 1, top_padding do
     table.insert(lines, 1, "")
   end
 
-  -- Add bottom padding
   for _ = 1, bottom_padding do
     table.insert(lines, "")
   end
@@ -57,4 +57,3 @@ function M.apply_vertical_centering(lines)
 end
 
 return M
-

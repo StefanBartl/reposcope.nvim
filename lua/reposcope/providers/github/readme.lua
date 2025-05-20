@@ -17,7 +17,7 @@ local cache = require("reposcope.cache.cache_manager")
 -- State Management (Repositories)
 local repositories_state = require("reposcope.state.repositories.repositories_state")
 -- UI Components (Preview Injection)
-local preview = require("reposcope.ui.preview.inject")
+local preview_manager = require("reposcope.ui.preview.preview_manager")
 -- Debugging Utility
 local debug = require("reposcope.utils.debug")
 
@@ -48,14 +48,14 @@ function M.fetch_readme_for_selected()
     local is_cached, source = readme_cache.has_cached_readme(repo_name)
     if is_cached then
       local uuid = core_utils.generate_uuid()
-      if metrics.record_metrics() then
+      if metrics.record_metrics() then  -- REF: should this be in update_readme ? at this point, where it actually uses the cache
         if source == "ram" then
           metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
         elseif source == "file" then
           metrics.increase_fcache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
         end
       end
-      preview.show_readme(repo_name, source)
+      preview_manager.update_preview(repo_name)
       return
     end
     return
@@ -66,7 +66,7 @@ function M.fetch_readme_for_selected()
   -- Check if README is cached (RAM or File) REF:  cache
   local is_cached, source = readme_cache.has_cached_readme(repo_name)
   if is_cached then
-    local uuid = core_utils.generate_uuid()
+    local uuid = core_utils.generate_uuid()  -- REF: maybe in update_preview()
     if metrics.record_metrics() then
       if source == "ram" then
         metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
@@ -74,7 +74,7 @@ function M.fetch_readme_for_selected()
         metrics.increase_fcache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
       end
     end
-    preview.show_readme(repo_name, source)
+    preview_manager.update_preview(repo_name)
     active_readme_requests[repo_name] = nil
     return
   end

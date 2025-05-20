@@ -46,7 +46,7 @@ function M.open_ui()
   background.open_window()
 
   -- Open Preview
-  preview.open_preview()
+  preview.open_window()
 
   -- Open List
   list.initialize()

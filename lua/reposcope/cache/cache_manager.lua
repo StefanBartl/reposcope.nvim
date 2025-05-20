@@ -1,3 +1,5 @@
+--REF: refacore this file: get_repo. etc... from state/ to here
+
 ---@class CacheManager
 ---@field show_cached_readme fun(repo_name: string): boolean Shows README file if available in cache
 ---@field cache_and_show_readme fun(repo_name: string, content: string): nil Caches and displays the fetched README
@@ -10,7 +12,7 @@ local metrics = require("reposcope.utils.metrics")
 local core_utils = require("reposcope.utils.core")
 local notify = require("reposcope.utils.debug").notify
 -- UI Injection (Preview Manipulation)
-local preview = require("reposcope.ui.preview.inject")
+local preview_manager = require("reposcope.ui.preview.preview_manager")
 
 
 --- Displays cached README if available
@@ -29,7 +31,7 @@ function M.show_cached_readme(repo_name)
       end
     end
 
-    preview.show_readme(repo_name, source)
+    preview_manager.update_preview(repo_name)
 
   readme_cache.active_readme_requests[repo_name] = nil  --REF: must this be here?
 
@@ -50,7 +52,7 @@ function M.cache_and_show_readme(repo_name, content)
     notify("[reposcope] README cached to file: " .. repo_name, 1)
   end)
 
-  preview.show_readme(repo_name)
+  preview_manager.update_preview(repo_name)
   notify("[reposcope] Successfully fetched README")
 end
 
