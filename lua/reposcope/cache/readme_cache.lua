@@ -2,6 +2,7 @@
 
 ---@class ReadmeCache
 ---@field active_readme_requests table Holds state for active requests to README files in repositories
+---@field get_readme fun(repo_name): string|nil Returns the README content for a given repository from cache (RAM or file)
 ---@field has_cached_readme fun(repo_name: string): boolean, string|nil Checks if a README is cached (RAM or File)
 ---@field cache_readme fun(repo_name: string, readme_text: string): nil Caches the README for a repository directly in RAM
 ---@field get_cached_readme fun(repo_name: string): string|nil Returns the cached README if available
@@ -20,6 +21,34 @@ local notify = require("reposcope.utils.debug").notify
 
 
 M.active_readme_requests = {}
+
+---Returns the README content for a given repository from cache (RAM or file)
+---@param repo_name string The full name of the repository (e.g. "user/repo")
+---@return string|nil content The cached README content if available, nil otherwise
+function M.get_readme(repo_name)
+  -- Validate input type
+  if type(repo_name) ~= "string" or repo_name == "" then
+    notify("[reposcope] Invalid repository name provided to get_readme()", vim.log.levels.WARN)
+    return nil
+  end
+
+  -- Determine the source of the cached README: "ram", "file", or nil
+  local ok, source = M.has_cached_readme(repo_name)
+  if not ok then
+    notify("[reposcope] No cached README found for: " .. repo_name, vim.log.levels.INFO)
+    return nil
+  end
+
+  -- Return README content based on source
+  if source == "ram" then
+    return M.get_cached_readme(repo_name)
+  elseif source == "file" then
+    return M.get_fcached_readme(repo_name)
+  else
+    notify("[reposcope] Unknown cache source for: " .. repo_name, vim.log.levels.ERROR)
+    return nil
+  end
+end
 
 --- Checks if a README is cached (RAM or File)
 ---@param repo_name string The repository name
@@ -141,13 +170,13 @@ function M.clear_cache(repo_name)
     return false
   end
 
-  -- RAM-Cache löschen
+  -- Removes all repositoreies from RAM
   if repo.readme_cache then
     repo.readme_cache = nil
     notify("[reposcope] README removed from RAM cache: " .. repo_name, 2)
   end
 
-  -- Dateicache löschen
+  -- Remoe all files in filecache dir
   local fcache_path = config.get_readme_fcache_dir()
   local readmefile = fcache_path .. "/" .. repo_name .. ".md"
   if vim.fn.filereadable(readmefile) == 1 then
@@ -161,7 +190,7 @@ end
 --- Clears all README caches (RAM and File) for all repositories
 ---@return boolean Success status (true if all cleared, false on error)
 function M.clear_all_caches()
-  -- RAM-Cache für alle Repositories leeren
+  -- Removes all repositoreies from RAM
   local repositories = repositories_state.get_repositories().items
 
   for _, repo in ipairs(repositories) do
@@ -171,7 +200,7 @@ function M.clear_all_caches()
   end
   notify("[reposcope] All READMEs removed from RAM cache.", 2)
 
-  -- Alle Dateien im Dateicache löschen
+  -- Remoe all files in filecache dir
   local fcache_path = config.get_readme_fcache_dir()
   local success, err = pcall(function()
     for file in vim.fn.readdir(fcache_path) do
