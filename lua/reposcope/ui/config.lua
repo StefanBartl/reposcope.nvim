@@ -31,6 +31,7 @@ M.colortheme = {
   accent_2 = "#98C379",
 }
 
+
 --- Dynamically updates the layout of the UI (width, height, position)
 ---@param width? number Optional new width for the UI
 ---@param height? number Optional new height for the UI
@@ -44,6 +45,7 @@ function M.update_layout(width, height, col, row)
   M.row = row or math.floor((vim.o.lines - M.height) / 2)
   M.preview_width = math.floor(M.width * 0.5)
 end
+
 
 --- Applies a pre-defined theme (dark, light) or custom colors
 ---@param theme string The theme to apply ("dark", "light", "custom")

@@ -22,6 +22,7 @@ local notify = require("reposcope.utils.debug").notify
 
 M.active_readme_requests = {}
 
+
 ---Returns the README content for a given repository from cache (RAM or file)
 ---@param repo_name string The full name of the repository (e.g. "user/repo")
 ---@return string|nil content The cached README content if available, nil otherwise
@@ -69,6 +70,7 @@ function M.has_cached_readme(repo_name)
   return false, nil
 end
 
+
 --- Caches the README for a repository directly in RAM
 ---@param repo_name string The name of the repository
 ---@param readme_text string The content of the README file
@@ -82,6 +84,7 @@ function M.cache_readme(repo_name, readme_text)
   end
 end
 
+
 --- Returns the cached README if available in RAM
 ---@param repo_name string The name of the repository
 ---@return string|nil Cached README content or nil if not found
@@ -89,6 +92,7 @@ function M.get_cached_readme(repo_name)
   local repo = repositories_state.get_repository(repo_name)
   return repo and repo.readme_cache or nil
 end
+
 
 --- Writes the README content to the file cache
 ---@param repo_name string The repository name
@@ -128,6 +132,7 @@ function M.fcache_readme(repo_name, readme_text)
   return true
 end
 
+
 --- Reads the README content from the file cache
 ---@param repo_name string The repository name
 ---@return string|nil Cached README content or nil if not found
@@ -160,6 +165,7 @@ function M.get_fcached_readme(repo_name)
   return content
 end
 
+
 --- Clears the README cache (RAM and File) for a specific repository
 ---@param repo_name string The repository name
 ---@return boolean Success status (true if cleared, false on error)
@@ -186,6 +192,7 @@ function M.clear_cache(repo_name)
 
   return true
 end
+
 
 --- Clears all README caches (RAM and File) for all repositories
 ---@return boolean Success status (true if all cleared, false on error)

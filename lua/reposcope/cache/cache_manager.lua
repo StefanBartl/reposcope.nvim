@@ -40,6 +40,7 @@ function M.show_cached_readme(repo_name)
   return false
 end
 
+
 --- Caches and displays the fetched README content
 ---@param repo_name string The name of the repository
 ---@param content string The README content to cache

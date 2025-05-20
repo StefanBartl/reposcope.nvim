@@ -24,6 +24,14 @@ local protection = require("reposcope.utils.protection")
 ---Opens the background window.
 ---@return nil
 function M.open_window()
+  -- Reset buffer and/or if invalid  REF:
+  if ui_state.buffers.backg and not vim.api.nvim_buf_is_valid(ui_state.buffers.backg) then
+    ui_state.buffers.backg = nil
+  end
+  if ui_state.windows.backg and not vim.api.nvim_win_is_valid(ui_state.windows.backg) then
+    ui_state.windows.backg = nil
+  end
+
   ui_state.buffers.backg = protection.create_named_buffer("reposcope://background")
   vim.bo[ui_state.buffers.backg].buftype = "nofile"
   vim.bo[ui_state.buffers.backg].modifiable = false
@@ -45,6 +53,7 @@ function M.open_window()
   M.apply_layout()
 end
 
+
 ---Closes the background window.
 ---@return nil
 function M.close_window()
@@ -54,6 +63,7 @@ function M.close_window()
   ui_state.windows.backg = nil
   ui_state.buffers.backg = nil
 end
+
 
 ---Applies the layout and styling to the background window.
 ---@return nil

@@ -8,6 +8,7 @@ local M = {}
 ---@private
 M.actual_text = ""
 
+
 ---Sets the last prompt text
 ---@param text string The prompt text to set
 ---@return nil
@@ -22,6 +23,7 @@ end
 function M.get_prompt_text()
   return M.actual_text
 end
+
 
 ---Clears the prompt text state
 ---@return nil

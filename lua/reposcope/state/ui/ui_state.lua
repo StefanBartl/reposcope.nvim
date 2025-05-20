@@ -46,12 +46,14 @@ M.invocation = {
   }
 }
 
+
 ---Capture the current window and cursor position for later restoration.
 ---@return nil
 function M.capture_invocation_state()
   M.invocation.win = vim.api.nvim_get_current_win()
   M.invocation.cursor.row, M.invocation.cursor.col = unpack(vim.api.nvim_win_get_cursor(M.invocation.win))
 end
+
 
 ---Reset part or all of the UI state
 ---@param tbl? "buffers"|"windows"|"invocation" optional table to reset; if nil, all will be reset
@@ -83,11 +85,13 @@ function M.reset(tbl)
   end
 end
 
+
 ---Return the window of the invocation state
 ---@return number|nil The window ID of the invocation state
 function M.get_invocation_win()
   return M.invocation.win
 end
+
 
 ---Returns the cursor of the invocation state
 ---@return table|nil The cursor position (row, col)
@@ -131,6 +135,7 @@ M.windows = {
   readme_viewer = nil,
 }
 
+
 ---Returns the buffer number for the given buffer name, if it is valid
 ---@param buf_name string The name of the buffer
 ---@return number|nil The buffer number if found and valid, or nil if not found or invalid
@@ -145,6 +150,7 @@ function M.get_valid_buffer(buf_name)
   return nil
 end
 
+
 ---Returns all buffer handles in the state table which are not nil
 ---@return number[]|nil List of active buffer handles
 function M.get_buffers()
@@ -157,6 +163,7 @@ function M.get_buffers()
 
   return #bufs > 0 and bufs or nil
 end
+
 
 ---Returns all window handles in the state table which are not nil
 ---@return number[]|nil List of active window handles

@@ -10,6 +10,7 @@ local notify = require("reposcope.utils.debug").notify
 
 local active_requests = {}
 
+
 ---Sends a generalized API request (GET, POST, etc.)
 ---@param method string The HTTP method (e.g., GET, POST)
 ---@param url string The URL for the API request

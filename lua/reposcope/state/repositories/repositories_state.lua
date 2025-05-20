@@ -12,6 +12,7 @@
 ---@class RepositoryResponse
 ---@field total_count number Total number of repositories found
 ---@field items Repository[] List of repositories
+---@field list string[] List of all repositories with most important informations
 
 ---@class RepositoryState
 ---@brief Manages the current state of loaded repositories in the application.
@@ -30,6 +31,7 @@
 ---@field get_repositories fun(): RepositoryResponse Returns the cached JSON response
 ---@field get_repository fun(repo_name: string): Repository|nil Returns a repository by its name
 ---@field get_selected_repo fun(): Repository|nil Retrieves the currently selected repository
+---@field get_repositories_list fun(): string[] Returns the list of actual repositories or table with empty string if thte list is empty
 ---@field clear_state fun(): nil Clears the repository state
 ---@field is_populated fun(): boolean Returns true, if the repositories table is popoulated
 local M = {}
@@ -42,7 +44,8 @@ local notify = require("reposcope.utils.debug").notify
 
 
 ---@type RepositoryResponse
-M.repositories = { total_count = 0, items = {} } -- Global cache for JSON response
+M.repositories = { total_count = 0, items = {}, list = {} }
+
 
 ---Stores the JSON response of repositories
 ---@param json RepositoryResponse
@@ -72,14 +75,23 @@ function M.set_repositories(json)
       notify("[reposcope] Warning: Repository owner is not a table. Type: " .. type(repo.owner), 3)
       repo.owner = { login = "Unknown" }
     end
+
+    local owner = repo.owner and repo.owner.login or "Unknown"
+    local name = repo.name or "No name"
+    local desc = repo.description or "No description"
+    local line = owner .. "/" .. name .. ": " .. desc
+    table.insert(M.repositories.list, line)
   end
+
 end
+
 
 ---Returns the cached JSON response
 ---@return RepositoryResponse
 function M.get_repositories()
   return M.repositories
 end
+
 
 ---Returns a repository by its name
 ---@param repo_name string Repository name to search for
@@ -92,6 +104,20 @@ function M.get_repository(repo_name)
   return nil
 end
 
+
+---Returns the list of the actual repositories or table with empty string if thte list is empty
+---@return string[]
+function M.get_repositories_list()
+  local list = M.repositories.list
+
+  if #list == 0 then
+    list = { "" }
+  end
+
+  return list
+end
+
+
 ---Retrieves the currently selected repository based on the list entry.
 ---@return Repository|nil
 function M.get_selected_repo()
@@ -99,7 +125,6 @@ function M.get_selected_repo()
   if not json_data or not json_data.items or json_data.total_count == 0 then
     return nil
   end
-
 
   -- Read the currently selected line in the list
   local selected_line = list_window.highlighted_line
@@ -125,14 +150,17 @@ function M.get_selected_repo()
 
   notify("[reposcope] Repository not found: " .. owner .. "/" .. repo_name, 3)
   return nil
+
 end
+
 
 --- Clears the repository state
 ---@return nil
 function M.clear_state()
-  M.repositories = { total_count = 0, items = {} }
+  M.repositories = { total_count = 0, items = {}, list = {} }
   notify("[reposcope] Repository state cleared.", 2)
 end
+
 
 ---Returns true if repositories table is populated
 ---@return boolean

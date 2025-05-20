@@ -1,6 +1,6 @@
 ---@class UtilsProtection Utility functions related to value normalization and scratch buffer management
 ---@field count_or_default fun(val: table|number|string, default: number): number Returns the item count if `val` is a table, the number if `val` is a number, or `default` otherwise
----@field create_named_buffer fun(name: string): integer Creates a named scratch buffer, replacing any existing one with the same name
+---@field create_named_buffer fun(name: string): integer|nil Creates a named scratch buffer, replacing any existing one with the same name
 ---@field is_valid_filename fun(filename: string|nil): boolean, string Normalizes a value into a non-zero count
 ---@field is_valid_path fun(path: string, nec_filename: boolean): boolean Validates if a given path or optional filepath is a valid and writable file path
 ---@field safe_mkdir fun(path: string): boolean Safely creates a directory (including parent directories)
@@ -33,15 +33,30 @@ end
 ---Creates a scratch buffer with a given name.
 ---If a buffer with that name exists, it is deleted and replaced.
 ---@param name string Buffer name (e.g. "reposcope://preview")
+---@return integer|nil buf Created buffer handle or nil if creation failed
 function M.create_named_buffer(name)
   local existing = vim.fn.bufnr(name)
   if existing ~= -1 and vim.api.nvim_buf_is_valid(existing) then
-    vim.api.nvim_buf_delete(existing, { force = true })
+    local ok, err = pcall(vim.api.nvim_buf_delete, existing, { force = true })
+    if not ok then
+      notify("[reposcope] Failed to delete buffer '" .. name .. "': " .. tostring(err), vim.log.levels.WARN)
+    end
   end
-  local buf = vim.api.nvim_create_buf(false, true)
-  vim.api.nvim_buf_set_name(buf, name)
+
+  local ok, buf = pcall(vim.api.nvim_create_buf, false, true)
+  if not ok then
+    notify("[reposcope] Failed to create buffer '" .. name .. "'", vim.log.levels.ERROR)
+    return nil
+  end
+
+  local ok2, err = pcall(vim.api.nvim_buf_set_name, buf, name)
+  if not ok2 then
+    notify("[reposcope] Failed to name buffer '" .. name .. "': " .. tostring(err), vim.log.levels.WARN)
+  end
+
   return buf
 end
+
 
 --- Checks if the given filename is valid according to standard file naming rules.
 --- A valid filename:

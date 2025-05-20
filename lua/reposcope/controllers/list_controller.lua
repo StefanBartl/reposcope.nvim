@@ -33,7 +33,7 @@ function M.display_repositories()
     return
   end
 
-  -- Dynamically get the list window width
+  -- Dynamically get the list window width  --REF: this should be get_repositories_list in state
   local list_width = math.floor(list_config.width - 1)
 
   local lines = {}
@@ -46,7 +46,6 @@ function M.display_repositories()
   end
 
   list_manager.set_list(lines)
-  list_window.highlight_selected(1)
   notify("[reposcope] Displayed repositories in list UI.", 2)
 end
 

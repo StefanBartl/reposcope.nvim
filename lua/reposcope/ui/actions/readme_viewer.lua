@@ -19,7 +19,7 @@ local repositories_state = require("reposcope.state.repositories.repositories_st
 local os = require("reposcope.utils.os")
 
 
---- Displays the README of the currently selected repository.
+--- Displays the README of the currently selected repository.  REF:  too long
 --- If the README contains HTML content, it opens in the default web browser.
 --- If the README is Markdown, it opens in a fullscreen Neovim buffer.
 ---@return nil
@@ -115,6 +115,7 @@ function M.open_viewer()
   vim.cmd("stopinsert")
   vim.cmd("normal! gg")
 end
+
 
 
 ---Closes the README viewer window.

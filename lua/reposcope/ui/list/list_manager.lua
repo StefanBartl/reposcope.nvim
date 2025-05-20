@@ -20,18 +20,12 @@ local ui_state = require("reposcope.state.ui.ui_state")
 local notify = require("reposcope.utils.debug").notify
 
 
----Sets the list entries and displays them in the list window
+---Sets the list entries and displays them in the list window  REF:  update_and_open()
 ---@param entries string[] The list of entries to display
 ---@return nil
 function M.set_list(entries)
-  if type(entries) ~= "table" then
-    notify("[reposcope] Invalid list entries (not a table).", 4)
-    return
-  end
-
-  if #entries == 0 then
-    notify("[reposcope] No entries to display in the list.", 3)
-    M.clear_list()
+  if not entries then
+    notify("[reposcope] 'entries'-table is missed", 4)
     return
   end
 
@@ -40,20 +34,43 @@ function M.set_list(entries)
   ui_state.list_populated = true
 end
 
+
 ---Updates the list content with the provided lines
 ---@param lines string[] The list of repository entries to display
 ---@return nil
 function M.update_list(lines)
+  if not lines or type(lines) ~= "table" then
+    notify("[reposcope] 'lines'-argument is missed or has invalid type (table needed)", 4)
+    return
+  end
+
+  if type(lines[1]) ~= "string" then
+    notify("[reposcope] 'lines'-table must consist of string(s)", 4)
+    return
+  end
+
   if not ui_state.buffers.list then
     notify("[reposcope] List buffer is not available.", 3)
     return
   end
+
   vim.schedule(function()
     vim.api.nvim_buf_set_option(ui_state.buffers.list, "modifiable", true)
     vim.api.nvim_buf_set_lines(ui_state.buffers.list, 0, -1, false, lines)
     vim.api.nvim_buf_set_option(ui_state.buffers.list, "modifiable", false)
+
+    list_window.highlight_selected(ui_state.last_selected_line or 1)
+
+    -- Update preview if possible
+    local selected_repo = require("reposcope.state.repositories.repositories_state").get_selected_repo()
+    if selected_repo then
+      require("reposcope.ui.preview.preview_manager").update_preview(selected_repo.name)
+    else
+      notify("[reposcope] No selected repository for preview.", 3)
+    end
   end)
 end
+
 
 ---Clears the list content and closes the list window
 ---@return nil
@@ -61,6 +78,7 @@ function M.clear_list()
   list_window.close_window()
   ui_state.list_populated = nil
 end
+
 
 ---Returns the currently selected list entry
 ---@return string|nil The selected list entry text
@@ -81,6 +99,7 @@ function M.get_selected()
 
   return lines[1]
 end
+
 
 ---Displays the list with the given entries
 ---@param entries string[] The list of repository entries to display

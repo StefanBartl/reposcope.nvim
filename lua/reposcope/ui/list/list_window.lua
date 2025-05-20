@@ -50,15 +50,20 @@ M.Layouts = {
   }
 }
 
+
 ---Opens list window, ensures the list window and buffer are created and initialized
 ---@return boolean True if the list window is ready, false otherwise
 function M.open_window()
-  if ui_state.buffers.list and vim.api.nvim_buf_is_valid(ui_state.buffers.list) then
-    return true
+  -- Reset buffer and/or if invalid  -- REF:
+  if ui_state.buffers.list and not vim.api.nvim_buf_is_valid(ui_state.buffers.list) then
+    ui_state.buffers.list = nil
+  end
+  if ui_state.windows.list and not vim.api.nvim_win_is_valid(ui_state.windows.list) then
+    ui_state.windows.list = nil
   end
 
   local buf = protection.create_named_buffer("reposcope://list")
-  if not buf then
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
     notify("[reposcope] Failed to create list buffer.", 4)
     return false
   end
@@ -83,6 +88,7 @@ end
 --title = "Repositories", -- NOTE: Try
 --title_pos = "left",     -- NOTE: Try
 
+
 ---Closes the list window
 ---@return nil
 function M.close_window()
@@ -93,16 +99,15 @@ function M.close_window()
   ui_state.buffers.list = nil
 end
 
+
 ---Configures the list buffer with UI settings (no editing, restricted keymaps).
 ---@return nil
 function M.configure()
   local buf = ui_state.buffers.list
-  if not buf then
-    vim.schedule(function()
-      notify("[reposcope] List configure failed", 4)
-    end)
-    return
-  end
+   if not buf or not vim.api.nvim_buf_is_valid(buf) then
+     notify("[reposcope] List buffer configure failed", 4)
+     return
+   end
 
   vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
   vim.api.nvim_buf_set_option(buf, "swapfile", false)
@@ -118,11 +123,12 @@ function M.configure()
   notify("[reposcope] List buffer configured.", 2)
 end
 
+
 ---Applies the layout and styling to the list window
 ---@return nil
 function M.apply_layout()
-  if not ui_state.windows.list then
-    notify("[reposcope] List window is not open.", 3)
+  if not ui_state.windows.list or not vim.api.nvim_win_is_valid(ui_state.windows.list) then
+    notify("[reposcope] List window is not open or not valid", 3)
     return
   end
 
@@ -152,7 +158,8 @@ end
 ---@param index number The index of the entry to highlight
 ---@return nil
 function M.highlight_selected(index)
-  if not ui_state.buffers.list then
+  local buf = ui_state.buffers.list
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
     notify("[reposcope] List buffer not available for highlighting.", 3)
     return
   end
@@ -162,7 +169,7 @@ function M.highlight_selected(index)
     return
   end
 
-  local lines = vim.api.nvim_buf_get_lines(ui_state.buffers.list, 0, -1, false)
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
   if #lines == 0 then
     notify("[reposcope] List is empty, cannot highlight.", 3)
     return
@@ -174,11 +181,11 @@ function M.highlight_selected(index)
   end
 
   -- Clear all highlights first
-  vim.api.nvim_buf_clear_namespace(ui_state.buffers.list, -1, 0, -1)
+  vim.api.nvim_buf_clear_namespace(buf, -1, 0, -1)
 
   -- Highlight the selected line
   vim.api.nvim_buf_add_highlight(
-    ui_state.buffers.list,
+    buf,
     -1,
     "ReposcopeListSelected",
     index - 1,
@@ -190,10 +197,12 @@ function M.highlight_selected(index)
   M.highlighted_line = index
 end
 
+
 ---Sets the highlighted line in the list UI.
 ---@param line number The line number to highlight
 function M.set_highlighted_line(line)
-  if not ui_state.buffers.list then
+  local buf = ui_state.buffers.list
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
     notify("[reposcope] List buffer not found.", 4)
     return
   end
@@ -204,11 +213,11 @@ function M.set_highlighted_line(line)
   end
 
   -- Clear all highlights first
-  vim.api.nvim_buf_clear_namespace(ui_state.buffers.list, -1, 0, -1)
+  vim.api.nvim_buf_clear_namespace(buf, -1, 0, -1)
 
   -- Highlight the specified line
   vim.api.nvim_buf_add_highlight(
-    ui_state.buffers.list,
+    buf,
     -1,
     "ReposcopeListSelected",
     line - 1,
@@ -219,10 +228,11 @@ function M.set_highlighted_line(line)
   M. highlighted_line = line
 end
 
+
 ---Returns the currently highlighted list entry
 ---@return string|nil The text of the highlighted list entry
 function M.get_highlighted_entry()
-  if not ui_state.buffers.list then
+  if not ui_state.buffers.list or not vim.api.nvim_buf_is_valid(ui_state.buffers.list) then
     notify("[reposcope] List buffer not available.", 3)
     return nil
   end
@@ -234,6 +244,5 @@ function M.get_highlighted_entry()
 
   return lines[M.highlighted_line] or nil
 end
-
 
 return M

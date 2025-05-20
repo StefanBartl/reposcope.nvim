@@ -45,11 +45,11 @@ function M.open_ui()
   -- Open Background
   background.open_window()
 
-  -- Open Preview
-  preview.open_window()
-
   -- Open List
   list.initialize()
+
+  -- Open Preview
+  preview.open_window()
 
   -- Open Prompt
   prompt.open_prompt()
