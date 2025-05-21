@@ -1,5 +1,7 @@
 ---@class CoreUtils
 ---@field tbl_find fun(tbl: table, value: any): integer|nil Searches for a value in the table and returns its index
+---@field tbl_islist fun(t: any): boolean Checks if a table is a proper list: integer keys 1..#t without gaps or non-integer keys.
+---@field flatten_table fun(input: table, result?: table): table Recursively flattens a nested table into a flat list
 ---@field generate_uuid fun(): string  Creates a UUID based on actual timestamp
 local M = {}
 
@@ -23,6 +25,53 @@ function M.tbl_find(tbl, value)
     end
   end
   return nil
+end
+
+
+---@brief Checks if a table is a proper list: integer keys 1..#t without gaps or non-integer keys.
+---@param t any
+---@return boolean
+function M.tbl_islist(t)
+  if type(t) ~= "table" then return false end
+
+  local max = 0
+  for k, _ in pairs(t) do
+    if type(k) ~= "number" or k < 1 or math.floor(k) ~= k then
+      return false
+    end
+    if k > max then max = k end
+  end
+
+  for i = 1, max do
+    if t[i] == nil then return false end
+  end
+
+  return true
+end
+
+
+---Recursively flattens a nested table into a flat list.
+---Traverses nested tables and collects all non-table values into a flat array-style table.
+---@param input any The table (or value) to flatten
+---@param result? table The table to accumulate into (optional, for recursion)
+---@return table A flat array-style list of values
+function M.flatten_table(input, result)
+  result = result or {}
+
+  if type(input) ~= "table" then
+    table.insert(result, input)
+    return result
+  end
+
+  for _, v in pairs(input) do
+    if type(v) == "table" then
+      M.flatten_table(v, result)
+    else
+      table.insert(result, v)
+    end
+  end
+
+  return result
 end
 
 --- Creates a UUID based on actual timestamp.
