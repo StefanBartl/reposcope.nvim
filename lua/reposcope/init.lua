@@ -18,7 +18,7 @@ local list = require("reposcope.ui.list.init")
 local prompt = require("reposcope.ui.prompt.init")
 -- UI-Specific Functions and Submodules
 local list_window = require("reposcope.ui.list.list_window")
-local prompt_autocmds = require("reposcope.ui.prompt.autocmds")
+local prompt_autocmds = require("reposcope.ui.prompt.prompt_autocmds")
 -- Keymaps and User Input
 local keymaps = require("reposcope.keymaps")
 
@@ -49,10 +49,10 @@ function M.open_ui()
   list.initialize()
 
   -- Open Preview
-  preview.open_window()
+  preview.initialize()
 
   -- Open Prompt
-  prompt.open_prompt()
+  prompt.initialize()
 
   -- Set Keymaps
   keymaps.set_ui_keymaps()
@@ -77,13 +77,15 @@ function M.close_ui()
     })
   end
 
-  -- close all windows
+  -- Close all Reposcope-related windows safely
   for _, win in ipairs(vim.api.nvim_list_wins()) do
-    local ok_buf, buf = pcall(vim.api.nvim_win_get_buf, win)
-    if ok_buf and vim.api.nvim_buf_is_valid(buf) then
-      local name = vim.api.nvim_buf_get_name(buf)
-      if name:find("^reposcope://") then
-        vim.api.nvim_win_close(win, true)
+    if vim.api.nvim_win_is_valid(win) then
+      local ok_buf, buf = pcall(vim.api.nvim_win_get_buf, win)
+      if ok_buf and vim.api.nvim_buf_is_valid(buf) then
+        local name = vim.api.nvim_buf_get_name(buf)
+        if type(name) == "string" and name:find("^reposcope://") then
+          pcall(vim.api.nvim_win_close, win, true)
+        end
       end
     end
   end

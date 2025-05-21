@@ -11,7 +11,7 @@
 ---- Create and display the preview window
 ---- Inject a banner at startup
 ---
----@field open_window fun(): nil Opens the preview window and injects either the default banner or the last selected README.
+---@field initialize fun(): nil Initializes the preview window and injects either the default banner or the last selected README.
 
 local M = {}
 
@@ -25,9 +25,9 @@ local repositories_state = require("reposcope.state.repositories.repositories_st
 local notify = require("reposcope.utils.debug").notify
 
 
---- Opens the preview window and injects either the default banner or the last selected README.
+---Initialize the preview window and injects either the default banner or the last selected README.
 ---@return nil
-function M.open_window()
+function M.initialize()
   if not preview_window.open_window() then
     notify("[reposcope] Preview initialization failed.", 4)
     return

@@ -102,7 +102,7 @@ end
 ---@class UIStateBuffers
 ---@field backg integer|nil
 ---@field preview integer|nil
----@field prompt integer|nil
+---@field prompt table|nil
 ---@field prompt_prefix integer|nil
 ---@field list integer|nil
 ---@field readme_viewer integer|nil
@@ -110,7 +110,7 @@ end
 ---@class UIStateWindows
 ---@field backg integer|nil
 ---@field preview integer|nil
----@field prompt integer|nil
+---@field prompt table|nil
 ---@field prompt_prefix integer|nil
 ---@field list integer|nil
 ---@field readme_viewer integer|nil

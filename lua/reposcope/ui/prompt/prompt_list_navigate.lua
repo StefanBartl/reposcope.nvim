@@ -13,6 +13,7 @@ local notify = require("reposcope.utils.debug").notify
 
 ---Allows navigation within the list directly from the prompt
 ---@param direction "up"|"down" The direction to navigate ("up" or "down")
+---@return nil
 function M.navigate_list_in_prompt(direction)
   local total_lines = #vim.api.nvim_buf_get_lines(ui_state.buffers.list, 0, -1, false)
   if total_lines == 0 then return end
@@ -27,12 +28,13 @@ function M.navigate_list_in_prompt(direction)
     list_window.highlighted_line = math.min(list_window.highlighted_line + 1, total_lines)
   end
 
-  -- Apply highlight
   list_window.highlight_selected(list_window.highlighted_line)
 end
 
+
 ---Sets the list's current line to given line number
 ---@param line string
+---@return nil
 function M.set_list_to(line)
   if type(line) ~= "number" then
     notify("[reposcope] Type 'number' is required for argument line, passed " .. type(line), 1)

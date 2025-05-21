@@ -21,6 +21,14 @@ local core_utils = require("reposcope.utils.core")
 local urlencode = require("reposcope.utils.encoding").urlencode
 
 
+---Builds the full GitHub API URL from a query
+---@param query string
+---@return string
+function M.build_url(query)
+  local encoded_query = urlencode(query or "")
+  return string.format(GITHUB_API_SEARCH_URL, encoded_query)
+end
+
 --- Initializes the repository list with a query
 ---@param query string The search query for GitHub repositories
 function M.init(query)
@@ -48,8 +56,7 @@ function M.fetch_github_repositories(query, uuid)
     return
   end
 
-  local encoded_query = urlencode(query)
-  local url = string.format(GITHUB_API_SEARCH_URL, encoded_query)
+  local url = M.build_url(query)
 
   api_client.request("GET", url, function(response, err)
     if err then

@@ -9,6 +9,22 @@ local M = {}
 M.actual_text = ""
 
 
+
+M.input = {}
+
+function M.set_field_text(field, text)
+  if type(field) == "string" and type(text) == "string" then
+    M.input[field] = text
+  end
+end
+
+function M.get_field_text(field)
+  return M.input[field] or ""
+end
+
+
+
+
 ---Sets the last prompt text
 ---@param text string The prompt text to set
 ---@return nil

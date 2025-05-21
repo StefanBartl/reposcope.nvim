@@ -17,7 +17,7 @@ local M = {}
 -- Configuration and Layout (List Window)
 local config = require("reposcope.ui.list.list_config")
 local ui_config = require("reposcope.ui.config")
-local prompt_config = require("reposcope.ui.prompt.config")
+local prompt_config = require("reposcope.ui.prompt.prompt_config")
 -- State Management (UI State)
 local ui_state = require("reposcope.state.ui.ui_state")
 -- Utility Modules (Debugging, Protection)
