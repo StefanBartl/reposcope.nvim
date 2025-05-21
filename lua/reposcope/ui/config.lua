@@ -20,7 +20,6 @@ M.width = math.floor(vim.o.columns * 0.8)
 M.height = math.floor(vim.o.lines * 0.8)
 M.col = math.floor((vim.o.columns - M.width) / 2)
 M.row = math.floor((vim.o.lines - M.height) / 2)
---M.preview_width = math.floor(M.width * 0.5)  --REF: Why here? circ dep
 
 -- Default Color Theme (Dark)  TEST:
 M.colortheme = {
