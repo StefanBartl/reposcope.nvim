@@ -1,5 +1,8 @@
 -- REF: functions are way to long
 
+---Forward declarations for private functions
+local ensure_prefix_first
+
 ---@class UIPromptManager
 ---@brief Manages the creation and orchestration of prompt windows
 ---@description
@@ -8,7 +11,6 @@
 ---Window handles are stored in `ui_state.windows.prompt`, indexed by field name.
 ---@field open_windows fun(): nil Initializes and renders the prompt UI
 ---@field close_windows fun(): nil Closes all prompt-related windows  --NOTE:  niuy
-
 local M = {}
 
 -- System
@@ -26,6 +28,8 @@ local prompt_layout = require("reposcope.ui.prompt.prompt_layout")
 ---Opens the prompt UI based on active fields and layout configuration
 ---@return nil
 function M.open_windows()
+  local sorted_fields = ensure_prefix_first(prompt_config.fields)
+  prompt_config.fields = sorted_fields
   prompt_buffers.setup_buffers()
 
   local layout = prompt_layout.build_layout()
@@ -125,6 +129,32 @@ function M.add_title_to_prompt_buffer(buf, field, width)
     virt_text_pos = "overlay",
     hl_mode = "combine",
   })
+end
+
+
+---@brief Ensures that the field "prefix" is first in the list, if present.
+---@param fields string[] A list of prompt field names (e.g. { "author", "prefix", "keywords" })
+---@return string[] Sorted list with "prefix" at position 1, if present
+---@private
+function ensure_prefix_first(fields)
+  if type(fields) ~= "table" then return {} end
+
+  local result = {}
+  local has_prefix = false
+
+  for _, v in ipairs(fields) do
+    if v == "prefix" then
+      has_prefix = true
+    else
+      table.insert(result, v)
+    end
+  end
+
+  if has_prefix then
+    table.insert(result, 1, "prefix")
+  end
+
+  return result
 end
 
 return M
