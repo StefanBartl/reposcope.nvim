@@ -5,6 +5,7 @@
 ---@field unset_ui_keymaps fun(): nil Removes all prompt-related keymaps
 ---@field set_clone_keymaps fun(): nil Applies all clone-related keymaps
 ---@field unset_clone_keymaps fun(): nil Removes all clone-related keymaps
+---@field set_user_keymaps fun(map_cfg?: table, opts?: table): nil Sets user keymaps for opening/closing Reposcope
 local M = {}
 
 -- State Modules (Managing UI and Prompt State)
@@ -20,6 +21,7 @@ local prompt_focus = require("reposcope.ui.prompt.prompt_focus")
 -- Utility Modules (Debugging and Notifications)
 local notify = require("reposcope.utils.debug").notify
 local core = require("reposcope.utils.core")
+local defaults = require("reposcope.defaults")
 
 local _registry = {}
 local map_over_bufs
@@ -312,6 +314,34 @@ end
 ---Remove all ui-specific keymaps
 function M.unset_close_ui_keymaps()
   clear_registered_keymaps("reposcope_ui")
+end
+
+
+---Sets user keymaps for opening/closing Reposcope
+---@param map_cfg? table Optional map override: { rs = "...", rc = "..." }
+---@param opts? table Optional map opts (e.g. { silent = false })
+---@return nil
+function M.set_user_keymaps(map_cfg, opts)
+  map_cfg = map_cfg or defaults.options.keymaps
+  opts = opts or defaults.options.keymap_opts
+
+  vim.keymap.set("n", map_cfg.open, function()
+    local ok, err = pcall(function()
+      require("reposcope.init").open_ui()
+    end)
+    if not ok then
+      print("Error while opening reposcope: " .. err)
+    end
+  end, vim.tbl_extend("force", { desc = "Open Reposcope" }, opts))
+
+  vim.keymap.set("n", map_cfg.close, function()
+    local ok, err = pcall(function()
+      require("reposcope.init").close_ui()
+    end)
+    if not ok then
+      print("Error while closing reposcope: " .. err)
+    end
+  end, vim.tbl_extend("force", { desc = "Close Reposcope" }, opts))
 end
 
 return M

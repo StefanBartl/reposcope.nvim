@@ -34,6 +34,10 @@ local close_autocmd_id
 function M.setup(opts)
   config.setup(opts or {})
   checks.resolve_request_tool()
+
+  if opts.keymaps ~= false then
+    keymaps.set_user_keymaps(opts.keymaps, opts.keymap_opts)
+  end
 end
 
 ---Opens the Reposcope UI.
@@ -97,7 +101,6 @@ function M.close_ui()
   vim.cmd("stopinsert")
 end
 
--- HACK:
 
 --- Sets up an AutoCmd for automatically closing all related UI windows (Reposcope UI).
 --- The AutoCmd triggers on `QuitPre` for any window that matches the pattern `reposcope://*`.
@@ -129,31 +132,5 @@ function M.remove_ui_autocmd()
     close_autocmd_id = nil
   end
 end
-
-
-
-vim.keymap.set("n", "<leader>rs", function()
-  local ok, err = pcall(function()
-    require("reposcope.init").open_ui()
-  end)
-  if not ok then
-    print("Error while opening reposcope: " .. err, 4)
-  end
-end, {
-  desc = "Open Reposcope",
-})
-
-
-vim.keymap.set("n", "<leader>rc", function()
-  local ok, err = pcall(function()
-    require("reposcope.init").close_ui()
-  end)
-  if not ok then
-    print("Error while closing reposcope: " .. err, 4)
-  end
-end, {
-  desc = "close Reposcope",
-})
-
 
 return M
