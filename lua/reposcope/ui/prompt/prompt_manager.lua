@@ -10,6 +10,7 @@
 ---Window handles are stored in `ui_state.windows.prompt`, indexed by field name.
 ---@field open_windows fun(): nil Initializes and renders the prompt UI
 ---@field close_windows fun(): nil Closes all prompt-related windows  --NOTE:  niuy
+---@field load_state_into_prompt fun(): nil Loads prompt field values from prompt_state and injects them into the corresponding buffers
 local M = {}
 
 -- System
@@ -19,6 +20,7 @@ local prompt_config = require("reposcope.ui.prompt.prompt_config")
 local notify = require("reposcope.utils.debug").notify
 -- State
 local ui_state = require("reposcope.state.ui.ui_state")
+local prompt_state = require("reposcope.state.ui.prompt_state")
 -- Prompt Components
 local prompt_buffers = require("reposcope.ui.prompt.prompt_buffers")
 local prompt_layout = require("reposcope.ui.prompt.prompt_layout")
@@ -79,6 +81,8 @@ function M.open_windows()
     ::continue::
   end
 
+
+  M.load_state_into_prompt()
   focus_first_input()
 end
 
@@ -127,6 +131,23 @@ function M.add_title_to_prompt_buffer(buf, field, width)
     virt_text_pos = "overlay",
     hl_mode = "combine",
   })
+end
+
+
+---Loads prompt field values from prompt_state and injects them into the corresponding buffers
+---@return nil
+function M.load_state_into_prompt()
+  local fields = prompt_config.get_fields()
+
+  for _, field in ipairs(fields) do
+    local buf = ui_state.buffers.prompt[field]
+    if buf and vim.api.nvim_buf_is_valid(buf) then
+      local text = prompt_state.get_field_text(field)
+      if type(text) == "string" and text ~= "" then
+        vim.api.nvim_buf_set_lines(buf, 1, 2, false, { text })
+      end
+    end
+  end
 end
 
 return M
