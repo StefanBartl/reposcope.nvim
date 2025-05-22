@@ -15,6 +15,7 @@ local req_state = require("reposcope.state.repositories.requests_state")
 local ui_state = require("reposcope.state.ui.ui_state")
 -- Controllers (List UI Management)
 local list_controller = require("reposcope.controllers.list_controller")
+local list_manager = require("reposcope.ui.list.list_manager")
 -- Utility Modules (Debugging, Core Utilities, Encoding)
 local notify = require("reposcope.utils.debug").notify
 local core_utils = require("reposcope.utils.core")
@@ -80,6 +81,7 @@ function M.fetch_github_repositories(query, uuid)
 
     -- Ensure that the list UI is displayed and populated
     vim.schedule(function()
+      list_manager.reset_selected_line()
       list_controller.display_repositories()
 
       -- Wait for the list to be populated before selecting a line
