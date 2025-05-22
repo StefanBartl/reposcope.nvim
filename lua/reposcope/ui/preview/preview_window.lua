@@ -31,7 +31,7 @@ function M.open_window()
     ui_state.windows.preview = nil
   end
 
-  if not ui_state.buffers.preview then
+  if not ui_state.buffers.preview or not vim.api.nvim_buf_is_valid(ui_state.buffers.preview) then
     local buf = protection.create_named_buffer("reposcope://preview")
     if not buf or not vim.api.nvim_buf_is_valid(buf) then
       notify("[reposcope] Preview buffer cannot be created.", 4)
@@ -39,7 +39,6 @@ function M.open_window()
     end
 
     ui_state.buffers.preview = buf
-
     vim.bo[buf].buftype = "nofile"
     vim.bo[buf].modifiable = true
     vim.bo[buf].bufhidden = "wipe"
@@ -63,10 +62,6 @@ function M.open_window()
     return true
   else
     notify("[reposcope] Preview window already exists.", 2)
-    print("preview window:", ui_state.windows.preview)
-    print("preview win is valid:", vim.api.nvim_win_is_valid(ui_state.windows.preview))
-    print("preview buf:", ui_state.buffers.preview)
-    print("preview buf is valid:", vim.api.nvim_buf_is_valid(ui_state.buffers.preview))
     return true
   end
 end

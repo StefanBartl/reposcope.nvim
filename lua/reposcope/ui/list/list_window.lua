@@ -54,7 +54,7 @@ M.Layouts = {
 ---Opens list window, ensures the list window and buffer are created and initialized
 ---@return boolean True if the list window is ready, false otherwise
 function M.open_window()
-  -- Reset buffer and/or if invalid  -- REF:
+  -- Reset buffer and/or if invalid
   if ui_state.buffers.list and not vim.api.nvim_buf_is_valid(ui_state.buffers.list) then
     ui_state.buffers.list = nil
   end
@@ -62,28 +62,37 @@ function M.open_window()
     ui_state.windows.list = nil
   end
 
-  local buf = protection.create_named_buffer("reposcope://list")
-  if not buf or not vim.api.nvim_buf_is_valid(buf) then
-    notify("[reposcope] Failed to create list buffer.", 4)
-    return false
+  if not ui_state.buffers.list then
+    local buf = protection.create_named_buffer("reposcope://list")
+    if not buf or not vim.api.nvim_buf_is_valid(buf) then
+      notify("[reposcope] Failed to create list buffer.", 4)
+      return false
+    end
+
+    ui_state.buffers.list = buf
+    vim.bo[ui_state.buffers.list].buftype = "nofile"
+    vim.bo[ui_state.buffers.list].modifiable = false
+    vim.bo[ui_state.buffers.list].bufhidden = "wipe"
+
+    ui_state.windows.list = vim.api.nvim_open_win(buf, false, {  --TEST:  layouts...
+      relative = "editor",
+      row = M.Layouts.Normal.row,
+      col = M.Layouts.Normal.col,
+      width = M.Layouts.Normal.width,
+      height = M.Layouts.Normal.height,
+      style = "minimal",
+      border = config.border or "none",
+      focusable = false,
+      noautocmd = true,
+    })
+
+    M.apply_layout()
+    notify("[reposcope] List window initialized.", 2)
+    return true
+  else
+    notify("[reposcope] List window already exists.", 2)
+    return true
   end
-
-  ui_state.buffers.list = buf
-  ui_state.windows.list = vim.api.nvim_open_win(buf, false, {  --TEST:  layouts...
-    relative = "editor",
-    row = M.Layouts.Normal.row,
-    col = M.Layouts.Normal.col,
-    width = M.Layouts.Normal.width,
-    height = M.Layouts.Normal.height,
-    style = "minimal",
-    border = config.border or "none",
-    focusable = false,
-    noautocmd = true,
-  })
-
-  M.apply_layout()
-  notify("[reposcope] List buffer and window initialized.", 2)
-  return true
 end
 --title = "Repositories", -- NOTE: Try
 --title_pos = "left",     -- NOTE: Try
