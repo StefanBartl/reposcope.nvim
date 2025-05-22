@@ -2,6 +2,8 @@
 ---@field tbl_find fun(tbl: table, value: any): integer|nil Searches for a value in the table and returns its index
 ---@field tbl_islist fun(t: any): boolean Checks if a table is a proper list: integer keys 1..#t without gaps or non-integer keys.
 ---@field flatten_table fun(input: table, result?: table): table Recursively flattens a nested table into a flat list
+---@field dedupe_list fun(list: string[]): string[] Returns a new list with all duplicates removed (preserving order)
+---@field put_to_front_if_present fun(list: string[], value: string): string[] Ensures that the given value appears first in the list if present
 ---@field generate_uuid fun(): string  Creates a UUID based on actual timestamp
 local M = {}
 
@@ -73,6 +75,55 @@ function M.flatten_table(input, result)
 
   return result
 end
+
+
+---@brief Returns a new list with all duplicates removed (preserving order)
+---@param list string[]
+---@return string[]
+function M.dedupe_list(list)
+  if type(list) ~= "table" then return {} end
+
+  local seen = {}
+  local result = {}
+
+  for _, item in ipairs(list) do
+    if not seen[item] then
+      seen[item] = true
+      table.insert(result, item)
+    end
+  end
+
+  return result
+end
+
+
+---@brief Ensures that the given value appears first in the list if present.
+---@param list string[] The input list (e.g. { "b", "a", "c", "a" })
+---@param value string The value to move to the front (e.g. "a")
+---@return string[] New list with `value` at position 1 (if present)
+function M.put_to_front_if_present(list, value)
+  if type(list) ~= "table" or type(value) ~= "string" then
+    return {}
+  end
+
+  local result = {}
+  for _, item in ipairs(list) do
+    if item ~= value then
+      table.insert(result, item)
+    end
+  end
+
+  -- only insert if value was present at least once
+  for _, item in ipairs(list) do
+    if item == value then
+      table.insert(result, 1, value)
+      break
+    end
+  end
+
+  return result
+end
+
 
 --- Creates a UUID based on actual timestamp.
 ---@return string Unique UUID string.

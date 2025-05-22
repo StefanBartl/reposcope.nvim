@@ -28,7 +28,7 @@ local current_index = 1
 ---@param index integer
 ---@return nil
 function M.focus_field_index(index)
-  local fields = prompt_config.fields
+  local fields = prompt_config.get_fields()
   local field = fields[index]
   if not field then return end
 
@@ -48,7 +48,8 @@ end
 ---@param field string
 ---@return nil
 function M.focus_field(field)
-  for i, name in ipairs(prompt_config.fields) do
+  local fields = prompt_config.get_fields()
+  for i, name in ipairs(fields) do
     if name == field then
       return M.focus_field_index(i)
     end
@@ -61,7 +62,7 @@ end
 ---@return nil
 function M.navigate(direction)
   local delta = direction == "next" and 1 or -1
-  local fields = prompt_config.fields
+  local fields = prompt_config.get_fields()
   local new_index = current_index + delta
 
   if new_index < 1 then

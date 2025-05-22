@@ -20,7 +20,7 @@ local notify = require("reposcope.utils.debug").notify
 ---Builds a list of window slots for the currently configured prompt fields
 ---@return {name: string, buffer: integer, width: integer, col: integer}[] List of window layouts
 function M.build_layout()
-  local fields = prompt_config.fields
+  local fields = prompt_config.get_fields()
   local remaining_width = prompt_config.width
   local current_col = prompt_config.col
   local layout = {}
