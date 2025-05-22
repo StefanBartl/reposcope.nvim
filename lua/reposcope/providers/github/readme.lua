@@ -19,7 +19,7 @@ local repositories_state = require("reposcope.state.repositories.repositories_st
 -- UI Components (Preview Injection)
 local preview_manager = require("reposcope.ui.preview.preview_manager")
 -- Debugging Utility
-local debug = require("reposcope.utils.debug")
+local notify = require("reposcope.utils.debug").notify
 
 
 local active_readme_requests = {}
@@ -30,7 +30,7 @@ function M.fetch_readme_for_selected()
 ---REF: Refactore this part to a funtion which doesnt gave nil back
   local repo = repositories_state.get_selected_repo()
   if not repo then
-    debug.notify("[reposcope] No repository selected", 3)
+    notify("[reposcope] No repository selected", 3)
     return
   end
 
@@ -39,7 +39,7 @@ function M.fetch_readme_for_selected()
   local default_branch = repo.default_branch or "main"
 
   if not owner or not repo_name then
-    debug.notify("[reposcope] Invalid repository URL", 4)
+    notify("[reposcope] Invalid repository URL", 4)
     return
   end
 
@@ -90,14 +90,14 @@ end
 function M.try_fetch_readme(raw_url, api_url, repo_name)
   api_client.request("GET", raw_url, function(response, error)
     if error then
-      debug.notify("[reposcope] Error fetching data: " .. error, 4)
+      notify("[reposcope] Error fetching data: " .. error, 4)
       return
     end
 
     if response then
       cache.cache_and_show_readme(repo_name, response)
     else
-      debug.notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", 2)
+      notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", 2)
       M.fetch_readme_from_api(api_url, repo_name)
     end
   end, nil, false, "fetch_readme")
@@ -109,20 +109,20 @@ end
 function M.fetch_readme_from_api(api_url, repo_name)
   api_client.request("GET", api_url, function(response, err)
     if err then
-      debug.notify("[reposcope] Failed to fetch README via API: " .. err, 4)
+      notify("[reposcope] Failed to fetch README via API: " .. err, 4)
       return
     end
 
     -- Check for response
     if not response then
-      debug.notify("[reposcope] No response received from API: " .. api_url, 4)
+      notify("[reposcope] No response received from API: " .. api_url, 4)
       return
     end
 
     -- Decode API response (JSON format)
     local decoded = vim.json.decode(response)
     if not decoded or not decoded.content then
-      debug.notify("[reposcope] Invalid API response for README", 4)
+      notify("[reposcope] Invalid API response for README", 4)
       return
     end
 
