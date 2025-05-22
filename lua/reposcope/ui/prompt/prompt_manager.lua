@@ -22,6 +22,7 @@ local ui_state = require("reposcope.state.ui.ui_state")
 -- Prompt Components
 local prompt_buffers = require("reposcope.ui.prompt.prompt_buffers")
 local prompt_layout = require("reposcope.ui.prompt.prompt_layout")
+local focus_first_input = require("reposcope.ui.prompt.prompt_focus").focus_first_input
 
 
 ---Opens the prompt UI based on active fields and layout configuration
@@ -78,6 +79,7 @@ function M.open_windows()
     ::continue::
   end
 
+  focus_first_input()
 end
 
 
@@ -126,8 +128,5 @@ function M.add_title_to_prompt_buffer(buf, field, width)
     hl_mode = "combine",
   })
 end
-
-
-
 
 return M

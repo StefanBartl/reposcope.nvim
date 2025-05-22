@@ -16,9 +16,7 @@ local create_buf = require("reposcope.utils.protection").create_named_buffer
 local ui_state = require("reposcope.state.ui.ui_state")
 
 
----List of supported prompt field names  REF:  should come from config
-local FIELDS = { "prefix", "keywords", "author", "topics" }
-
+local FIELDS = prompt_config.get_available_fields()
 
 ---Creates and registers all supported prompt buffers into ui_state
 ---@return nil
