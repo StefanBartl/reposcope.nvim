@@ -1,7 +1,6 @@
 -- REF: functions are way to long
 
----Forward declarations for private functions
-local ensure_prefix_first
+
 
 ---@class UIPromptManager
 ---@brief Manages the creation and orchestration of prompt windows
@@ -28,8 +27,6 @@ local prompt_layout = require("reposcope.ui.prompt.prompt_layout")
 ---Opens the prompt UI based on active fields and layout configuration
 ---@return nil
 function M.open_windows()
-  local sorted_fields = ensure_prefix_first(prompt_config.fields)
-  prompt_config.fields = sorted_fields
   prompt_buffers.setup_buffers()
 
   local layout = prompt_layout.build_layout()
@@ -111,9 +108,8 @@ function M.add_title_to_prompt_buffer(buf, field, width)
     api.nvim_buf_set_lines(buf, 0, 1, false, { " " })
   end
 
-  -- Get title from config
-  local config = require("reposcope.ui.prompt.prompt_config")
-  local title = config.fields[field] or string.upper(" " .. field .. " ")
+  local fields = prompt_config.get_fields()
+  local title = fields[field] or string.upper(" " .. field .. " ")
 
   local win_col = math.floor((width - #title) / 2)
 
@@ -132,29 +128,6 @@ function M.add_title_to_prompt_buffer(buf, field, width)
 end
 
 
----@brief Ensures that the field "prefix" is first in the list, if present.
----@param fields string[] A list of prompt field names (e.g. { "author", "prefix", "keywords" })
----@return string[] Sorted list with "prefix" at position 1, if present
----@private
-function ensure_prefix_first(fields)
-  if type(fields) ~= "table" then return {} end
 
-  local result = {}
-  local has_prefix = false
-
-  for _, v in ipairs(fields) do
-    if v == "prefix" then
-      has_prefix = true
-    else
-      table.insert(result, v)
-    end
-  end
-
-  if has_prefix then
-    table.insert(result, 1, "prefix")
-  end
-
-  return result
-end
 
 return M

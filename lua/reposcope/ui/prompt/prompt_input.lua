@@ -24,8 +24,8 @@ local query_builder = require("reposcope.providers.github.query_builder")
 ---@return table<string, string>
 function M.collect()
   local result = {}
-
-  for _, field in ipairs(prompt_config.fields or {}) do
+  local fields = prompt_config.get_fields()
+  for _, field in ipairs(fields or {}) do
     local text = prompt_state.get_field_text(field)
     if type(text) == "string" and text ~= "" then
       result[field] = text
