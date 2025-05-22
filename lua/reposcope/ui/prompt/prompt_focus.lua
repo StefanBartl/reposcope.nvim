@@ -9,7 +9,7 @@
 ---@field focus_first_input fun(): nil Sets focus to the first interactive prompt input field and enters insert mode.
 ---@field focus_field_index fun(index: integer): nil Sets focus to the input field at the specified index (1-based), and positions the cursor at line 2.
 ---@field focus_field fun(field: string): nil Focuses a field by its name (e.g. "keywords") if it exists in the configured field list --NOTE: nuiy
----@field navigate_field fun(direction: "next"|"prev"): nil Navigates to the next or previous field in the list, wrapping around  --NOTE: niuy
+---@field navigate fun(direction: "next"|"prev"): nil Navigates to the next or previous field in the list, wrapping around  --NOTE: niuy
 local M = {}
 
 -- UI State
@@ -56,40 +56,72 @@ function M.focus_field_index(index)
     return
   end
 
+  local cfg = vim.api.nvim_win_get_config(win)
+  if not cfg.focusable then
+    notify("[reposcope] Attempted to focus non-focusable window: " .. field, 3)
+    return
+  end
+
   current_index = index
   vim.api.nvim_set_current_win(win)
-  vim.api.nvim_win_set_cursor(win, { 2, 0 }) -- Always line 2
+  vim.api.nvim_win_set_cursor(win, { 2, 0 })
 end
 
 
----Focuses a field by its name
+---Focuses a field by its name, only if it is focusable
 ---@param field string
 ---@return nil
 function M.focus_field(field)
   local fields = prompt_config.get_fields()
   for i, name in ipairs(fields) do
     if name == field then
-      return M.focus_field_index(i)
+      local win = ui_state.windows.prompt and ui_state.windows.prompt[field]
+      if win and vim.api.nvim_win_is_valid(win) then
+        local cfg = vim.api.nvim_win_get_config(win)
+        if cfg.focusable then
+          return M.focus_field_index(i)
+        end
+      end
+      break -- found field, but it’s not focusable
     end
   end
 end
 
 
----Navigates to the next or previous prompt field
+---Navigates to the next or previous prompt field, skipping non-focusable ones (e.g. prefix)
 ---@param direction "next"|"prev"
 ---@return nil
-function M.navigate_field(direction)
-  local delta = direction == "next" and 1 or -1
+function M.navigate(direction)
   local fields = prompt_config.get_fields()
-  local new_index = current_index + delta
+  local count = #fields
+  local step = direction == "next" and 1 or -1
+  local idx = current_index
 
-  if new_index < 1 then
-    new_index = #fields
-  elseif new_index > #fields then
-    new_index = 1
+  -- Try up to `count` times to find the next focusable field
+  -- Prevents infinite loops if no valid window is focusable
+  for _ = 1, count do
+    -- Move to the next index (with wrap-around behavior)
+    idx = idx + step
+    if idx < 1 then
+      idx = count
+    elseif idx > count then
+      idx = 1
+    end
+
+    -- Resolve field name and associated window
+    local field = fields[idx]
+    local win = ui_state.windows.prompt and ui_state.windows.prompt[field]
+
+    if win and vim.api.nvim_win_is_valid(win) then
+      local cfg = vim.api.nvim_win_get_config(win)
+
+      -- Skip windows that are not focusable (e.g. prefix)
+      if cfg.focusable then
+        -- Focus this window and update current index
+        return M.focus_field_index(idx)
+      end
+    end
   end
-
-  M.focus_field_index(new_index)
 end
 
 return M

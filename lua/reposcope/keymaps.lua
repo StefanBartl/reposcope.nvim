@@ -16,6 +16,7 @@ local gh_clone = require("reposcope.providers.github.clone")
 local readme_viewer = require("reposcope.ui.actions.readme_viewer")
 local readme_editor = require("reposcope.ui.actions.readme_editor")
 local navigate_list = require("reposcope.ui.prompt.prompt_list_navigate")
+local prompt_focus = require("reposcope.ui.prompt.prompt_focus")
 -- Utility Modules (Debugging and Notifications)
 local notify = require("reposcope.utils.debug").notify
 local core = require("reposcope.utils.core")
@@ -133,8 +134,43 @@ function M.set_prompt_keymaps()
         gh_readme.fetch_readme_for_selected()  -- REF: Refactore if more providers available
       end,
     },
-   {
+    {
       mode = {"n", "i"},
+      lhs = "<C-w>",
+      rhs = function()
+        prompt_focus.navigate("next")
+      end,
+    },
+    {
+      mode = {"i"},
+      lhs = "<C-h>",
+      rhs = function()
+        prompt_focus.navigate("prev")
+      end,
+    },
+    {
+      mode = {"i"},
+      lhs = "<C-w>h",
+      rhs = function()
+        prompt_focus.navigate("prev")
+      end,
+    },
+    {
+      mode = {"i"},
+      lhs = "<C-l>",
+      rhs = function()
+        prompt_focus.navigate("next")
+      end,
+    },
+    {
+      mode = {"i"},
+      lhs = "<C-w>l",
+      rhs = function()
+        prompt_focus.navigate("next")
+      end,
+    },
+   {
+      mode = {"i"},
       lhs = "<C-v>",
       rhs = function()
         readme_viewer.open_viewer()
