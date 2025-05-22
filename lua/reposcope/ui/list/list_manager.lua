@@ -10,6 +10,7 @@
 ---@field get_selected fun(): string|nil Returns the currently selected list entry  --REF: niuy
 ---@field select_entry fun(index: number): nil Selects a specific list entry  --REF: niuy
 ---@field get_selected_entry fun(): string|nil Returns the currently selected list entry  --REF: niuy
+---@field reset_selected_line fun(): nil Resets the last selected line and the line highlight
 local M = {}
 
 -- UI Components (List Window)
@@ -126,6 +127,14 @@ function M.select_entry(index)
 
   list_window.highlight_selected(index)
   notify("[reposcope] List entry selected at index: " .. index, 2)
+end
+
+
+---Resets the last selected line and the line highlight
+---@return nil
+function M.reset_selected_line()
+    ui_state.last_selected_line = 1
+    list_window.highlight_selected(1)
 end
 
 return M
