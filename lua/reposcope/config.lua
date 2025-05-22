@@ -11,7 +11,7 @@ local M = {}
 -- Utility Modules (Protection and Debugging)
 local protection = require("reposcope.utils.protection")
 local notify = require("reposcope.utils.debug").notify
-
+local defaults = require("reposcope.defaults")
 
 ---@class CloneOptions 
 ---@field std_dir string Standardth for cloning repositories
@@ -26,38 +26,48 @@ local notify = require("reposcope.utils.debug").notify
 ---@field results_limit number Maximum number of results returned in search queries (default: 25)
 ---@field preview_limit number Maximum number of lines shown in preview (default: 200)
 ---@field layout string UI layout type (default: "default")
+---@field clone CloneOptions Options to configure cloning repositories
+---@field keymaps table<string, string> Set keymaps to open and close Reposcope
+---@field keymap_opts table Set keymap options
 ---@field metrics boolean Controls the state to record metrics
 ---@field cache_dir string Path for Reposcope cache data (default: OS-dependent) 
 ---@field log_filepath string Full path to the log file (determined dynamically)
 ---@field log_max number Controls the size of the log file
----@field clone CloneOptions Options to configure cloning repositories
 M.options = {
-  provider = "github", -- Default provider for Reposcope (GitHub)
-  preferred_requesters = { "gh", "curl", "wget" }, -- Preferred tools for API requests
-  request_tool = "gh", -- Default request tool (GitHub CLI)
+  provider = "", -- Default provider for Reposcope (GitHub)
+  preferred_requesters = {}, -- Preferred tools for API requests
+  request_tool = "", -- Default request tool (GitHub CLI)
   github_token = "", -- Github authorization token (for higher request limits)
-  results_limit = 25, -- Default result limit for search queries
-  preview_limit = 200, -- Default preview limit for displayed results
-  layout = "default", -- Default UI layout
+  results_limit = 0, -- Default result limit for search queries
+  preview_limit = 0, -- Default preview limit for displayed results
+  layout = "", -- Default UI layout
   clone = {
-    std_dir = "~/temp",  -- Standard path for cloning repositories
+    std_dir = "",  -- Standard path for cloning repositories
     type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
   },
-  -- Only change following values if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
+  keymaps = {
+    open = "<leader>rs",  -- Set the keymap to open Repsocope
+    close = "<leader>rc",  -- Set the keymap to close Reposcope
+  },
+  keymap_opts = {
+    silent = true,  -- Silent option for open and close keymap
+    noremap = true,  -- noremap option for open and close keymap
+  },
+
+  -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
   metrics = false,
   cache_dir = "", -- Cache path for persistent cache files; standard is: vim.fn.stdpath("cache") .. "/reposcope/data"
   log_filepath = "", -- Full path (without .ext) to the log file; standard is: vim.fn.stdpath("cache") .. "/reposcope/logs/log"
-  log_max = 1000, -- Controls the size of the log file
+  log_max = 0, -- Controls the size of the log file
 }
 
 ---Setup function for configuration
 ---@param opts ConfigOptions User configuration options
 function M.setup(opts)
-  -- Merge user-provided options with default options
-  M.options = vim.tbl_deep_extend("force", M.options, opts or {})
-
-  -- Set the clone type based on the request tool
-  M.options.clone.type = M.options.clone.type ~= "" and M.options.clone.type or M.options.request_tool
+  --- Merges user-provided configuration with default options.
+  --- Any keys not present in the user options are filled in from the defaults.
+  ---@type ConfigOptions
+  M.options = vim.tbl_deep_extend("keep", {}, opts or {}, defaults.options)
 
   M.init_cache_dir()
   M.init_log_path()
