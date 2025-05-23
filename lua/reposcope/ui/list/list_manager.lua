@@ -65,7 +65,9 @@ function M.update_list(lines)
     -- Update preview if possible
     local selected_repo = require("reposcope.state.repositories.repositories_state").get_selected_repo()
     if selected_repo then
-      require("reposcope.ui.preview.preview_manager").update_preview(selected_repo.name)
+      vim.schedule(function()
+        require("reposcope.ui.preview.preview_manager").update_preview(selected_repo.name)
+      end)
     else
       notify("[reposcope] No selected repository for preview.", 3)
     end

@@ -28,6 +28,7 @@ function M.request(method, url, callback, headers, debug, metrics_context)
   local start_time = vim.loop.hrtime()
 
   local curl_args = { "-s", "-X", method, url }
+  notify("[reposcope] curl args: " .. curl_args[1] .. " " .. curl_args[2] .. " " .. curl_args[3] .. " " ..  curl_args[4] ) -- TEST:
 
   -- Add headers to curl command
   if headers then

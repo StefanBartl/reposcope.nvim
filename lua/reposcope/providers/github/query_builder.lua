@@ -8,6 +8,10 @@
 
 local M = {}
 
+-- Debug utils
+local notify = require("reposcope.utils.debug").notify
+
+
 -- List of known GitHub filter keys (must be formatted as `key:value`)
 local FILTER_KEYS = {
   author = true,
@@ -24,18 +28,25 @@ function M.build(input)
   if type(input) ~= "table" then return "" end
 
   local query_parts = {}
+  local debug_parts = {}
 
   for field, value in pairs(input) do
     if type(value) == "string" and value ~= "" then
       if FILTER_KEYS[field] then
         table.insert(query_parts, field .. ":" .. value)
+        debug_parts[#debug_parts+1] = string.format("filter %s=%s", field, value)
       elseif field ~= "prefix" then
         table.insert(query_parts, value)
+        debug_parts[#debug_parts+1] = string.format("keyword = %s", value)
       end
     end
   end
 
-  return table.concat(query_parts, " ")
+  local final_query = table.concat(query_parts, " ")
+  notify("[reposcope] Built query: " .. final_query, 2)
+  notify("[reposcope] Query components: " .. table.concat(debug_parts, ", "), 4)
+
+  return final_query
 end
 
 return M

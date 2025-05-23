@@ -31,10 +31,14 @@ M.prefix = " " .. "\u{f002}" .. " "
 M.prefix_len = vim.fn.strdisplaywidth(M.prefix)
 M.prefix_win_width = M.prefix_len + 2
 
--- Internal storage for prompt fields
-local _fields = {}
+---@class PromptFieldClass
+---@brief Enumeration of valid prompt field keys
+---@description
+--- This class defines the allowed field names for prompt input configuration.
+--- It is used for validation, autocomplete suggestions, and type safety.
+---@alias PromptField "prefix"|"keywords"|"author"|"topic"|"language"|"stars"
 
--- Allowed field names
+---@type table<string, boolean>
 local VALID_FIELDS = {
   prefix = true,
   keywords = true,
@@ -44,9 +48,14 @@ local VALID_FIELDS = {
   stars = true,
 }
 
+-- Internal storage for prompt fields (controlled by set_fields)
+---@type PromptField[]
+local _fields = {}
+
 --- Sets the active prompt fields with deduplication and prefix reordering.
 --- Invalid fields are ignored with a warning.
----@param fields string[]
+---@param fields PromptField List of valid field names
+---@return nil
 function M.set_fields(fields)
   if type(fields) ~= "table" then
     notify("[reposcope] Expected table for prompt fields, got: " .. type(fields), 3)
@@ -67,15 +76,13 @@ function M.set_fields(fields)
 end
 
 --- Returns the normalized prompt field list
----@return string[]
+---@return PromptField[]
 function M.get_fields()
   return _fields
 end
 
-
 -- Default fields
-M.set_fields({ "prefix", "keywords", "topic" })
-
+M.set_fields({"prefix", "keywords", "topic", "author"})
 
 ---Returns all valid prompt field names (whitelist)
 ---@return string[]
