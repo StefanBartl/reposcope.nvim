@@ -12,9 +12,10 @@
 ---@field get_buffers fun(): number[]|nil Returns all buffer handles in the state table which are not nil
 ---
 ---@field list UIStateList list handles by role
----@field list_populated boolean|nil Indicates if the list window was populated at least once
 ---@field current_selected_repo_name string|nil The name of the currently selected repository
 ---@field last_selected_line integer|nil The last selected line number in the list
+---@field is_list_populated fun(): nil Returns true if the repository list was populated at least once
+---@field set_list_populated fun(val: boolean): boolean Sets the internal list population state
 ---
 ---@brief Tracks plugin-local buffer and window handles  REF: update description
 ---@description
@@ -181,20 +182,14 @@ end
 -- HACK: list not in use right now, only the direct variables
 
 ---@class UIStateList
----@field list_populated boolean|nil Indicates if the list window was populated at least once
 ---@field current_selected_repo_name string|nil The name of the currently selected repository
 ---@field last_selected_line integer|nil The last selected line number in the list
 
 ---@type UIStateList
 M.list = {
-  list_populated = nil,
   current_selected_repo_name = nil,
   last_selected_line = nil
 }
-
--- State variables related to the list and selection
----@type boolean|nil Indicates if the list was populated at least once
-M.list_populated = nil
 
 ---@type string|nil The name of the currently selected repository -- HACK:
 M.current_selected_repo_name = nil
@@ -203,5 +198,28 @@ M.current_selected_repo_name = nil
 M.last_selected_line = nil
 
 --TODO:  print above to values over period and check if the are equal odr defer any time
+
+
+-- State variable tracking if the repository list has ever been populated
+---@type boolean|nil
+---@private
+local list_populated = nil
+
+---Returns true if the repository list was populated at least once
+---@return boolean
+function M.is_list_populated()
+  return list_populated == true
+end
+
+---Sets the internal list population state
+---@param val boolean True if list has been populated
+---@return nil
+function M.set_list_populated(val)
+  if type(val) ~= "boolean" then
+    notify("[reposcope] set_list_populated: expected boolean, got " .. type(val), 4)
+    return
+  end
+  list_populated = val
+end
 
 return M

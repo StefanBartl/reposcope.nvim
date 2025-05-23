@@ -33,7 +33,6 @@
 ---@field get_selected_repo fun(): Repository|nil Retrieves the currently selected repository
 ---@field get_repositories_list fun(): string[] Returns the list of actual repositories or table with empty string if thte list is empty
 ---@field clear_state fun(): nil Clears the repository state
----@field is_populated fun(): boolean Returns true, if the repositories table is popoulated
 local M = {}
 
 -- State Management (UI State, List Window)
@@ -128,11 +127,17 @@ function M.get_selected_repo()
 
   -- Read the currently selected line in the list
   local selected_line = list_window.highlighted_line
-  if not selected_line then return nil end
+  if not selected_line then
+    notify("[reposcope] No list item is currently selected.", 3)
+    return nil
+  end
 
   -- Read the repository entry in the list (format: "username/reponame: description")
   local line_text = vim.api.nvim_buf_get_lines(ui_state.buffers.list, selected_line - 1, selected_line, false)[1]
-  if not line_text then return nil end
+  if not line_text or line_text == "" then
+    notify(string.format("[reposcope] No content found at line %d in list buffer.", selected_line), 3)
+    return nil
+  end
 
   -- Expected format: "username/reponame: description"
   local owner, repo_name = line_text:match("([^/]+)/([^:]+)")
@@ -159,18 +164,6 @@ end
 function M.clear_state()
   M.repositories = { total_count = 0, items = {}, list = {} }
   notify("[reposcope] Repository state cleared.", 2)
-end
-
-
----Returns true if repositories table is populated
----@return boolean
-function M.is_populated()
-  local json_data = M.get_repositories()
-  if not json_data or not json_data.items then
-    return false
-  end
-
-  return true
 end
 
 return M
