@@ -45,9 +45,7 @@ function M.open_viewer()
   end
 
   -- Open in browser if HTML-like
-  if content:match("<html>") or content:match("<head>") or content:match("<body>") or
-     content:match("<img src") or content:match("<!--") or content:match("<div>") or
-     content:match("<h1") or content:match("<a href=") then
+  if content:match("<html>") or content:match("<head>") or content:match("<body>") or content:match("<div>") then
     local url = "https://github.com/" .. repo.owner.login .. "/" .. repo_name
     os.open_url(url)
     return
@@ -56,6 +54,7 @@ function M.open_viewer()
   -- Prepare buffer
   local buf
   if ui_state.buffers.readme_viewer and vim.api.nvim_buf_is_valid(ui_state.buffers.readme_viewer) then
+    notify("Buffer valid: " .. tostring(vim.api.nvim_buf_is_valid(ui_state.buffers.readme_viewer)), 2)
     buf = ui_state.buffers.readme_viewer
     vim.bo[buf].modifiable = true
     notify("[reposcope] Using existing README buffer", 2)
@@ -97,19 +96,24 @@ function M.open_viewer()
   local win = vim.api.nvim_open_win(buf, true, {
     relative = "editor",
     width = vim.o.columns,
-    height = vim.o.lines - 3,
+    height = vim.o.lines - 4,
     col = 0,
     row = 0,
     style = "minimal",
     border = "single",
     focusable = true,
-    title = "README VIEWER",  -- TEST:
-    title_pos = 'center',     -- TEST:
+    title = "README VIEWER",
+    title_pos = 'center',
   })
+
+  vim.wo[win].wrap = true
+  vim.wo[win].cursorline = true
 
   ui_state.windows.readme_viewer = win
   vim.api.nvim_set_current_win(win)
 
+  require("reposcope.ui.prompt.prompt_autocmds").cleanup_autocmds()
+  require("reposcope.keymaps").unset_prompt_keymaps()
   M.set_viewer_keymap(buf)
 
   vim.cmd("stopinsert")
@@ -121,10 +125,14 @@ end
 ---Closes the README viewer window.
 ---@return nil
 function M.close_viewer()
-  if ui_state.windows.readme_viewer and vim.api.nvim_win_is_valid(ui_state.windows.readme_viewer) then
-    vim.api.nvim_win_close(ui_state.windows.readme_viewer, true)
+  if ui_state.buffers.readme_viewer and vim.api.nvim_buf_is_valid(ui_state.buffers.readme_viewer) then
+    vim.api.nvim_buf_delete(ui_state.buffers.readme_viewer, { force = true })
   end
-  ui_state.windows.readme_viewer = nil
+
+  ui_state.buffers.readme_viewer = nil
+
+  require("reposcope.ui.prompt.prompt_autocmds").setup_autocmds()
+  require("reposcope.keymaps").set_prompt_keymaps()
 end
 
 

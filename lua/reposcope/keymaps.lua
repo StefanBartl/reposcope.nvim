@@ -172,7 +172,7 @@ function M.set_prompt_keymaps()
       end,
     },
    {
-      mode = {"i"},
+      mode = {"n", "i"},
       lhs = "<C-v>",
       rhs = function()
         readme_viewer.open_viewer()
