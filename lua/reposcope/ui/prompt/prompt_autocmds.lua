@@ -48,7 +48,7 @@ function M.setup_autocmds()
     end,
   })
 
-  -- Lock cursor to second line
+  -- Lock cursor to second line  TEST:
   vim.api.nvim_create_autocmd({ "CursorMoved", "CursorMovedI", "InsertEnter", "InsertLeave" }, {
     group = "reposcope_prompt_autocmds",
     pattern = "*",

@@ -35,6 +35,10 @@ M.options = {
     noremap = true,  -- noremap option for open and close keymap
   },
 
+  ---@type PromptField[]
+  ---prompt_fields = { "prefix", "keywords" }
+
+
   -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
   metrics = false,
   cache_dir = "", -- Cache path for persistent cache files; standard is: vim.fn.stdpath("cache") .. "/reposcope/data"
