@@ -32,7 +32,7 @@ function M.set_list(entries)
 
   list_window.open_window()
   M.update_list(entries)
-  ui_state.list_populated = true
+  ui_state.set_list_populated(true)
 end
 
 
@@ -77,7 +77,7 @@ end
 ---@return nil
 function M.clear_list()
   list_window.close_window()
-  ui_state.list_populated = nil
+  ui_state.set_list_populated(false)
 end
 
 

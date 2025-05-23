@@ -13,8 +13,8 @@ local checks = require("reposcope.utils.checks")
 local ui_state = require("reposcope.state.ui.ui_state")
 -- UI Components (Core UI Elements)
 local background = require("reposcope.ui.background.background_window")
-local preview = require("reposcope.ui.preview.init")
 local list = require("reposcope.ui.list.init")
+local preview = require("reposcope.ui.preview.init")
 local prompt = require("reposcope.ui.prompt.init")
 -- UI-Specific Functions and Submodules
 local list_window = require("reposcope.ui.list.list_window")
@@ -43,26 +43,44 @@ end
 ---Opens the Reposcope UI.
 ---Captures caller position, creates background, preview, list, and prompt windows, and sets keymaps.
 function M.open_ui()
+  require("reposcope.utils.debug").notify("[reposcope] REPOSCOPE START")
+
+
+  require("reposcope.utils.debug").notify("[reposcope] CAPTURING SEQUENCE")
   -- Capture users window and cursor for placing him back after closing Reposcope UI
   ui_state.capture_invocation_state()
 
+
+  require("reposcope.utils.debug").notify("[reposcope] BACKGROUND SEQUENCE")
   -- Open Background
   background.open_window()
 
+
+  require("reposcope.utils.debug").notify("[reposcope] LIST SEQUENCE")
   -- Open List
   list.initialize()
 
+
+  require("reposcope.utils.debug").notify("[reposcope] PREVIEW SEQUENCE")
   -- Open Preview
   preview.initialize()
 
+
+  require("reposcope.utils.debug").notify("[reposcope] PROMPT SEQUENCE")
   -- Open Prompt
   prompt.initialize()
 
+
+  require("reposcope.utils.debug").notify("[reposcope] KEYMAPS SEQUENCE")
   -- Set Keymaps
   keymaps.set_ui_keymaps()
 
+
+  require("reposcope.utils.debug").notify("[reposcope] SETUP UI CLOSE SEQUENCE")
   -- Setup UI Close Handler
   M.setup_ui_close()
+
+  require("reposcope.utils.debug").notify("[reposcope] REPOSCOPE START SEQUENCE FINISHED")
 end
 
 ---Closes the Reposcope UI.
@@ -96,6 +114,8 @@ function M.close_ui()
   prompt_autocmds.cleanup_autocmds()
   keymaps.unset_ui_keymaps()
   M.remove_ui_autocmd()
+
+  require("reposcope.utils.debug").notify("[reposcope] REPOSCOPE END")
 
   vim.cmd("stopinsert")
 end
