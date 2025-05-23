@@ -35,7 +35,7 @@ function M.setup(opts)
   config.setup(opts or {})
   checks.resolve_request_tool()
 
-  if opts.keymaps ~= false then
+  if opts and opts.keymaps ~= false then
     keymaps.set_user_keymaps(opts.keymaps, opts.keymap_opts)
   end
 end
@@ -43,7 +43,7 @@ end
 ---Opens the Reposcope UI.
 ---Captures caller position, creates background, preview, list, and prompt windows, and sets keymaps.
 function M.open_ui()
-  -- Capture users window and cursor for placing him back after closing Reposcope UI 
+  -- Capture users window and cursor for placing him back after closing Reposcope UI
   ui_state.capture_invocation_state()
 
   -- Open Background
@@ -68,7 +68,6 @@ end
 ---Closes the Reposcope UI.
 ---Restores the caller window, closes all Reposcope windows, and unsets keymaps.
 function M.close_ui()
-
   -- save row number in list
   ui_state.last_selected_line = list_window.highlighted_line
 
@@ -100,7 +99,6 @@ function M.close_ui()
 
   vim.cmd("stopinsert")
 end
-
 
 --- Sets up an AutoCmd for automatically closing all related UI windows (Reposcope UI).
 --- The AutoCmd triggers on `QuitPre` for any window that matches the pattern `reposcope://*`.

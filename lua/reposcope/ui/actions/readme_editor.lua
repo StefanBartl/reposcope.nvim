@@ -39,9 +39,7 @@ function M.open_editor()
   end
 
   -- Open in browser if HTML-like
-  if content:match("<html>") or content:match("<head>") or content:match("<body>") or
-     content:match("<img src") or content:match("<!--") or content:match("<div>") or
-     content:match("<h1") or content:match("<a href=") then
+  if content:match("<html>") or content:match("<head>") or content:match("<body>") or content:match("<div>") then
     local url = "https://github.com/" .. repo.owner.login .. "/" .. repo_name
     os.open_url(url)
     return

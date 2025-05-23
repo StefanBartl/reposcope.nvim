@@ -14,7 +14,6 @@ local M = {}
 local list_window = require("reposcope.ui.list.list_window")
 local list_manager = require("reposcope.ui.list.list_manager")
 -- State Management
-local ui_state = require("reposcope.state.ui.ui_state")
 local repositories_state = require("reposcope.state.repositories.repositories_state")
 -- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
