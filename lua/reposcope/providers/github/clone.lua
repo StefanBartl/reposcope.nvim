@@ -22,7 +22,9 @@ function M.init()
     completion = "file",
   }, function(input)
     if (input) then
-      M.clone_repository(input)
+      vim.schedule(function ()
+        M.clone_repository(input)
+      end)
     else
       print("No input, canceled cloning")
     end

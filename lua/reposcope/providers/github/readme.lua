@@ -30,7 +30,7 @@ function M.fetch_readme_for_selected()
 ---REF: Refactore this part to a funtion which doesnt gave nil back
   local repo = repositories_state.get_selected_repo()
   if not repo then
-    notify("[reposcope] No repository selected", 3)
+    notify("[reposcope] No repository selected to fetch a README", 3)
     return
   end
 
@@ -55,7 +55,11 @@ function M.fetch_readme_for_selected()
           metrics.increase_fcache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
         end
       end
-      preview_manager.update_preview(repo_name)
+
+      vim.schedule(function()
+        preview_manager.update_preview(repo_name)
+      end)
+
       return
     end
     return
@@ -74,7 +78,9 @@ function M.fetch_readme_for_selected()
         metrics.increase_fcache_hit(uuid, repo_name, repo.html_url, "fetch_readme")
       end
     end
-    preview_manager.update_preview(repo_name)
+    vim.schedule(function()
+      preview_manager.update_preview(repo_name)
+    end)
     active_readme_requests[repo_name] = nil
     return
   end
@@ -95,7 +101,9 @@ function M.try_fetch_readme(raw_url, api_url, repo_name)
     end
 
     if response then
-      cache.cache_and_show_readme(repo_name, response)
+      vim.schedule(function()
+        cache.cache_and_show_readme(repo_name, response)
+      end)
     else
       notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", 2)
       M.fetch_readme_from_api(api_url, repo_name)
@@ -128,7 +136,9 @@ function M.fetch_readme_from_api(api_url, repo_name)
 
     -- Decode the Base64-encoded README content using the utility function
     local content = encoding.decode_base64(decoded.content)
-    cache.cache_and_show_readme(repo_name, content)
+    vim.schedule(function()
+      cache.cache_and_show_readme(repo_name, content)
+    end)
   end, nil, "fetch_readme_api")
 end
 

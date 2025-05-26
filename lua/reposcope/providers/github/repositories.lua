@@ -65,8 +65,6 @@ function M.fetch_github_repositories(query, uuid)
   if not check then
     notify("UUID check failed: " .. uuid .. " with query: " .. query, 4)
     return
-  else
-    notify("UUID check passed: " .. uuid .. " with query: " .. query, 1)
   end
 
   if query == "" then

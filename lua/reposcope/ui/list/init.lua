@@ -30,11 +30,10 @@ function M.initialize()
   -- Check if there are reseults from former prompt search in the list
   local actual_repo_list = repositories_state.get_repositories_list()
   if #actual_repo_list[1] > 1 then
-    list_manager.set_list(actual_repo_list)  -- REF:  this should be like in list manager (formatted)
-    notify("[reposcope] List UI initialized with cached repositories.", 2)
+    vim.schedule(function()
+      list_manager.set_list(actual_repo_list)
+    end)
   end
-
-  notify("[reposcope] List UI initialized.", 2)
 end
 
 return M

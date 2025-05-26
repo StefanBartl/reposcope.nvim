@@ -27,7 +27,7 @@
 --- This ensures that the list of repositories always reflects the most recent search result.
 --- Unlike a cache, which might store multiple versions of data for reuse, this state only
 --- stores the current result set.
----@field set_repositories fun(json: RepositoryResponse): nil Stores the JSON response of repositories
+---@field set_repositories fun(json: RepositoryResponse): nil Stores the JSON response of repositories, sanitizes each repo entry and builds lines
 ---@field get_repositories fun(): RepositoryResponse Returns the cached JSON response
 ---@field get_repository fun(repo_name: string): Repository|nil Returns a repository by its name
 ---@field get_selected_repo fun(): Repository|nil Retrieves the currently selected repository
@@ -38,50 +38,47 @@ local M = {}
 -- State Management (UI State, List Window)
 local ui_state = require("reposcope.state.ui.ui_state")
 local list_window = require("reposcope.ui.list.list_window")
--- Debugging Utility
+-- Debugging & Utility
 local notify = require("reposcope.utils.debug").notify
-
+local ensure_string = require("reposcope.utils.core").ensure_string
+local api = vim.api
 
 ---@type RepositoryResponse
 M.repositories = { total_count = 0, items = {}, list = {} }
 
 
----Stores the JSON response of repositories
+---Stores the JSON response of repositories, sanitizes each repo entry and builds lines
 ---@param json RepositoryResponse
 ---@return nil
 function M.set_repositories(json)
   M.repositories.total_count = json.total_count or 0
   M.repositories.items = json.items or {}
+  M.repositories.list = {}
 
-  ---DEBUG: proof and securing repository fields
-  -- Problem: `userdata` type in API data causes errors when concatenated.  
-  -- Solution: Ensure all API fields are strings, using `tostring()` if needed.
   for _, repo in ipairs(M.repositories.items) do
-    if type(repo.name) ~= "string" then
-      notify("[reposcope] Warning: Repository name is not a string. Type: " .. type(repo.name), 3)
-      repo.name = tostring(repo.name or "No name")
+    ---@type string
+    local name = ensure_string(repo.name)
+    if name == "" then
+      notify("[reposcope] Repository missing valid 'name', inserted fallback", 2)
+      name = "No name"
     end
 
-    if type(repo.description) ~= "string" and repo.description ~= nil then
-      notify("[reposcope] Warning: Repository description is not a string. Type: " .. type(repo.description), 3)
-      repo.description = tostring(repo.description or "No description")
+    ---@type string
+    local owner = ensure_string(repo.owner and repo.owner.login)
+    if owner == "" then
+      notify("[reposcope] Repository missing valid 'owner.login', inserted fallback", 2)
+      owner = "Unknown"
     end
 
-    if type(repo.owner) == "table" and type(repo.owner.login) ~= "string" then
-      notify("[reposcope] Warning: Repository owner login is not a string. Type: " .. type(repo.owner.login), 3)
-      repo.owner.login = tostring(repo.owner.login or "Unknown")
-    elseif type(repo.owner) ~= "table" then
-      notify("[reposcope] Warning: Repository owner is not a table. Type: " .. type(repo.owner), 3)
-      repo.owner = { login = "Unknown" }
+    ---@type string
+    local desc = ensure_string(repo.description)
+    if desc == "" then
+      desc = "No description"
     end
 
-    local owner = repo.owner and repo.owner.login or "Unknown"
-    local name = repo.name or "No name"
-    local desc = repo.description or "No description"
     local line = owner .. "/" .. name .. ": " .. desc
     table.insert(M.repositories.list, line)
   end
-
 end
 
 
@@ -132,8 +129,15 @@ function M.get_selected_repo()
     return nil
   end
 
+  -- Avoid accessing a row that does not yet exist
+  local line_count = api.nvim_buf_line_count(ui_state.buffers.list)
+  if selected_line > line_count then
+    notify(string.format("[reposcope] Selected line (%d) exceeds list buffer line count (%d)", selected_line, line_count), 3)
+    return nil
+  end
+
   -- Read the repository entry in the list (format: "username/reponame: description")
-  local line_text = vim.api.nvim_buf_get_lines(ui_state.buffers.list, selected_line - 1, selected_line, false)[1]
+  local line_text = api.nvim_buf_get_lines(ui_state.buffers.list, selected_line - 1, selected_line, false)[1]
   if not line_text or line_text == "" then
     notify(string.format("[reposcope] No content found at line %d in list buffer.", selected_line), 3)
     return nil

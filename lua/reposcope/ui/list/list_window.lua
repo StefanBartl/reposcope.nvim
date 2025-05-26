@@ -87,10 +87,8 @@ function M.open_window()
     })
 
     M.apply_layout()
-    notify("[reposcope] List window initialized.", 2)
     return true
   else
-    notify("[reposcope] List window already exists.", 2)
     return true
   end
 end
@@ -158,8 +156,6 @@ function M.apply_layout()
     bg = ui_config.colortheme.background,
     fg = ui_config.colortheme.text,
   })
-
-  notify("[reposcope] List layout and styling applied.", 2)
 end
 
 

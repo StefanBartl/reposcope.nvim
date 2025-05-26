@@ -31,10 +31,11 @@ function M.show_cached_readme(repo_name)
       end
     end
 
-    preview_manager.update_preview(repo_name)
+    vim.schedule(function()
+      preview_manager.update_preview(repo_name)
+    end)
 
-  readme_cache.active_readme_requests[repo_name] = nil  --REF: must this be here?
-
+    readme_cache.active_readme_requests[repo_name] = nil
     return true
   end
   return false

@@ -64,8 +64,6 @@ function M.inject_content(buf, lines, filetype)
   vim.api.nvim_buf_set_option(buf, "filetype", filetype or "text")
   vim.api.nvim_buf_set_option(buf, "readonly", true)
   vim.api.nvim_buf_set_option(buf, "modifiable", false)
-
-  notify(string.format("[reposcope] Injected %s into preview buffer", filetype or "text"), 2)
 end
 
 
