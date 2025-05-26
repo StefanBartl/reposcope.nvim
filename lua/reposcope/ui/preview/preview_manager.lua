@@ -6,6 +6,7 @@
 --- on existing preview buffers. It supports injecting content from cache as well as
 --- raw text with specific formatting (e.g. markdown or centered banner).
 ---@field update_preview fun(repo_name: string): nil Updates the preview with the README of the given repository
+---@field clear_preview fun(): nil Set preview window to a blank line
 ---@field inject_content fun(buf: integer, lines: string[], filetype: string): nil Injects arbitrary content into the given buffer with the specified filetype
 ---@field inject_banner fun(buf: integer): nil Injects the default banner into the buffer (vertically and horizontally centered)
 local M = {}
@@ -53,7 +54,7 @@ end
 ---@param filetype string Filetype to apply to the buffer (e.g. "markdown", "text")
 ---@return nil
 function M.inject_content(buf, lines, filetype)
-  if not vim.api.nvim_buf_is_valid(buf) then
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
     notify("[reposcope] Invalid buffer passed to inject_content", 4)
     return
   end
@@ -72,13 +73,26 @@ end
 ---@param buf integer The preview buffer handle
 ---@return nil
 function M.inject_banner(buf)
-  if not vim.api.nvim_buf_is_valid(buf) then
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
     notify("[reposcope] Invalid buffer passed to inject_banner", 4)
     return
   end
 
   local lines = banner(preview_config.width)
   M.inject_content(buf, lines, "text")
+end
+
+
+---Set preview window to a blank line
+---@return nil
+function M.clear_preview()
+  local buf = ui_state.buffers.preview
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
+    notify("[reposcope] Cannot clear invalid preview buffer", 4)
+    return
+  end
+
+  M.inject_content(buf, {""}, "text")
 end
 
 return M

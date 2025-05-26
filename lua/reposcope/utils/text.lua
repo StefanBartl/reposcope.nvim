@@ -1,8 +1,8 @@
 ---@class UtilsText
 ---@field center_text fun(text: string, width: number): string[] Centers given text input and returns it, splitting lines without breaking words
 ---@field center_text_lines fun(lines: string[], width: number): string[] Centers an array of text lines within a specified width
----@field cut_text_for_line fun(offset: number, width: number, input: string): string Centers given text input and returns it
----@field gen_padded_lines fun(height: number, content: string|string[]): string[] Centers given text input and returns it
+---@field cut_text_for_line fun(offset: number, width: number, input: string): string Cuts given input to fit in 1 row and postfix it with '...'
+---@field gen_padded_lines fun(height: number, content: string|string[]): string[] Pads or trims content to a specific number of lines
 local M = {}
 
 -- Debugging Utility

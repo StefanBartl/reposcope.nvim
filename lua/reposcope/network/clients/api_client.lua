@@ -1,5 +1,5 @@
 ---@class API
----@field request fun(method: string, url: string, callback: fun(response: string|nil, error?: string|nil), headers?: table, debug?: boolean, context?: string): nil Sends an API request using HTTP module
+---@field request fun(method: string, url: string, callback: fun(response: string|nil, error?: string|nil), headers?: table, context?: string): nil Sends an API request using HTTP module
 local M = {}
 
 -- HTTP Client (Low-level HTTP Requests)
@@ -16,9 +16,8 @@ local active_requests = {}
 ---@param url string The URL for the API request
 ---@param callback fun(response: string|nil, error?: string|nil) Callback with the response data or error message
 ---@param headers? table Optional headers for the request
----@param debug? boolean Optional debug flag for debugging output
 ---@param context? string Optional context identifier (e.g., "fetch_repo", "fetch_readme", "clone_repo")
-function M.request(method, url, callback, headers, debug, context)
+function M.request(method, url, callback, headers, context)
   -- Set default context if not provided
   context = context or "general"
 
@@ -35,13 +34,12 @@ function M.request(method, url, callback, headers, debug, context)
     active_requests[url] = nil
 
     if error then
-      notify("[reposcope] API Request Error: " .. error, 4)
       callback(nil, error)
       return
     end
 
     callback(response, nil)
-  end, headers, debug)
+  end, headers)
 end
 
 return M
