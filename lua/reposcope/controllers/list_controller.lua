@@ -41,12 +41,16 @@ function M.display_repositories()
     local owner = repo.owner and repo.owner.login or "Unknown"
     local name = repo.name or "No name"
     local desc = repo.description or "No description"
+    if type(desc) ~= "string" then
+      notify(string.format("[reposcope] Skipped invalid repo description for %s/%s (type: %s)",
+      repo.owner.login, repo.name, type(desc)), 3)
+      desc = ""
+    end
     local line = owner .. "/" .. name .. ": " .. desc
     table.insert(lines, text_utils.cut_text_for_line(0, list_width, line))
   end
 
   list_manager.set_list(lines)
-  notify("[reposcope] Displayed repositories in list UI.", 2)
 end
 
 return M

@@ -4,6 +4,7 @@
 ---@field flatten_table fun(input: table, result?: table): table Recursively flattens a nested table into a flat list
 ---@field dedupe_list fun(list: string[]): string[] Returns a new list with all duplicates removed (preserving order)
 ---@field put_to_front_if_present fun(list: string[], value: string): string[] Ensures that the given value appears first in the list if present
+---@field ensure_string fun(val: string): string Ensures that a given argument 'val' is from type string, else returns empty string
 ---@field generate_uuid fun(): string  Creates a UUID based on actual timestamp
 local M = {}
 
@@ -122,6 +123,20 @@ function M.put_to_front_if_present(list, value)
   end
 
   return result
+end
+
+
+---Ensures that a given argument 'val' is from type string, else returns empty string
+---@param val string
+---@return string
+function M.ensure_string(val)
+  if type(val) == "string" then
+    return val
+  elseif val == nil or val == vim.NIL then
+    return ""
+  else
+    return tostring(val)
+  end
 end
 
 

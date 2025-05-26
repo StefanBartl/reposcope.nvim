@@ -58,10 +58,8 @@ function M.open_window()
     ui_state.windows.preview = win
 
     M.apply_layout()
-    notify("[reposcope] Preview window initialized.", 2)
     return true
   else
-    notify("[reposcope] Preview window already exists.", 2)
     return true
   end
 end
@@ -98,8 +96,6 @@ function M.apply_layout()
     bg = preview_config.highlight_color,
     fg = preview_config.normal_color,
   })
-
-  notify("[reposcope] Preview layout and styling applied.", 2)
 end
 
 return M

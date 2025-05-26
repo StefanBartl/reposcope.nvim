@@ -40,10 +40,12 @@ function M.initialize()
   end
 
   if ui_state.is_list_populated() then
-    local selected_repo = repositories_state.get_selected_repo()
-    if selected_repo and selected_repo.name then
-      preview_manager.update_preview(selected_repo.name)
-    end
+    vim.schedule(function()
+      local selected_repo = repositories_state.get_selected_repo()
+      if selected_repo and selected_repo.name then
+          preview_manager.update_preview(selected_repo.name)
+      end
+    end)
   else
     preview_manager.inject_banner(buf)
   end

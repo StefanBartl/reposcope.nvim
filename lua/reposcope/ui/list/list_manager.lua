@@ -5,7 +5,7 @@
 ---It provides functions to load, update, and clear the list, and to manage the selected line.
 ---The list manager is independent of the UI and can be used with any list window.
 ---@field set_list fun(entries: string[]): nil Sets the list entries and displays them
----@field update_list fun(lines: string[]): nil Updates the list content
+---@field update_list fun(lines: string[]): boolean Updates the list content and returns status 
 ---@field clear_list fun(): nil Clears the list content
 ---@field get_selected fun(): string|nil Returns the currently selected list entry  --REF: niuy
 ---@field select_entry fun(index: number): nil Selects a specific list entry  --REF: niuy
@@ -31,28 +31,33 @@ function M.set_list(entries)
   end
 
   list_window.open_window()
-  M.update_list(entries)
-  ui_state.set_list_populated(true)
+  if M.update_list(entries) then
+    ui_state.set_list_populated(true)
+  else
+    ui_state.set_list_populated(false)
+  end
+
 end
 
 
----Updates the list content with the provided lines
+---Updates the list content with the provided lines and returns status
+---@nodiscard
 ---@param lines string[] The list of repository entries to display
----@return nil
+---@return boolean
 function M.update_list(lines)
   if not lines or type(lines) ~= "table" then
     notify("[reposcope] 'lines'-argument is missed or has invalid type (table needed)", 4)
-    return
+    return false
   end
 
   if type(lines[1]) ~= "string" then
     notify("[reposcope] 'lines'-table must consist of string(s)", 4)
-    return
+    return false
   end
 
   if not ui_state.buffers.list then
     notify("[reposcope] List buffer is not available.", 3)
-    return
+    return false
   end
 
   vim.schedule(function()
@@ -72,6 +77,8 @@ function M.update_list(lines)
       notify("[reposcope] No selected repository for preview.", 3)
     end
   end)
+
+  return true
 end
 
 
@@ -101,20 +108,6 @@ function M.get_selected()
   end
 
   return lines[1]
-end
-
-
----Displays the list with the given entries
----@param entries string[] The list of repository entries to display
----@return nil
-function M.show_list(entries)
-  if type(entries) ~= "table" then
-    notify("[reposcope] Invalid list entries (not a table).", 4)
-    return
-  end
-
-  M.set_list(entries)
-  notify("[reposcope] List UI displayed.", 2)
 end
 
 
