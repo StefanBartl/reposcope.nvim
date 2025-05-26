@@ -16,6 +16,8 @@ local ui_state = require("reposcope.state.ui.ui_state")
 -- Controllers (List UI Management)
 local list_controller = require("reposcope.controllers.list_controller")
 local list_manager = require("reposcope.ui.list.list_manager")
+
+local preview_manager = require("reposcope.ui.preview.preview_manager")
 -- Utility Modules (Debugging, Core Utilities, Encoding)
 local notify = require("reposcope.utils.debug").notify
 local core_utils = require("reposcope.utils.core")
@@ -37,6 +39,21 @@ function M.init(query)
   table.insert(req_state.repositories, uuid)
 
   M.fetch_github_repositories(query, uuid)
+end
+
+
+---Handling of the UI after an API-Error occurs
+--- - Clear repositories state
+--- - Clear the list UI
+--- - Cleat the preview UI
+---@private
+---@return nil
+local function ui_handle_error()
+  vim.schedule(function()
+    repositories_state.clear_state()
+    list_manager.clear_list()
+    preview_manager.clear_preview()
+  end)
 end
 
 --- Fetches repositories from GitHub API
@@ -62,17 +79,20 @@ function M.fetch_github_repositories(query, uuid)
   api_client.request("GET", url, function(response, err)
     if err then
       notify("[reposcope] No response from GitHub API: " .. err, 4)
+      ui_handle_error()
       return
     end
 
     local ok, parsed = pcall(vim.json.decode, response)
     if not ok then
       notify("[reposcope] Invalid JSON response from GitHub API: " .. response, 4)
+      ui_handle_error()
       return
     end
 
     if not parsed or not parsed.items then
       notify("[reposcope] No repositories found in API response.", 4)
+      ui_handle_error()
       return
     end
 
@@ -97,7 +117,7 @@ function M.fetch_github_repositories(query, uuid)
         end
       end, 100) -- Delay slightly to ensure list is displayed
     end)
-  end, nil, false, "fetch_repositories")
+  end, nil, "fetch_repositories")
 end
 
 return M

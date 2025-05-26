@@ -100,7 +100,7 @@ function M.try_fetch_readme(raw_url, api_url, repo_name)
       notify("[reposcope] Failed to fetch README from RAW URL. Trying API...", 2)
       M.fetch_readme_from_api(api_url, repo_name)
     end
-  end, nil, false, "fetch_readme")
+ end, nil, "fetch_readme")
 end
 
 --- Fetches the README using the GitHub API (fallback)
@@ -129,7 +129,7 @@ function M.fetch_readme_from_api(api_url, repo_name)
     -- Decode the Base64-encoded README content using the utility function
     local content = encoding.decode_base64(decoded.content)
     cache.cache_and_show_readme(repo_name, content)
-  end, nil, false, "fetch_readme_api")
+  end, nil, "fetch_readme_api")
 end
 
 --- Constructs the RAW and API URLs for the README

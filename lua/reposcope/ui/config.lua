@@ -42,7 +42,6 @@ function M.update_layout(width, height, col, row)
   M.height = height or M.height
   M.col = col or math.floor((vim.o.columns - M.width) / 2)
   M.row = row or math.floor((vim.o.lines - M.height) / 2)
-  M.preview_width = math.floor(M.width * 0.5)
 end
 
 
