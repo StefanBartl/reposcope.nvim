@@ -6,6 +6,7 @@
 --- forces the cursor to line 2, and skips non-focusable fields like "prefix".
 --- The field order is derived from `prompt_config.get_fields()`.
 ---
+---@field set_current_index fun(index: number): nil Sets the current prompt index
 ---@field focus_first_input fun(): nil Sets focus to the first interactive prompt input field and enters insert mode.
 ---@field focus_field_index fun(index: integer): nil Sets focus to the input field at the specified index (1-based), and positions the cursor at line 2.
 ---@field focus_field fun(field: string): nil Focuses a field by its name (e.g. "keywords") if it exists in the configured field list --NOTE: nuiy
@@ -22,6 +23,13 @@ local notify = require("reposcope.utils.debug").notify
 
 -- Internal tracking
 local current_index = 1
+
+
+---Sets the current prompt navigation index
+---@param index integer
+function M.set_current_index(index)
+  current_index = index
+end
 
 
 --- Focuses the first focusable prompt input window (skips prefix).
@@ -122,6 +130,10 @@ function M.navigate(direction)
       end
     end
   end
+
+  -- Fallback
+  notify("[reposcope] No focusable prompt field found", 3)
+  M.focus_field_index(1)
 end
 
 return M

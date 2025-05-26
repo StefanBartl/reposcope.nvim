@@ -1,5 +1,6 @@
 -- REF: functions are way to long
 
+local load_state_into_prompt, set_prompt_start_idx
 
 
 ---@class UIPromptManager
@@ -10,7 +11,6 @@
 ---Window handles are stored in `ui_state.windows.prompt`, indexed by field name.
 ---@field open_windows fun(): nil Initializes and renders the prompt UI
 ---@field close_windows fun(): nil Closes all prompt-related windows  --NOTE:  niuy
----@field load_state_into_prompt fun(): nil Loads prompt field values from prompt_state and injects them into the corresponding buffers
 local M = {}
 
 -- System
@@ -25,7 +25,7 @@ local prompt_state = require("reposcope.state.ui.prompt_state")
 local prompt_buffers = require("reposcope.ui.prompt.prompt_buffers")
 local prompt_layout = require("reposcope.ui.prompt.prompt_layout")
 local focus_first_input = require("reposcope.ui.prompt.prompt_focus").focus_first_input
-
+local navigate = require("reposcope.ui.prompt.prompt_focus")
 
 ---Opens the prompt UI based on active fields and layout configuration
 ---@return nil
@@ -82,7 +82,8 @@ function M.open_windows()
   end
 
 
-  M.load_state_into_prompt()
+  load_state_into_prompt()
+  set_prompt_start_idx()
   focus_first_input()
 end
 
@@ -135,8 +136,9 @@ end
 
 
 ---Loads prompt field values from prompt_state and injects them into the corresponding buffers
+---@private
 ---@return nil
-function M.load_state_into_prompt()
+function load_state_into_prompt()
   local fields = prompt_config.get_fields()
 
   for _, field in ipairs(fields) do
@@ -145,6 +147,25 @@ function M.load_state_into_prompt()
       local text = prompt_state.get_field_text(field)
       if type(text) == "string" and text ~= "" then
         vim.api.nvim_buf_set_lines(buf, 1, 2, false, { text })
+      end
+    end
+  end
+
+end
+
+---Set the field starting index for prompt
+---@private
+---@return nil
+function set_prompt_start_idx()
+  local fields = prompt_config.get_fields()
+
+  for i, field in ipairs(fields) do
+    local win = ui_state.windows.prompt and ui_state.windows.prompt[field]
+    if win and vim.api.nvim_win_is_valid(win) then
+      local cfg = vim.api.nvim_win_get_config(win)
+      if cfg.focusable then
+        navigate.set_current_index(i)
+        break
       end
     end
   end

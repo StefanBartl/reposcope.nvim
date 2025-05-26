@@ -152,7 +152,7 @@ function M.set_prompt_keymaps()
     },
     {
       mode = {"i"},
-      lhs = "<C-w>h",
+      lhs = "<S-Tab>",
       rhs = function()
         prompt_focus.navigate("prev")
       end,
@@ -166,16 +166,16 @@ function M.set_prompt_keymaps()
     },
     {
       mode = {"i"},
-      lhs = "<C-w>l",
+      lhs = "<Tab>",
       rhs = function()
         prompt_focus.navigate("next")
       end,
     },
-   {
+    {
       mode = {"n", "i"},
       lhs = "<C-v>",
       rhs = function()
-        readme_viewer.open_viewer()
+      readme_viewer.open_viewer()
       end,
     },
    {
