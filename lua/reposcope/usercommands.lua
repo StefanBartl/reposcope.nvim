@@ -42,3 +42,24 @@ end, { desc = "Print reposcope dev mode" })
 vim.api.nvim_create_user_command("ReposcopeStats", function()
   require("reposcope.utils.stats").show_stats()
 end, {})
+
+
+local prompt_config = require("reposcope.ui.prompt.prompt_config")
+
+vim.api.nvim_create_user_command("ReposcopePromptReload", function(opts)
+  local fields = opts.fargs
+  if not fields or #fields == 0 then
+    vim.notify("[reposcope] Please provide one or more prompt fields", vim.log.levels.WARN)
+    return
+  end
+
+  prompt_config.set_fields(fields)
+  vim.notify("[reposcope] Prompt fields set to: " .. table.concat(fields, ", "), vim.log.levels.INFO)
+end, {
+  desc = "Set and apply new prompt fields (e.g. :ReposcopePromptReload prefix keywords)",
+  nargs = "+",  -- one or more arguments
+  complete = function()
+    return prompt_config.get_available_fields()
+  end,
+})
+
