@@ -29,7 +29,9 @@ function M.request(method, url, callback, _, debug, context, uuid)
     stdio = { nil, stdout, stderr },
     env = env,
   }, function(code)
+    ---@diagnostic disable-next-line: undefined-field
     stdout:close()
+    ---@diagnostic disable-next-line: undefined-field
     stderr:close()
     local duration = (uv.hrtime() - start_time) / 1e6
     if code ~= 0 then
@@ -47,6 +49,7 @@ function M.request(method, url, callback, _, debug, context, uuid)
     return
   end
 
+  ---@diagnostic disable-next-line: undefined-field
   stdout:read_start(function(err, data)
     local duration_ms = (vim.loop.hrtime() - start_time) / 1e6
 
@@ -71,6 +74,7 @@ function M.request(method, url, callback, _, debug, context, uuid)
     end
   end)
 
+  ---@diagnostic disable-next-line: undefined-field
   stderr:read_start(function(err, data)
     local duration_ms = (vim.loop.hrtime() - start_time) / 1e6
 
