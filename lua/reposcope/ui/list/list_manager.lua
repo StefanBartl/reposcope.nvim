@@ -67,15 +67,17 @@ function M.update_list(lines)
     return false
   end
 
-  if not ui_state.buffers.list then
+  local buf = ui_state.buffers.list
+
+  if not buf then
     notify("[reposcope] List buffer is not available.", 3)
     return false
   end
 
   vim.schedule(function()
-    vim.api.nvim_buf_set_option(ui_state.buffers.list, "modifiable", true)
-    vim.api.nvim_buf_set_lines(ui_state.buffers.list, 0, -1, false, lines)
-    vim.api.nvim_buf_set_option(ui_state.buffers.list, "modifiable", false)
+    vim.bo[buf].modifiable = true
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+    vim.bo[buf].modifiable = false
 
     list_window.highlight_selected(ui_state.last_selected_line or 1)
 

@@ -13,6 +13,7 @@ local metrics = require("reposcope.utils.metrics")
 local core_utils = require("reposcope.utils.core")
 local protection = require("reposcope.utils.protection")
 
+local hrtime = vim.uv.hrtime
 
 function M.init()
   local clone_dir = config.get_clone_dir()
@@ -82,7 +83,7 @@ function M.clone_repository(path)
   local repo_name = infos.name
   local repo_url = infos.url
   local uuid = core_utils.generate_uuid()
-  local start_time = vim.loop.hrtime()
+  local start_time = hrtime()
   local source = "clone_repo"
   local query = repo_name
 
@@ -115,7 +116,7 @@ function M.clone_repository(path)
     success, output = protection.safe_execute_shell(string.format("git clone %s %s", repo_url, output_dir))
     error_msg = "Git clone failed: " .. (output or "")
   end
-  local duration_ms = (vim.loop.hrtime() - start_time) / 1e6 -- Duration in milliseconds
+  local duration_ms = (hrtime() - start_time) / 1e6 -- Duration in milliseconds
 
   if success then
     if metrics.record_metrics() then

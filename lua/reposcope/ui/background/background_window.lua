@@ -68,7 +68,9 @@ end
 ---Applies the layout and styling to the background window.
 ---@return nil
 function M.apply_layout()
-  if not ui_state.windows.backg then
+  local win = ui_state.windows.backg
+
+  if not win then
     notify("[reposcope] Background window not open.", 3)
     return
   end
@@ -77,7 +79,7 @@ function M.apply_layout()
     bg = config.color_bg,
   })
 
-  vim.api.nvim_win_set_option(ui_state.windows.backg, "winhighlight", "Normal:ReposcopeBackground")
+  vim.wo[win].winhighlight = "Normal:ReposcopeBackground"
 end
 
 return M

@@ -100,7 +100,6 @@ function M.setup(opts)
     sanitized
   )
 
-  notify("[reposcope] config: setted request_tool: " .. M.options.request_tool, 2)
   init_cache_dir()
   init_log_path()
 end
