@@ -59,11 +59,11 @@ function M.inject_content(buf, lines, filetype)
     return
   end
 
-  vim.api.nvim_buf_set_option(buf, "modifiable", true)
+  vim.bo[buf].modifiable = true
   vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
-  vim.api.nvim_buf_set_option(buf, "filetype", filetype or "text")
-  vim.api.nvim_buf_set_option(buf, "readonly", true)
-  vim.api.nvim_buf_set_option(buf, "modifiable", false)
+  vim.bo[buf].filetype = filetype or "text"
+  vim.b[buf].readonly = true
+  vim.bo[buf].modifiable = false
 end
 
 

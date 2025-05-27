@@ -151,6 +151,8 @@ function M.generate_uuid()
   local random = math.random
   return string.format(
     "%08x-%04x-%04x-%04x-%012x",
+
+    ---@diagnostic disable-next-line uv.now exists
     uv.now(),
     random(0, 0xffff),
     random(0, 0xffff),

@@ -95,7 +95,7 @@ end
 function M.calculate_extended_stats()
   local file_path = require("reposcope.config").get_log_path()
 
-  if not vim.fn.filereadable(file_path) then
+  if not file_path or not vim.fn.filereadable(file_path) then
     notify("[reposcope] File not readable or does not exist: " .. file_path, 4)
     return 0, "N/A"
   end

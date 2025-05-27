@@ -30,6 +30,12 @@ function M.request(method, url, callback, headers, debug, metrics_context)
   local default_tool = get_option("request_tool")
   local default_token = get_option("github_token")
 
+  -- Debugging
+  notify("[reposcope] HTTPClient default_tool: " .. default_tool, 2)
+  if type(default_token) == "string" and default_token ~= "" then
+    notify("[reposcope] HTTPClient default_token: " .. default_token, 2)
+  end
+
   if default_tool == "gh" then
     request_module = require("reposcope.network.request_tools.gh")
   elseif default_tool == "curl" then

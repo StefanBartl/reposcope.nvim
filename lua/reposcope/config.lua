@@ -36,6 +36,9 @@ local defaults = require("reposcope.defaults").options
 ---@field std_dir string Standardth for cloning repositories
 ---@field type string Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
 
+
+--NOTE: maybe private and acces only via setter and getter ?
+
 --- Configuration options for Reposcope
 ---@class ConfigOptions
 ---@field provider string The API provider to be used (default: "github")
@@ -97,6 +100,7 @@ function M.setup(opts)
     sanitized
   )
 
+  notify("[reposcope] config: setted request_tool: " .. M.options.request_tool, 2)
   init_cache_dir()
   init_log_path()
 end
