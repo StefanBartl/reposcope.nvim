@@ -1,3 +1,5 @@
+require("reposcope.types.aliases")
+
 ---@class UIPromptConfig
 ---@brief Static configuration values for the prompt input layout
 ---@description
@@ -23,7 +25,7 @@ local notify = require("reposcope.utils.debug").notify
 -- Static layout values
 M.row = ui_config.row
 M.col = ui_config.col
-M.width = ui_config.width / 2
+  M.width = ui_config.width / 2
 M.height = 3
 
 -- Prefix
@@ -36,9 +38,8 @@ M.prefix_win_width = M.prefix_len + 2
 ---@description
 --- This class defines the allowed field names for prompt input configuration.
 --- It is used for validation, autocomplete suggestions, and type safety.
----@alias PromptField "prefix"|"keywords"|"owner"|"topic"|"language"|"stars"
 
----@type table<string, boolean>
+---@type table<PromptField, boolean>
 local VALID_FIELDS = {
   prefix = true,
   keywords = true,
@@ -81,8 +82,6 @@ function M.get_fields()
   return _fields
 end
 
--- Default fields
-M.set_fields({ "prefix", "keywords", "owner", "language" }) -- REF: to init.setup()
 
 ---Returns all valid prompt field names (whitelist)
 ---@return string[]

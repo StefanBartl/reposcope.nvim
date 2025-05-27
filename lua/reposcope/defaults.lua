@@ -1,7 +1,10 @@
+require("reposcope.types.aliases")
+
 ---@class ReposcopeDefaultOptions
+---@field prompt_fields PromptField[] Default fields for the prompt UI
 ---@field provider string The API provider to be used (default: "github")
 ---@field preferred_requesters string[] List of preferred tools for making HTTP requests (default: {"gh", "curl", "wget"})
----@field request_tool string Default request tool (default: "gh")
+---@field request_tool RequestTool Default request tool (default: "gh")
 ---@field github_token string  Github authorization token (for higher request limits)
 ---@field results_limit number Maximum number of results returned in search queries (default: 25)
 ---@field preview_limit number Maximum number of lines shown in preview (default: 200)
@@ -15,6 +18,8 @@
 local M = {}
 
 M.options = {
+  ---@type PromptField[]
+  prompt_fields = { "prefix", "keywords", "owner", "language" }, -- Default fields for the prompt in the UI
   provider = "github", -- Default provider for Reposcope (GitHub)
   preferred_requesters = { "gh", "curl", "wget" }, -- Preferred tools for API requests
   request_tool = "gh", -- Default request tool (GitHub CLI)
@@ -34,9 +39,6 @@ M.options = {
     silent = true,  -- Silent option for open and close keymap
     noremap = true,  -- noremap option for open and close keymap
   },
-
-  ---@type PromptField[]
-  ---prompt_fields = { "prefix", "keywords" }
 
 
   -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
