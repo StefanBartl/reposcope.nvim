@@ -16,6 +16,9 @@ function M.request(method, url, callback, headers, debug, context, uuid)
     table.insert(args, k .. ": " .. v)
   end
 
+  notify(string.format("[reposcope] CURL Request: curl %s", table.concat(args, " ")), 2)
+
+
   local handle = uv.spawn("curl", {
     args = args,
     stdio = { nil, stdout, stderr },

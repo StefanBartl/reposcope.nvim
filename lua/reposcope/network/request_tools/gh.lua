@@ -1,3 +1,5 @@
+-- NOTE: Annotations
+
 local uv = vim.loop
 local notify = require("reposcope.utils.debug").notify
 local metrics = require("reposcope.utils.metrics")
@@ -9,7 +11,8 @@ function M.request(method, url, callback, _, debug, context, uuid)
   local start_time = uv.hrtime()
   local token = config.options.github_token
 
-  local args = { "api", "-X", method, url }
+  local parsed = url:gsub("^https://api%.github%.com", "")
+  local args = { "api", "-X", method, parsed }
   local env = {}
   if token and token ~= "" then
     table.insert(env, "GITHUB_TOKEN=" .. token)
@@ -18,6 +21,8 @@ function M.request(method, url, callback, _, debug, context, uuid)
   local stdout = uv.new_pipe(false)
   local stderr = uv.new_pipe(false)
   local response_data = {}
+
+  notify(string.format("[reposcope] GH Request: gh %s", table.concat(args, " ")), 2)
 
   local handle = uv.spawn("gh", {
     args = args,

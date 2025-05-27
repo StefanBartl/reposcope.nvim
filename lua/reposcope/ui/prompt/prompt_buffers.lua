@@ -30,18 +30,19 @@ function M.setup_buffers()
       notify("[prompt_buffers] Failed to create buffer for field: " .. field, 4)
 
     else
-        vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
-        vim.api.nvim_buf_set_option(buf, "bufhidden", "hide")
-        vim.api.nvim_buf_set_option(buf, "swapfile", false)
-        vim.api.nvim_buf_set_option(buf, "modifiable", true)
+
+       vim.bo[buf].buftype = "nofile"
+       vim.bo[buf].bufhidden = "hide"
+       vim.bo[buf].swapfile = false
+       vim.bo[buf].modifiable = true
 
         if field == "prefix" then
           vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
             " ",
             prompt_config.prefix
           })
-          vim.api.nvim_buf_set_option(buf, "modifiable", false)
-          vim.api.nvim_buf_set_option(buf, "readonly", true)
+          vim.bo[buf].modifiable = false
+          vim.bo[buf].readonly = true
         else
           vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
             " ",

@@ -24,6 +24,9 @@ local ui_state = require("reposcope.state.ui.ui_state")
 local notify = require("reposcope.utils.debug").notify
 local protection = require("reposcope.utils.protection")
 
+-- Shared highlight namespace
+local HIGHLIGHT_NS = vim.api.nvim_create_namespace("reposcope.list")
+
 
 -- Highlighted line index
 M.highlighted_line = 1
@@ -116,8 +119,8 @@ function M.configure()
      return
    end
 
-  vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
-  vim.api.nvim_buf_set_option(buf, "swapfile", false)
+  vim.bo[buf].buftype = "nofile"
+  vim.bo[buf].swapfile = false
 
   -- REF: needed? not focusable?
 
@@ -134,7 +137,8 @@ end
 ---Applies the layout and styling to the list window
 ---@return nil
 function M.apply_layout()
-  if not ui_state.windows.list or not vim.api.nvim_win_is_valid(ui_state.windows.list) then
+  local win = ui_state.windows.list
+  if not win or not vim.api.nvim_win_is_valid(win) then
     notify("[reposcope] List window is not open or not valid", 3)
     return
   end
@@ -147,10 +151,13 @@ function M.apply_layout()
     bold = true,
   })
 
-  vim.api.nvim_win_set_hl_ns(ui_state.windows.list, ns)
+  vim.api.nvim_win_set_hl_ns(win, ns)
 
-  vim.api.nvim_win_set_option(ui_state.windows.list, "wrap", false)
-  vim.api.nvim_win_set_option(ui_state.windows.list, "scrolloff", 3)
+  if win and vim.api.nvim_win_is_valid(win) then
+    vim.wo[win].wrap = false
+    vim.wo[win].scrolloff = 3
+  end
+
 
   vim.api.nvim_set_hl(ns, "Normal", {
     bg = ui_config.colortheme.background,
@@ -185,26 +192,24 @@ function M.highlight_selected(index)
     return
   end
 
-  -- Clear all highlights first
-  vim.api.nvim_buf_clear_namespace(buf, -1, 0, -1)
+  -- Clear previous highlights
+  vim.api.nvim_buf_clear_namespace(buf, HIGHLIGHT_NS, 0, -1)
 
-  -- Highlight the selected line
-  vim.api.nvim_buf_add_highlight(
-    buf,
-    -1,
-    "ReposcopeListSelected",
-    index - 1,
-    0,
-    -1
-  )
+ local line = vim.api.nvim_buf_get_lines(buf, index - 1, index, false)[1] or ""
+  -- Apply persistent highlight using extmark
+  vim.api.nvim_buf_set_extmark(buf, HIGHLIGHT_NS, index - 1, 0, {
+    end_row = index - 1,
+    end_col = #line,
+    hl_group = "ReposcopeListSelected"
+  })
 
-  -- Store highlighted line index
   M.highlighted_line = index
 end
 
 
 ---Sets the highlighted line in the list UI.
 ---@param line number The line number to highlight
+---@return nil
 function M.set_highlighted_line(line)
   local buf = ui_state.buffers.list
   if not buf or not vim.api.nvim_buf_is_valid(buf) then
@@ -217,20 +222,15 @@ function M.set_highlighted_line(line)
     return
   end
 
-  -- Clear all highlights first
-  vim.api.nvim_buf_clear_namespace(buf, -1, 0, -1)
+  vim.api.nvim_buf_clear_namespace(buf, HIGHLIGHT_NS, 0, -1)
 
-  -- Highlight the specified line
-  vim.api.nvim_buf_add_highlight(
-    buf,
-    -1,
-    "ReposcopeListSelected",
-    line - 1,
-    0,
-    -1
-  )
+  vim.api.nvim_buf_set_extmark(buf, HIGHLIGHT_NS, line - 1, 0, {
+    end_row = line - 1,
+    end_col = -1,
+    hl_group = "ReposcopeListSelected"
+  })
 
-  M. highlighted_line = line
+  M.highlighted_line = line
 end
 
 

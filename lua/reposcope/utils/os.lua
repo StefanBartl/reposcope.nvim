@@ -21,6 +21,7 @@ local notify = require("reposcope.utils.debug").notify
 ---@param url string The URL to open
 ---@return nil
 function M.open_url(url)
+  ---@diagnostic disable-next-line vim.loop or vim.uv os_uname exists
   local os = vim.loop.os_uname().sysname
 
   if os == "Linux" then

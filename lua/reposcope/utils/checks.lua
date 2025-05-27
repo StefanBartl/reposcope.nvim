@@ -7,9 +7,9 @@ local M = {}
 
 -- Configuration (Global Configuration)
 local config = require("reposcope.config")
--- Debugging Utility
+-- Debugging and Utils
 local notify = require("reposcope.utils.debug").notify
-
+local tbl_find = require("reposcope.utils.core").tbl_find
 
 ---Checks if a given binary is available in the system's PATH
 ---@param name string The name of the binary to check
@@ -30,12 +30,21 @@ end
 ---@param requesters? string[] Optional list of preferred request tools to use
 function M.resolve_request_tool(requesters)
   requesters = requesters or config.options.preferred_requesters or { "gh", "curl", "wget" }
+  local req_tool = config.options.request_tool or nil
+  print("rew tool is ", req_tool)
 
-  local req_tool = M.first_available(requesters)
+  -- Check if there is a requester tool set as request_tool and its available on the system
+  if req_tool and tbl_find(requesters, req_tool) and M.has_binary(req_tool) then
+    notify("[reposcope] resolve_request_tool doesnt set req_tool, value is " .. req_tool, 2)
+    return
+  end
+
+  local new_req_tool = M.first_available(requesters)
   if not req_tool then
     notify("[reposcope.nvim]: no request tool available", 4)
-  else
-    config.options.request_tool = req_tool
+  elseif new_req_tool then  -- HACK:
+    config.options.request_tool = new_req_tool
+    notify("[reposcope] resolve_request_tool set request_tool to " .. new_req_tool, 2)
   end
 end
 

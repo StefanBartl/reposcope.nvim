@@ -77,6 +77,7 @@ function M.get_total_requests()
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
+  ---@diagnostic disable-next-line vim.loop or vim.us fs_stat exists
   local file_stats = vim.loop.fs_stat(log_path)
   if file_stats and file_stats.size == 0 then
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
@@ -127,6 +128,11 @@ local function log_request(uuid, data)
 
   local log_max = config.options.log_max or 1000
   local log_path = config.get_log_path()
+
+  if not log_path then
+    notify("[reposcope] log_path for log_request() is invalid.", 2)
+    return
+  end
 
   vim.schedule(function()
     local logs = {}
