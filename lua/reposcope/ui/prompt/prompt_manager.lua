@@ -104,7 +104,7 @@ end
 
 ---@brief Adds a centered virtual title to a prompt buffer
 ---@param buf integer Buffer handle
----@param field string Prompt field name (e.g. "keywords", "author")
+---@param field string Prompt field name (e.g. "keywords", "owner")
 ---@param width integer Width of the window the buffer will be displayed in
 function M.add_title_to_prompt_buffer(buf, field, width)
   local ns = api.nvim_create_namespace("reposcope_prompt_title")
