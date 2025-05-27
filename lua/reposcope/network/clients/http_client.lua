@@ -5,11 +5,6 @@ local M = {}
 local notify = require("reposcope.utils.debug").notify
 local get_option = require("reposcope.config").get_option
 
-local default_tool = get_option("request_tool")
-print("request_tool: ", default_tool)
-local default_token = get_option("github_token")
-print("gh token: ", default_token)
-
 
 ---@private
 local function build_auth_header(token, tool)
@@ -32,6 +27,8 @@ end
 function M.request(method, url, callback, headers, debug, metrics_context)
   local uuid = require("reposcope.utils.core").generate_uuid()
   local request_module
+  local default_tool = get_option("request_tool")
+  local default_token = get_option("github_token")
 
   if default_tool == "gh" then
     request_module = require("reposcope.network.request_tools.gh")
