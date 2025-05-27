@@ -1,21 +1,5 @@
 ---REF: outsource functions to /config_utils
 
----@alias ConfigOptionKey
----| "provider"
----| "preferred_requesters"
----| "request_tool"
----| "github_token"
----| "results_limit"
----| "preview_limit"
----| "layout"
----| "clone"
----| "keymaps"
----| "keymap_opts"
----| "metrics"
----| "cache_dir"
----| "log_filepath"
----| "log_max"
-
 ---@class ReposcopeConfig
 ---@field options ConfigOptions Configuration options for Reposcope
 ---@field setup fun(opts: table): nil Setup function for user configuration
@@ -31,6 +15,7 @@ local init_cache_dir, init_log_path, sanitize_opts
 local protection = require("reposcope.utils.protection")
 local notify = require("reposcope.utils.debug").notify
 local defaults = require("reposcope.defaults").options
+local set_prompt_fields = require("reposcope.ui.prompt.prompt_config").set_fields
 
 ---@class CloneOptions 
 ---@field std_dir string Standardth for cloning repositories
@@ -41,6 +26,7 @@ local defaults = require("reposcope.defaults").options
 
 --- Configuration options for Reposcope
 ---@class ConfigOptions
+---@field prompt_fields PromptField[] Default fields for the prompt UI
 ---@field provider string The API provider to be used (default: "github")
 ---@field preferred_requesters string[] List of preferred tools for making HTTP requests (default: {"gh", "curl", "wget"})
 ---@field request_tool string Default request tool (default: "gh")
@@ -56,6 +42,7 @@ local defaults = require("reposcope.defaults").options
 ---@field log_filepath string Full path to the log file (determined dynamically)
 ---@field log_max number Controls the size of the log file
 M.options = {
+  prompt_fields = {}, -- Default fields for the prompt in the UI
   provider = "", -- Default provider for Reposcope (GitHub)
   preferred_requesters = {}, -- Preferred tools for API requests
   request_tool = "", -- Default request tool (GitHub CLI)
@@ -102,6 +89,7 @@ function M.setup(opts)
 
   init_cache_dir()
   init_log_path()
+  set_prompt_fields(M.options.prompt_fields)
 end
 
 function M.get_readme_fcache_dir()
