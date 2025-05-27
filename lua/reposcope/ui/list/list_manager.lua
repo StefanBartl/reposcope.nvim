@@ -15,11 +15,16 @@ local M = {}
 
 -- UI Components (List Window)
 local list_window = require("reposcope.ui.list.list_window")
+local inject_content = require("reposcope.ui.preview.preview_manager").inject_content
 -- State Management (UI State)
 local ui_state = require("reposcope.state.ui.ui_state")
--- Debugging Utility
+-- Debugging and Utilities
 local notify = require("reposcope.utils.debug").notify
+local center_text = require("reposcope.utils.text").center_text
 
+-- Prepare message for empty table preview window
+local preview_width = require("reposcope.ui.preview.preview_config").width
+local empty_tbl_msg = center_text("No results. Try a different keyword or remove filters.", preview_width)
 
 ---Sets the list entries and displays them in the list window  REF:  update_and_open()
 ---@param entries string[] The list of entries to display
@@ -50,8 +55,15 @@ function M.update_list(lines)
     return false
   end
 
+  if vim.tbl_isempty(lines) then
+    notify("[reposcope] No repositories found for this query.", 3)
+    inject_content(ui_state.buffers.preview, empty_tbl_msg, "text")
+    return false
+  end
+
   if type(lines[1]) ~= "string" then
     notify("[reposcope] 'lines'-table must consist of string(s)", 4)
+    notify(string.format("[reposcope] lines type: %s", type(lines[1])), 4)
     return false
   end
 

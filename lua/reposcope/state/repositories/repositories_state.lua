@@ -79,6 +79,13 @@ function M.set_repositories(json)
     local line = owner .. "/" .. name .. ": " .. desc
     table.insert(M.repositories.list, line)
   end
+
+  for i, line in ipairs(M.repositories.list) do
+    if type(line) ~= "string" then
+      notify(string.format("[reposcope] [dev] Repo list line %d is not a string: %s", i, type(line)), 4)
+      notify(vim.inspect(line), 4)
+    end
+  end
 end
 
 

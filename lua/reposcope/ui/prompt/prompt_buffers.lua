@@ -1,7 +1,7 @@
 ---@class UIPromptBuffers
 ---@brief Initializes and registers all prompt input buffers.
 ---@description
---- This module prepares buffer handles for all possible prompt fields (prefix, keywords, author, etc.)
+--- This module prepares buffer handles for all possible prompt fields (prefix, keywords, owner, etc.)
 --- and stores them in `ui_state.buffers` under their respective keys. Buffers are created safely
 --- using pcall and can later be dynamically attached to windows depending on the selected layout.
 ---@field setup_buffers fun(): nil Creates and registers all supported prompt buffers into ui_state

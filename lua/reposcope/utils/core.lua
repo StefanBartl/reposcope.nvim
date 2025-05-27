@@ -130,14 +130,12 @@ end
 ---@param val string
 ---@return string
 function M.ensure_string(val)
-  if type(val) == "string" then
-    return val
-  elseif val == nil or val == vim.NIL then
-    return ""
-  else
-    return tostring(val)
-  end
+  if type(val) == "string" then return val end
+  if val == nil or val == vim.NIL then return "" end
+  local ok, str = pcall(tostring, val)
+  return ok and str or ""
 end
+
 
 
 --- Creates a UUID based on actual timestamp.
