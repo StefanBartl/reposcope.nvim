@@ -2,7 +2,7 @@
 ---@brief Builds GitHub-compatible search query strings from prompt input.
 ---@description
 --- This module transforms a structured input table (from `prompt_input.collect()`)
---- into a GitHub search query string, respecting filter keys like `author`, `language`, `topic`
+--- into a GitHub search query string, respecting filter keys like `owner`, `language`, `topic`
 --- and appending all other text as loose keywords.
 ---@field build fun(input: table<string, string>): string
 
@@ -14,11 +14,11 @@ local notify = require("reposcope.utils.debug").notify
 
 -- List of known GitHub filter keys (must be formatted as `key:value`)
 local FILTER_KEYS = {
-  author = true,
-  topic = true,
-  language = true,
-  stars = true,
-  org = true,
+  owner = "user",
+  topic = "topic",
+  language = "language",
+  stars = "stars",
+  org = "org",
 }
 
 ---Builds a search query string from prompt input
