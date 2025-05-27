@@ -1,17 +1,36 @@
+---REF: outsource functions to /config_utils
+
+---@alias ConfigOptionKey
+---| "provider"
+---| "preferred_requesters"
+---| "request_tool"
+---| "github_token"
+---| "results_limit"
+---| "preview_limit"
+---| "layout"
+---| "clone"
+---| "keymaps"
+---| "keymap_opts"
+---| "metrics"
+---| "cache_dir"
+---| "log_filepath"
+---| "log_max"
+
 ---@class ReposcopeConfig
 ---@field options ConfigOptions Configuration options for Reposcope
 ---@field setup fun(opts: table): nil Setup function for user configuration
----@field get_cache_dir fun(): string Returns the current cache path
----@field get_clone_dir fun(): string Returns the standard clone directory
----@field get_log_path fun(): string|nil Check if log options are set and returns it
----@field init_cache_dir fun(): nil Initialize cache path
----@field init_log_path fun(): nil Initialize log path
+---@field get_cache_dir fun(): string Returns the current cache path  REF: get_option
+---@field get_clone_dir fun(): string Returns the standard clone directory  REF: get_option
+---@field get_log_path fun(): string|nil Check if log options are set and returns it REF: get_option
+---@field get_option fun(key: ConfigOptionKey): any Returns a specific value from config.options, with optional fallback
 local M = {}
+
+local init_cache_dir, init_log_path, sanitize_opts
 
 -- Utility Modules (Protection and Debugging)
 local protection = require("reposcope.utils.protection")
 local notify = require("reposcope.utils.debug").notify
-local defaults = require("reposcope.defaults")
+local defaults = require("reposcope.defaults").options
 
 ---@class CloneOptions 
 ---@field std_dir string Standardth for cloning repositories
@@ -45,7 +64,7 @@ M.options = {
     std_dir = "",  -- Standard path for cloning repositories
     type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
   },
-  keymaps = {
+  keymaps = { -- NOTE: Other keymaps?
     open = "<leader>rs",  -- Set the keymap to open Repsocope
     close = "<leader>rc",  -- Set the keymap to close Reposcope
   },
@@ -64,13 +83,22 @@ M.options = {
 ---Setup function for configuration
 ---@param opts ConfigOptions User configuration options
 function M.setup(opts)
-  --- Merges user-provided configuration with default options.
-  --- Any keys not present in the user options are filled in from the defaults.
-  ---@type ConfigOptions
-  M.options = vim.tbl_deep_extend("keep", {}, opts or {}, defaults.options)
+  local sanitized = sanitize_opts(opts or {})
 
-  M.init_cache_dir()
-  M.init_log_path()
+  -- Merges configuration in three priority levels:
+  -- 1. Base: `defaults.options` provides standard fallback values.
+  -- 2. Middle: `M.options` (values from config.lua) are preserved where set and not overwritten by defaults.
+  -- 3. Highest: User-provided `opts` via `.setup({ ... })` override both.
+  -- This guarantees safe defaults, respects values declared in `config.lua`,
+  -- and allows users to override any setting via setup().
+  ---@type ConfigOptions
+  M.options = vim.tbl_deep_extend("force",
+    vim.tbl_deep_extend("keep", {}, defaults, M.options or {}),
+    sanitized
+  )
+
+  init_cache_dir()
+  init_log_path()
 end
 
 function M.get_readme_fcache_dir()
@@ -85,8 +113,10 @@ function M.get_cache_dir()
   return M.options.cache_dir
 end
 
+
+---@private
 --- Initialize cache path for persistent cached data
-function M.init_cache_dir()
+function init_cache_dir()
   if M.options.cache_dir and M.options.cache_dir ~= "" then
     M.options.cache_dir = vim.fn.expand(M.options.cache_dir)
     if not protection.is_valid_path(M.options.cache_dir, false) then
@@ -112,9 +142,9 @@ function M.get_log_path()
   return M.options.log_filepath .. ".json"
 end
 
-
+---@private
 ---Initialize log path
-function M.init_log_path()
+function init_log_path()
 
   -- Check if the user has set a custom log file path
   if M.options.log_filepath and M.options.log_filepath ~= "" then
@@ -156,6 +186,7 @@ function M.get_clone_dir()
   if M.options.clone.std_dir ~= "" and M.options.clone.std_dir and vim.fn.isdirectory(M.options.clone.std_dir) then
     return M.options.clone.std_dir
   else
+    ---@diagnostic disable-next-line vim.loop or vim.uv os_uname exists
     local is_windows = vim.loop.os_uname().sysname:match("Windows")
     if is_windows then
       return os.getenv("USERPROFILE") or "./"
@@ -163,6 +194,72 @@ function M.get_clone_dir()
       return os.getenv("HOME") or "./"
     end
   end
+end
+
+
+--- Returns a specific value from config.options, with optional fallback.
+--- If `request_tool` is empty, returns `"curl"` instead.
+---@param key ConfigOptionKey
+---@return any
+function M.get_option(key)
+  local value = M.options[key]
+
+  if key == "request_tool" then
+    return (value ~= "" and value) or "curl" -- curl as fallback
+  end
+
+  if key == "clone" then
+    local clone = {}
+    clone.std_dir = M.get_clone_dir()
+    clone.type = M.options.clone.type
+    return clone
+  end
+
+  if key == "log_filepath" then
+    return M.get_log_path()
+  end
+
+  if key == "cache_dir" then
+    return M.get_cache_dir()
+  end
+
+  return value
+end
+
+
+
+---@private
+--- Sanitizes user-provided options: removes empty strings and unknown fields.
+--- Dynamically derives valid fields from defaults.options
+---@param opts table
+---@return table
+function sanitize_opts(opts)
+  local options = M.options
+  if type(opts) ~= "table" then return {} end
+
+  local clean = {}
+
+  for key, value in pairs(opts) do
+    local default_value = options[key]
+
+    -- Only allow fields that exist in defaults
+    if default_value ~= nil and value ~= nil and value ~= "" then
+      if type(value) == "table" and type(default_value) == "table" then
+        -- Clean nested tables (shallow clone only)
+        local nested = {}
+        for k, v in pairs(value) do
+          if v ~= nil and v ~= "" then
+            nested[k] = v
+          end
+        end
+        clean[key] = nested
+      else
+        clean[key] = value
+      end
+    end
+  end
+
+  return clean
 end
 
 return M

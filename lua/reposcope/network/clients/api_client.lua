@@ -29,6 +29,9 @@ function M.request(method, url, callback, headers, context)
 
   active_requests[url] = true
 
+  -- Merging a default Accept header (application/vnd.github+json) with any supplied headers
+  headers = vim.tbl_extend("force", { ["Accept"] = "application/vnd.github+json" }, headers or {})
+
   -- Send HTTP request using the HTTP client
   http_client.request(method, url, function(response, error)
     active_requests[url] = nil

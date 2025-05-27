@@ -4,7 +4,8 @@
 ---@field req_count ReqCount Stores API request count for profiling purposes
 ---@field rate_limits RateLimits Stores the rate limits for the GitHub API (Core and Search)
 ---@field log_request fun(uuid: string, data: table): nil Logs request details to request_log.json in JSON object format
----@field increase_failed fun(uuid: string, query: string, source: string, context: string, duration_ms: number, status_code: number, error?: string|nil): nil Increases the failed request count and logs it:
+---@field increase_success fun(uuid: string, query: string, source: string, context: string, duration_ms: number, status_code: number) Increases the succes request count and logs it
+---@field increase_failed fun(uuid: string, query: string, source: string, context: string, duration_ms: number, status_code: number, error?: string|nil): nil Increases the failed request count and logs it
 ---@field increase_cache_hit fun(uuid: string, query: string, source: string, context: string): nil Increases the cache hit count and logs it
 ---@field increase_fcache_hit fun(uuid: string, query: string, source: string, context: string): nil Increases the filecache hit count and logs it
 ---@field get_session_requests fun(): {successful: number, failed: number, cache_hitted: number, fcache_hitted: number } Retrieves the current session request count
