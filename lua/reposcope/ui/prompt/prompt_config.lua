@@ -82,7 +82,7 @@ function M.get_fields()
 end
 
 -- Default fields
-M.set_fields({"prefix", "keywords", "owner", "language"})
+M.set_fields({"prefix", "keywords", "owner", "language"}) -- REF: to init.setup()
 
 ---Returns all valid prompt field names (whitelist)
 ---@return string[]
