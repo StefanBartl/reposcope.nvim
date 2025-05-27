@@ -1,5 +1,3 @@
---BUG: Stats are not correct
-
 ---@class ReposcopeMetrics
 ---@field req_count ReqCount Stores API request count for profiling purposes
 ---@field rate_limits RateLimits Stores the rate limits for the GitHub API (Core and Search)
