@@ -44,7 +44,7 @@ function M.display_repositories()
     if type(desc) ~= "string" then
       notify(string.format("[reposcope] Skipped invalid repo description for %s/%s (type: %s)",
       repo.owner.login, repo.name, type(desc)), 3)
-      desc = ""
+      desc = "No description"
     end
     local line = owner .. "/" .. name .. ": " .. desc
     table.insert(lines, text_utils.cut_text_for_line(0, list_width, line))

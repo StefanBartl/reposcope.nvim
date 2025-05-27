@@ -57,7 +57,7 @@ function map_over_bufs(modes, lhs, rhs, bufs, opts, tag)
   elseif core.tbl_islist(bufs) then
     resolved = bufs
   elseif type(bufs) == "table" then
-    -- Named map: { prefix = 7, author = 8, ... }
+    -- Named map: { prefix = 7, owner = 8, ... }
     for _, buf in pairs(bufs) do
       table.insert(resolved, buf)
     end
