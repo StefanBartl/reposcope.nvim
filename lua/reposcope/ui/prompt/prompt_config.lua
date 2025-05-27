@@ -37,11 +37,13 @@ M.prefix_win_width = M.prefix_len + 2
 --- This class defines the allowed field names for prompt input configuration.
 --- It is used for validation, autocomplete suggestions, and type safety.
 ---@alias PromptField "prefix"|"keywords"|"owner"|"topic"|"language"|"stars"
+---@alias PromptField "prefix"|"keywords"|"owner"|"topic"|"language"|"stars"
 
 ---@type table<string, boolean>
 local VALID_FIELDS = {
   prefix = true,
   keywords = true,
+  owner = true,
   owner = true,
   topic = true,
   language = true,
@@ -82,7 +84,7 @@ function M.get_fields()
 end
 
 -- Default fields
-M.set_fields({"prefix", "keywords", "owner", "language"}) -- REF: to init.setup()
+M.set_fields({ "prefix", "keywords", "owner", "language" }) -- REF: to init.setup()
 
 ---Returns all valid prompt field names (whitelist)
 ---@return string[]
@@ -94,8 +96,5 @@ function M.get_available_fields()
   table.sort(result) -- optional alphabetisch
   return result
 end
-
-
-
 
 return M
