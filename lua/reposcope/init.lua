@@ -87,7 +87,7 @@ end
 ---Restores the caller window, closes all Reposcope windows, and unsets keymaps.
 function M.close_ui()
   -- save row number in list
-  ui_state.last_selected_line = list_window.highlighted_line
+  ui_state.list.last_selected_line = list_window.highlighted_line
 
   -- set focus back to caller position
   if vim.api.nvim_win_is_valid(ui_state.invocation.win) then

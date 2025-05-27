@@ -12,8 +12,6 @@
 ---@field get_buffers fun(): number[]|nil Returns all buffer handles in the state table which are not nil
 ---
 ---@field list UIStateList list handles by role
----@field current_selected_repo_name string|nil The name of the currently selected repository
----@field last_selected_line integer|nil The last selected line number in the list
 ---@field is_list_populated fun(): nil Returns true if the repository list was populated at least once
 ---@field set_list_populated fun(val: boolean): boolean Sets the internal list population state
 ---
@@ -179,25 +177,14 @@ function M.get_windows()
   return #wins > 0 and wins or nil
 end
 
--- HACK: list not in use right now, only the direct variables
-
 ---@class UIStateList
----@field current_selected_repo_name string|nil The name of the currently selected repository
 ---@field last_selected_line integer|nil The last selected line number in the list
 
 ---@type UIStateList
 M.list = {
-  current_selected_repo_name = nil,
+  ---@type integer|nil The last selected line in the list
   last_selected_line = nil
 }
-
----@type string|nil The name of the currently selected repository -- HACK:
-M.current_selected_repo_name = nil
-
----@type integer|nil The last selected line in the list
-M.last_selected_line = nil
-
---TODO:  print above to values over period and check if the are equal odr defer any time
 
 
 -- State variable tracking if the repository list has ever been populated

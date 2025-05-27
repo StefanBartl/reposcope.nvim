@@ -34,16 +34,14 @@ function M.resolve_request_tool(requesters)
 
   -- Check if there is a requester tool set as request_tool and its available on the system
   if req_tool and tbl_find(requesters, req_tool) and M.has_binary(req_tool) then
-    --notify("[reposcope] resolve_request_tool doesnt set req_tool, value is " .. req_tool, 2)
     return
   end
 
   local new_req_tool = M.first_available(requesters)
   if not req_tool then
     notify("[reposcope.nvim]: no request tool available", 4)
-  elseif new_req_tool then  -- HACK:
+  elseif new_req_tool then  -- last fallback (functioning request_tool is very important for reposcope)
     config.options.request_tool = new_req_tool
-    --notify("[reposcope] resolve_request_tool set request_tool to " .. new_req_tool, 2)
   end
 end
 

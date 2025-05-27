@@ -79,7 +79,7 @@ function M.update_list(lines)
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
     vim.bo[buf].modifiable = false
 
-    list_window.highlight_selected(ui_state.last_selected_line or 1)
+    list_window.highlight_selected(ui_state.list.last_selected_line or 1)
 
     -- Update preview if possible
     local selected_repo = require("reposcope.state.repositories.repositories_state").get_selected_repo()
@@ -142,7 +142,7 @@ end
 ---Resets the last selected line and the line highlight
 ---@return nil
 function M.reset_selected_line()
-    ui_state.last_selected_line = 1
+    ui_state.list.last_selected_line = 1
     list_window.highlight_selected(1)
 end
 

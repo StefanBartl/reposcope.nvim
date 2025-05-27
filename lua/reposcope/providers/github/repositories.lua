@@ -105,7 +105,7 @@ function M.fetch_github_repositories(query, uuid)
       -- Wait for the list to be populated before selecting a line
       vim.defer_fn(function()
         if ui_state.buffers.list and vim.api.nvim_buf_is_valid(ui_state.buffers.list) then
-          ui_state.last_selected_line = 1 -- Default to the first line
+          ui_state.list.last_selected_line = 1 -- Default to the first line
           notify("[reposcope] Default list line set to first entry.", 2)
 
           -- Automatically load README for the first in the result list
