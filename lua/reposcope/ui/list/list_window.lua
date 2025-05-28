@@ -10,8 +10,8 @@
 ---@field configure fun(): nil Configures the list buffer with UI settings (no editing, restricted keymaps)
 ---@field apply_layout fun(): nil Applies layout and styling to the list window
 ---@field highlight_selected fun(index: number): nil Highlights the selected list entry
----@field set_highlighted_line fun(line: number): nil Sets the highlighted line in the list UI  --REF: niuy
----@field get_highlighted_entry fun(): string|nil Returns the currently highlighted list entry  --REF: niuy
+---@field set_highlighted_line fun(line: number): nil Sets the highlighted line in the list UI  --NIUY
+---@field get_highlighted_entry fun(): string|nil Returns the currently highlighted list entry  --NIUY
 local M = {}
 
 -- Configuration and Layout (List Window)
@@ -121,14 +121,6 @@ function M.configure()
 
   vim.bo[buf].buftype = "nofile"
   vim.bo[buf].swapfile = false
-
-  -- REF: needed? not focusable?
-
-  -- Restricted keymaps in the list buffer
-  --local keys = { "h", "j", "k", "l", "i", "a", "o", "v", "<Up>", "<Down>" }
-  --for _, key in ipairs(keys) do
-  --  vim.api.nvim_buf_set_keymap(buf, "n", key, "<Nop>", { silent = true, noremap = true })
-  --end
 
   notify("[reposcope] List buffer configured.", 2)
 end
