@@ -21,7 +21,7 @@ M.height = math.floor(vim.o.lines * 0.8)
 M.col = math.floor((vim.o.columns - M.width) / 2)
 M.row = math.floor((vim.o.lines - M.height) / 2)
 
--- Default Color Theme (Dark)  TEST:
+-- Default Color Theme (Dark)  LAYOUTS!
 M.colortheme = {
   background = "#322931",
   prompt = "#7B7B7B",

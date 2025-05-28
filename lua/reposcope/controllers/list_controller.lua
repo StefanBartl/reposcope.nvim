@@ -33,7 +33,7 @@ function M.display_repositories()
     return
   end
 
-  -- Dynamically get the list window width  --REF: this should be get_repositories_list in state
+  -- Dynamically get the list window width
   local list_width = math.floor(list_config.width - 1)
 
   local lines = {}
@@ -50,7 +50,7 @@ function M.display_repositories()
     table.insert(lines, text_utils.cut_text_for_line(0, list_width, line))
   end
 
-  list_manager.set_list(lines)
+  list_manager.set_and_display_list(lines)
 end
 
 return M

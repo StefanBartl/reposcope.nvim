@@ -8,8 +8,6 @@
 ---@field print_win_buf_state fun(): nil Prints actual state for debugging to the console
 local M = {}
 
----WATCH: Anything new to mention here?
-
 ---@class DebugOptions
 ---@field dev_mode boolean Enables developer mode (default: false)
 M.options = {

@@ -170,12 +170,13 @@ local function log_request(uuid, data)
     end
 
     -- Encode and save logs to file with formatted JSON
-    local formatted_json = vim.json.encode(logs) -- REF: pcall
-    if not formatted_json then
-      notify("[reposcope] Error encoding JSON File", 4)
-      return -- REF: |nil
+    local ok, json_or_err = pcall(vim.json.encode, logs)
+    if not ok then
+      notify("[reposcope] Failed to encode logs to JSON: " .. tostring(json_or_err), 5)
+      return
     end
-    vim.fn.writefile(vim.split(formatted_json, "\n"), log_path)
+    vim.fn.writefile(vim.split(json_or_err, "\n"), log_path)
+
   end)
 end
 

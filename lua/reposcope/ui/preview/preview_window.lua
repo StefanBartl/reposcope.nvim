@@ -23,22 +23,22 @@ local notify = require("reposcope.utils.debug").notify
 ---Opens the preview window and injects the initial banner
 ---@return boolean
 function M.open_window()
-  -- Reset buffer and/or if invalid  REF:
-  if ui_state.buffers.preview and not vim.api.nvim_buf_is_valid(ui_state.buffers.preview) then
-    ui_state.buffers.preview = nil
-  end
-  if ui_state.windows.preview and not vim.api.nvim_win_is_valid(ui_state.windows.preview) then
-    ui_state.windows.preview = nil
+  local buf = ui_state.buffers.preview
+
+  -- Reset buffer if invalid
+  if buf and not vim.api.nvim_buf_is_valid(buf) then
+    buf = nil
   end
 
-  if not ui_state.buffers.preview or not vim.api.nvim_buf_is_valid(ui_state.buffers.preview) then
-    local buf = protection.create_named_buffer("reposcope://preview")
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
+    buf = protection.create_named_buffer("reposcope://preview")
     if not buf or not vim.api.nvim_buf_is_valid(buf) then
       notify("[reposcope] Preview buffer cannot be created.", 4)
       return false
     end
 
     ui_state.buffers.preview = buf
+
     vim.bo[buf].buftype = "nofile"
     vim.bo[buf].modifiable = true
     vim.bo[buf].bufhidden = "wipe"
@@ -66,18 +66,25 @@ end
 
 
 ---Closes the preview window
+---@return nil
 function M.close_window()
-  if ui_state.windows.preview and vim.api.nvim_win_is_valid(ui_state.windows.preview) then
-    vim.api.nvim_win_close(ui_state.windows.preview, true)
+  local win = ui_state.windows.preview
+
+  if win and vim.api.nvim_win_is_valid(win) then
+    vim.api.nvim_win_close(win, true)
   end
-  ui_state.windows.preview = nil
+
+  win = nil
   ui_state.buffers.preview = nil
 end
 
 
 ---Applies layout and highlight styling
+---@return nil
 function M.apply_layout()
-  if not ui_state.windows.preview then
+  local win = ui_state.windows.preview
+
+  if not win then
     notify("[reposcope] Preview window is not open.", 3)
     return
   end
@@ -90,7 +97,7 @@ function M.apply_layout()
     bold = true,
   })
 
-  vim.api.nvim_win_set_hl_ns(ui_state.windows.preview, ns)
+  vim.api.nvim_win_set_hl_ns(win, ns)
 
   vim.api.nvim_set_hl(ns, "Normal", {
     bg = preview_config.highlight_color,

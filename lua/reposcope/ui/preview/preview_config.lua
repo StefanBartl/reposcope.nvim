@@ -34,7 +34,7 @@ M.height = math.floor(ui_config.height - 2)
 M.row = math.floor(ui_config.row + 1)
 M.col = math.floor(ui_config.col + (ui_config.width / 2) + 2)
 
--- TEST:  layout functionality
+-- LAYOUTS! layout functionality
 
 M.layout = {
   Normal = {

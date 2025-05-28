@@ -13,9 +13,9 @@
 ---@field highlight_color string The color for the selected list entry
 ---@field normal_color string The default text color for the list
 ---@field border string The type of window border ("none", "single", "double")
----@field update_layout fun(width?: number, height?: number, row?: number, col?: number): nil Dynamically updates the list layout settings
----@field update_colors fun(highlight_color?: string, normal_color?: string): nil Dynamically updates the list colors  REF: niuy, make available f user
----@field update_border fun(border_layout: "none"|"single"|"double"): nil Dynamically updates the list border  --REF: niuy, make available f user
+---@field update_layout fun(width?: number, height?: number, row?: number, col?: number): nil Dynamically updates the list layout settings -- LAYOUTS
+---@field update_colors fun(highlight_color?: string, normal_color?: string): nil Dynamically updates the list colors --NIUY LAYOUTS
+---@field update_border fun(border_layout: "none"|"single"|"double"): nil Dynamically updates the list border --NIUY LAYOUTS
 local M = {}
 
 -- Default Layout (List is on the left side, taking 40% of the width)
