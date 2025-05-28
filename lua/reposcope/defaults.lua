@@ -12,8 +12,6 @@ require("reposcope.types.aliases")
 ---@field keymaps table<string, string> Set keymaps to open and close Reposcope
 ---@field keymap_opts table Set keymap options
 ---@field metrics boolean Controls the state to record metrics
----@field cache_dir string Path for Reposcope cache data (default: OS-dependent) 
----@field log_filepath string Full path to the log file (determined dynamically)
 ---@field log_max number Controls the size of the log file
 local M = {}
 
@@ -40,11 +38,8 @@ M.options = {
     noremap = true,  -- noremap option for open and close keymap
   },
 
-
   -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
   metrics = false,
-  cache_dir = "", -- Cache path for persistent cache files; standard is: vim.fn.stdpath("cache") .. "/reposcope/data"
-  log_filepath = "", -- Full path (without .ext) to the log file; standard is: vim.fn.stdpath("cache") .. "/reposcope/logs/log"
   log_max = 1000, -- Controls the size of the log file
 }
 

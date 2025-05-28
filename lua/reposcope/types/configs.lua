@@ -6,9 +6,6 @@
 ---@class ReposcopeConfig
 ---@field options ConfigOptions Configuration options for Reposcope
 ---@field setup fun(opts: table): nil Setup function for user configuration
----@field get_cache_dir fun(): string Returns the current cache path  REF: get_option
----@field get_clone_dir fun(): string Returns the standard clone directory  REF: get_option
----@field get_log_path fun(): string|nil Check if log options are set and returns it REF: get_option
 ---@field get_option fun(key: ConfigOptionKey): any Returns a specific value from config.options, with optional fallback
 
 ---@class CloneOptions 
@@ -29,8 +26,6 @@
 ---@field keymaps table<string, string> Set keymaps to open and close Reposcope
 ---@field keymap_opts table Set keymap options
 ---@field metrics boolean Controls the state to record metrics
----@field cache_dir string Path for Reposcope cache data (default: OS-dependent) 
----@field log_filepath string Full path to the log file (determined dynamically)
 ---@field log_max number Controls the size of the log file
 
 
