@@ -20,7 +20,7 @@ local generate_uuid = require("reposcope.utils.core").generate_uuid
 -- Request Tracking
 local request_state = require("reposcope.state.requests_state")
 -- Config Access
-local get_clone_dir = require("reposcope.config").get_clone_dir
+local get_config_option = require("reposcope.config").get_option
 -- Debug Output
 local notify = require("reposcope.utils.debug").notify
 
@@ -58,7 +58,7 @@ end
 ---to the active provider with the given target path.
 ---@return nil
 function M.prompt_and_clone()
-  local clone_dir = get_clone_dir()
+  local clone_dir = get_config_option("clone")
   vim.ui.input({
     prompt = "Set clone path: ",
     default = clone_dir,

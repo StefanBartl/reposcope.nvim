@@ -19,7 +19,7 @@
 ---| "keymap_opts"
 ---| "metrics"
 ---| "cache_dir"
----| "log_filepath"
+---| "logfile_path"
 ---| "log_max"
 
 -- Prompt field types (used to build prompt UI dynamically)

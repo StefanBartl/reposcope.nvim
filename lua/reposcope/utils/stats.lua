@@ -93,7 +93,7 @@ end
 --- Calculates the average duration and most frequent query
 ---@return number, string The average duration and most frequent query
 function M.calculate_extended_stats()
-  local file_path = require("reposcope.config").get_log_path()
+  local file_path = require("reposcope.config").get_option("logfile_path")
 
   if not file_path or not vim.fn.filereadable(file_path) then
     notify("[reposcope] File not readable or does not exist: " .. file_path, 4)

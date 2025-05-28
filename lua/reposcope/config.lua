@@ -1,15 +1,12 @@
----REF: outsource functions to /config_utils
-
 require("reposcope.types.configs")
 
 ---@class ReposcopeConfig
 local M = {}
 
-local init_cache_dir, init_log_path, sanitize_opts
+---@description Forward declarations for private functions
+local _sanitize_opts
 
 -- Utility Modules (Protection and Debugging)
-local protection = require("reposcope.utils.protection")
-local notify = require("reposcope.utils.debug").notify
 local defaults = require("reposcope.defaults").options
 local set_prompt_fields = require("reposcope.ui.prompt.prompt_config").set_fields
 
@@ -27,7 +24,7 @@ M.options = {
     std_dir = "",  -- Standard path for cloning repositories
     type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
   },
-  keymaps = { -- NOTE: Other keymaps?
+  keymaps = {
     open = "<leader>rs",  -- Set the keymap to open Repsocope
     close = "<leader>rc",  -- Set the keymap to close Reposcope
   },
@@ -38,15 +35,26 @@ M.options = {
 
   -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
   metrics = false,
-  cache_dir = "", -- Cache path for persistent cache files; standard is: vim.fn.stdpath("cache") .. "/reposcope/data"
-  log_filepath = "", -- Full path (without .ext) to the log file; standard is: vim.fn.stdpath("cache") .. "/reposcope/logs/log"
   log_max = 0, -- Controls the size of the log file
 }
+
+---@private
+---Root directory for cache and logs
+local base_cache = vim.fn.stdpath("cache") .. "/reposcope"
+
+---@private
+---Persistent file-based cache directory
+local filecache_path = base_cache .. "/data"
+
+---@private
+---Absolute path to the request log file
+local logfile_path = base_cache .. "/logs/request_log.json"
+
 
 ---Setup function for configuration
 ---@param opts ConfigOptions User configuration options
 function M.setup(opts)
-  local sanitized = sanitize_opts(opts or {})
+  local sanitized = _sanitize_opts(opts or {})
 
   -- Merges configuration in three priority levels:
   -- 1. Base: `defaults.options` provides standard fallback values.
@@ -60,8 +68,6 @@ function M.setup(opts)
     sanitized
   )
 
-  init_cache_dir()
-  init_log_path()
   set_prompt_fields(M.options.prompt_fields)
 end
 
@@ -69,98 +75,7 @@ end
 ---Returns the current filecache directory
 ---@return string The current filecache directory
 function M.get_readme_fcache_dir()
-  local filecache = M.get_cache_dir()
-  return filecache .. "/readme"
-end
-
-
----Returns the current cache path
----@return string The current cache path
-function M.get_cache_dir()
-  return M.options.cache_dir
-end
-
-
----@private
---- Initialize cache path for persistent cached data
-function init_cache_dir()
-  if M.options.cache_dir and M.options.cache_dir ~= "" then
-    M.options.cache_dir = vim.fn.expand(M.options.cache_dir)
-    if not protection.is_valid_path(M.options.cache_dir, false) then
-      M.options.cache_dir = vim.fn.stdpath("cache") .. "/reposcope/data"
-    end
-  else
-    M.options.cache_dir = vim.fn.stdpath("cache") .. "/reposcope/data"
-  end
-
-  if not protection.safe_mkdir(M.options.cache_dir) then
-    notify("[reposcope] Cache path could not be created: " .. M.options.cache_dir, 4)
-  end
-end
-
-
----Check if log options are set and return them
-function M.get_log_path()
-  if not M.options.log_filepath or M.options.log_filepath == "" then
-    require("reposcope.utils.debug").notify("[reposcope] No log file path set. No logging possible", 3)
-    return nil
-  end
-
-  return M.options.log_filepath .. ".json"
-end
-
----@private
----Initialize log path
-function init_log_path()
-
-  -- Check if the user has set a custom log file path
-  if M.options.log_filepath and M.options.log_filepath ~= "" then
-    local log_filepath = M.get_log_path() or ""
-    if protection.is_valid_path(log_filepath, true) then
-      return
-    else
-      notify("[reposcope] Warning: User-defined log path is invalid. Falling back to default.", 3)
-    end
-  end
-
-  -- Use default log path if user-defined path is invalid or not set
-  local log_dir = vim.fn.stdpath("cache") .. "/reposcope/logs"
-  protection.safe_mkdir(log_dir)
-  M.options.log_filepath = vim.fn.fnameescape(log_dir .. "/request_log")
-
-  if not protection.is_valid_path(M.options.log_filepath, true) then
-    notify("[reposcope] Error: Log file path could not be set or is invalid.", 4)
-  end
-
-  local log_file = M.get_log_path()
-  if not log_file then
-      notify("[reposcope] Log file path could not be determined", 4)
-  else
-      if not vim.fn.filereadable(log_file) then
-          local file, err = io.open(log_file, "w")
-          if err then
-              notify("[reposcope] Log file could not be created: " .. err, 4)
-          elseif file then
-              io.close(file)
-          end
-      end
-  end
-
-end
-
----Returns the standard directory for cloning
-function M.get_clone_dir()
-  if M.options.clone.std_dir ~= "" and M.options.clone.std_dir and vim.fn.isdirectory(M.options.clone.std_dir) then
-    return M.options.clone.std_dir
-  else
-    ---@diagnostic disable-next-line vim.loop or vim.uv os_uname exists
-    local is_windows = vim.loop.os_uname().sysname:match("Windows")
-    if is_windows then
-      return os.getenv("USERPROFILE") or "./"
-    else
-      return os.getenv("HOME") or "./"
-    end
-  end
+  return filecache_path .. "/readme"
 end
 
 
@@ -169,6 +84,7 @@ end
 ---@param key ConfigOptionKey
 ---@return any
 function M.get_option(key)
+  assert(key ~= nil, "config.get_option: key must be provided")
   local value = M.options[key]
 
   if key == "request_tool" then
@@ -176,23 +92,33 @@ function M.get_option(key)
   end
 
   if key == "clone" then
-    local clone = {}
-    clone.std_dir = M.get_clone_dir()
-    clone.type = M.options.clone.type
-    return clone
+    local dir = M.options.clone.std_dir
+    local resolved = ""
+
+    if dir ~= "" and dir and vim.fn.isdirectory(dir) then
+      resolved = dir
+    else
+      ---@diagnostic disable-next-line vim.loop or vim.uv os_uname exists
+      local is_windows = vim.loop.os_uname().sysname:match("Windows")
+      resolved = is_windows and (os.getenv("USERPROFILE") or "./") or (os.getenv("HOME") or "./")
+    end
+
+    return {
+      std_dir = resolved,
+      type = M.options.clone.type,
+    }
   end
 
-  if key == "log_filepath" then
-    return M.get_log_path()
+  if key == "logfile_path" then
+    return logfile_path
   end
 
   if key == "cache_dir" then
-    return M.get_cache_dir()
+    return filecache_path
   end
 
   return value
 end
-
 
 
 ---@private
@@ -200,7 +126,7 @@ end
 --- Dynamically derives valid fields from defaults.options
 ---@param opts table
 ---@return table
-function sanitize_opts(opts)
+function _sanitize_opts(opts)
   local options = M.options
   if type(opts) ~= "table" then return {} end
 
