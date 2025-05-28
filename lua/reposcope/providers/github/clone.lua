@@ -9,7 +9,7 @@
 local M = {}
 
 ---@description Forward declarations for private functions
-local get_clone_informations, build_clone_command, run_clone_with_metrics
+local _get_clone_informations, _build_clone_command, _run_clone_with_metrics
 
 -- Debug Utilities
 local hrtime = vim.uv.hrtime
@@ -35,7 +35,7 @@ function M.clone_repository(path, uuid)
   end
 
   local clone_type = config.options.clone.type
-  local infos = get_clone_informations()
+  local infos = _get_clone_informations()
   if not infos then
     request_state.end_request(uuid)
     return
@@ -52,8 +52,8 @@ function M.clone_repository(path, uuid)
     vim.fn.mkdir(output_dir, "p")
   end
 
-  local cmd = build_clone_command(clone_type, repo_url, output_dir)
-  run_clone_with_metrics(cmd, uuid, repo_name, "clone_repo")
+  local cmd = _build_clone_command(clone_type, repo_url, output_dir)
+  _run_clone_with_metrics(cmd, uuid, repo_name, "clone_repo")
   request_state.end_request(uuid)
  end
 
@@ -65,7 +65,7 @@ function M.clone_repository(path, uuid)
 ---@private
 ---Retrieves clone information for the selected repository
 ---@return CloneInfo|nil clone_info The directory, name, and URL of the repository for cloning
-function get_clone_informations()
+function _get_clone_informations()
   local repo = require("reposcope.cache.repository_cache").get_selected()
   if not repo then
     vim.notify("[reposcope] Error cloning: Repository is nil", 4)
@@ -97,7 +97,7 @@ end
 ---@param repo_url string The GitHub repo URL (e.g. https://github.com/user/repo)
 ---@param output_dir string The directory to clone to
 ---@return string cmd The shell command to execute
-function build_clone_command(clone_type, repo_url, output_dir)
+function _build_clone_command(clone_type, repo_url, output_dir)
   if clone_type == "gh" then
     return string.format("gh repo clone %s %s", repo_url, output_dir)
   elseif clone_type == "curl" then
@@ -120,7 +120,7 @@ end
 ---@param repo_name string The repository name (used for logging)
 ---@param source string The metrics source (e.g., "clone_repo")
 ---@return nil
-function run_clone_with_metrics(cmd, uuid, repo_name, source)
+function _run_clone_with_metrics(cmd, uuid, repo_name, source)
   local start = hrtime()
   local success, output = protection.safe_execute_shell(cmd)
   local duration_ms = (hrtime() - start) / 1e6

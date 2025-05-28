@@ -13,7 +13,7 @@
 local M = {}
 
 ---@description Forward declaration for private helper
-local get_provider
+local _get_provider
 
 -- Utilities and Core
 local generate_uuid = require("reposcope.utils.core").generate_uuid
@@ -39,7 +39,7 @@ local providers = {
 function M.fetch_readme_for_selected()
   local uuid = generate_uuid()
   request_state.register_request(uuid)
-  providers[get_provider()].readme_manager.fetch_for_selected(uuid)
+  providers[_get_provider()].readme_manager.fetch_for_selected(uuid)
 end
 
 
@@ -50,7 +50,7 @@ end
 function M.fetch_repositories(query)
   local uuid = generate_uuid()
   request_state.register_request(uuid)
-  providers[get_provider()].repo_fetcher.fetch_repositories(query, uuid)
+  providers[_get_provider()].repo_fetcher.fetch_repositories(query, uuid)
 end
 
 
@@ -68,7 +68,7 @@ function M.prompt_and_clone()
       local uuid = generate_uuid()
       request_state.register_request(uuid)
       vim.schedule(function ()
-        providers[get_provider()].cloner.clone_repository(input, uuid)
+        providers[_get_provider()].cloner.clone_repository(input, uuid)
       end)
     else
       notify("[reposcope] Cloning canceled.", 2)
@@ -80,7 +80,7 @@ end
 ---@private
 ---Resolves the currently selected provider string from config
 ---@return string The active provider identifier (e.g., "github")
-function get_provider()
+function _get_provider()
   return require("reposcope.config").get_option("provider")
 end
 
