@@ -10,9 +10,8 @@ local M = {}
 
 -- State Modules (Managing UI and Prompt State)
 local ui_state = require("reposcope.state.ui.ui_state")
--- Providers (GitHub-specific Functionality)
-local gh_readme_manager = require("reposcope.providers.github.readme.readme_manager")
-local gh_clone = require("reposcope.providers.github.clone")
+-- Providers
+local provider_controller = require("reposcope.controllers.provider_controller")
 -- UI Components (Preview and Navigation)
 local readme_viewer = require("reposcope.ui.actions.readme_viewer")
 local readme_editor = require("reposcope.ui.actions.readme_editor")
@@ -125,7 +124,7 @@ function M.set_prompt_keymaps()
       lhs = "<Up>",
       rhs = function()
         navigate_list.navigate_list_in_prompt("up")
-        gh_readme_manager.fetch_for_selected()  -- REFACTORE if more providers available
+        provider_controller.fetch_readme_for_selected()
       end,
     },
     {
@@ -133,7 +132,7 @@ function M.set_prompt_keymaps()
       lhs = "<Down>",
       rhs = function()
         navigate_list.navigate_list_in_prompt("down")
-        gh_readme_manager.fetch_for_selected()  -- REFACTORE if more providers available
+        provider_controller.fetch_readme_for_selected()
       end,
     },
     {
@@ -189,9 +188,7 @@ function M.set_prompt_keymaps()
       mode = {"n", "i"},
       lhs = "<C-c>",
       rhs = function()
-        vim.schedule(function()
-          gh_clone.init()  -- REFACTORE if more providers available
-        end)
+        provider_controller.prompt_and_clone()
       end,
     },
     {
