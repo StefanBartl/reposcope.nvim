@@ -27,7 +27,7 @@ M.options = {
   layout = "default", -- Default UI layout
   clone = {
     std_dir = "~/temp",  -- Standard path for cloning repositories
-    type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
+    type = "", -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
   },
   keymaps = {
     open = "<leader>rs",  -- Set the keymap to open Repsocope

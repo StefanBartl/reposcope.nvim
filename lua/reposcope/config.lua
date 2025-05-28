@@ -22,7 +22,7 @@ M.options = {
   layout = "", -- Default UI layout
   clone = {
     std_dir = "",  -- Standard path for cloning repositories
-    type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
+    type = "", -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
   },
   keymaps = {
     open = "<leader>rs",  -- Set the keymap to open Repsocope
@@ -79,8 +79,10 @@ function M.get_readme_fcache_dir()
 end
 
 
---- Returns a specific value from config.options, with optional fallback.
---- If `request_tool` is empty, returns `"curl"` instead.
+---@overload fun(key: "clone"): CloneOption
+---@overload fun(key: "request_tool"): string
+---@overload fun(key: "cache_dir"): string
+---@overload fun(key: "logfile_path"): string
 ---@param key ConfigOptionKey
 ---@return any
 function M.get_option(key)
@@ -103,10 +105,12 @@ function M.get_option(key)
       resolved = is_windows and (os.getenv("USERPROFILE") or "./") or (os.getenv("HOME") or "./")
     end
 
-    return {
+    --@type CloneOption
+    local clone_result = {
       std_dir = resolved,
       type = M.options.clone.type,
     }
+    return clone_result
   end
 
   if key == "logfile_path" then
