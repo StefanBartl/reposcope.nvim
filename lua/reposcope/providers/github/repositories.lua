@@ -1,6 +1,5 @@
 ---@class GithubRepositories
----@field init fun(query: string, debug?: boolean): nil Initializes the repository list with a query
----@field fetch_github_repositories fun(query: string, uuid: string): nil Fetches repositories from GitHub API based on a query
+---@field fetch_repositories fun(query: string, uuid: string): nil Fetches repositories from GitHub API based on a query
 ---@field build_cmd fun(query: string): string[] Builds the API request for GitHub repo search
 local M = {}
 
@@ -11,16 +10,14 @@ local GITHUB_API_SEARCH_URL = "https://api.github.com/search/repositories?q=%s"
 local api_client = require("reposcope.network.clients.api_client")
 -- State Management (Repositories, Requests, UI)
 local repositories_state = require("reposcope.state.repositories.repositories_state")
-local req_state = require("reposcope.state.repositories.requests_state")
+local request_state = require("reposcope.state.requests_state")
 local ui_state = require("reposcope.state.ui.ui_state")
 -- Controllers (List UI Management)
 local list_controller = require("reposcope.controllers.list_controller")
 local list_manager = require("reposcope.ui.list.list_manager")
-
 local preview_manager = require("reposcope.ui.preview.preview_manager")
 -- Utility Modules (Debugging, Core Utilities, Encoding)
 local notify = require("reposcope.utils.debug").notify
-local core_utils = require("reposcope.utils.core")
 local urlencode = require("reposcope.utils.encoding").urlencode
 
 
@@ -30,15 +27,6 @@ local urlencode = require("reposcope.utils.encoding").urlencode
 function M.build_url(query)
   local encoded_query = urlencode(query or "")
   return string.format(GITHUB_API_SEARCH_URL, encoded_query)
-end
-
---- Initializes the repository list with a query
----@param query string The search query for GitHub repositories
-function M.init(query)
-  local uuid = vim.fn.system("uuidgen"):gsub("\n", "")
-  table.insert(req_state.repositories, uuid)
-
-  M.fetch_github_repositories(query, uuid)
 end
 
 
@@ -59,13 +47,10 @@ end
 --- Fetches repositories from GitHub API
 ---@param query string The search query for GitHub repositories
 ---@param uuid string A unique identifier for this request
-function M.fetch_github_repositories(query, uuid)
-  -- Validate UUID
-  local check = core_utils.tbl_find(req_state.repositories, uuid)
-  if not check then
-    notify("UUID check failed: " .. uuid .. " with query: " .. query, 4)
-    return
-  end
+function M.fetch_repositories(query, uuid)
+  if not request_state.is_registered(uuid) then return end
+  if request_state.is_request_active(uuid) then return end
+  request_state.start_request(uuid)
 
   if query == "" then
     notify("[reposcope] Error: Search query is empty.", 4)
@@ -75,6 +60,8 @@ function M.fetch_github_repositories(query, uuid)
   local url = M.build_url(query)
 
   api_client.request("GET", url, function(response, err)
+    request_state.end_request(uuid)
+
     if err then
       notify("[reposcope] No response from GitHub API: " .. err, 4)
       ui_handle_error()
@@ -109,7 +96,7 @@ function M.fetch_github_repositories(query, uuid)
           notify("[reposcope] Default list line set to first entry.", 2)
 
           -- Automatically load README for the first in the result list
-          require("reposcope.providers.github.readme.readme_manager").fetch_for_selected()
+          require("reposcope.controllers.provider_controller").fetch_readme_for_selected()
         else
           notify("[reposcope] List buffer is not available. README fetch canceled.", 4)
         end

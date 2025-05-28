@@ -10,8 +10,10 @@
 --- (Prompt, List, Preview) and can be customized via the background_config.lua.
 ---@field open_window fun(): nil Opens the background window.
 ---@field close_window fun(): nil Closes the background window.
----@field apply_layout fun(): nil Applies layout and styling to the background window.
 local M = {}
+
+---@description: Forward declaration for private functions
+local apply_background_layout
 
 -- Configuration and State Management (Background UI)
 local config = require("reposcope.ui.background.background_config")
@@ -24,20 +26,29 @@ local protection = require("reposcope.utils.protection")
 ---Opens the background window.
 ---@return nil
 function M.open_window()
-  -- Reset buffer and/or if invalid  REF:
-  if ui_state.buffers.backg and not vim.api.nvim_buf_is_valid(ui_state.buffers.backg) then
-    ui_state.buffers.backg = nil
+  -- Check buffer and window
+  local buf = ui_state.buffers.backg
+  if buf and not vim.api.nvim_buf_is_valid(ui_state.buffers.backg) then
+    buf = nil
   end
-  if ui_state.windows.backg and not vim.api.nvim_win_is_valid(ui_state.windows.backg) then
-    ui_state.windows.backg = nil
+  local win = ui_state.windows.backg
+  if win and not vim.api.nvim_win_is_valid(win) then
+    win = nil
   end
 
-  ui_state.buffers.backg = protection.create_named_buffer("reposcope://background")
-  vim.bo[ui_state.buffers.backg].buftype = "nofile"
-  vim.bo[ui_state.buffers.backg].modifiable = false
-  vim.bo[ui_state.buffers.backg].bufhidden = "wipe"
+  -- Create new buffer and assign to state table
+  buf = protection.create_named_buffer("reposcope://background")
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
+    notify("[reposcope] Error creating background buffer.", 4)
+    return
+  end
 
-  ui_state.windows.backg = vim.api.nvim_open_win(ui_state.buffers.backg, false, {
+  vim.bo[buf].buftype = "nofile"
+  vim.bo[buf].modifiable = false
+  vim.bo[buf].bufhidden = "wipe"
+  ui_state.buffers.backg = buf
+
+  win = vim.api.nvim_open_win(buf, false, {
     relative = "editor",
     row = config.row,
     col = config.col,
@@ -50,7 +61,8 @@ function M.open_window()
     noautocmd = true,
   })
 
-  M.apply_layout()
+  ui_state.windows.backg = win
+  apply_background_layout()
 end
 
 
@@ -65,9 +77,10 @@ function M.close_window()
 end
 
 
+---@private
 ---Applies the layout and styling to the background window.
 ---@return nil
-function M.apply_layout()
+function apply_background_layout()
   local win = ui_state.windows.backg
 
   if not win then

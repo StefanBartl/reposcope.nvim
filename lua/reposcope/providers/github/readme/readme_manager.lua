@@ -4,7 +4,7 @@
 --- This module coordinates the download and caching of README files using
 --- the readme_fetcher module. It checks for cached data and handles UI updates
 --- after successfully retrieving README content, either from RAM, file, or network.
----@field fetch_for_selected fun(): nil Fetches the README for the currently selected repository
+---@field fetch_for_selected fun(uuid: string): nil Fetches the README for the currently selected repository
 local M = {}
 
 ---@description Forward declarations for private functions
@@ -16,6 +16,7 @@ local generate_uuid = require("reposcope.utils.core").generate_uuid
 local record_metrics = require("reposcope.utils.metrics").record_metrics
 local increase_cache_hit = require("reposcope.utils.metrics").increase_cache_hit
 local increase_fcache_hit = require("reposcope.utils.metrics").increase_fcache_hit
+local request_state = require("reposcope.state.requests_state")
 -- Readme Utilities and Cache
 local readme_fetch_api = require("reposcope.providers.github.readme.readme_fetcher").fetch_api
 local readme_fetch_raw = require("reposcope.providers.github.readme.readme_fetcher").fetch_raw
@@ -26,13 +27,14 @@ local cache_and_show_readme = require("reposcope.cache.cache_manager").cache_and
 local update_preview = require("reposcope.ui.preview.preview_manager").update_preview
 
 
--- Active requests tracker to avoid duplicate fetches
-local active_readme_requests = {}
-
-
---- Fetches the README for the currently selected repository
+---Fetches the README for the currently selected repository
+---@param uuid string
 ---@return nil
-function M.fetch_for_selected()
+function M.fetch_for_selected(uuid)
+  if not request_state.is_registered(uuid) then return end
+  if request_state.is_request_active(uuid) then return end
+  request_state.start_request(uuid)
+
   local repo = get_selected_repo()
   if not repo or not repo.name or not repo.owner or not repo.owner.login then
     notify("[reposcope] Invalid repository selection", 4)
@@ -43,7 +45,6 @@ function M.fetch_for_selected()
   local repo_name = repo.name
   local branch = repo.default_branch or "main"
 
-  if active_readme_requests[repo_name] then return end
   if has_cached_readme(repo_name) then
     _record_metrics(repo, repo_name)
     vim.schedule(function()
@@ -52,17 +53,15 @@ function M.fetch_for_selected()
     return
   end
 
-  active_readme_requests[repo_name] = true
-
   readme_fetch_raw(owner, repo_name, branch, function(success, content, err)
     if success and content then
       vim.schedule(function()
         cache_and_show_readme(repo_name, content)
-        active_readme_requests[repo_name] = nil
+        request_state.end_request(uuid)
       end)
     else
       notify("[reposcope] Raw fetch failed: " .. (err or "unknown error"), 3)
-      fetch_from_api_fallback(owner, repo_name, branch)
+      fetch_from_api_fallback(owner, repo_name, branch, uuid)
     end
   end)
 end
@@ -72,10 +71,10 @@ end
 ---@param owner string
 ---@param repo_name string
 ---@param branch string
+---@param uuid string
 ---@return nil
-function fetch_from_api_fallback(owner, repo_name, branch)
+function fetch_from_api_fallback(owner, repo_name, branch, uuid)
   readme_fetch_api(owner, repo_name, branch, function(success, content, err)
-    active_readme_requests[repo_name] = nil
 
     if not success or not content then
       notify("[reposcope] API fetch failed: " .. (err or "unknown error"), 4)
@@ -84,6 +83,7 @@ function fetch_from_api_fallback(owner, repo_name, branch)
 
     vim.schedule(function()
       cache_and_show_readme(repo_name, content)
+      request_state.end_request(uuid)
     end)
   end)
 end

@@ -14,7 +14,7 @@ local config = require("reposcope.config")
 local prompt_config = require("reposcope.ui.prompt.prompt_config")
 local prompt_state = require("reposcope.state.ui.prompt_state")
 -- Providers
-local gh_repositories = require("reposcope.providers.github.repositories")
+local provider_controller = require("reposcope.controllers.provider_controller")
 -- Utilities
 local notify = require("reposcope.utils.debug").notify
 local query_builder = require("reposcope.providers.github.query_builder")
@@ -47,11 +47,7 @@ function M.on_enter()
     return
   end
 
-  if config.options.provider == "github" then
-    gh_repositories.init(query)
-  else
-    notify("[reposcope] No valid provider configured in `options.provider`", 4)
-  end
+  provider_controller.fetch_repositories(query)
 end
 
 return M
