@@ -1,8 +1,3 @@
--- REF: functions are way to long
-
-local load_state_into_prompt, set_prompt_start_idx
-
-
 ---@class UIPromptManager
 ---@brief Manages the creation and orchestration of prompt windows
 ---@description
@@ -12,6 +7,9 @@ local load_state_into_prompt, set_prompt_start_idx
 ---@field open_windows fun(): nil Initializes and renders the prompt UI
 ---@field close_windows fun(): nil Closes all prompt-related windows  --NOTE:  niuy
 local M = {}
+
+---@description Forward declaration for private functions
+local add_title_to_prompt_buffer, load_state_into_prompt, set_prompt_start_idx
 
 -- System
 local api = vim.api
@@ -40,6 +38,7 @@ function M.open_windows()
 
   ui_state.windows.prompt = {}
 
+  -- Initialize all prompt buffers and windows
   for _, section in ipairs(layout) do
     local buf = section.buffer
     local width = section.width
@@ -72,7 +71,7 @@ function M.open_windows()
     ui_state.windows.prompt[field] = win
 
     if field ~= "prefix" then
-      local success, err = pcall(M.add_title_to_prompt_buffer, buf, string.upper(" " .. field .. " "), section.width)
+      local success, err = pcall(add_title_to_prompt_buffer, buf, string.upper(" " .. field .. " "), section.width)
       if not success then
         notify("[reposcope] Failed to add title to " .. field .. ": " .. tostring(err), 2)
       end
@@ -80,7 +79,6 @@ function M.open_windows()
 
     ::continue::
   end
-
 
   load_state_into_prompt()
   set_prompt_start_idx()
@@ -102,11 +100,12 @@ function M.close_windows()
 end
 
 
+ ---@private
 ---@brief Adds a centered virtual title to a prompt buffer
 ---@param buf integer Buffer handle
 ---@param field string Prompt field name (e.g. "keywords", "owner")
 ---@param width integer Width of the window the buffer will be displayed in
-function M.add_title_to_prompt_buffer(buf, field, width)
+function add_title_to_prompt_buffer(buf, field, width)
   local ns = api.nvim_create_namespace("reposcope_prompt_title")
 
   -- Make sure line 0 exists

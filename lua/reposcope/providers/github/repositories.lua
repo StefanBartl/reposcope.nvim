@@ -8,8 +8,9 @@ local GITHUB_API_SEARCH_URL = "https://api.github.com/search/repositories?q=%s"
 
 -- API Client (GitHub API Integration)
 local api_client = require("reposcope.network.clients.api_client")
+-- Cache Management
+local repository_cache = require("reposcope.cache.repository_cache")
 -- State Management (Repositories, Requests, UI)
-local repositories_state = require("reposcope.state.repositories.repositories_state")
 local request_state = require("reposcope.state.requests_state")
 local ui_state = require("reposcope.state.ui.ui_state")
 -- Controllers (List UI Management)
@@ -31,14 +32,14 @@ end
 
 
 ---Handling of the UI after an API-Error occurs
---- - Clear repositories state
+--- - Clear repositories cache
 --- - Clear the list UI
 --- - Cleat the preview UI
 ---@private
 ---@return nil
 local function ui_handle_error()
   vim.schedule(function()
-    repositories_state.clear_state()
+    repository_cache.clear()
     list_manager.clear_list()
     preview_manager.clear_preview()
   end)
@@ -82,7 +83,7 @@ function M.fetch_repositories(query, uuid)
     end
 
     -- Set repositories in state (cache)
-    repositories_state.set_repositories(parsed)
+    repository_cache.set(parsed)
 
     -- Ensure that the list UI is displayed and populated
     vim.schedule(function()

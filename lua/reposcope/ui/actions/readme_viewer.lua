@@ -21,7 +21,8 @@ local notify = require("reposcope.utils.debug").notify
 local readme_cache = require("reposcope.cache.readme_cache")
 -- State Management (UI State, Repositories State)
 local ui_state = require("reposcope.state.ui.ui_state")
-local repositories_state = require("reposcope.state.repositories.repositories_state")
+-- Cache Management
+local repository_cache = require("reposcope.cache.repository_cache")
 -- OS Utilities (Operating System Commands)
 local os = require("reposcope.utils.os")
 
@@ -30,7 +31,7 @@ local os = require("reposcope.utils.os")
 --- Displays HTML in a browser or Markdown in a temporary Neovim buffer
 ---@return nil
 function M.open_viewer()
-  local repo = repositories_state.get_selected_repo()
+  local repo = repository_cache.get_selected()
   if not repo or not repo.name then
     notify("[reposcope] No repository selected or invalid.", 3)
     return

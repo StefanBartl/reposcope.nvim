@@ -21,7 +21,7 @@ local request_state = require("reposcope.state.requests_state")
 local readme_fetch_api = require("reposcope.providers.github.readme.readme_fetcher").fetch_api
 local readme_fetch_raw = require("reposcope.providers.github.readme.readme_fetcher").fetch_raw
 local has_cached_readme = require("reposcope.cache.readme_cache").has_cached_readme
-local get_selected_repo = require("reposcope.state.repositories.repositories_state").get_selected_repo
+local get_selected_repo = require("reposcope.cache.repository_cache").get_selected
 local cache_and_show_readme = require("reposcope.cache.cache_manager").cache_and_show_readme
 -- UI related
 local update_preview = require("reposcope.ui.preview.preview_manager").update_preview

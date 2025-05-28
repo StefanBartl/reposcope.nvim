@@ -82,7 +82,7 @@ function M.update_list(lines)
     list_window.highlight_selected(ui_state.list.last_selected_line or 1)
 
     -- Update preview if possible
-    local selected_repo = require("reposcope.state.repositories.repositories_state").get_selected_repo()
+    local selected_repo = require("reposcope.cache.repository_cache").get_selected()
     if selected_repo then
       vim.schedule(function()
         require("reposcope.ui.preview.preview_manager").update_preview(selected_repo.name)

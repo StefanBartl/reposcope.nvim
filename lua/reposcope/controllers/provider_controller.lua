@@ -38,7 +38,7 @@ local providers = {
 ---@return nil
 function M.fetch_readme_for_selected()
   local uuid = generate_uuid()
-  request_state.start_request(uuid)
+  request_state.register_request(uuid)
   providers[get_provider()].readme_manager.fetch_for_selected(uuid)
 end
 
@@ -65,8 +65,10 @@ function M.prompt_and_clone()
     completion = "file",
   }, function(input)
     if input then
+      local uuid = generate_uuid()
+      request_state.register_request(uuid)
       vim.schedule(function ()
-        providers[get_provider()].cloner.clone_repository(input)
+        providers[get_provider()].cloner.clone_repository(input, uuid)
       end)
     else
       notify("[reposcope] Cloning canceled.", 2)

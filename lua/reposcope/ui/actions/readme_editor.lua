@@ -10,8 +10,8 @@ local M  = {}
 local notify = require("reposcope.utils.debug").notify
 -- Caching (Readme Cache Management)
 local readme_cache = require("reposcope.cache.readme_cache")
--- State Management (Repositories State)
-local repositories_state = require("reposcope.state.repositories.repositories_state")
+-- Cache Management
+local repository_cache = require("reposcope.cache.repository_cache")
 -- OS Utilities (Operating System Commands)
 local os = require("reposcope.utils.os")
 
@@ -19,7 +19,7 @@ local os = require("reposcope.utils.os")
 ---Creates a hidden buffer with the README content of the selected repository.
 ---@return nil
 function M.open_editor()
-  local repo = repositories_state.get_selected_repo()
+  local repo = repository_cache.get_selected()
   if not repo or not repo.name then
     notify("[reposcope] No repository selected or invalid.", 3)
     return

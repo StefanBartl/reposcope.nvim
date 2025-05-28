@@ -14,25 +14,18 @@
 ---@field items Repository[] List of repositories
 ---@field list string[] List of all repositories with most important informations
 
----@class RepositoryState
----@brief Manages the current state of loaded repositories in the application.
----@description 
---- The `RepositoryState` module is responsible for managing the active state of repositories
---- that are loaded in the application. Unlike a cache, this state is not persistent and 
---- is dynamically updated whenever a new search query is performed. The state is cleared 
---- or overwritten with each new search result, representing the current, active view 
---- of repositories in the application.
----
---- The module provides functions to set, retrieve, and clear the current state of repositories.
---- This ensures that the list of repositories always reflects the most recent search result.
---- Unlike a cache, which might store multiple versions of data for reuse, this state only
---- stores the current result set.
----@field set_repositories fun(json: RepositoryResponse): nil Stores the JSON response of repositories, sanitizes each repo entry and builds lines
----@field get_repositories fun(): RepositoryResponse Returns the cached JSON response
----@field get_repository fun(repo_name: string): Repository|nil Returns a repository by its name
----@field get_selected_repo fun(): Repository|nil Retrieves the currently selected repository
----@field get_repositories_list fun(): string[] Returns the list of actual repositories or table with empty string if thte list is empty
----@field clear_state fun(): nil Clears the repository state
+---@class RepositoryCache
+---@brief Caches the most recent GitHub repository results in memory
+---@description
+--- This module temporarily caches the result of repository queries from the GitHub API.
+--- It is not persistent and is overwritten on each new query. Other modules can
+--- access and use this data (e.g., list UI, README fetcher, etc.)
+---@field set fun(json: RepositoryResponse): nil Caches the repository response
+---@field get fun(): RepositoryResponse Returns the currently cached repositories
+---@field get_by_name fun(repo_name: string): Repository|nil Returns a repository object by name
+---@field get_selected fun(): Repository|nil Returns the currently selected repository
+---@field get_list fun(): string[] Returns the display-ready list for the UI
+---@field clear fun(): nil Clears the repository cache
 local M = {}
 
 -- State Management (UI State, List Window)
@@ -50,7 +43,7 @@ M.repositories = { total_count = 0, items = {}, list = {} }
 ---Stores the JSON response of repositories, sanitizes each repo entry and builds lines
 ---@param json RepositoryResponse
 ---@return nil
-function M.set_repositories(json)
+function M.set(json)
   M.repositories.total_count = json.total_count or 0
   M.repositories.items = json.items or {}
   M.repositories.list = {}
@@ -91,14 +84,14 @@ end
 
 ---Returns the cached JSON response
 ---@return RepositoryResponse
-function M.get_repositories()
+function M.get()
   return M.repositories
 end
 
 
 ---Returns a repository by its name
 ---@param repo_name string Repository name to search for
-function M.get_repository(repo_name)
+function M.get_by_name(repo_name)
   for _, repo in ipairs(M.repositories.items or {}) do
     if repo.name == repo_name then
       return repo
@@ -110,7 +103,7 @@ end
 
 ---Returns the list of the actual repositories or table with empty string if thte list is empty
 ---@return string[]
-function M.get_repositories_list()
+function M.get_list()
   local list = M.repositories.list
 
   if #list == 0 then
@@ -123,8 +116,8 @@ end
 
 ---Retrieves the currently selected repository based on the list entry.
 ---@return Repository|nil
-function M.get_selected_repo()
-  local json_data = M.get_repositories()
+function M.get_selected()
+  local json_data = M.get()
   if not json_data or not json_data.items or json_data.total_count == 0 then
     return nil
   end
@@ -170,9 +163,9 @@ function M.get_selected_repo()
 end
 
 
---- Clears the repository state
+--- Clears the repository cache 
 ---@return nil
-function M.clear_state()
+function M.clear()
   M.repositories = { total_count = 0, items = {}, list = {} }
   notify("[reposcope] Repository state cleared.", 2)
 end

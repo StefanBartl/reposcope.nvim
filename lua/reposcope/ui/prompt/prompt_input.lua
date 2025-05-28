@@ -8,8 +8,6 @@
 
 local M = {}
 
--- Config
-local config = require("reposcope.config")
 -- State
 local prompt_config = require("reposcope.ui.prompt.prompt_config")
 local prompt_state = require("reposcope.state.ui.prompt_state")
