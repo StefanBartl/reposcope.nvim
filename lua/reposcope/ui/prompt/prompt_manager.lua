@@ -9,7 +9,7 @@
 local M = {}
 
 ---@description Forward declaration for private functions
-local add_title_to_prompt_buffer, load_state_into_prompt, set_prompt_start_idx
+local _add_title_to_prompt_buffer, _load_state_into_prompt, _set_prompt_start_idx
 
 -- System
 local api = vim.api
@@ -71,7 +71,7 @@ function M.open_windows()
     ui_state.windows.prompt[field] = win
 
     if field ~= "prefix" then
-      local success, err = pcall(add_title_to_prompt_buffer, buf, string.upper(" " .. field .. " "), section.width)
+      local success, err = pcall(_add_title_to_prompt_buffer, buf, string.upper(" " .. field .. " "), section.width)
       if not success then
         notify("[reposcope] Failed to add title to " .. field .. ": " .. tostring(err), 2)
       end
@@ -80,8 +80,8 @@ function M.open_windows()
     ::continue::
   end
 
-  load_state_into_prompt()
-  set_prompt_start_idx()
+  _load_state_into_prompt()
+  _set_prompt_start_idx()
   focus_first_input()
 end
 
@@ -105,7 +105,7 @@ end
 ---@param buf integer Buffer handle
 ---@param field string Prompt field name (e.g. "keywords", "owner")
 ---@param width integer Width of the window the buffer will be displayed in
-function add_title_to_prompt_buffer(buf, field, width)
+function _add_title_to_prompt_buffer(buf, field, width)
   local ns = api.nvim_create_namespace("reposcope_prompt_title")
 
   -- Make sure line 0 exists
@@ -137,7 +137,7 @@ end
 ---Loads prompt field values from prompt_state and injects them into the corresponding buffers
 ---@private
 ---@return nil
-function load_state_into_prompt()
+function _load_state_into_prompt()
   local fields = prompt_config.get_fields()
 
   for _, field in ipairs(fields) do
@@ -155,7 +155,7 @@ end
 ---Set the field starting index for prompt
 ---@private
 ---@return nil
-function set_prompt_start_idx()
+function _set_prompt_start_idx()
   local fields = prompt_config.get_fields()
 
   for i, field in ipairs(fields) do

@@ -8,7 +8,7 @@
 local M = {}
 
 ---@description Forward declarations for private functions
-local _record_metrics, fetch_from_api_fallback
+local _record_metrics, _fetch_from_api_fallback
 
 -- Debugging and Utilities
 local notify = require("reposcope.utils.debug").notify
@@ -61,7 +61,7 @@ function M.fetch_for_selected(uuid)
       end)
     else
       notify("[reposcope] Raw fetch failed: " .. (err or "unknown error"), 3)
-      fetch_from_api_fallback(owner, repo_name, branch, uuid)
+      _fetch_from_api_fallback(owner, repo_name, branch, uuid)
     end
   end)
 end
@@ -73,7 +73,7 @@ end
 ---@param branch string
 ---@param uuid string
 ---@return nil
-function fetch_from_api_fallback(owner, repo_name, branch, uuid)
+function _fetch_from_api_fallback(owner, repo_name, branch, uuid)
   readme_fetch_api(owner, repo_name, branch, function(success, content, err)
 
     if not success or not content then
