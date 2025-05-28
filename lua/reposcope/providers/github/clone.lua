@@ -1,44 +1,59 @@
----DEBUG:
----hardening
----Annotation
---REF:
-
----@desc forward decalarations
-local get_clone_informations
-
+---@class GithubCloner
+---@brief Clones a repository using the preferred clone tool and tracks the request state
+---@description
+--- This module handles the cloning of a selected GitHub repository. It uses
+--- configuration values to determine which clone method (gh, curl, wget, git)
+--- to use and reports success/failure via metrics. It uses a UUID to register
+--- and track the clone request state via the request_state module.
+---@field clone_repository fun(path: string): nil Starts the clone operation
 local M = {}
+
+---@description Forward declarations for private functions
+local get_clone_informations, build_clone_command, run_clone_with_metrics
 
 -- Project-Specific Config and Utility Modules
 local config = require("reposcope.config")
 local metrics = require("reposcope.utils.metrics")
 local core_utils = require("reposcope.utils.core")
 local protection = require("reposcope.utils.protection")
-
 local hrtime = vim.uv.hrtime
 
-function M.init()
-  local clone_dir = config.get_clone_dir()
-  vim.ui.input({
-    prompt = "Set clone path: ",
-    default = clone_dir,
-    completion = "file",
-  }, function(input)
-    if (input) then
-      vim.schedule(function ()
-        M.clone_repository(input)
-      end)
-    else
-      print("No input, canceled cloning")
-    end
-  end)
-end
+
+--- Clones a GitHub repository using various methods (gh, curl, wget, git)
+---@param path string The local path where the repository should be cloned
+function M.clone_repository(path)
+  if not path or not vim.fn.isdirectory(path) then
+    vim.notify("[reposcope] Error cloning: invalid path", 4)
+    return
+  end
+
+  local clone_type = config.options.clone.type
+  local infos = get_clone_informations()
+  if not infos then return end
+
+  local repo_name = infos.name
+  local repo_url = infos.url
+  local uuid = core_utils.generate_uuid()
+
+  -- Normalize the path (remove trailing slashes and add one)
+  path = path:gsub("/+$", "") .. "/"
+  local output_dir = vim.fn.fnameescape(path .. repo_name)
+
+  if not vim.fn.isdirectory(output_dir) then
+    vim.fn.mkdir(output_dir, "p")
+  end
+
+  local cmd = build_clone_command(clone_type, repo_url, output_dir)
+  run_clone_with_metrics(cmd, uuid, repo_name, "clone_repo")
+ end
+
 
 ---@class CloneInfo
 ---@field name string The name of the repository
 ---@field url string The URL of the repository
 
----Retrieves clone information for the selected repository
 ---@private
+---Retrieves clone information for the selected repository
 ---@return CloneInfo|nil clone_info The directory, name, and URL of the repository for cloning
 function get_clone_informations()
   local repo = require("reposcope.state.repositories.repositories_state").get_selected_repo()
@@ -66,72 +81,53 @@ function get_clone_informations()
   return { name = repo_name, url = repo_url }
 end
 
---- Clones a GitHub repository using various methods (gh, curl, wget, git)
----@param path string The local path where the repository should be cloned
-function M.clone_repository(path)
-  if not path or not vim.fn.isdirectory(path) then
-    vim.notify("[reposcope] Error cloning: invalid path", 4)
-    return
-  end
 
-  local clone_type = config.options.clone.type
-  local infos = get_clone_informations()
-  if not infos then
-    vim.notify("[reposcope] Cloning aborted", 4)
-    return
-  end
-
-  local repo_name = infos.name
-  local repo_url = infos.url
-  local uuid = core_utils.generate_uuid()
-  local start_time = hrtime()
-  local source = "clone_repo"
-  local query = repo_name
-
-  -- Normalize the path (remove trailing slashes and add one)
-  path = path:gsub("/+$", "") .. "/"
-  local output_dir = vim.fn.fnameescape(path .. repo_name)
-
-  if not vim.fn.isdirectory(output_dir) then
-    vim.fn.mkdir(output_dir, "p")
-  end
-
-  local success = false
-  local output, error_msg = "", ""
-
-  -- Clone based on selected method
+---@private
+---@param clone_type string The configured cloning method ("gh", "curl", "wget", "git")
+---@param repo_url string The GitHub repo URL (e.g. https://github.com/user/repo)
+---@param output_dir string The directory to clone to
+---@return string cmd The shell command to execute
+function build_clone_command(clone_type, repo_url, output_dir)
   if clone_type == "gh" then
-    success, output = protection.safe_execute_shell(string.format("gh repo clone %s %s", repo_url, output_dir))
-    error_msg = "GitHub CLI clone failed: " .. (output or "")
+    return string.format("gh repo clone %s %s", repo_url, output_dir)
   elseif clone_type == "curl" then
     local zip_url = repo_url:gsub("%.git$", "/archive/refs/heads/main.zip")
     local output_zip = output_dir .. ".zip"
-    success, output = protection.safe_execute_shell(string.format("curl -L -o %s %s", output_zip, zip_url))
-    error_msg = "Curl download failed: " .. (output or "")
+    return string.format("curl -L -o %s %s", output_zip, zip_url)
   elseif clone_type == "wget" then
     local zip_url = repo_url:gsub("%.git$", "/archive/refs/heads/main.zip")
     local output_zip = output_dir .. ".zip"
-    success, output = protection.safe_execute_shell(string.format("wget -O %s %s", output_zip, zip_url))
-    error_msg = "Wget download failed: " .. (output or "")
-  else
-    success, output = protection.safe_execute_shell(string.format("git clone %s %s", repo_url, output_dir))
-    error_msg = "Git clone failed: " .. (output or "")
+    return string.format("wget -O %s %s", output_zip, zip_url)
+  else -- fallback to plain git
+    return string.format("git clone %s %s", repo_url, output_dir)
   end
-  local duration_ms = (hrtime() - start_time) / 1e6 -- Duration in milliseconds
+end
+
+
+---@private
+---@param cmd string The shell command to execute
+---@param uuid string UUID for metrics tracking
+---@param repo_name string The repository name (used for logging)
+---@param source string The metrics source (e.g., "clone_repo")
+---@return nil
+function run_clone_with_metrics(cmd, uuid, repo_name, source)
+  local start = hrtime()
+  local success, output = protection.safe_execute_shell(cmd)
+  local duration_ms = (hrtime() - start) / 1e6
 
   if success then
     if metrics.record_metrics() then
-      metrics.increase_success(uuid, query, source, "clone_repository", duration_ms, 200)
+      metrics.increase_success(uuid, repo_name, source, "clone_repo", duration_ms, 200)
     end
-    vim.notify("Repository cloned to: " .. output_dir, 2)
-    print("Repository cloned to: " .. output_dir)
+    vim.notify("Repository cloned successfully", 2)
+    print("Repository cloned successfully")
   else
-    error_msg = string.format("Failed to clone repository: %s", error_msg)
+    local err_msg = "Clone failed: " .. (output or "unknown error")
     if metrics.record_metrics() then
-      metrics.increase_failed(uuid, query, source, "clone_repository", duration_ms, 500, error_msg)
+      metrics.increase_failed(uuid, repo_name, source, "clone_repo", duration_ms, 500, err_msg)
     end
-    vim.notify(error_msg, 4)
-    print(error_msg)
+    vim.notify(err_msg, 4)
+    print(err_msg)
   end
 end
 
