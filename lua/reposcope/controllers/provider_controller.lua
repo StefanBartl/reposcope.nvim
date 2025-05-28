@@ -58,7 +58,9 @@ end
 ---to the active provider with the given target path.
 ---@return nil
 function M.prompt_and_clone()
-  local clone_dir = get_config_option("clone")
+  local clone = get_config_option("clone")
+  local clone_dir = (type(clone) == "table" and clone.std_dir) or "./"
+
   vim.ui.input({
     prompt = "Set clone path: ",
     default = clone_dir,

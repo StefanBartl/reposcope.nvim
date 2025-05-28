@@ -58,6 +58,7 @@ function M.update_list(lines)
   if vim.tbl_isempty(lines) then
     notify("[reposcope] No repositories found for this query.", 3)
     inject_content(ui_state.buffers.preview, empty_tbl_msg, "text")
+    M.clear_list()
     return false
   end
 

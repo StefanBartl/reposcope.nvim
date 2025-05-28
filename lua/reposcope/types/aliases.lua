@@ -28,6 +28,9 @@
 -- Request tool identifiers (used in config/options)
 ---@alias RequestTool "gh" | "curl" | "wget"
 
+---@class CloneOption
+---@field std_dir string
+---@field type string
 
 -- Future enums could include:
 -- @alias LayoutType "horizontal" | "vertical"
