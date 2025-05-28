@@ -86,7 +86,7 @@ function prepare_readme_buffer(content)
     notify("[reposcope] Using existing README buffer", 2)
   end
 
-  if not vim.api.nvim_buf_is_valid(buf) then
+  if not buf or not vim.api.nvim_buf_is_valid(buf) then
     notify("[reposcope] Cannot create valid buffer for readme_viewer", 4)
     return nil
   end
