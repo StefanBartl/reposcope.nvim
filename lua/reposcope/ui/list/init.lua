@@ -1,13 +1,17 @@
+---@module 'reposcope.ui.list.list_ui'
 ---@class ListUI
----@brief Initializes the list UI for displaying repositories
----@description -- REF:  TEXT
---- This module serves as the entry point for the list UI. It integrates the 
---- list window, list manager, and list configuration, providing a centralized 
---- interface for displaying and managing the list of repositories.
+---@brief Entry point for initializing and restoring the repository list UI
+---@description
+--- This module acts as the orchestration layer for the repository list UI.
+--- It integrates the list window and list manager components, and ensures
+--- that any cached repository results are restored and displayed after startup.
 ---
---- This ensures that the list UI is modular, flexible, and easily extendable
----@field initialize fun(): nil Initializes the list UI
-
+--- Responsibilities include:
+--- - Creating the list UI window
+--- - Checking for previously cached repository results
+--- - Delegating display logic to the list manager if results exist
+---
+---@field initialize fun(): nil Creates the list window and displays cached repositories if available
 local M = {}
 
 -- UI Components (List Management and Window)
@@ -31,7 +35,7 @@ function M.initialize()
   local actual_repo_list = repositories_state.get_repositories_list()
   if #actual_repo_list[1] > 1 then
     vim.schedule(function()
-      list_manager.set_list(actual_repo_list)
+      list_manager.set_and_display_list(actual_repo_list)
     end)
   end
 end

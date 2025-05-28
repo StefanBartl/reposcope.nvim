@@ -1,27 +1,31 @@
+---@module 'reposcope.state.ui.ui_state'
 ---@class UIStateManager
----@field invocation UIStateInvocation invocation editor state before UI activation
----@field capture_invocation_state fun(): nil Captures the current window and cursor position for later restoration
----@field reset fun(tbl?: "buffers"|"windows"|"invocation"): nil Resets part or all of the UI state
----@field get_invocation_win fun(): number|nil Returns the window ID of the invocation state
----@field get_invocation_cursor fun(): UIStateCursor|nil Returns the cursor
----
----@field buffers UIStateBuffers buffer handles by role
----@field windows UIStateWindows window handles by role
----@field get_windows fun(): number[]|nil Returns all window handles in the state table which are not nil
----@field get_valid_buffer fun(buf_name): number|nil Returns the buffer number for the given buffer name, if it is valid
----@field get_buffers fun(): number[]|nil Returns all buffer handles in the state table which are not nil
----
----@field list UIStateList list handles by role
----@field is_list_populated fun(): nil Returns true if the repository list was populated at least once
----@field set_list_populated fun(val: boolean): boolean Sets the internal list population state
----
----@brief Tracks plugin-local buffer and window handles  REF: update description
+---@brief Tracks plugin-local buffer, window, and cursor state
 ---@description
 ---The UIStateManager module maintains references to buffer and window IDs
 ---used by different parts of the user interface such as preview, prompt,
----list, and background. These handles allow coordinated lifecycle management
----(creation, update, teardown) of UI components.
-
+---list, and background. It also tracks invocation context (cursor/window)
+---and whether the UI list has been populated. These handles and states
+---allow coordinated lifecycle management (creation, update, teardown).
+---
+-- Invocation (pre-UI state)
+---@field invocation UIStateInvocation Invocation editor state before UI activation
+---@field capture_invocation_state fun(): nil Captures the current window and cursor position for later restoration
+---@field get_invocation_win fun(): number|nil Returns the window ID of the invocation state
+---@field get_invocation_cursor fun(): UIStateCursor Returns the cursor position of the invocation state
+---@field reset fun(tbl?: "buffers"|"windows"|"invocation"): nil Resets part or all of the UI state (default: all)
+---
+-- Buffers and windows
+---@field buffers UIStateBuffers Buffer handles by role
+---@field windows UIStateWindows Window handles by role
+---@field get_buffers fun(): number[]|nil Returns all active buffer handles (if any)
+---@field get_valid_buffer fun(buf_name: string): number|nil Returns the buffer number if valid and tracked
+---@field get_windows fun(): number[]|nil Returns all active window handles (if any)
+---
+-- List UI State
+---@field list UIStateList List-specific UI state (e.g. selection)
+---@field is_list_populated fun(): boolean Returns true if the list UI was populated at least once
+---@field set_list_populated fun(val: boolean): nil Sets internal flag indicating list was populated
 local M = {}
 
 -- Utility Modules (Debugging)

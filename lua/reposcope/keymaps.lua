@@ -125,7 +125,7 @@ function M.set_prompt_keymaps()
       lhs = "<Up>",
       rhs = function()
         navigate_list.navigate_list_in_prompt("up")
-        gh_readme.fetch_readme_for_selected()  -- REF: Refactore if more providers available
+        gh_readme.fetch_readme_for_selected()  -- REFACTORE if more providers available
       end,
     },
     {
@@ -133,7 +133,7 @@ function M.set_prompt_keymaps()
       lhs = "<Down>",
       rhs = function()
         navigate_list.navigate_list_in_prompt("down")
-        gh_readme.fetch_readme_for_selected()  -- REF: Refactore if more providers available
+        gh_readme.fetch_readme_for_selected()  -- REFACTORE if more providers available
       end,
     },
     {
@@ -190,7 +190,7 @@ function M.set_prompt_keymaps()
       lhs = "<C-c>",
       rhs = function()
         vim.schedule(function()
-          gh_clone.init()  -- REF: Refactore if more providers available
+          gh_clone.init()  -- REFACTORE if more providers available
         end)
       end,
     },

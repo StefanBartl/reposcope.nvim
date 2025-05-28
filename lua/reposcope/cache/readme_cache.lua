@@ -1,5 +1,3 @@
---REF: refactor this file
-
 ---@class ReadmeCache
 ---@field active_readme_requests table Holds state for active requests to README files in repositories
 ---@field get_readme fun(repo_name): string|nil Returns the README content for a given repository from cache (RAM or file)
@@ -37,7 +35,7 @@ function M.get_readme(repo_name)
   local ok, source = M.has_cached_readme(repo_name)
   if not ok then
     notify("[reposcope] No cached README found for: " .. repo_name, vim.log.levels.INFO)
-    return nil
+    return "README not cached yet."
   end
 
   -- Return README content based on source

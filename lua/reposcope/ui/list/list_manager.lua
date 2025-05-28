@@ -4,12 +4,12 @@
 ---This module is responsible for handling the list content (repositories) and their display.
 ---It provides functions to load, update, and clear the list, and to manage the selected line.
 ---The list manager is independent of the UI and can be used with any list window.
----@field set_list fun(entries: string[]): nil Sets the list entries and displays them
+---@field set_and_display_list fun(entries: string[]): nil Sets the list entries and displays them
 ---@field update_list fun(lines: string[]): boolean Updates the list content and returns status 
 ---@field clear_list fun(): nil Clears the list content
----@field get_selected fun(): string|nil Returns the currently selected list entry  --REF: niuy
----@field select_entry fun(index: number): nil Selects a specific list entry  --REF: niuy
----@field get_selected_entry fun(): string|nil Returns the currently selected list entry  --REF: niuy
+---@field get_selected fun(): string|nil Returns the currently selected list entry  --NUIY
+---@field select_entry fun(index: number): nil Selects a specific list entry  --NUIY
+---@field get_selected_entry fun(): string|nil Returns the currently selected list entry  --NUIY
 ---@field reset_selected_line fun(): nil Resets the last selected line and the line highlight
 local M = {}
 
@@ -26,22 +26,22 @@ local center_text = require("reposcope.utils.text").center_text
 local preview_width = require("reposcope.ui.preview.preview_config").width
 local empty_tbl_msg = center_text("No results. Try a different keyword or remove filters.", preview_width)
 
----Sets the list entries and displays them in the list window  REF:  update_and_open()
+---Sets the list entries and displays them in the list window
 ---@param entries string[] The list of entries to display
 ---@return nil
-function M.set_list(entries)
+function M.set_and_display_list(entries)
   if not entries then
     notify("[reposcope] 'entries'-table is missed", 4)
     return
   end
 
   list_window.open_window()
+
   if M.update_list(entries) then
     ui_state.set_list_populated(true)
   else
     ui_state.set_list_populated(false)
   end
-
 end
 
 

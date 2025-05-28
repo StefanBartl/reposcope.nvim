@@ -31,7 +31,7 @@ local HIGHLIGHT_NS = vim.api.nvim_create_namespace("reposcope.list")
 -- Highlighted line index
 M.highlighted_line = 1
 
--- List of available test layouts --- TEST: 
+-- List of available test layouts --- LAYOUTS! 
 M.Layouts = {
   Normal = {
     row = ui_config.row + prompt_config.height + 1,
@@ -77,7 +77,7 @@ function M.open_window()
     vim.bo[ui_state.buffers.list].modifiable = false
     vim.bo[ui_state.buffers.list].bufhidden = "wipe"
 
-    ui_state.windows.list = vim.api.nvim_open_win(buf, false, {  --TEST:  layouts...
+    ui_state.windows.list = vim.api.nvim_open_win(buf, false, {  -- LAYOUTS!
       relative = "editor",
       row = M.Layouts.Normal.row,
       col = M.Layouts.Normal.col,
