@@ -12,7 +12,7 @@ local list_window = require("reposcope.ui.list.list_window")
 local list_manager = require("reposcope.ui.list.list_manager")
 local list_config = require("reposcope.ui.list.list_config")
 -- State Management (Repositories State)
-local repositories_state = require("reposcope.state.repositories.repositories_state")
+local repository_cache = require("reposcope.cache.repository_cache")
 -- Utility Modules (Text Manipulation, Debugging)
 local text_utils = require("reposcope.utils.text")
 local notify = require("reposcope.utils.debug").notify
@@ -26,7 +26,7 @@ function M.display_repositories()
     return
   end
 
-  local json_data = repositories_state.get_repositories()
+  local json_data = repository_cache.get()
   if not json_data or not json_data.items then
     notify("[reposcope] No repositories loaded.", 3)
     list_manager.clear_list()

@@ -12,8 +12,8 @@ local M = {}
 
 -- Config Module
 local config = require("reposcope.config")
--- State Management (Repository State)
-local repositories_state = require("reposcope.state.repositories.repositories_state")
+-- Cache Management
+local repository_cache = require("reposcope.cache.repository_cache")
 -- Utility Modules (Debugging)
 local notify = require("reposcope.utils.debug").notify
 
@@ -74,7 +74,7 @@ end
 ---@param readme_text string The content of the README file
 ---@return nil
 function M.cache_readme(repo_name, readme_text)
-  local repo = repositories_state.get_repository(repo_name)
+  local repo = repository_cache.get_by_name(repo_name)
   if repo then
     repo.readme_cache = readme_text
   else
@@ -87,7 +87,7 @@ end
 ---@param repo_name string The name of the repository
 ---@return string|nil Cached README content or nil if not found
 function M.get_cached_readme(repo_name)
-  local repo = repositories_state.get_repository(repo_name)
+  local repo = repository_cache.get_by_name(repo_name)
   return repo and repo.readme_cache or nil
 end
 
@@ -97,7 +97,7 @@ end
 ---@param readme_text string The README content
 ---@return boolean Success status (true if written, false on error)
 function M.fcache_readme(repo_name, readme_text)
-  local repo = repositories_state.get_repository(repo_name)
+  local repo = repository_cache.get_by_name(repo_name)
   if not repo then
     notify("[reposcope] Repository not found: " .. repo_name, 4)
     return false
@@ -168,7 +168,7 @@ end
 ---@param repo_name string The repository name
 ---@return boolean Success status (true if cleared, false on error)
 function M.clear_cache(repo_name)
-  local repo = repositories_state.get_repository(repo_name)
+  local repo = repository_cache.get_by_name(repo_name)
   if not repo then
     notify("[reposcope] Repository not found: " .. repo_name, 4)
     return false
@@ -196,7 +196,7 @@ end
 ---@return boolean Success status (true if all cleared, false on error)
 function M.clear_all_caches()
   -- Removes all repositoreies from RAM
-  local repositories = repositories_state.get_repositories().items
+  local repositories = repository_cache.get().items
 
   for _, repo in ipairs(repositories) do
     if repo.readme_cache then

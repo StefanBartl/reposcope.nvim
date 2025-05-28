@@ -20,7 +20,8 @@ local preview_window = require("reposcope.ui.preview.preview_window")
 local preview_manager = require("reposcope.ui.preview.preview_manager")
 -- Application State
 local ui_state = require("reposcope.state.ui.ui_state")
-local repositories_state = require("reposcope.state.repositories.repositories_state")
+-- Cache Management
+local repository_cache = require("reposcope.cache.repository_cache")
 -- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
 
@@ -41,7 +42,7 @@ function M.initialize()
 
   if ui_state.is_list_populated() then
     vim.schedule(function()
-      local selected_repo = repositories_state.get_selected_repo()
+      local selected_repo = repository_cache.get_selected()
       if selected_repo and selected_repo.name then
           preview_manager.update_preview(selected_repo.name)
       end

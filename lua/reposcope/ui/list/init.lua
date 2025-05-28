@@ -17,8 +17,8 @@ local M = {}
 -- UI Components (List Management and Window)
 local list_window = require("reposcope.ui.list.list_window")
 local list_manager = require("reposcope.ui.list.list_manager")
--- State Management
-local repositories_state = require("reposcope.state.repositories.repositories_state")
+-- Cache Management
+local repository_cache = require("reposcope.cache.repository_cache")
 -- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
 
@@ -32,7 +32,7 @@ function M.initialize()
   end
 
   -- Check if there are reseults from former prompt search in the list
-  local actual_repo_list = repositories_state.get_repositories_list()
+  local actual_repo_list = repository_cache.get_list()
   if #actual_repo_list[1] > 1 then
     vim.schedule(function()
       list_manager.set_and_display_list(actual_repo_list)

@@ -5,35 +5,44 @@
 --- configuration values to determine which clone method (gh, curl, wget, git)
 --- to use and reports success/failure via metrics. It uses a UUID to register
 --- and track the clone request state via the request_state module.
----@field clone_repository fun(path: string): nil Starts the clone operation
+---@field clone_repository fun(path: string, uuid: string): nil Starts the clone operation
 local M = {}
 
 ---@description Forward declarations for private functions
 local get_clone_informations, build_clone_command, run_clone_with_metrics
 
+-- Debug Utilities
+local hrtime = vim.uv.hrtime
+local metrics = require("reposcope.utils.metrics")
+local request_state = require("reposcope.state.requests_state")
 -- Project-Specific Config and Utility Modules
 local config = require("reposcope.config")
-local metrics = require("reposcope.utils.metrics")
-local core_utils = require("reposcope.utils.core")
 local protection = require("reposcope.utils.protection")
-local hrtime = vim.uv.hrtime
 
 
 --- Clones a GitHub repository using various methods (gh, curl, wget, git)
 ---@param path string The local path where the repository should be cloned
-function M.clone_repository(path)
+---@param uuid string
+function M.clone_repository(path, uuid)
+  if not request_state.is_registered(uuid) then return end
+  if request_state.is_request_active(uuid) then return end
+  request_state.start_request(uuid)
+
   if not path or not vim.fn.isdirectory(path) then
     vim.notify("[reposcope] Error cloning: invalid path", 4)
+    request_state.end_request(uuid)
     return
   end
 
   local clone_type = config.options.clone.type
   local infos = get_clone_informations()
-  if not infos then return end
+  if not infos then
+    request_state.end_request(uuid)
+    return
+  end
 
   local repo_name = infos.name
   local repo_url = infos.url
-  local uuid = core_utils.generate_uuid()
 
   -- Normalize the path (remove trailing slashes and add one)
   path = path:gsub("/+$", "") .. "/"
@@ -45,6 +54,7 @@ function M.clone_repository(path)
 
   local cmd = build_clone_command(clone_type, repo_url, output_dir)
   run_clone_with_metrics(cmd, uuid, repo_name, "clone_repo")
+  request_state.end_request(uuid)
  end
 
 
@@ -56,7 +66,7 @@ function M.clone_repository(path)
 ---Retrieves clone information for the selected repository
 ---@return CloneInfo|nil clone_info The directory, name, and URL of the repository for cloning
 function get_clone_informations()
-  local repo = require("reposcope.state.repositories.repositories_state").get_selected_repo()
+  local repo = require("reposcope.cache.repository_cache").get_selected()
   if not repo then
     vim.notify("[reposcope] Error cloning: Repository is nil", 4)
     return nil
@@ -120,14 +130,12 @@ function run_clone_with_metrics(cmd, uuid, repo_name, source)
       metrics.increase_success(uuid, repo_name, source, "clone_repo", duration_ms, 200)
     end
     vim.notify("Repository cloned successfully", 2)
-    print("Repository cloned successfully")
   else
     local err_msg = "Clone failed: " .. (output or "unknown error")
     if metrics.record_metrics() then
       metrics.increase_failed(uuid, repo_name, source, "clone_repo", duration_ms, 500, err_msg)
     end
     vim.notify(err_msg, 4)
-    print(err_msg)
   end
 end
 
