@@ -109,7 +109,7 @@ function M.fetch_github_repositories(query, uuid)
           notify("[reposcope] Default list line set to first entry.", 2)
 
           -- Automatically load README for the first in the result list
-          require("reposcope.providers.github.readme").fetch_readme_for_selected()
+          require("reposcope.providers.github.readme.readme_manager").fetch_for_selected()
         else
           notify("[reposcope] List buffer is not available. README fetch canceled.", 4)
         end
