@@ -28,6 +28,9 @@
 ---@field clear fun(): nil Clears the repository cache
 local M = {}
 
+---@description Forward declarations for private functions
+local _sanitize_repo, _build_repo_line, _validate_repo_list
+
 -- State Management (UI State, List Window)
 local ui_state = require("reposcope.state.ui.ui_state")
 local list_window = require("reposcope.ui.list.list_window")
@@ -48,31 +51,60 @@ function M.set(json)
   M.repositories.items = json.items or {}
   M.repositories.list = {}
 
-  for _, repo in ipairs(M.repositories.items) do
-    ---@type string
-    local name = ensure_string(repo.name)
-    if name == "" then
-      notify("[reposcope] Repository missing valid 'name', inserted fallback", 2)
-      name = "No name"
-    end
-
-    ---@type string
-    local owner = ensure_string(repo.owner and repo.owner.login)
-    if owner == "" then
-      notify("[reposcope] Repository missing valid 'owner.login', inserted fallback", 2)
-      owner = "Unknown"
-    end
-
-    ---@type string
-    local desc = ensure_string(repo.description)
-    if desc == "" then
-      desc = "No description"
-    end
-
-    local line = owner .. "/" .. name .. ": " .. desc
+  for i, repo in ipairs(M.repositories.items) do
+    local sanitized = _sanitize_repo(repo, i)
+    local line = _build_repo_line(sanitized)
     table.insert(M.repositories.list, line)
   end
 
+  _validate_repo_list()
+end
+
+---@private
+---@param repo table
+---@param index integer
+---@return table
+function _sanitize_repo(repo, index)
+  ---@type string
+  local name = ensure_string(repo.name)
+  if name == "" then
+    notify(string.format("[reposcope] Repository [%d] missing valid 'name', inserted fallback", index), 2)
+    name = "No name"
+  end
+
+  ---@type string
+  local owner = ensure_string(repo.owner and repo.owner.login)
+  if owner == "" then
+    notify(string.format("[reposcope] Repository [%d] missing valid 'owner.login', inserted fallback", index), 2)
+    owner = "Unknown"
+  end
+
+  ---@type string
+  local desc = ensure_string(repo.description)
+  if desc == "" then
+    desc = "No description"
+  end
+
+  repo.name = name
+  repo.owner = repo.owner or {}
+  repo.owner.login = owner
+  repo.description = desc
+
+  return repo
+end
+
+
+---@private
+---@param repo table
+---@return string
+function _build_repo_line(repo)
+  return string.format("%s/%s: %s", repo.owner.login, repo.name, repo.description)
+end
+
+
+---@private
+---@return nil
+function _validate_repo_list()
   for i, line in ipairs(M.repositories.list) do
     if type(line) ~= "string" then
       notify(string.format("[reposcope] [dev] Repo list line %d is not a string: %s", i, type(line)), 4)
