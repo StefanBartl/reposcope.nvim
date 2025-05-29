@@ -12,25 +12,25 @@ local set_prompt_fields = require("reposcope.ui.prompt.prompt_config").set_field
 
 ---@type ConfigOptions
 M.options = {
-  prompt_fields = {}, -- Default fields for the prompt in the UI
-  provider = "", -- Default provider for Reposcope (GitHub)
+  prompt_fields = {},        -- Default fields for the prompt in the UI
+  provider = "",             -- Default provider for Reposcope (GitHub)
   preferred_requesters = {}, -- Preferred tools for API requests
-  request_tool = "", -- Default request tool (GitHub CLI)
-  github_token = "", -- Github authorization token (for higher request limits)
-  results_limit = 0, -- Default result limit for search queries
-  preview_limit = 0, -- Default preview limit for displayed results
-  layout = "", -- Default UI layout
+  request_tool = "",         -- Default request tool (GitHub CLI)
+  github_token = "",         -- Github authorization token (for higher request limits)
+  results_limit = 0,         -- Default result limit for search queries
+  preview_limit = 0,         -- Default preview limit for displayed results
+  layout = "",               -- Default UI layout
   clone = {
-    std_dir = "",  -- Standard path for cloning repositories
-    type = "", -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
+    std_dir = "",            -- Standard path for cloning repositories
+    type = "",               -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
   },
   keymaps = {
-    open = "<leader>rs",  -- Set the keymap to open Repsocope
-    close = "<leader>rc",  -- Set the keymap to close Reposcope
+    open = "",  -- Set the keymap to open Repsocope
+    close = "", -- Set the keymap to close Reposcope
   },
   keymap_opts = {
     silent = true,  -- Silent option for open and close keymap
-    noremap = true,  -- noremap option for open and close keymap
+    noremap = true, -- noremap option for open and close keymap
   },
 
   -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
@@ -71,16 +71,15 @@ function M.setup(opts)
   set_prompt_fields(M.options.prompt_fields)
 end
 
-
+---REF: naming
 ---Returns the current filecache directory
 ---@return string The current filecache directory
 function M.get_readme_fcache_dir()
   return filecache_path .. "/readme"
 end
 
-
----@overload fun(key: "clone"): CloneOption
----@overload fun(key: "request_tool"): string
+---@overload fun(key: "clone"): CloneOptions
+---@overload fun(key: "request_tool"): RequestTool
 ---@overload fun(key: "cache_dir"): string
 ---@overload fun(key: "logfile_path"): string
 ---@param key ConfigOptionKey
@@ -113,17 +112,16 @@ function M.get_option(key)
     return clone_result
   end
 
-  if key == "logfile_path" then
+  if key == "logfile_path" then --REF: if not in options table, then not via get_option
     return logfile_path
   end
 
-  if key == "cache_dir" then
+  if key == "cache_dir" then --REF: if not in options table, then not via get_option
     return filecache_path
   end
 
   return value
 end
-
 
 ---@private
 --- Sanitizes user-provided options: removes empty strings and unknown fields.

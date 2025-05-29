@@ -1,32 +1,33 @@
 ---@module 'reposcope.types.configs'
----@brief 
+---@brief Type definitions for user configuration
 ---@description
----
+--- This module defines the ReposcopeConfig structure used to manage and validate
+--- user-provided configuration options. These types ensure correctness across
+--- the setup process, runtime queries, and UI rendering.
+
+---@class CloneOptions
+---@brief Repository clone settings
+---@field std_dir string Directory to clone repositories into
+---@field type string Tool used for cloning (e.g. 'curl', 'wget')
+
+---@class ConfigOptions
+---@brief All configurable options accepted by `reposcope.setup()`
+---@field prompt_fields PromptField[] Default fields shown in the prompt UI
+---@field provider string API provider used for search requests (e.g. "github")
+---@field preferred_requesters string[] Fallback order of CLI tools to use for HTTP requests
+---@field request_tool string Main tool to perform HTTP requests (used unless unavailable)
+---@field github_token string Optional GitHub token for authenticated API calls
+---@field results_limit number Maximum number of search results to show
+---@field preview_limit number Maximum number of lines to show in preview window
+---@field layout LayoutType Default layout for result view
+---@field clone CloneOptions Options related to downloading/cloning repositories
+---@field keymaps table<string, string> Custom key mappings for plugin actions
+---@field keymap_opts table Options passed to all keymaps (e.g. `noremap`, `silent`)
+---@field metrics boolean Enable or disable anonymous usage metrics
+---@field log_max number Maximum log size (lines)
 
 ---@class ReposcopeConfig
----@field options ConfigOptions Configuration options for Reposcope
----@field setup fun(opts: table): nil Setup function for user configuration
----@field get_option fun(key: ConfigOptionKey): any Returns a specific value from config.options, with optional fallback
-
----@class CloneOptions 
----@field std_dir string Standardth for cloning repositories
----@field type string Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories)
-
---- Configuration options for Reposcope
----@class ConfigOptions
----@field prompt_fields PromptField[] Default fields for the prompt UI
----@field provider string The API provider to be used (default: "github")
----@field preferred_requesters string[] List of preferred tools for making HTTP requests (default: {"gh", "curl", "wget"})
----@field request_tool string Default request tool (default: "gh")
----@field github_token string  Github authorization token (for higher request limits)
----@field results_limit number Maximum number of results returned in search queries (default: 25)
----@field preview_limit number Maximum number of lines shown in preview (default: 200)
----@field layout string UI layout type (default: "default")
----@field clone CloneOptions Options to configure cloning repositories
----@field keymaps table<string, string> Set keymaps to open and close Reposcope
----@field keymap_opts table Set keymap options
----@field metrics boolean Controls the state to record metrics
----@field log_max number Controls the size of the log file
-
-
-return {}
+---@brief Structure exposed to the outside and used during `setup()`
+---@field options ConfigOptions Full configuration options
+---@field setup fun(opts: table): nil Setup function to initialize the plugin
+---@field get_option fun(key: ConfigOptionKey): any Retrieve a value from config.options

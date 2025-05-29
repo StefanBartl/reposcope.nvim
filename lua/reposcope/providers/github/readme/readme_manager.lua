@@ -65,7 +65,6 @@ function M.fetch_for_selected(uuid)
   end)
 end
 
-
 ---@private
 ---@param owner string
 ---@param repo_name string
@@ -74,7 +73,6 @@ end
 ---@return nil
 function _fetch_from_api_fallback(owner, repo_name, branch, uuid)
   readme_fetch_api(owner, repo_name, branch, function(success, content, err)
-
     if not success or not content then
       notify("[reposcope] API fetch failed: " .. (err or "unknown error"), 4)
       return
@@ -88,7 +86,6 @@ function _fetch_from_api_fallback(owner, repo_name, branch, uuid)
     end)
   end)
 end
-
 
 ---@private
 ---@param repo table
