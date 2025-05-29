@@ -7,7 +7,6 @@
 ---@field html_url string Repository URL
 ---@field owner RepositoryOwner Owner of the repository
 ---@field default_branch? string The default branch of the repository (optional)
----@field readme_cache? string Cached README text
 
 ---@class RepositoryResponse
 ---@field total_count number Total number of repositories found

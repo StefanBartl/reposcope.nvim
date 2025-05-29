@@ -11,6 +11,7 @@ local readme_cache = require("reposcope.cache.readme_cache")
 local metrics = require("reposcope.utils.metrics")
 local core_utils = require("reposcope.utils.core")
 local notify = require("reposcope.utils.debug").notify
+local end_request = require("reposcope.state.requests_state").end_request
 -- UI Injection (Preview Manipulation)
 local preview_manager = require("reposcope.ui.preview.preview_manager")
 
@@ -19,7 +20,7 @@ local preview_manager = require("reposcope.ui.preview.preview_manager")
 ---@param repo_name string Name of the repository for which a README file could be cached
 ---@return boolean Returns true if a README file is shown for given repository, false if not
 function M.show_cached_readme(repo_name)
-  local is_cached, source = readme_cache.has_cached_readme(repo_name)
+  local is_cached, source = readme_cache.has(repo_name)
   if is_cached then
 
     local uuid = core_utils.generate_uuid()
@@ -35,7 +36,7 @@ function M.show_cached_readme(repo_name)
       preview_manager.update_preview(repo_name)
     end)
 
-    readme_cache.active_readme_requests[repo_name] = nil
+    -- end_request(uuid) function show_cached_readme not in use at the moment
     return true
   end
   return false
@@ -48,14 +49,14 @@ end
 ---@return nil
 function M.cache_and_show_readme(repo_name, content)
   -- Try caching in memory
-  local ok_mem, err_mem = pcall(readme_cache.cache_readme, repo_name, content)
+  local ok_mem, err_mem = pcall(readme_cache.set_ram, repo_name, content)
   if not ok_mem then
     notify("[reposcope] Failed to cache README in memory: " .. tostring(err_mem), vim.log.levels.WARN)
   end
 
   -- Write to file cache asynchronously
   vim.schedule(function()
-    local ok_file, err_file = pcall(readme_cache.fcache_readme, repo_name, content)
+    local ok_file, err_file = pcall(readme_cache.set_file, repo_name, content)
     if not ok_file then
       notify("[reposcope] Failed to write README to file cache: " .. tostring(err_file), vim.log.levels.WARN)
     else
