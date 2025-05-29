@@ -28,10 +28,10 @@ function M.open_editor()
   local repo_name = repo.name
 
   -- Try loading from cache
-  local content = readme_cache.get_cached_readme(repo_name)
+  local content = readme_cache.get_ram(repo_name)
   if not content then
     notify("[reposcope] README not cached for: " .. repo_name, 3)
-    content = readme_cache.get_fcached_readme(repo_name)
+    content = readme_cache.get_file(repo_name)
     if not content then
       notify("[reposcope] README not filecached for: " .. repo_name, 3)
       content = "README not cached yet."

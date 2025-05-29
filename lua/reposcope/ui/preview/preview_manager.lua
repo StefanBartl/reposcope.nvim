@@ -32,7 +32,7 @@ function M.update_preview(repo_name)
     return
   end
 
-  local content = readme_cache.get_readme(repo_name)
+  local content = readme_cache.get(repo_name)
   if not content then
     notify("[reposcope] No README content found for: " .. repo_name, 4)
     return
