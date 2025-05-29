@@ -95,8 +95,6 @@ function M.open_window()
     return true
   end
 end
---title = "Repositories", -- NOTE: Try
---title_pos = "left",     -- NOTE: Try
 
 
 ---Closes the list window

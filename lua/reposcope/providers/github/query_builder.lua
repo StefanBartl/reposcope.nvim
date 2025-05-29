@@ -43,8 +43,6 @@ function M.build(input)
   end
 
   local final_query = table.concat(query_parts, " ")
-  notify("[reposcope] Built query: " .. final_query, 2)
-  notify("[reposcope] Query components: " .. table.concat(debug_parts, ", "), 4)
 
   return final_query
 end
