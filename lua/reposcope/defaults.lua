@@ -1,20 +1,9 @@
 require("reposcope.types.aliases")
 
----@class ReposcopeDefaultOptions
----@field prompt_fields PromptField[] Default fields for the prompt UI
----@field provider string The API provider to be used (default: "github")
----@field preferred_requesters string[] List of preferred tools for making HTTP requests (default: {"gh", "curl", "wget"})
----@field request_tool RequestTool Default request tool (default: "gh")
----@field github_token string  Github authorization token (for higher request limits)
----@field results_limit number Maximum number of results returned in search queries (default: 25)
----@field preview_limit number Maximum number of lines shown in preview (default: 200)
----@field layout string UI layout type (default: "default")
----@field keymaps table<string, string> Set keymaps to open and close Reposcope
----@field keymap_opts table Set keymap options
----@field metrics boolean Controls the state to record metrics
----@field log_max number Controls the size of the log file
+---@class ReposcopeDefaultConfig
 local M = {}
 
+---@type ConfigOptions
 M.options = {
   ---@type PromptField[]
   prompt_fields = { "prefix", "keywords", "owner", "language" }, -- Default fields for the prompt in the UI

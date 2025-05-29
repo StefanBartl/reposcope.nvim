@@ -1,39 +1,24 @@
 ---@module 'reposcope.types.aliases'
----@brief Shared type aliases for configuration and UI parameters
+---@brief Global type aliases for Reposcope
 ---@description
---- This module defines global alias types used across Reposcope such as prompt
---- field identifiers and valid request tool names. These aliases are used for
---- annotation consistency and LuaLS type inference.
+--- This module defines shared alias types used throughout Reposcope for
+--- configuration keys, prompt field labels, request tools, and layout types.
+--- These aliases improve annotation consistency and LuaLS type inference.
 
--- All keys in the reposcope/config.lua options table
 ---@alias ConfigOptionKey
----| "provider"
----| "preferred_requesters"
----| "request_tool"
----| "github_token"
----| "results_limit"
----| "preview_limit"
----| "layout"
----| "clone"
----| "keymaps"
----| "keymap_opts"
----| "metrics"
----| "cache_dir"
----| "logfile_path"
----| "log_max"
+---| "provider" | "preferred_requesters" | "request_tool"
+---| "github_token" | "results_limit" | "preview_limit"
+---| "layout" | "clone" | "keymaps" | "keymap_opts"
+---| "metrics" | "cache_dir" | "logfile_path" | "log_max"
 
--- Prompt field types (used to build prompt UI dynamically)
----@alias PromptField "prefix" | "keywords" | "owner" | "language" | "topic" | "stars"
+---@alias PromptField
+--- Valid prompt fields shown in the interactive UI
+---| "prefix" | "keywords" | "owner" | "language" | "topic" | "stars"
 
--- Request tool identifiers (used in config/options)
----@alias RequestTool "gh" | "curl" | "wget"
+---@alias RequestTool
+--- Supported CLI tools for making API requests
+---| "gh" | "curl" | "wget"
 
----@class CloneOption
----@field std_dir string
----@field type string
-
--- Future enums could include:
--- @alias LayoutType "horizontal" | "vertical"
--- @alias ListSort "stars" | "updated" | "name"
-
-return {}
+---@alias LayoutType
+--- Terminal layout type used in UI settings or terminal modules
+---| "horizontal" | "vertical" | "float" | ""
