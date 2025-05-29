@@ -13,7 +13,7 @@ local _record_metrics, _fetch_from_api_fallback
 -- Debugging and Utilities
 local notify = require("reposcope.utils.debug").notify
 local generate_uuid = require("reposcope.utils.core").generate_uuid
-local record_metrics = require("reposcope.utils.metrics")
+local metrics = require("reposcope.utils.metrics")
 local request_state = require("reposcope.state.requests_state")
 -- Readme Utilities and Cache
 local readme_fetch_api = require("reposcope.providers.github.readme.readme_fetcher").fetch_api
@@ -98,14 +98,14 @@ function _record_metrics(repo, repo_name)
   local uuid = generate_uuid()
   local ok, source = readme_cache.has(repo_name)
 
-  if not ok or not record_metrics() then
+  if not ok or not metrics.record_metrics() then
     return
   end
 
   if source == "ram" then
-    record_metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "readme_manager")
+    metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "readme_manager")
   elseif source == "file" then
-    record_metrics.increase_fcache_hit(uuid, repo_name, repo.html_url, "readme_manager")
+    metrics.increase_fcache_hit(uuid, repo_name, repo.html_url, "readme_manager")
   end
 end
 
