@@ -1,5 +1,5 @@
----@class ReposcopeHealth
----@field check fun(): nil Performs a health check for reposcope.nvim environment
+---@module 'reposcope.health'
+---@brief Health module of the Reposcope Plugin
 local M = {}
 
 -- Health and Diagnostic Modules
@@ -9,6 +9,7 @@ local checks = require("reposcope.utils.checks")
 
 
 ---Performs a health check for reposcope.nvim environment
+---@return nil
 function M.check()
   health.start("Checking reposcope.nvim environment")
 

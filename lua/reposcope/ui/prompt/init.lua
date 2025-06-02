@@ -19,9 +19,9 @@ local prompt_manager = require("reposcope.ui.prompt.prompt_manager")
 ---Opens the prompt UI
 ---@returns nil
 function M.initialize()
-  if config.options.layout ~= "default" then
+  if config.options.layout ~= "default" then  -- REF: If layouts are implemented, change
     notify("[reposcope] Unsupported prompt layout: " .. config.options.layout, 3)
-    return
+    config.options.layout = "default"
   end
 
   prompt_manager.open_windows()

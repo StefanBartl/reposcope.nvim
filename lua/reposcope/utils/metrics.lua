@@ -2,7 +2,7 @@
 ---@brief Tracks and logs all API-related request metrics, rate limits, and cache hits in Reposcope.
 ---@see reposcope.types.classes.utils
 
----@class ReposcopeMetrics : ReposcopeMetricsDef
+---@class ReposcopeMetrics : ReposcopeMetricsModule
 ---@see reposcope.types.classes.utils
 local M = {}
 

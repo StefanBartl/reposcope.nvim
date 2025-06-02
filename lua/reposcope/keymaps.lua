@@ -1,25 +1,29 @@
----@class UIKeymaps
----@field set_ui_keymaps fun(): nil Applies all UI-related keymaps
----@field unset_ui_keymaps fun(): nil Removes all UI-related keymaps
----@field set_prompt_keymaps fun(): nil Applies all prompt-related keymaps
----@field unset_ui_keymaps fun(): nil Removes all prompt-related keymaps
----@field set_clone_keymaps fun(): nil Applies all clone-related keymaps
----@field unset_clone_keymaps fun(): nil Removes all clone-related keymaps
----@field set_user_keymaps fun(map_cfg?: table, opts?: table): nil Sets user keymaps for opening/closing Reposcope
+---@module 'reposcope.keymaps'
+---@brief Definition of the keymaps for the Reposcope Plugin
+
+---@class UIKeymaps: UIKeymapsModule
 local M = {}
 
--- State Modules (Managing UI and Prompt State)
+-- Vim Utilities
+local tbl_extend = vim.tbl_extend
+local list_extend = vim.list_extend
+local set_km = vim.keymap.set
+local nvim_get_current_buf = vim.api.nvim_get_current_buf
+local nvim_win_get_cursor = vim.api.nvim_win_get_cursor
+local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
+local nvim_feedkeys = vim.api.nvim_feedkeys
+local nvim_replace_termcodes = vim.api.nvim_replace_termcodes
+--- Project dependencies
 local ui_state = require("reposcope.state.ui.ui_state")
--- Providers
-local provider_controller = require("reposcope.controllers.provider_controller")
--- UI Components (Preview and Navigation)
-local readme_viewer = require("reposcope.ui.actions.readme_viewer")
-local readme_editor = require("reposcope.ui.actions.readme_editor")
-local navigate_list = require("reposcope.ui.prompt.prompt_list_navigate")
-local prompt_focus = require("reposcope.ui.prompt.prompt_focus")
--- Utility Modules (Debugging and Notifications)
+local fetch_readme_for_selected = require("reposcope.controllers.provider_controller").fetch_readme_for_selected
+local prompt_and_clone = require("reposcope.controllers.provider_controller").prompt_and_clone
+local open_viewer = require("reposcope.ui.actions.readme_viewer").open_viewer
+local open_editor = require("reposcope.ui.actions.readme_editor").open_editor
+local navigate_list_in_prompt = require("reposcope.ui.prompt.prompt_list_navigate").navigate_list_in_prompt
+local navigate = require("reposcope.ui.prompt.prompt_focus").navigate
 local notify = require("reposcope.utils.debug").notify
-local core = require("reposcope.utils.core")
+local flatten_table = require("reposcope.utils.core").flatten_table
+local tbl_islist = require("reposcope.utils.core").tbl_islist
 local defaults = require("reposcope.defaults")
 
 local _registry = {}
@@ -28,16 +32,20 @@ local unmap_over_bufs
 local clear_registered_keymaps
 
 ---Apply all UI-related keymaps
+---@return nil
 function M.set_ui_keymaps()
   M.set_close_ui_keymaps()
   M.set_prompt_keymaps()
 end
 
+
 ---Remove all UI-related keymaps
+---@return nil
 function M.unset_ui_keymaps()
   M.unset_close_ui_keymaps()
   M.unset_prompt_keymaps()
 end
+
 
 ---Sets the same keymap for multiple buffers.
 ---@param modes string|string[] Keymap modes (e.g. "n", "i", {"n", "i"})
@@ -46,6 +54,7 @@ end
 ---@param bufs number[]|table|number List or map of buffer handles, or single buffer
 ---@param opts table? Keymap options
 ---@param tag string? Optional tag to store in registry
+---@return nil
 function map_over_bufs(modes, lhs, rhs, bufs, opts, tag)
   opts = opts or {}
 
@@ -53,7 +62,7 @@ function map_over_bufs(modes, lhs, rhs, bufs, opts, tag)
 
   if type(bufs) == "number" then
     table.insert(resolved, bufs)
-  elseif core.tbl_islist(bufs) then
+  elseif tbl_islist(bufs) then
     resolved = bufs
   elseif type(bufs) == "table" then
     -- Named map: { prefix = 7, owner = 8, ... }
@@ -63,8 +72,8 @@ function map_over_bufs(modes, lhs, rhs, bufs, opts, tag)
   end
 
   for _, buf in ipairs(resolved) do
-    if type(buf) == "number" and vim.api.nvim_buf_is_valid(buf) then
-      vim.keymap.set(modes, lhs, rhs, vim.tbl_extend("force", opts, { buffer = buf }))
+    if type(buf) == "number" and nvim_buf_is_valid(buf) then
+      set_km(modes, lhs, rhs, vim.tbl_extend("force", opts, { buffer = buf }))
 
       table.insert(_registry, {
         mode = modes,
@@ -77,17 +86,18 @@ function map_over_bufs(modes, lhs, rhs, bufs, opts, tag)
 end
 
 
+---@private
 ---Unsets a keymap from one or more buffers
 ---@param mode string|string[] Keymap mode(s)
 ---@param lhs string Left-hand side keymap
 ---@param bufs number[]|table|number Buffers to remove keymap from
----@private
+---@return nil
 function unmap_over_bufs(mode, lhs, bufs)
   local resolved = {}
 
   if type(bufs) == "number" then
     table.insert(resolved, bufs)
-  elseif core.tbl_islist(bufs) then
+  elseif tbl_islist(bufs) then
     resolved = bufs
   elseif type(bufs) == "table" then
     for _, buf in pairs(bufs) do
@@ -96,7 +106,7 @@ function unmap_over_bufs(mode, lhs, bufs)
   end
 
   for _, buf in ipairs(resolved) do
-    if type(buf) == "number" and vim.api.nvim_buf_is_valid(buf) then
+    if type(buf) == "number" and nvim_buf_is_valid(buf) then
       pcall(vim.keymap.del, mode, lhs, { buffer = buf })
     end
   end
@@ -104,6 +114,7 @@ end
 
 
 ---Set prompt-specific <CR> and arrow key keymaps
+---@return nil
 function M.set_prompt_keymaps()
   local prompt_bufs = ui_state.buffers.prompt
   if type(prompt_bufs) ~= "table" then
@@ -123,85 +134,86 @@ function M.set_prompt_keymaps()
       mode = {"n", "i"},
       lhs = "<Up>",
       rhs = function()
-        navigate_list.navigate_list_in_prompt("up")
-        provider_controller.fetch_readme_for_selected()
+        navigate_list_in_prompt("up")
+        fetch_readme_for_selected()
       end,
     },
     {
       mode = {"n", "i"},
       lhs = "<Down>",
       rhs = function()
-        navigate_list.navigate_list_in_prompt("down")
-        provider_controller.fetch_readme_for_selected()
+        navigate_list_in_prompt("down")
+
+        fetch_readme_for_selected()
       end,
     },
     {
       mode = {"n", "i"},
       lhs = "<C-w>",
       rhs = function()
-        prompt_focus.navigate("next")
+        navigate("next")
       end,
     },
     {
       mode = {"i"},
       lhs = "<C-h>",
       rhs = function()
-        prompt_focus.navigate("prev")
+        navigate("prev")
       end,
     },
     {
       mode = {"i"},
       lhs = "<S-Tab>",
       rhs = function()
-        prompt_focus.navigate("prev")
+        navigate("prev")
       end,
     },
     {
       mode = {"i"},
       lhs = "<C-l>",
       rhs = function()
-        prompt_focus.navigate("next")
+        navigate("next")
       end,
     },
     {
       mode = {"i"},
       lhs = "<Tab>",
       rhs = function()
-        prompt_focus.navigate("next")
+        navigate("next")
       end,
     },
     {
       mode = {"n", "i"},
       lhs = "<C-v>",
       rhs = function()
-      readme_viewer.open_viewer()
+      open_viewer()
       end,
     },
    {
       mode = {"n", "i"},
       lhs = "<C-b>",
       rhs = function()
-        readme_editor.open_editor()
+        open_editor()
       end,
     },
     {
       mode = {"n", "i"},
       lhs = "<C-c>",
       rhs = function()
-        provider_controller.prompt_and_clone()
+        prompt_and_clone()
       end,
     },
     {
       mode = {"n", "i"},
       lhs = "<BS>",
       rhs = function()
-        local buf = vim.api.nvim_get_current_buf()
-        local cursor_pos = vim.api.nvim_win_get_cursor(0)
+        local buf = nvim_get_current_buf()
+        local cursor_pos = nvim_win_get_cursor(0)
 
         if ui_state.buffers.prompt and buf == ui_state.buffers.prompt.keywords and cursor_pos[1] == 2 and cursor_pos[2] == 0 then
           notify("[reposcope] Backspace disabled in column 0 of line 2", 2)
         else
-          vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<BS>", true, false, true), "n", false)
+          nvim_feedkeys(nvim_replace_termcodes("<BS>", true, false, true), "n", false)
         end
       end,
    }
@@ -209,9 +221,9 @@ function M.set_prompt_keymaps()
   }
 
   for field, buf in pairs(prompt_bufs) do
-    if type(buf) == "number" and vim.api.nvim_buf_is_valid(buf) then
+    if type(buf) == "number" and nvim_buf_is_valid(buf) then
       for _, map in ipairs(mappings) do
-        vim.keymap.set(map.mode, map.lhs, map.rhs, { buffer = buf, silent = true })
+        set_km(map.mode, map.lhs, map.rhs, { buffer = buf, silent = true })
         table.insert(_registry, {
           mode = map.mode,
           lhs = map.lhs,
@@ -227,6 +239,7 @@ end
 ---These include `<Esc>` and `<C-w>` in normal mode for closing the UI.
 ---`<Esc>` and `<C-w>` in insert and terminal mode switches to normal mode.
 ---Registered keymaps are tagged as 'reposcope_ui' for later cleanup.
+---@return nil
 function M.set_close_ui_keymaps()
   local buffers = {
     ui_state.buffers.backg,
@@ -234,10 +247,10 @@ function M.set_close_ui_keymaps()
     ui_state.buffers.list,
   }
 
-  local prompt_buffers_list = core.flatten_table(ui_state.buffers.prompt)
-  vim.list_extend(buffers, prompt_buffers_list)
+  local prompt_buffers_list = flatten_table(ui_state.buffers.prompt)
+  list_extend(buffers, prompt_buffers_list)
 
-  -- Normal mode: <Esc> close UI
+  -- <Esc> close UI
   map_over_bufs(
     "n", "<Esc>",
     function()
@@ -248,7 +261,16 @@ function M.set_close_ui_keymaps()
     "reposcope_ui"
   )
 
-  -- Normal mode: <C-w> close UI
+  -- <Esc> -> Normal Mode
+  map_over_bufs(
+    { "i", "t", "v" }, "<Esc>",
+    "<C-\\><C-n>",
+    buffers,
+    { silent = true },
+    "reposcope_ui"
+  )
+
+  -- <C-w> close UI
   map_over_bufs(
     "n", "<C-w>",
     function()
@@ -259,16 +281,8 @@ function M.set_close_ui_keymaps()
     "reposcope_ui"
   )
 
-  -- Insert, Visual & Terminal Mode: <Esc> -> Normal Mode
-  map_over_bufs(
-    { "i", "t", "v" }, "<Esc>",
-    "<C-\\><C-n>",
-    buffers,
-    { silent = true },
-    "reposcope_ui"
-  )
 
-  --Insert, Visual & Terminal Mode: <C-w> -> No operations
+  -- <C-w> -> No operations
   map_over_bufs(
     { "i", "t", "v" }, "<C-w>",
     "<Nop>",
@@ -279,10 +293,10 @@ function M.set_close_ui_keymaps()
 
 end
 
+---@private
 ---Clear all registered keymaps with optional tag.
 ---If no tag is provided, only 'reposcope_'-prefixed tags are accepted.
 ---@param tag string|nil
----@private
 function clear_registered_keymaps(tag)
   if not tag or not tag:find("^reposcope_") then
     notify(
@@ -303,12 +317,16 @@ function clear_registered_keymaps(tag)
   _registry = remaining
 end
 
+
 ---Remove all prompt-specific keymaps
+---@return nil
 function M.unset_prompt_keymaps()
   clear_registered_keymaps("reposcope_prompt")
 end
 
+
 ---Remove all ui-specific keymaps
+---@return nil
 function M.unset_close_ui_keymaps()
   clear_registered_keymaps("reposcope_ui")
 end
@@ -322,23 +340,23 @@ function M.set_user_keymaps(map_cfg, opts)
   map_cfg = map_cfg or defaults.options.keymaps
   opts = opts or defaults.options.keymap_opts
 
-  vim.keymap.set("n", map_cfg.open, function()
+  set_km("n", map_cfg.open, function()
     local ok, err = pcall(function()
       require("reposcope.init").open_ui()
     end)
     if not ok then
       print("Error while opening reposcope: " .. err)
     end
-  end, vim.tbl_extend("force", { desc = "Open Reposcope" }, opts))
+  end, tbl_extend("force", { desc = "Open Reposcope" }, opts))
 
-  vim.keymap.set("n", map_cfg.close, function()
+  set_km("n", map_cfg.close, function()
     local ok, err = pcall(function()
       require("reposcope.init").close_ui()
     end)
     if not ok then
       print("Error while closing reposcope: " .. err)
     end
-  end, vim.tbl_extend("force", { desc = "Close Reposcope" }, opts))
+  end, tbl_extend("force", { desc = "Close Reposcope" }, opts))
 end
 
 return M
