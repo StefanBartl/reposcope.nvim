@@ -297,6 +297,7 @@ end
 ---Clear all registered keymaps with optional tag.
 ---If no tag is provided, only 'reposcope_'-prefixed tags are accepted.
 ---@param tag string|nil
+---@return nil
 function clear_registered_keymaps(tag)
   if not tag or not tag:find("^reposcope_") then
     notify(

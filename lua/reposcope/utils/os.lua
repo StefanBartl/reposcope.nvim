@@ -1,16 +1,8 @@
----@class OSUtils
+---@module 'reposcope.utils.os'
 ---@brief Provides OS-specific utilities, such as opening URLs in the default web browser
----@description
----The `OSUtils` module provides a set of utility functions for OS-specific operations.
----Currently, it supports opening URLs in the default web browser on Linux, macOS, and Windows.
----This is useful for allowing users to quickly access external resources directly from the UI.
----
---- Supported OS:
---- - Linux (using `xdg-open`)
---- - macOS (using `open`)
---- - Windows (using `start`)
----@field open_url fun(url: string): nil Opens the given URL in the system's default web browser
+--- Currently, it supports opening URLs in the default web browser on Linux, macOS, and Windows.
 
+---@class OSUtils : OSUtilsModule
 local M = {}
 
 -- Debugging Utility

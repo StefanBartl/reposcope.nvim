@@ -1,21 +1,41 @@
----@class ReposcopeStats
----@field show_stats fun(): nil Displays the request statistics in a floating window
----@field calculate_extended_stats fun(): number, string Calculates the average duration and most frequent query
----@field get_most_frequent_query fun(query_count: table<string, number>): string Determines the most frequent query
+---@module 'reposcope.ui.stats'
+---@brief Displays and analyzes API request statistics in a floating UI window.
+---@description
+--- This module renders session and total API usage statistics such as successful requests,
+--- cache hits, average durations, and most frequent queries in a floating popup.
+
+---@class Stats : StatsModule
 local M = {}
+
+-- Vim Utilities
+local fn = vim.fn
+local api = vim.api
+local filereadable = fn.filereadable
+local readfile = fn.readfile
+local buf_is_valid = api.nvim_buf_is_valid
+local buf_delete = api.nvim_buf_delete
+local buf_set_lines = api.nvim_buf_set_lines
+local win_is_valid = api.nvim_win_is_valid
+local win_set_current = api.nvim_set_current_win
+local open_win = api.nvim_open_win
+local buf_del_keymap = api.nvim_buf_del_keymap
+local set_keymap = vim.keymap.set
 
 -- Metrics Management (Tracking Performance and Usage Statistics)
 local metrics = require("reposcope.utils.metrics")
 -- State Management (Stats Popup)
 local stats_state = require("reposcope.state.popups.stats_popup").stats
--- Debugging Utility
+-- Configuration & Debugging
+local get_option = require("reposcope.config").get_option
 local notify = require("reposcope.utils.debug").notify
 
 
---- Displays the request statistics in a floating window
+---Displays the request statistics in a floating window.
+---Creates a new window if none exists, or focuses the existing one.
+---@return nil
 function M.show_stats()
-  if stats_state.win and vim.api.nvim_win_is_valid(stats_state.win) then
-    vim.api.nvim_set_current_win(stats_state.win)
+  if stats_state.win and win_is_valid(stats_state.win) then
+    win_set_current(stats_state.win)
     return
   end
 
@@ -47,13 +67,12 @@ function M.show_stats()
     string.format("Most Frequent Query: %s", most_frequent_query or "N/A"),
   }
 
-  -- Create a floating window for the stats
   stats_state.buf = require("reposcope.utils.protection").create_named_buffer("reposcope://stats")
-  vim.api.nvim_buf_set_lines(stats_state.buf, 0, -1, false, lines)
+  buf_set_lines(stats_state.buf, 0, -1, false, lines)
 
   local width = 50
   local height = #lines
-  stats_state.win = vim.api.nvim_open_win(stats_state.buf, true, {
+  stats_state.win = open_win(stats_state.buf, true, {
     relative = "editor",
     width = width,
     height = height,
@@ -65,42 +84,40 @@ function M.show_stats()
 
   vim.bo[stats_state.buf].modifiable = false
 
-  vim.keymap.set("n", "q", function()
-    M.close_stats()
-  end, { noremap = true, silent = true, buffer = stats_state.buf })
-
-  vim.keymap.set("n", "<Esc>", function()
-    M.close_stats()
-  end, { noremap = true, silent = true, buffer = stats_state.buf })
-
+  set_keymap("n", "q", function() M.close_stats() end, { noremap = true, silent = true, buffer = stats_state.buf })
+  set_keymap("n", "<Esc>", function() M.close_stats() end, { noremap = true, silent = true, buffer = stats_state.buf })
 end
 
-function M.close_stats()
-  if stats_state.buf and vim.api.nvim_buf_is_valid(stats_state.buf) then
-    vim.api.nvim_buf_del_keymap(stats_state.buf, "n", "<Esc>")
-    vim.api.nvim_buf_del_keymap(stats_state.buf, "n", "q")
 
-    vim.api.nvim_buf_delete(stats_state.buf, { force = true })
+---Closes the statistics popup window and removes associated keymaps.
+---@return nil
+function M.close_stats()
+  if stats_state.buf and buf_is_valid(stats_state.buf) then
+    buf_del_keymap(stats_state.buf, "n", "<Esc>")
+    buf_del_keymap(stats_state.buf, "n", "q")
+    buf_delete(stats_state.buf, { force = true })
     stats_state.buf = nil
   end
 
-  if stats_state.win and vim.api.nvim_win_is_valid(stats_state.win) then
-    vim.api.nvim_win_close(stats_state.win, true)
+  if stats_state.win and win_is_valid(stats_state.win) then
+    api.nvim_win_close(stats_state.win, true)
     stats_state.win = nil
   end
 end
 
---- Calculates the average duration and most frequent query
----@return number, string The average duration and most frequent query
-function M.calculate_extended_stats()
-  local file_path = require("reposcope.config").get_option("logfile_path")
 
-  if not file_path or not vim.fn.filereadable(file_path) then
+---Calculates the average request duration and most frequent query from logs.
+---@return number average_duration The average request duration in milliseconds
+---@return string most_frequent_query The most frequently used search query
+function M.calculate_extended_stats()
+  local file_path = get_option("logfile_path")
+
+  if not file_path or not filereadable(file_path) then
     notify("[reposcope] File not readable or does not exist: " .. file_path, 4)
     return 0, "N/A"
   end
 
-  local ok, raw = pcall(vim.fn.readfile, file_path)
+  local ok, raw = pcall(readfile, file_path)
   if not ok then
     notify("[reposcope] Error reading file: " .. file_path .. " - " .. raw, 4)
     return 0, "N/A"
@@ -135,9 +152,10 @@ function M.calculate_extended_stats()
   return average_duration, most_frequent_query
 end
 
---- Determines the most frequent query from a query count table
----@param query_count table<string, number> Table of query counts
----@return string The most frequent query
+
+---Finds the most frequently used query from a table of query counts.
+---@param query_count table<string, number> Map of query strings to occurrence count
+---@return string most_frequent_query The most frequent query or "N/A"
 function M.get_most_frequent_query(query_count)
   local most_frequent_query = nil
   local max_count = 0
@@ -153,3 +171,4 @@ function M.get_most_frequent_query(query_count)
 end
 
 return M
+

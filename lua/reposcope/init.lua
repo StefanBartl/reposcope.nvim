@@ -55,7 +55,7 @@ local close_autocmd_id
 
 ---Initializes the Reposcope UI by applying user options and performing tool checks.
 --- This function should be called once during plugin setup.
----@param opts ConfigOptions|nil Optional configuration options to override defaults
+---@param opts PartialConfigOptions Optional configuration options to override defaults
 ---@return nil
 function M.setup(opts)
   config.setup(opts or {})

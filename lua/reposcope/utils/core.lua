@@ -1,16 +1,14 @@
----@class CoreUtils
----@field tbl_find fun(tbl: table, value: any): integer|nil Searches for a value in the table and returns its index
----@field tbl_islist fun(t: any): boolean Checks if a table is a proper list: integer keys 1..#t without gaps or non-integer keys.
----@field flatten_table fun(input: table, result?: table): table Recursively flattens a nested table into a flat list
----@field dedupe_list fun(list: string[]): string[] Returns a new list with all duplicates removed (preserving order)
----@field put_to_front_if_present fun(list: string[], value: string): string[] Ensures that the given value appears first in the list if present
----@field ensure_string fun(val: string): string Ensures that a given argument 'val' is from type string, else returns empty string
----@field generate_uuid fun(): string  Creates a UUID based on actual timestamp
+---@module 'reposcope.utils.core'
+---@brief Core utility functions for list operations, UUIDs, and type safety.
+---@description
+--- This module provides reusable low-level utilities including table operations,
+--- value validation, and UUID generation. It is used across multiple layers of
+--- Reposcope to simplify logic and reduce redundancy.
+
+---@class CoreUtils : CoreUtilsModule
 local M = {}
 
--- Low-Level Utilities (Libuv for High-Performance Timers)
 local uv = vim.loop
-
 
 ---Searches for a value in the table and returns its index.
 ---@param tbl table The table to search in.

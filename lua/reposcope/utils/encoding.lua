@@ -1,7 +1,10 @@
----@class EncodingUtils
----@field urlencode fun(str: string): string Encodes a string for safe URL usage
----@field decode_base64 fun(encoded: string): string Decodes a Base64-encoded string (compatible with Lua)
+---@module 'reposcope.utils.encoding'
+---@brief Utility functions for string encoding (URL, Base64).
+
+---@class EncodingUtils : EncodingUtilsModule
 local M = {}
+
+local system = vim.fn.system
 
 --- Encodes a string for safe URL usage (percent-encoding)
 ---@param str string The string to be URL-encoded
@@ -18,12 +21,13 @@ function M.urlencode(str)
   return url_encoded
 end
 
---- Decodes a Base64-encoded string (compatible with Lua)
+
+---Decodes a Base64-encoded string compatible with Lua
 ---@param encoded string The Base64-encoded string to decode
 ---@return string The decoded string
 function M.decode_base64(encoded)
-  -- Use Lua's native base64 decoding (more efficient)
-  local decoded = vim.fn.system("echo '" .. encoded .. "' | base64 --decode")
+  -- Use Lua's native base64 decoding
+  local decoded = system("echo '" .. encoded .. "' | base64 --decode")
   return decoded
 end
 

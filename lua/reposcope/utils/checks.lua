@@ -1,8 +1,7 @@
----@class ReposcopeChecks Utility functions for checking environment conditions and available binaries.
----@field has_binary fun(name: string): boolean Returns true if the given binary is executable on the system.
----@field first_available fun(binaries: string[]): string|nil Returns the first available binary from a list or nil if none found.
----@field resolve_request_tool fun(requesters?: string[]): nil Selects the preferred available request tool and sets it in config.
----@field has_env fun(name: string): boolean Returns true if the given environment variable is set and non-empty.
+---@module 'reposcope.utils.checks'
+---@brief Checks Utility module for Reposcope
+
+---@class ReposcopeChecks : ReposcopeChecksModule 
 local M = {}
 
 -- Configuration (Global Configuration)
@@ -13,12 +12,15 @@ local tbl_find = require("reposcope.utils.core").tbl_find
 
 ---Checks if a given binary is available in the system's PATH
 ---@param name string The name of the binary to check
+---@return boolean available True if the binary is executable in PATH
 function M.has_binary(name)
   return vim.fn.executable(name) == 1
 end
 
+
 ---Returns the first available binary from a list
 ---@param binaries string[] A list of binary names to check
+---@return string|nil available_binary The name of the first available binary, or nil if none found
 function M.first_available(binaries)
   for _, bin in ipairs(binaries) do
     if M.has_binary(bin) then return bin end
@@ -26,8 +28,11 @@ function M.first_available(binaries)
   return nil
 end
 
----Resolves and sets the preferred request tool for Reposcope
----@param requesters? string[] Optional list of preferred request tools to use
+
+---Resolves and sets the preferred request tool for Reposcope.
+---Uses user config, fallback list, and system availability to set a valid requester.
+---@param requesters? string[] Optional list of preferred request tools to use (e.g. { "gh", "curl", "wget" })
+---@return nil
 function M.resolve_request_tool(requesters)
   requesters = requesters or config.options.preferred_requesters or { "gh", "curl", "wget" }
   local req_tool = config.options.request_tool or nil
@@ -40,13 +45,15 @@ function M.resolve_request_tool(requesters)
   local new_req_tool = M.first_available(requesters)
   if not req_tool then
     notify("[reposcope.nvim]: no request tool available", 4)
-  elseif new_req_tool then  -- last fallback (functioning request_tool is very important for reposcope)
+  elseif new_req_tool then
     config.options.request_tool = new_req_tool
   end
 end
 
+
 ---Checks if an environment variable is set and non-empty
 ---@param name string The name of the environment variable
+---@return boolean is_set True if the variable exists and is not empty
 function M.has_env(name)
   return vim.env[name] and #vim.env[name] > 0
 end
