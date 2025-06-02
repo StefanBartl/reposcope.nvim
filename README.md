@@ -1,6 +1,6 @@
 # reposcope.nvim
-![Alpha](https://img.shields.io/badge/status-alpha-orange)
-![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+![version](https://img.shields.io/badge/version-0.1-blue.svg)
+![license](https://img.shields.io/github/license/StefanBartl/reposcope.nvim)
 ![Lazy.nvim compatible](https://img.shields.io/badge/lazy.nvim-supported-success)
 
 ⚠️ This plugin is in **alpha stage**. Expect breaking changes, missing features, and sharp edges.
@@ -47,7 +47,7 @@ Search and preview repositories from GitHub (and other code forges) directly ins
 
 ```lua
 {
-  "yourname/reposcope.nvim",
+  "StefanBartl/reposcope.nvim",
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-telescope/telescope.nvim",
@@ -60,7 +60,7 @@ Search and preview repositories from GitHub (and other code forges) directly ins
 
 ```lua
 use {
-  "yourname/reposcope.nvim",
+  "StefanBartl/reposcope.nvim",
   requires = {
     "nvim-lua/plenary.nvim",
     "nvim-telescope/telescope.nvim",

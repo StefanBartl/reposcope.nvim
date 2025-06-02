@@ -1,5 +1,3 @@
-require("reposcope.types.configs")
-
 ---@class ReposcopeConfig
 local M = {}
 
@@ -10,7 +8,7 @@ local _sanitize_opts
 local defaults = require("reposcope.defaults").options
 local set_prompt_fields = require("reposcope.ui.prompt.prompt_config").set_fields
 
----@type ConfigOptions
+---@type ConfigOptionKey[]
 M.options = {
   prompt_fields = {},        -- Default fields for the prompt in the UI
   provider = "",             -- Default provider for Reposcope (GitHub)
@@ -19,6 +17,7 @@ M.options = {
   github_token = "",         -- Github authorization token (for higher request limits)
   results_limit = 0,         -- Default result limit for search queries
   preview_limit = 0,         -- Default preview limit for displayed results
+  ---@type LayoutType
   layout = "",               -- Default UI layout
   clone = {
     std_dir = "",            -- Standard path for cloning repositories
@@ -52,7 +51,7 @@ local logfile_path = base_cache .. "/logs/request_log.json"
 
 
 ---Setup function for configuration
----@param opts ConfigOptions User configuration options
+---@param opts ConfigOptionKey[] User configuration options
 function M.setup(opts)
   local sanitized = _sanitize_opts(opts or {})
 
@@ -71,17 +70,12 @@ function M.setup(opts)
   set_prompt_fields(M.options.prompt_fields)
 end
 
----REF: naming
 ---Returns the current filecache directory
 ---@return string The current filecache directory
-function M.get_readme_fcache_dir()
+function M.get_readme_filecache_dir()
   return filecache_path .. "/readme"
 end
 
----@overload fun(key: "clone"): CloneOptions
----@overload fun(key: "request_tool"): RequestTool
----@overload fun(key: "cache_dir"): string
----@overload fun(key: "logfile_path"): string
 ---@param key ConfigOptionKey
 ---@return any
 function M.get_option(key)

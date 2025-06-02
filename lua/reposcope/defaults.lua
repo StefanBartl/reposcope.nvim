@@ -1,11 +1,8 @@
-require("reposcope.types.aliases")
-
 ---@class ReposcopeDefaultConfig
 local M = {}
 
 ---@type ConfigOptions
 M.options = {
-  ---@type PromptField[]
   prompt_fields = { "prefix", "keywords", "owner", "language" }, -- Default fields for the prompt in the UI
   provider = "github", -- Default provider for Reposcope (GitHub)
   preferred_requesters = { "gh", "curl", "wget" }, -- Preferred tools for API requests
@@ -13,7 +10,7 @@ M.options = {
   github_token = "", -- Github authorization token (for higher request limits)
   results_limit = 25, -- Default result limit for search queries
   preview_limit = 200, -- Default preview limit for displayed results
-  layout = "default", -- Default UI layout
+  layout = "float", -- Default UI layout
   clone = {
     std_dir = "~/temp",  -- Standard path for cloning repositories
     type = "", -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)

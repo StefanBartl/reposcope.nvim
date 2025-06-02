@@ -8,9 +8,6 @@
 
 local M = {}
 
--- Debug utils
-local notify = require("reposcope.utils.debug").notify
-
 
 -- List of known GitHub filter keys (must be formatted as `key:value`)
 local FILTER_KEYS = {

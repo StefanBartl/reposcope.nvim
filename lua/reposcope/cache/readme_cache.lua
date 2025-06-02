@@ -30,7 +30,6 @@ M.readme_cache = {}
 ---@param repo_name string
 ---@return string|nil
 function M.get(repo_name)
-  assert(type(repo_name) == "string" and repo_name ~= "", "readme_cache.get: invalid repo_name")
   local ok, source = M.has(repo_name)
   if not ok then return nil end
 
@@ -47,13 +46,11 @@ end
 ---@param repo_name string
 ---@return boolean, "ram"|"file"|nil
 function M.has(repo_name)
-  assert(type(repo_name) == "string" and repo_name ~= "", "readme_cache.has: invalid repo_name")
-
   if M.get_ram(repo_name) then
     return true, "ram"
   end
 
-  local path = config.get_readme_fcache_dir() .. "/" .. repo_name .. ".md"
+  local path = config.get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
   if vim.fn.filereadable(path) == 1 then
     return true, "file"
   end
@@ -66,9 +63,6 @@ end
 ---@param readme_text string
 ---@return nil
 function M.set_ram(repo_name, readme_text)
-  assert(type(repo_name) == "string" and repo_name ~= "", "readme_cache.set_ram: invalid repo_name")
-  assert(type(readme_text) == "string", "readme_cache.set_ram: readme_text must be string")
-
   M.readme_cache[repo_name] = readme_text
 end
 
@@ -76,7 +70,6 @@ end
 ---@param repo_name string
 ---@return string|nil
 function M.get_ram(repo_name)
-  assert(type(repo_name) == "string" and repo_name ~= "", "readme_cache.get_ram: invalid repo_name")
   return M.readme_cache[repo_name]
 end
 
@@ -85,10 +78,7 @@ end
 ---@param readme_text string
 ---@return boolean
 function M.set_file(repo_name, readme_text)
-  assert(type(repo_name) == "string" and repo_name ~= "", "readme_cache.set_file: invalid repo_name")
-  assert(type(readme_text) == "string", "readme_cache.set_file: readme_text must be string")
-
-  local dir = config.get_readme_fcache_dir()
+  local dir = config.get_readme_filecache_dir()
   safe_mkdir(dir)
 
   local path = dir .. "/" .. repo_name .. ".md"
@@ -114,9 +104,7 @@ end
 ---@param repo_name string
 ---@return string|nil
 function M.get_file(repo_name)
-  assert(type(repo_name) == "string" and repo_name ~= "", "readme_cache.get_file: invalid repo_name")
-
-  local path = config.get_readme_fcache_dir() .. "/" .. repo_name .. ".md"
+  local path = config.get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
   if vim.fn.filereadable(path) == 0 then return nil end
 
   local ok, content = pcall(function()
@@ -142,7 +130,6 @@ end
 ---@return boolean
 function M.clear(repo_name, target)
   target = target or "both"
-  assert(type(repo_name) == "string" and repo_name ~= "", "readme_cache.clear: invalid repo_name")
 
   if target ~= "ram" and target ~= "file" and target ~= "both" then
     notify("[reposcope] Invalid target for clear: " .. tostring(target), vim.log.levels.ERROR)
@@ -159,7 +146,7 @@ function M.clear(repo_name, target)
   end
 
   if target == "file" or target == "both" then
-    local path = config.get_readme_fcache_dir() .. "/" .. repo_name .. ".md"
+    local path = config.get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
     if vim.fn.filereadable(path) == 1 then
       os.remove(path)
       cleared = true
@@ -174,7 +161,7 @@ end
 function M.clear_all()
   M.readme_cache = {}
 
-  local dir = config.get_readme_fcache_dir()
+  local dir = config.get_readme_filecache_dir()
   local ok, err = pcall(function()
     for file in vim.fn.readdir(dir) do
       os.remove(dir .. "/" .. file)
