@@ -1,5 +1,3 @@
-require("reposcope.types.aliases")
-
 ---@class UIPromptConfig
 ---@brief Static configuration values for the prompt input layout
 ---@description
