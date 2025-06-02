@@ -1,18 +1,25 @@
----@class ReposcopeDebug Debug utilities for inspecting UI-related buffers and windows.
----@field options DebugOptions Configurations options for debugging of reposcope
----@field is_dev_mode fun(): boolean Checks if developer mode is enabled
----@field set_dev_mode fun(value: boolean): nil Sets the debug mode to a specific value
----@field toggle_dev_mode fun(): nil Toggle dev mode (standard: false)
----@field notify fun(message: string, level?: number): nil Sends a notification message with an optional log level.
----@field debugf fun(msg: string, level?: number, log_level?: number, schedule?: boolean): nil Enhanced debugging function for logging
----@field print_win_buf_state fun(): nil Prints actual state for debugging to the console
+---@module 'reposcope.utils.debug'
+---@brief Debug and notification utilities for Reposcope.
+---@description
+--- Provides utilities for conditional notifications, debug messages, and developer-mode
+--- toggling. When `dev_mode` is enabled, debug logs and internal state information are printed
+--- automatically. Includes metatable-based dynamic access, structured logging (`debugf`), and
+--- runtime inspection helpers like `print_win_buf_state()`.
+
+---@class DebugUtils : DebugUtilsModule
 local M = {}
+
+-- Vim Utilities
+local notify = vim.notify
+local schedule = vim.schedule
+
 
 ---@class DebugOptions
 ---@field dev_mode boolean Enables developer mode (default: false)
 M.options = {
   dev_mode = true, -- Print all notifys  
 }
+
 
 --- Dynamically provides access to debug_mode value via metatable.
 --- The metatable ensures that access to debug_mode always returns the current value
@@ -25,29 +32,37 @@ setmetatable(M, {
   end
 })
 
+
 ---Checks if dev mode is enabled
+---@return nil
 function M.is_dev_mode()
   return M.options.dev_mode
 end
 
+
 ---Toggle dev mode config option 
+---@return nil
 function M.toggle_dev_mode()
   M.options.dev_mode = not M.options.dev_mode
 end
 
---- Sets the debug mode to a specific value
+
+---Sets the debug mode to a specific value
+---@return nil
 function M.set_dev_mode(value)
   M.options.dev_mode = value
 end
 
+
 ---Sends a notification message with an optional log level.
 ---@param message string The notification message
 ---@param level? number Optional vim.log.levels (default: INFO)
+---@return nil
 function M.notify(message, level)
   level = level or 2
   if M.is_dev_mode() or level >= 3 then
-    vim.schedule(function()
-      vim.notify(message, level)
+    schedule(function()
+      notify(message, level)
     end)
   end
 end
@@ -56,8 +71,9 @@ end
 ---@param msg string The debug message to display
 ---@param level number? The stack level to analyze (default is 2)
 ---@param log_level number? The log level (DEBUG by default)
----@param schedule boolean? Optional: Use vim.schedule for async notification
-function M.debugf(msg, level, log_level, schedule)
+---@param _schedule boolean? Optional: Use vim.schedule for async notification
+---@return nil
+function M.debugf(msg, level, log_level, _schedule)
   if M.is_dev_mode() then
     level = level or 2
     log_level = log_level or 1
@@ -75,11 +91,11 @@ function M.debugf(msg, level, log_level, schedule)
     )
 
     -- Output the debug message
-    if not schedule then
-      vim.notify(dmsg, log_level)
+    if not _schedule then
+      notify(dmsg, log_level)
     else
-      vim.schedule(function()
-        vim.notify(dmsg, log_level)
+      schedule(function()
+        notify(dmsg, log_level)
       end)
     end
   end
@@ -87,6 +103,7 @@ end
 
 
 ---Prints actual state for debugging to the console
+---@return nil
 function M.print_win_buf_state()
   print("State Buffers:", vim.inspect(require("reposcope.state.ui.ui_state").get_buffers()))
   print("State Windows:", vim.inspect(require("reposcope.state.ui.ui_state").get_windows()))

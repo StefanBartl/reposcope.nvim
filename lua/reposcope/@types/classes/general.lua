@@ -19,3 +19,4 @@
 
 ---@class ReposcopeHealthModule
 ---@field check fun(): nil Performs a health check for reposcope.nvim environment
+

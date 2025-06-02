@@ -67,7 +67,7 @@ local logfile_path = base_cache .. "/logs/request_log.json"
 
 
 ---Setup function for configuration
----@param opts ConfigOptionKey|nil User configuration options
+---@param opts PartialConfigOptions|nil User configuration options
 function M.setup(opts)
   local sanitized = _sanitize_opts(opts or {})
 

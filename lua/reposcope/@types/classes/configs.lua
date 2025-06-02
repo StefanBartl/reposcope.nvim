@@ -30,3 +30,19 @@
 ---@field options ConfigOptions Full configuration options
 ---@field setup fun(opts: table): nil Setup function to initialize the plugin
 ---@field get_option fun(key: ConfigOptionKey): any Retrieve a value from config.options
+
+--- Type to be able to pass the opts table to the setup function
+---@class PartialConfigOptions
+---@field prompt_fields? PromptField[]
+---@field provider? string
+---@field preferred_requesters? string[]
+---@field request_tool? string
+---@field github_token? string
+---@field results_limit? number
+---@field layout? LayoutType
+---@field clone? CloneOptions
+---@field keymaps? table<string, string>
+---@field keymap_opts? table
+---@field metrics? boolean
+---@field log_max? number
+

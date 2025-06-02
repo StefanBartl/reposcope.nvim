@@ -1,16 +1,17 @@
----@class UtilsText
----@field center_text fun(text: string, width: number): string[] Centers given text input and returns it, splitting lines without breaking words
----@field center_text_lines fun(lines: string[], width: number): string[] Centers an array of text lines within a specified width
----@field cut_text_for_line fun(offset: number, width: number, input: string): string Cuts given input to fit in 1 row and postfix it with '...'
----@field gen_padded_lines fun(height: number, content: string|string[]): string[] Pads or trims content to a specific number of lines
+---@module 'reposcope.utils.text_utils'
+---@brief Utilities for centering, cutting, and formatting textual content
+
+---@class TextUtils : TextUtilsModule
 local M = {}
 
 -- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
 
+
 ---Centers given text input and returns it, splitting lines without breaking words
 ---@param text string The text to be centered
 ---@param width number The maximum width for centering
+---@return string[]
 function M.center_text(text, width)
   local lines = {}
 
@@ -46,9 +47,11 @@ function M.center_text(text, width)
   return { string.rep(" ", math.max(pad, 0)) .. text }
 end
 
+
 ---Centers an array of text lines within a specified width
 ---@param lines string[] List of text lines to be centered
 ---@param width number The maximum width for centering
+---@return string[]
 function M.center_text_lines(lines, width)
   local centered_lines = {}
 
@@ -61,10 +64,12 @@ function M.center_text_lines(lines, width)
   return centered_lines
 end
 
+
 ---Cuts given input to fit in 1 row and postfix it with '...'
 ---@param offset integer Number of characters before the actual text (e.g. indent)
 ---@param width integer Total allowed width
 ---@param input string Text to shorten if needed
+---@return string
 function M.cut_text_for_line(offset, width, input)
   local max_length = width - offset - 3
   if #input <= max_length then
@@ -73,9 +78,11 @@ function M.cut_text_for_line(offset, width, input)
   return string.sub(input, 1, max_length) .. "..."
 end
 
+
 ---Pads or trims content to a specific number of lines
 ---@param height number
 ---@param content string|string[]
+---@return string[]
 function M.gen_padded_lines(height, content)
   local lines = {}
 

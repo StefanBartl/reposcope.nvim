@@ -1,12 +1,15 @@
----@class UtilsProtection Utility functions related to value normalization and scratch buffer management
----@field count_or_default fun(val: table|number|string, default: number): number Returns the item count if `val` is a table, the number if `val` is a number, or `default` otherwise
----@field create_named_buffer fun(name: string): integer|nil Creates a named scratch buffer, replacing any existing one with the same name
----@field is_valid_filename fun(filename: string|nil): boolean, string Normalizes a value into a non-zero count
----@field is_valid_path fun(path: string, nec_filename: boolean): boolean Validates if a given path or optional filepath is a valid and writable file path
----@field safe_mkdir fun(path: string): boolean Safely creates a directory (including parent directories)
----@field safe_execute_shell fun(command: string): boolean, string Executes a shell command safely and returns the success status and output
+---@module 'reposcope.utils.protection'
+---@brief Filesystem safety, validation, and path protection utilities.
+
+---@class UtilsProtection : UtilsProtectionModule
 local M = {}
 
+-- Vim Utilities
+local fn = vim.fn
+local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
+local nvim_buf_delete = vim.api.nvim_buf_delete
+local nvim_create_buf = vim.api.nvim_create_buf
+local nvim_buf_set_name = vim.api.nvim_buf_set_name
 -- Debugging Utility (Enhanced Debugging with Formatted Output)
 local debug = require("reposcope.utils.debug")
 local debugf = debug.debugf
@@ -19,6 +22,7 @@ local notify = debug.notify
 --- - Otherwise, returns the default.
 ---@param val table|number|string Input value (e.g. a table, number, or empty string)
 ---@param default number Fallback value if input is empty, zero, or invalid
+---@return number
 function M.count_or_default(val, default)
   if type(val) == "table" then
     local n = vim.tbl_count(val)
@@ -30,28 +34,29 @@ function M.count_or_default(val, default)
   end
 end
 
+
 ---Creates a scratch buffer with a given name.
 ---If a buffer with that name exists, it is deleted and replaced.
 ---@param name string Buffer name (e.g. "reposcope://preview")
----@return integer|nil buf Created buffer handle or nil if creation failed
+---@return Buffer Created buffer handle or nil if creation failed
 function M.create_named_buffer(name)
-  local existing = vim.fn.bufnr(name)
-  if existing ~= -1 and vim.api.nvim_buf_is_valid(existing) then
-    local ok, err = pcall(vim.api.nvim_buf_delete, existing, { force = true })
+  local existing = fn.bufnr(name)
+  if existing ~= -1 and nvim_buf_is_valid(existing) then
+    local ok, err = pcall(nvim_buf_delete, existing, { force = true })
     if not ok then
-      notify("[reposcope] Failed to delete buffer '" .. name .. "': " .. tostring(err), vim.log.levels.WARN)
+      notify("[reposcope] Failed to delete buffer '" .. name .. "': " .. tostring(err), 4)
     end
   end
 
-  local ok, buf = pcall(vim.api.nvim_create_buf, false, true)
+  local ok, buf = pcall(nvim_create_buf, false, true)
   if not ok then
-    notify("[reposcope] Failed to create buffer '" .. name .. "'", vim.log.levels.ERROR)
+    notify("[reposcope] Failed to create buffer '" .. name .. "'", 5)
     return nil
   end
 
-  local ok2, err = pcall(vim.api.nvim_buf_set_name, buf, name)
+  local ok2, err = pcall(nvim_buf_set_name, buf, name)
   if not ok2 then
-    notify("[reposcope] Failed to name buffer '" .. name .. "': " .. tostring(err), vim.log.levels.WARN)
+    notify("[reposcope] Failed to name buffer '" .. name .. "': " .. tostring(err), 4)
   end
 
   return buf
@@ -89,22 +94,23 @@ function M.is_valid_filename(filename)
 end
 
 
---- Validates if a given file path is a valid and writable log file path
---- @desc: creates not existing directory if path is valid
+---Validates if a given file path is a valid and writable log file path
+--- Sideffect: if path is valid and directory does not exost, it creates it
 ---@param path string The full path to the log file
 ---@param nec_filename? boolean Optional parameter to toggle testing filename
+---@return boolean
 function M.is_valid_path(path, nec_filename)
-  path = vim.fn.expand(path)
+  path = fn.expand(path)
 
   local filename = nil
   if nec_filename == true then
-    filename = vim.fn.fnamemodify(path, ":t")
+    filename = fn.fnamemodify(path, ":t")
   elseif not path:match("/$") then  -- This check is needed for user safety. `fnamemodify()` doesnt recognizy directories without ending '/'
     path = path .. "/"
   end
 
   -- Extract directory and filename
-  local dir = vim.fn.fnamemodify(path, ":h")
+  local dir = fn.fnamemodify(path, ":h")
   local dir_ok = M.safe_mkdir(dir)
 
   if dir_ok == false then
@@ -129,18 +135,19 @@ end
 
 ---Safely creates a directory (including parent directories)
 ---@param path string The directory path to create
+---@return boolean
 function M.safe_mkdir(path)
-  if vim.fn.isdirectory(path) == 1 then
+  if fn.isdirectory(path) == 1 then
     return true
   end
 
-  local created = vim.fn.mkdir(path, "p")
+  local created = fn.mkdir(path, "p")
   if created == 0 then
     notify("[reposcope] Error: Directory could not be created: " .. path, 4)
     return false
   end
 
-  if vim.fn.isdirectory(path) == 1 then
+  if fn.isdirectory(path) == 1 then
     if M.is_dir_writeable(path) then
       return true
     else
@@ -154,9 +161,11 @@ function M.safe_mkdir(path)
 
 end
 
+
 -- Check if the directory is writable
+---@return boolean
 function M.is_dir_writeable(dir)
- local testfile = vim.fn.fnameescape(dir .. "/.rs_write_test")
+ local testfile = fn.fnameescape(dir .. "/.rs_write_test")
  local file, err = io.open(testfile, "w")
  if file then
    file:close()
@@ -171,10 +180,13 @@ function M.is_dir_writeable(dir)
  end
 end
 
----Executes a shell command safely and returns the success status and output
+
+---Executes a shell command safely and returns the success status and output.
 ---@param command string The shell command to be executed
+---@return boolean success True if the command succeeded (exit code 0)
+---@return string output The standard output (or error output) of the command
 function M.safe_execute_shell(command)
-  local result = vim.fn.system(command)
+  local result = fn.system(command)
   if vim.v.shell_error ~= 0 then
     return false, result
   end
