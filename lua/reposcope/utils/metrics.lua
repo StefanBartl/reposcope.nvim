@@ -1,29 +1,24 @@
----@class ReposcopeMetrics
----@field req_count ReqCount Stores API request count for profiling purposes
----@field rate_limits RateLimits Stores the rate limits for the GitHub API (Core and Search)
----@field log_request fun(uuid: string, data: table): nil Logs request details to request_log.json in JSON object format
----@field increase_success fun(uuid: string, query: string, source: string, context: string, duration_ms: number, status_code: number) Increases the succes request count and logs it
----@field increase_failed fun(uuid: string, query: string, source: string, context: string, duration_ms: number, status_code: number, error?: string|nil): nil Increases the failed request count and logs it
----@field increase_cache_hit fun(uuid: string, query: string, source: string, context: string): nil Increases the cache hit count and logs it
----@field increase_fcache_hit fun(uuid: string, query: string, source: string, context: string): nil Increases the filecache hit count and logs it
----@field get_session_requests fun(): {successful: number, failed: number, cache_hitted: number, fcache_hitted: number } Retrieves the current session request count
----@field get_total_requests fun(): { successful: number, failed: number, cache_hitted: number, fcache_hitted: number } Retrieves the total request count from the file
----@field check_rate_limit fun(): nil Checks the current GitHub rate limit and displays a warning if low
----@field record_metrics fun(): boolean Returns state of record metrics boolean variable
----@field toogle_record_metrics fun(): boolean Toogle the state of record metrics and returns it
----@field set_record_metrics fun(bool: boolean): boolean Set's the state of record metrics and returns it
+---@module 'reposcope.utils.metrics'
+---@brief Tracks and logs all API-related request metrics, rate limits, and cache hits in Reposcope.
+---@see reposcope.types.classes.utils
+
+---@class ReposcopeMetrics : ReposcopeMetricsDef
+---@see reposcope.types.classes.utils
 local M = {}
 
--- Project-specific Configuration and Utility Modules
-local config = require("reposcope.config")
+-- Vim Utilities
+local filereadable = vim.fn.filereadable
+local readfile = vim.fn.readfile
+local writefile = vim.fn.writefile
+local fs_stat = vim.uv.fs_stat
+local schedule = vim.schedule
+local decode = vim.json.decode
+-- Project Imports
 local notify = require("reposcope.utils.debug").notify
+local config = require("reposcope.config")
 
 
----@class ReqCount Counts API requests for profiling purposes
----@field successful number Stores the count of successful API requests for the current session
----@field failed number Stores the count of failed API requests for the current session
----@field cache_hitted number Stores the count of cache hits for the current session
----@field fcache_hitted number Stores the count of filecache hits for the current session
+---@type ReqCount
 M.req_count = {
   successful = 0,    -- Successful API requests in this session
   failed = 0,        -- Failed API requests in this session
@@ -31,13 +26,7 @@ M.req_count = {
   fcache_hitted = 0, -- Filecache hits in this session
 }
 
----@class RateLimits
----@field core RateLimitDetails The rate limit details for the GitHub Core API (general API requests)
----@field search RateLimitDetails The rate limit details for the GitHub Search API (search-related API requests)
----@class RateLimitDetails
----@field limit number The maximum number of requests allowed
----@field remaining number The remaining requests in the current rate limit window
----@field reset number The UNIX timestamp when the rate limit will reset
+---@type RateLimits
 M.rate_limits = {
   core = {
     limit = 0,     -- The maximum number of requests allowed for the Core API
@@ -51,8 +40,8 @@ M.rate_limits = {
   }
 }
 
---- Retrieves the current session request counts
----@return { successful: number, failed: number, cache_hitted: number, fcache_hitted: number }
+---Retrieves the current session request counts
+---@return RequestMetricsData
 function M.get_session_requests()
   return {
     successful = M.req_count.successful,
@@ -62,8 +51,8 @@ function M.get_session_requests()
   }
 end
 
---- Retrieves the total request counts from the file
----@return { successful: number, failed: number, cache_hitted: number, fcache_hitted: number }
+---Retrieves the total request counts from the file
+---@return RequestMetricsData
 function M.get_total_requests()
   local log_path = config.get_option("logfile_path")
   if not log_path then
@@ -71,17 +60,16 @@ function M.get_total_requests()
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
-  if not vim.fn.filereadable(log_path) then
+  if not filereadable(log_path) then
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
-  ---@diagnostic disable-next-line vim.loop or vim.us fs_stat exists
-  local file_stats = vim.loop.fs_stat(log_path)
+  local file_stats = fs_stat(log_path)
   if file_stats and file_stats.size == 0 then
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
-  local ok, raw = pcall(vim.fn.readfile, log_path)
+  local ok, raw = pcall(readfile, log_path)
   if not ok then
     notify("[reposcope] Error reading stats file: " .. raw, 4)
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
@@ -90,7 +78,7 @@ function M.get_total_requests()
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
-  local json_data = vim.json.decode(table.concat(raw, "\n")) or {}
+  local json_data = decode(table.concat(raw, "\n")) or {}
 
   local successful, failed, cache_hitted, fcache_hitted = 0, 0, 0, 0
 
@@ -114,13 +102,14 @@ function M.get_total_requests()
   }
 end
 
---- Logs request details to request_log.json in JSON object format
----@param uuid string request identifier
+---Logs request details to request_log.json in JSON object format
+---@param uuid UUID request identifier
 ---@param data table The request data to log
+---@return nil
 local function log_request(uuid, data)
   -- Sicherstellen, dass uuid ein String ist
   if type(uuid) ~= "string" then
-    vim.notify("[reposcope] Invalid UUID type. Expected string, got " .. type(uuid), vim.log.levels.ERROR)
+    notify("[reposcope] Invalid UUID type. Expected string, got " .. type(uuid), vim.log.levels.ERROR)
     return
   end
 
@@ -132,14 +121,14 @@ local function log_request(uuid, data)
     return
   end
 
-  vim.schedule(function()
+  schedule(function()
     local logs = {}
 
     -- Read existing log file if available
-    if vim.fn.filereadable(log_path) == 1 then
-      local raw = vim.fn.readfile(log_path)      -- string[]
+    if filereadable(log_path) == 1 then
+      local raw = readfile(log_path)
       if raw and not vim.tbl_isempty(raw) then
-        local raw_json = table.concat(raw, "\n") -- string
+        local raw_json = table.concat(raw, "\n")
         local success, decoded_logs = pcall(function()
           return vim.json.decode(raw_json)
         end)
@@ -147,7 +136,7 @@ local function log_request(uuid, data)
         if success and type(decoded_logs) == "table" then
           logs = decoded_logs
         else
-          vim.notify("[reposcope] Invalid JSON format in log file. Starting fresh log.", vim.log.levels.WARN)
+          notify("[reposcope] Invalid JSON format in log file. Starting fresh log.", vim.log.levels.WARN)
         end
       end
     end
@@ -175,12 +164,19 @@ local function log_request(uuid, data)
       notify("[reposcope] Failed to encode logs to JSON: " .. tostring(json_or_err), 5)
       return
     end
-    vim.fn.writefile(vim.split(json_or_err, "\n"), log_path)
+    writefile(vim.split(json_or_err, "\n"), log_path)
 
   end)
 end
 
---- Increases the successful request count
+---Increases the successful request count
+---@param uuid UUID
+---@param query Query
+---@param source string
+---@param context string
+---@param duration_ms number
+---@param status_code number
+---@return nil
 function M.increase_success(uuid, query, source, context, duration_ms, status_code)
   M.req_count.successful = M.req_count.successful + 1
   log_request(uuid, {
@@ -194,7 +190,14 @@ function M.increase_success(uuid, query, source, context, duration_ms, status_co
   })
 end
 
---- Increases the failed request count
+---Increases the failed request count
+---@param uuid UUID
+---@param query Query
+---@param source string
+---@param context string
+---@param duration_ms number
+---@param status_code number
+---@return nil
 function M.increase_failed(uuid, query, source, context, duration_ms, status_code, error)
   M.req_count.failed = M.req_count.failed + 1
   log_request(uuid, {
@@ -209,7 +212,13 @@ function M.increase_failed(uuid, query, source, context, duration_ms, status_cod
   })
 end
 
---- Increases the cache hit count
+
+---Increases the cache hit count
+---@param uuid UUID
+---@param query Query
+---@param source string
+---@param context string
+---@return nil
 function M.increase_cache_hit(uuid, query, source, context)
   M.req_count.cache_hitted = M.req_count.cache_hitted + 1
   log_request(uuid, {
@@ -221,7 +230,13 @@ function M.increase_cache_hit(uuid, query, source, context)
   })
 end
 
---- Increases the cache hit count
+
+---Increases the cache hit count
+---@param uuid UUID
+---@param query Query
+---@param source string
+---@param context string
+---@return nil
 function M.increase_fcache_hit(uuid, query, source, context)
   M.req_count.fcache_hitted = M.req_count.fcache_hitted + 1
   log_request(uuid, {
@@ -233,7 +248,9 @@ function M.increase_fcache_hit(uuid, query, source, context)
   })
 end
 
---- Checks the current GitHub rate limit and displays a warning if low
+
+---Checks the current GitHub rate limit and displays a warning if low
+---@return nil
 function M.check_rate_limit()
   if M.rate_limits.core.limit > 0 and M.rate_limits.search.limit > 0 then
     local core_used = M.req_count.successful + M.req_count.failed
@@ -241,15 +258,15 @@ function M.check_rate_limit()
     local core_usage = 1 - (core_remaining / M.rate_limits.core.limit)
 
     if core_usage >= 0.9 then
-      vim.schedule(function()
-        vim.notify(string.format(
+      schedule(function()
+        notify(string.format(
           "[Reposcope] WARNING: GitHub API Core limit critical (%d/%d, remaining: %d)",
           core_used, M.rate_limits.core.limit, core_remaining
         ), 3)
       end)
     elseif core_usage >= 0.75 then
-      vim.schedule(function()
-        vim.notify(string.format(
+      schedule(function()
+        notify(string.format(
           "[Reposcope] INFO: GitHub API Core limit approaching (%d/%d, remaining: %d)",
           core_used, M.rate_limits.core.limit, core_remaining
         ), 2)
@@ -260,15 +277,15 @@ function M.check_rate_limit()
     local search_usage = 1 - (search_remaining / M.rate_limits.search.limit)
 
     if search_usage >= 0.9 then
-      vim.schedule(function()
-        vim.notify(string.format(
+      schedule(function()
+        notify(string.format(
           "[Reposcope] WARNING: GitHub API Search limit critical (remaining: %d)",
           search_remaining
         ), 3)
       end)
     elseif search_usage >= 0.75 then
-      vim.schedule(function()
-        vim.notify(string.format(
+      schedule(function()
+        notify(string.format(
           "[Reposcope] INFO: GitHub API Search limit approaching (remaining: %d)",
           search_remaining
         ), 2)
@@ -289,13 +306,13 @@ function M.check_rate_limit()
 
   http.get("https://api.github.com/rate_limit", function(response)
     if not response then
-      vim.schedule(function()
-        vim.notify("[Reposcope] Failed to fetch GitHub rate limit.", 4)
+      schedule(function()
+        notify("[Reposcope] Failed to fetch GitHub rate limit.", 4)
       end)
       return
     end
 
-    local data = vim.json.decode(response)
+    local data = decode(response)
     if data and data.resources then
       M.rate_limits.core.limit = data.resources.core.limit
       M.rate_limits.core.remaining = data.resources.core.remaining

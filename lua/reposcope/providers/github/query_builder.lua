@@ -20,7 +20,7 @@ local FILTER_KEYS = {
 
 ---Builds a search query string from prompt input
 ---@param input table<string, string>
----@return string
+---@return Query
 function M.build(input)
   if type(input) ~= "table" then return "" end
 
