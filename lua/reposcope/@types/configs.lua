@@ -25,7 +25,7 @@
 ---@field metrics boolean Enable or disable anonymous usage metrics
 ---@field log_max number Maximum log size (lines)
 
----@class ReposcopeConfig
+---@class ReposcopeConfigModule
 ---@brief Structure exposed to the outside and used during `setup()`
 ---@field options ConfigOptions Full configuration options
 ---@field setup fun(opts: table): nil Setup function to initialize the plugin

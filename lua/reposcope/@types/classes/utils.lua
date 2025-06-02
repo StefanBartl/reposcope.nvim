@@ -1,11 +1,11 @@
----@module 'reposcope.types.classes.utils'
+---@module 'reposcope.@types.classes.utils'
 ---@brief Class definitions for all utility modules in `reposcope.utils`
 
 
 
 --- === metrics.lua ===
 
----@class ReposcopeMetricsDef
+---@class ReposcopeMetricsModule
 ---@field req_count ReqCount Stores API request count for profiling purposes
 ---@field rate_limits RateLimits Stores the rate limits for the GitHub API (Core and Search)
 ---@field log_request fun(uuid: string, data: table): nil Logs request details to request_log.json in JSON object format

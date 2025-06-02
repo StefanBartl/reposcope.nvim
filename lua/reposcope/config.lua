@@ -1,4 +1,21 @@
----@class ReposcopeConfig
+---@module 'reposcope.config'
+---@brief Handles the dynamic configuration setup and access for Reposcope.
+---@description
+--- This module manages the active configuration of Reposcope. It merges user-provided options
+--- (via `.setup({ ... })`) with default values from `reposcope.defaults` and provides a unified
+--- interface to access configuration values during runtime.
+---
+--- Key responsibilities:
+--- - Validating and sanitizing `ConfigOptions`
+--- - Providing a `setup()` entry point for user configuration
+--- - Resolving nested default structures like `clone`, `keymaps`, etc.
+--- - Allowing access to values via `get_option(key)` abstraction
+--- - Computing fallback paths like `cache_dir` and `logfile_path`
+---
+--- The resulting `M.options` table is always fully populated and safe to use across modules.
+--- Use `get_option(key)` instead of accessing `M.options` directly to preserve fallback logic.
+
+---@class ReposcopeConfig : ReposcopeConfigModule
 local M = {}
 
 ---@description Forward declarations for private functions
@@ -50,7 +67,7 @@ local logfile_path = base_cache .. "/logs/request_log.json"
 
 
 ---Setup function for configuration
----@param opts ConfigOptionKey[] User configuration options
+---@param opts ConfigOptionKey|nil User configuration options
 function M.setup(opts)
   local sanitized = _sanitize_opts(opts or {})
 
@@ -69,11 +86,13 @@ function M.setup(opts)
   set_prompt_fields(M.options.prompt_fields)
 end
 
+
 ---Returns the current filecache directory
 ---@return string The current filecache directory
 function M.get_readme_filecache_dir()
   return filecache_path .. "/readme"
 end
+
 
 ---@param key ConfigOptionKey
 ---@return any
@@ -105,16 +124,17 @@ function M.get_option(key)
     return clone_result
   end
 
-  if key == "logfile_path" then --REF: if not in options table, then not via get_option
+  if key == "logfile_path" then
     return logfile_path
   end
 
-  if key == "cache_dir" then --REF: if not in options table, then not via get_option
+  if key == "cache_dir" then
     return filecache_path
   end
 
   return value
 end
+
 
 ---@private
 --- Sanitizes user-provided options: removes empty strings and unknown fields.

@@ -1,4 +1,17 @@
----@class ReposcopeDefaultConfig
+---@module 'reposcope.defaults'
+---@brief Provides the default configuration options for Reposcope.
+---@description
+--- This module defines the fallback values used by Reposcope when no user configuration
+--- is provided or only partial configuration is given. It returns a `ConfigOptions` table
+--- with all required fields, and serves as the base layer in the setup resolution cascade:
+---
+--- 1. `reposcope.defaults.options` — project-wide safe defaults
+--- 2. `config.lua`                — optional plugin-local overrides
+--- 3. `setup({ ... })`           — user-provided values in init.lua
+---
+--- This module should **not** be modified directly unless you're changing plugin defaults.
+
+---@class ReposcopeDefaultConfig : ReposcopeConfig
 local M = {}
 
 ---@type ConfigOptions
