@@ -5,7 +5,7 @@
 --- configuration keys, prompt field labels, request tools, and layout types.
 --- These aliases improve annotation consistency and LuaLS type inference.
 
----@alias ConfigOptionKey "provider" | "preferred_requesters" | "request_tool" | "github_token" | "results_limit" | "preview_limit" | "layout" | "clone" | "keymaps" | "keymap_opts" | "metrics" | "cache_dir" | "logfile_path" | "log_max"
+---@alias ConfigOptionKey "provider" | "preferred_requesters" | "request_tool" | "github_token" | "results_limit" | "layout" | "clone" | "keymaps" | "keymap_opts" | "metrics" | "cache_dir" | "logfile_path" | "log_max"
 
 --- Valid prompt fields shown in the interactive UI
 ---@alias PromptField "prefix" | "keywords" | "owner" | "language" | "topic" | "stars"

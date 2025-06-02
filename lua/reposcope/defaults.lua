@@ -9,7 +9,6 @@ M.options = {
   request_tool = "gh", -- Default request tool (GitHub CLI)
   github_token = "", -- Github authorization token (for higher request limits)
   results_limit = 25, -- Default result limit for search queries
-  preview_limit = 200, -- Default preview limit for displayed results
   layout = "float", -- Default UI layout
   clone = {
     std_dir = "~/temp",  -- Standard path for cloning repositories

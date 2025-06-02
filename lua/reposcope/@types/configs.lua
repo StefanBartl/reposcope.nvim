@@ -18,7 +18,6 @@
 ---@field request_tool string Main tool to perform HTTP requests (used unless unavailable)
 ---@field github_token string Optional GitHub token for authenticated API calls
 ---@field results_limit number Maximum number of search results to show
----@field preview_limit number Maximum number of lines to show in preview window
 ---@field layout LayoutType Default layout for result view
 ---@field clone CloneOptions Options related to downloading/cloning repositories
 ---@field keymaps table<string, string> Custom key mappings for plugin actions

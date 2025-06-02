@@ -16,7 +16,6 @@ M.options = {
   request_tool = "",         -- Default request tool (GitHub CLI)
   github_token = "",         -- Github authorization token (for higher request limits)
   results_limit = 0,         -- Default result limit for search queries
-  preview_limit = 0,         -- Default preview limit for displayed results
   ---@type LayoutType
   layout = "",               -- Default UI layout
   clone = {
