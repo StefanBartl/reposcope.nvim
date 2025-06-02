@@ -172,6 +172,7 @@ function M.clear_all()
     notify("[reposcope] " .. err, 3)
   end
 
+  collectgarbage("collect")
   return ok or false
 end
 

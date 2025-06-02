@@ -48,12 +48,12 @@ M.repositories = { total_count = 0, items = {}, list = {} }
 function M.set(json)
   M.repositories.total_count = json.total_count or 0
   M.repositories.items = json.items or {}
-  M.repositories.list = {}
+  M.repositories.list = { [#M.repositories.items] = false } -- reserve cap 
 
   for i, repo in ipairs(M.repositories.items) do
     local sanitized = _sanitize_repo(repo, i)
     local line = _build_repo_line(sanitized)
-    table.insert(M.repositories.list, line)
+    M.repositories.list[i] = line
   end
 
   _validate_repo_list()
@@ -197,7 +197,9 @@ end
 --- Clears the repository cache 
 ---@return nil
 function M.clear()
-  M.repositories = { total_count = 0, items = {}, list = {} }
+  for k in pairs(M.repositories.items) do M.repositories.items[k] = nil end
+  for k in pairs(M.repositories.list) do M.repositories.list[k] = nil end
+  M.repositories.total_count = 0
   notify("[reposcope] Repository state cleared.", 2)
 end
 

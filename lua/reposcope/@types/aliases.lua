@@ -15,3 +15,13 @@
 
 --- Terminal layout type used in UI settings or terminal modules
 ---@alias LayoutType "horizontal" | "vertical" | "float" | ""
+
+
+--- === providers/github
+---@alias Query string
+
+
+--- === utils/   metrics ===
+---@alias RequestMetricsData { successful: number, failed: number, cache_hitted: number, fcache_hitted: number }
+---@alias UUID string A string in the format XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX (hexadecimal UUID)
+

@@ -139,12 +139,11 @@ end
 
 
 --- Creates a UUID based on actual timestamp.
----@return string Unique UUID string.
+---@return UUID
 ---@brief Generates a UUID (Universally Unique Identifier) based on the current timestamp
 ---@description
 ---This function generates a UUID using a combination of the current timestamp 
----(using `uv.now()` for high-resolution time) and random values. It avoids
----system calls and provides a fast, cross-platform UUID generation method
+---(using `uv.now()` for high-resolution time) and random values
 ---
 --- The format of the UUID is: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 function M.generate_uuid()
