@@ -1,5 +1,4 @@
----@module 'gh_request'
----@class GitHubRequest
+---@module 'reposcope.network.request_tools.gh'
 ---@brief Executes GitHub CLI (`gh`) requests with metrics and async callback support.
 ---@description
 --- Provides a wrapper around the GitHub CLI for issuing API requests.
@@ -7,15 +6,18 @@
 --- It is designed to be used internally by GitHub-based fetch modules.
 --- This is a low-level utility and does not format or interpret the response.
 
--- System API
-local uv = vim.uv or vim.loop
+---@class GitHubRequest : GithubRequestModule
+local M = {}
 
+-- libuv Utilities
+local new_pipe = vim.uv.new_pipe
+local hrtime = vim.uv.hrtime
+local spawn = vim.uv.spawn
 -- Utilities and Debugging
 local notify = require("reposcope.utils.debug").notify
 local metrics = require("reposcope.utils.metrics")
 local config = require("reposcope.config")
 
-local M = {}
 
 ---Issues a GitHub CLI API request and returns the response to callback
 ---@param method string HTTP method (e.g. "GET", "POST")
@@ -28,16 +30,16 @@ local M = {}
 ---@return nil
 ---@raises string if CLI spawning or pipe reading fails
 function M.request(method, url, callback, headers, debug, context, uuid)
-  local start_time = uv.hrtime()
-  local stdout = uv.new_pipe(false)
-  local stderr = uv.new_pipe(false)
+  local start_time = hrtime()
+  local stdout = new_pipe(false)
+  local stderr = new_pipe(false)
   local safe_uuid = uuid or "n/a"
   local safe_context = context or "unspecified"
   local response_data = {}
   local stderr_data = {}
 
   local token = config.options.github_token
-  local parsed = url:gsub("^https://api%.github%.com", "") -- relative API path
+  local parsed = url:gsub("^https://api%.github%.com", "")
   local args = { "api", parsed, "--method", method }
 
   -- Add headers
@@ -67,9 +69,9 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   end
 
 
-  notify("[reposcope] GH Request: gh " .. table.concat(args, " "), vim.log.levels.TRACE)
+  notify("[reposcope] GH Request: gh " .. table.concat(args, " "), 2)
 
-  local handle = uv.spawn("gh", {
+  local handle = spawn("gh", {
     args = args,
     stdio = { nil, stdout, stderr },
     env = env,
@@ -79,14 +81,14 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   ---@diagnostic disable-next-line: undefined-field
     stderr:close()
 
-    local duration = (uv.hrtime() - start_time) / 1e6 -- ms
+    local duration = (hrtime() - start_time) / 1e6 -- ms
 
     if code ~= 0 then
       if metrics.record_metrics() then
         metrics.increase_failed(safe_uuid, url, "gh", safe_context, duration, code, "gh CLI error")
       end
-      notify("[reposcope] gh exited with code " .. code, vim.log.levels.WARN)
-      notify("[reposcope] stderr: " .. table.concat(stderr_data, ""), vim.log.levels.DEBUG)
+      notify("[reposcope] gh exited with code " .. code, 4)
+      notify("[reposcope] stderr: " .. table.concat(stderr_data, ""), 2)
       callback(nil, "gh request failed (code " .. code .. ")")
     else
       local result = table.concat(response_data)
@@ -116,13 +118,13 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   ---@diagnostic disable-next-line: undefined-field
   stderr:read_start(function(err, data)
     if err then
-      notify("[reposcope] gh stderr read error: " .. err, vim.log.levels.ERROR)
+      notify("[reposcope] gh stderr read error: " .. err, 5)
       return
     end
     if data then
       table.insert(stderr_data, data)
       if debug then
-        notify("[reposcope] gh stderr: " .. data, vim.log.levels.TRACE)
+        notify("[reposcope] gh stderr: " .. data, 4)
       end
     end
   end)

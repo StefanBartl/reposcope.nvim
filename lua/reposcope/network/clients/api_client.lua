@@ -1,12 +1,19 @@
----@class API
----@field request fun(method: string, url: string, callback: fun(response: string|nil, error?: string|nil), headers?: table, context?: string): nil Sends an API request using HTTP module
+---@module 'reposcope.network.api_client'
+---@brief High-level HTTP API request handler for Reposcope
+---@description
+--- Provides a high-level wrapper around HTTP requests for Reposcope.
+--- Prevents duplicate requests to the same URL simultaneously and
+--- injects default headers such as GitHub Accept headers.
+--- Delegates actual request execution to the low-level HTTP client module.
+
+---@class API : APIModule
 local M = {}
+
 
 -- HTTP Client (Low-level HTTP Requests)
 local http_client = require("reposcope.network.clients.http_client")
 -- Utility Modules (Debugging)
 local notify = require("reposcope.utils.debug").notify
-
 
 local active_requests = {}
 
@@ -17,6 +24,7 @@ local active_requests = {}
 ---@param callback fun(response: string|nil, error?: string|nil) Callback with the response data or error message
 ---@param headers? table Optional headers for the request
 ---@param context? string Optional context identifier (e.g., "fetch_repo", "fetch_readme", "clone_repo")
+---@return nil
 function M.request(method, url, callback, headers, context)
   -- Set default context if not provided
   context = context or "general"

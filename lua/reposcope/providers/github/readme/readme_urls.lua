@@ -1,4 +1,4 @@
----@class ReadmeUrlBuilder
+---@module 'reposcope.providers.github.readme.readme_urls'
 ---@brief Constructs URLs to fetch repository README files
 ---@description
 --- This module provides utility functions for generating standardized URLs for fetching
@@ -6,10 +6,10 @@
 --- API endpoint used to fetch metadata (and encoded content).
 --- 
 --- It is used by the readme_fetcher and manager modules to construct targets for HTTP requests.
----@field get_urls fun(owner: string, repo: string, branch?: string): ReadmeURLs
+
+---@class ReadmeUrlBuilder : ReadmeUrlBuilderModule
 local M = {}
 
----@alias ReadmeURLs { raw: string, api: string }
 
 ---Returns both the raw content and API URLs for a given repository README
 ---@param owner string The owner of the repository

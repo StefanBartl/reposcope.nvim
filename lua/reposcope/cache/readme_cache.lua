@@ -1,27 +1,22 @@
 ---@module 'reposcope.cache.readme_cache'
----@class ReadmeCache
----@brief Caches README content for repositories in RAM and file.
+---@brief Manages caching of README files (RAM and file-based)
 ---@description
---- Handles all cache operations for repository READMEs.
---- Includes RAM- and file-based caching as well as inspection and clearing.
----@alias Readme table<string, string>
----@field active_requests table<string, boolean> Tracks active readme requests
----@field readme_cache Readme RAM cache for fetched README contents
----@field get fun(repo_name: string): string|nil Returns README content from cache
----@field has fun(repo_name: string): boolean, "ram"|"file"|nil Checks if README exists in cache
----@field set_ram fun(repo_name: string, text: string): nil Stores README in RAM cache
----@field get_ram fun(repo_name: string): string|nil Retrieves README from RAM cache
----@field set_file fun(repo_name: string, text: string): boolean Saves README to file cache
----@field get_file fun(repo_name: string): string|nil Loads README from file cache
----@field clear fun(repo_name: string, target?: "ram"|"file"|"both"): boolean Clears README cache (RAM/file)
----@field clear_all fun(): boolean Clears all README cache entries (RAM/file)
+--- This module handles in-memory and file-based caching for repository README content.
+--- It supports checking for cache hits, writing to disk, and clearing entries or the entire cache.
+--- Used internally to reduce redundant network requests and improve performance.
+
+---@class ReadmeCache : ReadmeCacheModule
 local M = {}
 
+-- Vim Utilities
+local filereadable = vim.fn.filereadable
+local readdir = vim.fn.readdir
 -- Config Module
-local config = require("reposcope.config")
+local get_readme_filecache_dir = require("reposcope.config").get_readme_filecache_dir
 -- Utility Modules
 local notify = require("reposcope.utils.debug").notify
 local safe_mkdir = require("reposcope.utils.protection").safe_mkdir
+
 
 M.active_requests = {}
 M.readme_cache = {}
@@ -50,8 +45,8 @@ function M.has(repo_name)
     return true, "ram"
   end
 
-  local path = config.get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
-  if vim.fn.filereadable(path) == 1 then
+  local path = get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
+  if filereadable(path) == 1 then
     return true, "file"
   end
 
@@ -78,11 +73,11 @@ end
 ---@param readme_text string
 ---@return boolean
 function M.set_file(repo_name, readme_text)
-  local dir = config.get_readme_filecache_dir()
+  local dir = get_readme_filecache_dir()
   safe_mkdir(dir)
 
   local path = dir .. "/" .. repo_name .. ".md"
-  if vim.fn.filereadable(path) == 1 then
+  if filereadable(path) == 1 then
     return false
   end
 
@@ -104,8 +99,8 @@ end
 ---@param repo_name string
 ---@return string|nil
 function M.get_file(repo_name)
-  local path = config.get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
-  if vim.fn.filereadable(path) == 0 then return nil end
+  local path = get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
+  if filereadable(path) == 0 then return nil end
 
   local ok, content = pcall(function()
     local f = assert(io.open(path, "r"))
@@ -146,8 +141,8 @@ function M.clear(repo_name, target)
   end
 
   if target == "file" or target == "both" then
-    local path = config.get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
-    if vim.fn.filereadable(path) == 1 then
+    local path = get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
+    if filereadable(path) == 1 then
       os.remove(path)
       cleared = true
     end
@@ -161,9 +156,9 @@ end
 function M.clear_all()
   M.readme_cache = {}
 
-  local dir = config.get_readme_filecache_dir()
+  local dir = get_readme_filecache_dir()
   local ok, err = pcall(function()
-    for file in vim.fn.readdir(dir) do
+    for file in readdir(dir) do
       os.remove(dir .. "/" .. file)
     end
   end)

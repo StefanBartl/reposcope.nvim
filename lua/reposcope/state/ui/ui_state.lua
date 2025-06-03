@@ -1,5 +1,4 @@
 ---@module 'reposcope.state.ui.ui_state'
----@class UIStateManager
 ---@brief Tracks plugin-local buffer, window, and cursor state
 ---@description
 ---The UIStateManager module maintains references to buffer and window IDs
@@ -7,38 +6,17 @@
 ---list, and background. It also tracks invocation context (cursor/window)
 ---and whether the UI list has been populated. These handles and states
 ---allow coordinated lifecycle management (creation, update, teardown).
----
--- Invocation (pre-UI state)
----@field invocation UIStateInvocation Invocation editor state before UI activation
----@field capture_invocation_state fun(): nil Captures the current window and cursor position for later restoration
----@field get_invocation_win fun(): number|nil Returns the window ID of the invocation state
----@field get_invocation_cursor fun(): UIStateCursor Returns the cursor position of the invocation state
----@field reset fun(tbl?: "buffers"|"windows"|"invocation"): nil Resets part or all of the UI state (default: all)
----
--- Buffers and windows
----@field buffers UIStateBuffers Buffer handles by role
----@field windows UIStateWindows Window handles by role
----@field get_buffers fun(): number[]|nil Returns all active buffer handles (if any)
----@field get_valid_buffer fun(buf_name: string): number|nil Returns the buffer number if valid and tracked
----@field get_windows fun(): number[]|nil Returns all active window handles (if any)
----
--- List UI State
----@field list UIStateList List-specific UI state (e.g. selection)
----@field is_list_populated fun(): boolean Returns true if the list UI was populated at least once
----@field set_list_populated fun(val: boolean): nil Sets internal flag indicating list was populated
+
+---@class UIStateManager : UIStateManagerModule
 local M = {}
 
+-- Vim Utilities
+local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
+local nvim_get_current_win = vim.api.nvim_get_current_win
+local nvim_win_get_cursor = vim.api.nvim_win_get_cursor
 -- Utility Modules (Debugging)
 local notify = require("reposcope.utils.debug").notify
 
-
----@class UIStateInvocation
----@field win integer|nil window ID before UI was opened
----@field cursor UIStateCursor cursor position before UI was opened
-
----@class UIStateCursor
----@field row integer|nil
----@field col integer|nil
 
 ---@type UIStateInvocation
 M.invocation = {
@@ -49,12 +27,11 @@ M.invocation = {
   }
 }
 
-
 ---Capture the current window and cursor position for later restoration.
 ---@return nil
 function M.capture_invocation_state()
-  M.invocation.win = vim.api.nvim_get_current_win()
-  M.invocation.cursor.row, M.invocation.cursor.col = unpack(vim.api.nvim_win_get_cursor(M.invocation.win))
+  M.invocation.win = nvim_get_current_win()
+  M.invocation.cursor.row, M.invocation.cursor.col = unpack(nvim_win_get_cursor(M.invocation.win))
 end
 
 
@@ -102,21 +79,6 @@ function M.get_invocation_cursor()
   return M.invocation.cursor
 end
 
----@class UIStateBuffers
----@field backg integer|nil
----@field preview integer|nil
----@field prompt table|nil
----@field prompt_prefix integer|nil
----@field list integer|nil
----@field readme_viewer integer|nil
-
----@class UIStateWindows
----@field backg integer|nil
----@field preview integer|nil
----@field prompt table|nil
----@field prompt_prefix integer|nil
----@field list integer|nil
----@field readme_viewer integer|nil
 
 ---@type UIStateBuffers
 M.buffers = {
@@ -138,14 +100,13 @@ M.windows = {
   readme_viewer = nil,
 }
 
-
 ---Returns the buffer number for the given buffer name, if it is valid
 ---@param buf_name string The name of the buffer
 ---@return number|nil The buffer number if found and valid, or nil if not found or invalid
 function M.get_valid_buffer(buf_name)
   local buf = M.buffers[buf_name]
 
-  if buf and vim.api.nvim_buf_is_valid(buf) then
+  if buf and nvim_buf_is_valid(buf) then
     return buf
   end
 
@@ -181,8 +142,6 @@ function M.get_windows()
   return #wins > 0 and wins or nil
 end
 
----@class UIStateList
----@field last_selected_line integer|nil The last selected line number in the list
 
 ---@type UIStateList
 M.list = {
@@ -190,17 +149,18 @@ M.list = {
   last_selected_line = nil
 }
 
-
 -- State variable tracking if the repository list has ever been populated
 ---@type boolean|nil
 ---@private
 local list_populated = nil
+
 
 ---Returns true if the repository list was populated at least once
 ---@return boolean
 function M.is_list_populated()
   return list_populated == true
 end
+
 
 ---Sets the internal list population state
 ---@param val boolean True if list has been populated
