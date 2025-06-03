@@ -21,6 +21,13 @@
 ---@class QueryBuilderModule
 ---@field build fun(input: table<string, string>): string
 
----@class GithubRepositoriesModule
----@field fetch_repositories fun(query: string, uuid: string): nil Fetches repositories from GitHub API based on a query
----@field build_cmd fun(query: string): string[] Builds the API request for GitHub repo search
+---@class GithubRepositoryFetcherModule
+---@field build_url fun(query: string): string Builds the full GitHub API URL from the search query
+---@field fetch_repositories fun(query: string, uuid: string, on_success: fun(): nil, on_failure: fun(): nil): nil Performs the API request and updates the cache
+
+---@class GithubRepositoryUILoaderModule
+---@field load_ui_after_fetch fun(): nil Populates the list UI and optionally triggers README load
+
+---@class GithubRepositoryManagerModule
+---@field fetch fun(query: string, uuid: string, on_success?: fun(): nil, on_failure?: fun(): nil): nil Fetches repositories without UI
+---@field fetch_and_display fun(query: string, uuid: string, on_failure?: fun(): nil): nil Fetches repositories and updates the list UI

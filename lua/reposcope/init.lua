@@ -61,6 +61,7 @@ function M.setup(opts)
   config.setup(opts or {})
   checks.resolve_request_tool()
 
+
   if opts and opts.keymaps ~= false then
     keymaps.set_user_keymaps(opts.keymaps, opts.keymap_opts)
   end
@@ -71,7 +72,6 @@ end
 ---@return nil
 function M.open_ui()
   notify("[reposcope] REPOSCOPE START")
-
 
   notify("[reposcope] CAPTURING SEQUENCE")
   -- Capture users window and cursor for placing him back after closing Reposcope UI
