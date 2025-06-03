@@ -25,7 +25,10 @@ function M.get_urls(owner, repo, branch)
   local raw_url = string.format("https://raw.githubusercontent.com/%s/%s/%s/README.md", owner, repo, branch)
   local api_url = string.format("https://api.github.com/repos/%s/%s/contents/README.md", owner, repo)
 
-  return { raw_url, api_url }
+  return {
+    raw = raw_url,
+    api = api_url
+  }
 end
 
 return M

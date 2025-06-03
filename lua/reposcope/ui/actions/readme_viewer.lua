@@ -31,9 +31,7 @@ local ui_state = require("reposcope.state.ui.ui_state")
 local os_open_url = require("reposcope.utils.os").open_url
 -- Reposcope dependencies
 local setup_autocmds = require("reposcope.ui.prompt.prompt_autocmds").setup_autocmds
-local set_prompt_keymaps = require("reposcope.keymaps").set_prompt_keymaps
 local cleanup_autocmds = require("reposcope.ui.prompt.prompt_autocmds").cleanup_autocmds
-local unset_prompt_keymaps = require("reposcope.keymaps").unset_prompt_keymaps
 local create_named_buffer = require("reposcope.utils.protection").create_named_buffer
 
 
@@ -123,7 +121,7 @@ local function _open_readme_window(buf)
   vim.api.nvim_set_current_win(win)
 
   cleanup_autocmds()
-  unset_prompt_keymaps()
+  require("reposcope.keymaps").unset_prompt_keymaps()
   M.set_viewer_keymap(buf)
 
   vim.cmd("stopinsert")
@@ -166,7 +164,7 @@ function M.close_viewer()
 
   ui_state.buffers.readme_viewer = nil
   setup_autocmds()
-  set_prompt_keymaps()
+  require("reposcope.keymaps").set_prompt_keymaps()
 end
 
 --- Sets viewer-specific keymaps for a given buffer (e.g., 'q' to close viewer)

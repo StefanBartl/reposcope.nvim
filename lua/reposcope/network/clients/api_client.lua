@@ -2,47 +2,36 @@
 ---@brief High-level HTTP API request handler for Reposcope
 ---@description
 --- Provides a high-level wrapper around HTTP requests for Reposcope.
---- Prevents duplicate requests to the same URL simultaneously and
---- injects default headers such as GitHub Accept headers.
---- Delegates actual request execution to the low-level HTTP client module.
+--- Prevents duplicate requests by UUID, injects headers, and delegates execution.
 
 ---@class API : APIModule
 local M = {}
 
-
--- HTTP Client (Low-level HTTP Requests)
-local http_client = require("reposcope.network.clients.http_client")
--- Utility Modules (Debugging)
+-- HTTP Client
+local http_client_request = require("reposcope.network.clients.http_client").request
+-- Request UUID State
+local request_is_registered = require("reposcope.state.requests_state").is_registered
+local request_is_active = require("reposcope.state.requests_state").is_request_active
+local request_start = require("reposcope.state.requests_state").start_request
+local request_end = require("reposcope.state.requests_state").end_request
+-- Debug
 local notify = require("reposcope.utils.debug").notify
-
-local active_requests = {}
 
 
 ---Sends a generalized API request (GET, POST, etc.)
----@param method string The HTTP method (e.g., GET, POST)
----@param url string The URL for the API request
----@param callback fun(response: string|nil, error?: string|nil) Callback with the response data or error message
----@param headers? table Optional headers for the request
----@param context? string Optional context identifier (e.g., "fetch_repo", "fetch_readme", "clone_repo")
+---@param method string
+---@param url string
+---@param callback fun(response: string|nil, error?: string|nil)
+---@param headers? table
+---@param context? string
+---@param uuid string
 ---@return nil
-function M.request(method, url, callback, headers, context)
-  -- Set default context if not provided
+function M.request(method, url, callback, headers, context, uuid)
   context = context or "general"
 
-  -- Check if there is a currently running request ongoing
-  if active_requests[url] then
-    notify("[reposcope] Request already in progress for URL: " .. url, 3)
-    return
-  end
+  headers = vim.tbl_extend("force", { ["Accept"] = "application/vnd.github+json" }, type(headers) == "table" and headers or {})
 
-  active_requests[url] = true
-
-  -- Merging a default Accept header (application/vnd.github+json) with any supplied headers
-  headers = vim.tbl_extend("force", { ["Accept"] = "application/vnd.github+json" }, headers or {})
-
-  -- Send HTTP request using the HTTP client
-  http_client.request(method, url, function(response, error)
-    active_requests[url] = nil
+  http_client_request(method, url, function(response, error)
 
     if error then
       callback(nil, error)
@@ -54,3 +43,4 @@ function M.request(method, url, callback, headers, context)
 end
 
 return M
+
