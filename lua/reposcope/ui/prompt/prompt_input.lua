@@ -1,30 +1,26 @@
----@class UIPromptInput
+---@module 'reposcope.ui.prompt.prompt_input'
 ---@brief Collects current input values from all active prompt fields and triggers a search.
----@description
---- This module retrieves all field input (from `prompt_state`), returns it as a structured
---- table, and optionally triggers a GitHub (or other) provider search when `on_enter()` is called.
----@field collect fun(): table<string, string>
----@field on_enter fun(): nil
 
+---@class UIPromptInput : UIPromptInputModule
 local M = {}
 
 -- State
-local prompt_config = require("reposcope.ui.prompt.prompt_config")
-local prompt_state = require("reposcope.state.ui.prompt_state")
+local get_fields = require("reposcope.ui.prompt.prompt_config").get_fields
+local get_field_text = require("reposcope.state.ui.prompt_state").get_field_text
 -- Providers
-local provider_controller = require("reposcope.controllers.provider_controller")
+local fetch_repositories = require("reposcope.controllers.provider_controller").fetch_repositories
 -- Utilities
 local notify = require("reposcope.utils.debug").notify
-local query_builder = require("reposcope.providers.github.query_builder")
+local query_builder = require("reposcope.providers.github.query_builder").build
 
 
 ---Collects input from each active prompt field
 ---@return table<string, string>
 function M.collect()
   local result = {}
-  local fields = prompt_config.get_fields()
+  local fields = get_fields()
   for _, field in ipairs(fields or {}) do
-    local text = prompt_state.get_field_text(field)
+    local text = get_field_text(field)
     if type(text) == "string" and text ~= "" then
       result[field] = text
     end
@@ -38,14 +34,14 @@ end
 ---@return nil
 function M.on_enter()
   local input = M.collect()
-  local query = query_builder.build(input)
+  local query = query_builder(input)
 
   if query == "" then
     notify("[reposcope] No input to search", 2)
     return
   end
 
-  provider_controller.fetch_repositories(query)
+  fetch_repositories(query)
 end
 
 return M

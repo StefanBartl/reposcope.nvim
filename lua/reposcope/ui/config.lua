@@ -1,27 +1,22 @@
----@class UIConfiguration
+---@module 'reposcope.ui.config'
 ---@brief Manages the central UI configuration for reposcope.nvim.
 ---@description
 --- This module provides the configuration settings for the entire UI (Prompt, List, Preview, Background).
 --- It allows for dynamic updates to the layout (width, height, position) and color theme.
 --- These settings are applied consistently across all UI components.
----
---- The module also supports theme customization, enabling different color schemes.
----@field width number Total width of UI
----@field height number Total height of UI
----@field col number Horizontal center of the UI
----@field row number Vertical center of the UI
----@field colortheme table<string, string> Color theme settings for the UI
----@field update_layout fun(width?: number, height?: number, col?: number, row?: number): nil Dynamically updates the UI layout settings
----@field update_theme fun(theme: string): nil Applies a pre-defined theme (e.g., "dark", "light")
+
+---@class UIConfiguration : UIConfigurationModule
 local M = {}
 
--- Default Layout
+local notify = require("reposcope.utils.debug").notify
+
+-- Default Layout  NOTE: Layout
 M.width = math.floor(vim.o.columns * 0.8)
 M.height = math.floor(vim.o.lines * 0.8)
 M.col = math.floor((vim.o.columns - M.width) / 2)
 M.row = math.floor((vim.o.lines - M.height) / 2)
 
--- Default Color Theme (Dark)  LAYOUTS!
+-- Default Color Theme (Dark)
 M.colortheme = {
   background = "#322931",
   prompt = "#7B7B7B",
@@ -69,7 +64,7 @@ function M.update_theme(theme)
     -- Custom theme can be set dynamically
     M.colortheme = M.colortheme
   else
-    require("reposcope.utils.debug").notify("[reposcope] Invalid theme: " .. theme, 4)
+    notify("[reposcope] Invalid theme: " .. theme, 4)
   end
 end
 

@@ -1,22 +1,27 @@
----@class UIPromptBuffers
+---@module 'reposcope.ui.prompt.prompt_bffers'
 ---@brief Initializes and registers all prompt input buffers.
 ---@description
 --- This module prepares buffer handles for all possible prompt fields (prefix, keywords, owner, etc.)
 --- and stores them in `ui_state.buffers` under their respective keys. Buffers are created safely
 --- using pcall and can later be dynamically attached to windows depending on the selected layout.
----@field setup_buffers fun(): nil Creates and registers all supported prompt buffers into ui_state
+
+---@class UIPromptBuffers : UIPromptBuffersModule
 local M = {}
 
+-- Vim Utilities
+local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
+local nvim_buf_set_lines = vim.api.nvim_buf_set_lines
 -- Prompt config
 local prompt_config = require("reposcope.ui.prompt.prompt_config")
--- Utilities
-local notify = require("reposcope.utils.debug").notify
-local create_buf = require("reposcope.utils.protection").create_named_buffer
+local get_available_fields = require("reposcope.ui.prompt.prompt_config").get_available_fields
 -- State
 local ui_state = require("reposcope.state.ui.ui_state")
+-- Utilities
+local notify = require("reposcope.utils.debug").notify
+local create_named_buf = require("reposcope.utils.protection").create_named_buffer
 
 
-local FIELDS = prompt_config.get_available_fields()
+local FIELDS = get_available_fields()
 
 ---Creates and registers all supported prompt buffers into ui_state
 ---@return nil
@@ -25,8 +30,8 @@ function M.setup_buffers()
 
   for _, field in ipairs(FIELDS) do
     local name = "reposcope://prompt_" .. field
-    local ok, buf = pcall(create_buf, name)
-    if not ok or not buf or not vim.api.nvim_buf_is_valid(buf) then
+    local ok, buf = pcall(create_named_buf, name)
+    if not ok or not buf or not nvim_buf_is_valid(buf) then
       notify("[prompt_buffers] Failed to create buffer for field: " .. field, 4)
 
     else
@@ -37,14 +42,14 @@ function M.setup_buffers()
        vim.bo[buf].modifiable = true
 
         if field == "prefix" then
-          vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+          nvim_buf_set_lines(buf, 0, -1, false, {
             " ",
             prompt_config.prefix
           })
           vim.bo[buf].modifiable = false
           vim.bo[buf].readonly = true
         else
-          vim.api.nvim_buf_set_lines(buf, 0, -1, false, {
+          nvim_buf_set_lines(buf, 0, -1, false, {
             " ",
             ""
           })

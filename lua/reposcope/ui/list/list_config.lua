@@ -1,24 +1,14 @@
----@class ListConfig
+---@module 'reposcope.ui.list.list_config'
 ---@brief Manages the configuration settings for the list window
 ---@description
 ---This module provides the configuration settings for the list window.
 ---It allows for customization of the list layout (size, position) and colors.
 ---These settings ensure consistent appearance and behavior of the list UI.
----
---- The module supports dynamic updates, enabling flexible layouts
----@field width number The width of the list window
----@field height number The height of the list window
----@field row number The starting row position of the list window
----@field col number The starting column position of the list window
----@field highlight_color string The color for the selected list entry
----@field normal_color string The default text color for the list
----@field border string The type of window border ("none", "single", "double")
----@field update_layout fun(width?: number, height?: number, row?: number, col?: number): nil Dynamically updates the list layout settings -- LAYOUTS
----@field update_colors fun(highlight_color?: string, normal_color?: string): nil Dynamically updates the list colors --NIUY LAYOUTS
----@field update_border fun(border_layout: "none"|"single"|"double"): nil Dynamically updates the list border --NIUY LAYOUTS
+
+---@class ListConfig : ListConfigModule
 local M = {}
 
--- Default Layout (List is on the left side, taking 40% of the width)
+-- Default Layout (List is on the left side, taking 40% of the width)  NOTE: Layouts
 M.width = math.floor(vim.o.columns * 0.4)
 M.height = math.floor(vim.o.lines * 0.8)
 M.row = math.floor((vim.o.lines - M.height) / 2)

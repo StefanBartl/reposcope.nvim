@@ -1,13 +1,39 @@
--- Forward declaration
-local apply_vertical_centering
+---@module 'reposcope.ui.preview.preview_banner'
+---@brief Generates and centers the preview banner text
+---@description
+--- This module is responsible for generating a welcome banner to display
+--- in the preview area when no repository is selected. The banner is both
+--- horizontally and vertically centered based on the configured preview size.
 
----@class PreviewBanner
----@field get_banner fun(preview_width: number): string[] Function to dynamically generate a default, centered preview banner
----@field private apply_vertical_centering fun(lines: string[]): string[] Applies vertical centering to the banner text, maintaining a 3/3 height ratio 
+---@class PreviewBanner : PreviewBannerModule
 local M = {}
 
--- Text Utilities (Text Manipulation and Display)
-local text = require("reposcope.utils.text")
+-- Text Utilities
+local center_text_lines = require("reposcope.utils.text").center_text_lines
+
+
+---@private
+---Applies vertical centering to the banner text, maintaining a 2/3 height ratio
+---@param lines string[] The lines to be vertically centered
+---@return string[] Vertically centered lines
+local function _apply_vertical_centering(lines)
+  local total_lines = #lines
+  local preview_height = require("reposcope.ui.config").height
+
+  -- Calculate padding (1/3 top padding, 2/3 text area)
+  local top_padding = math.max(0, math.floor((preview_height / 3) - (total_lines / 3)))
+  local bottom_padding = math.max(0, preview_height - total_lines - top_padding)
+
+  for _ = 1, top_padding do
+    table.insert(lines, 1, "")
+  end
+
+  for _ = 1, bottom_padding do
+    table.insert(lines, "")
+  end
+
+  return lines
+end
 
 
 ---Generates a dynamically centered preview banner
@@ -27,33 +53,11 @@ function M.get_banner(preview_width)
     "Thank you for using Reposcope!"
   }
 
-  local centered_lines = text.center_text_lines(text_lines, preview_width)
+  local centered_lines = center_text_lines(text_lines, preview_width)
 
-  return apply_vertical_centering(centered_lines)
+  return _apply_vertical_centering(centered_lines)
 end
 
 
----Applies vertical centering to the banner text, maintaining a 2/3 height ratio
----@param lines string[] The lines to be vertically centered
----@return string[] Vertically centered lines
----@private
-function apply_vertical_centering(lines)
-  local total_lines = #lines
-  local preview_height = require("reposcope.ui.config").height
-
-  -- Calculate padding (1/3 top padding, 2/3 text area)
-  local top_padding = math.max(0, math.floor((preview_height / 3) - (total_lines / 3)))
-  local bottom_padding = math.max(0, preview_height - total_lines - top_padding)
-
-  for _ = 1, top_padding do
-    table.insert(lines, 1, "")
-  end
-
-  for _ = 1, bottom_padding do
-    table.insert(lines, "")
-  end
-
-  return lines
-end
 
 return M

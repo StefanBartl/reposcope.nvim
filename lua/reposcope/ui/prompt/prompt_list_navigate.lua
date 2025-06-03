@@ -1,10 +1,16 @@
----@class UIPromptNavigation
----@field navigate_list_in_prompt fun(direction: "up"|"down"): nil Allows navigation within the list directly from the prompt
----@field set_list_to fun(line: number): nil Sets the list's current linr to given line number
+---@module 'reposcope.ui.prompt.prompt_list_navigate'
+---@brief Allows prompt-driven list navigation within the Reposcope UI.
+---@description
+--- This module provides functions to allow user interaction with the repository list UI
+--- while remaining in the prompt input buffer.
+
+---@class UIPromptNavigation : UIPromptNavigationModule
 local M = {}
+local nvim_buf_get_lines = vim.api.nvim_buf_get_lines
 
 -- UI Components (List Window)
 local list_window = require("reposcope.ui.list.list_window")
+local highlight_selected = require("reposcope.ui.list.list_window").highlight_selected
 -- State Management (UI State)
 local ui_state = require("reposcope.state.ui.ui_state")
 -- Debugging Utility
@@ -15,7 +21,7 @@ local notify = require("reposcope.utils.debug").notify
 ---@param direction "up"|"down" The direction to navigate ("up" or "down")
 ---@return nil
 function M.navigate_list_in_prompt(direction)
-  local total_lines = #vim.api.nvim_buf_get_lines(ui_state.buffers.list, 0, -1, false)
+  local total_lines = #nvim_buf_get_lines(ui_state.buffers.list, 0, -1, false)
   if total_lines == 0 then return end
 
   -- Default to first line if not set
@@ -28,7 +34,7 @@ function M.navigate_list_in_prompt(direction)
     list_window.highlighted_line = math.min(list_window.highlighted_line + 1, total_lines)
   end
 
-  list_window.highlight_selected(list_window.highlighted_line)
+  highlight_selected(list_window.highlighted_line)
 end
 
 
@@ -41,7 +47,7 @@ function M.set_list_to(line)
     return
   end
 
-  local total_lines = #vim.api.nvim_buf_get_lines(ui_state.buffers.list, 0, -1, false)
+  local total_lines = #nvim_buf_get_lines(ui_state.buffers.list, 0, -1, false)
 
   if line < 1 or line > total_lines then
     notify("[reposcope] Invalid line value: " .. line, 1)
@@ -49,7 +55,7 @@ function M.set_list_to(line)
   end
 
   list_window.highlighted_line = line
-  list_window.highlight_selected(line)
+  highlight_selected(line)
 end
 
 return M

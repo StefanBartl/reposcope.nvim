@@ -1,16 +1,17 @@
----@class UIPromptLayout
+---@module 'reposcope.ui.prompt.prompt_layout'
 ---@brief Calculates dynamic window layout for prompt fields.
 ---@description
 ---Based on the active prompt fields configured in `prompt_config`, this module calculates
 ---the dynamic layout to be used by the prompt manager. It determines the width and order
 ---of each window and assigns the corresponding buffer handles.
----
---- Each returned layout item includes: { name, buffer, width }
----@field build_layout fun(): {name: string, buffer: integer, width: integer, col: integer}[] List of window layouts
+
+---@class UIPromptLayout : UIPromptLayoutModule
 local M = {}
 
+local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 -- Config & Utils
 local prompt_config = require("reposcope.ui.prompt.prompt_config")
+local get_fields = require("reposcope.ui.prompt.prompt_config").get_fields
 -- State
 local ui_state = require("reposcope.state.ui.ui_state")
 -- Debugging
@@ -20,7 +21,7 @@ local notify = require("reposcope.utils.debug").notify
 ---Builds a list of window slots for the currently configured prompt fields
 ---@return {name: string, buffer: integer, width: integer, col: integer}[] List of window layouts
 function M.build_layout()
-  local fields = prompt_config.get_fields()
+  local fields = get_fields()
   local remaining_width = prompt_config.width
   local current_col = prompt_config.col
   local layout = {}
@@ -38,7 +39,7 @@ function M.build_layout()
 
   for _, field in ipairs(fields) do
     local buf = ui_state.buffers.prompt and ui_state.buffers.prompt[field]
-    if not buf or not vim.api.nvim_buf_is_valid(buf) then
+    if not buf or not nvim_buf_is_valid(buf) then
       notify("[reposcope] Skipped invalid buffer: " .. tostring(field), 4)
       goto continue
     end

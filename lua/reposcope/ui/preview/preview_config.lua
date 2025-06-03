@@ -1,4 +1,4 @@
----@class PreviewConfig
+---@module 'reposcope.ui.preview.preview_config'
 ---@brief Provides layout and style settings for the README preview window.
 ---@description
 ---The `PreviewConfig` module defines the layout, position, colors, and border type
@@ -6,29 +6,16 @@
 ---is displayed and allows dynamic updates for layout or styling.
 ---This structure matches other UI modules like list and background.
 ---
----All values are derived from the current Neovim UI dimensions and can be adjusted
----dynamically using the provided update functions.
----Example layouts: default (right side), fullscreen, or user-defined.
 ---The config is consumed by `preview_window.lua`
----
----@field width number Width of the preview window
----@field height number Height of the preview window
----@field row number Vertical position (top) of the window
----@field col number Horizontal position (left) of the window
----@field highlight_color string Highlighted text color
----@field normal_color string Default text color
----@field border string Border style of the window ("none", "single", "double")
----@field update_layout fun(width?: number, height?: number, row?: number, col?: number): nil Updates layout settings
----@field update_colors fun(highlight_color?: string, normal_color?: string): nil Updates highlight and text color
----@field update_border fun(border_layout: "none"|"single"|"double"): nil Updates the border type
 
+---@class PreviewConfig : PreviewConfigModule
 local M = {}
 
--- Project-Specific Configuration (Global UI Config)
+-- Project-Specific Configuration
 local ui_config = require("reposcope.ui.config")
 
 
--- Initial window layout: right-hand side
+-- Initial window layout: right-hand side  NOTE: Layouts
 M.width = math.floor((ui_config.width * 0.5) - 3)
 M.height = math.floor(ui_config.height - 2)
 M.row = math.floor(ui_config.row + 1)
