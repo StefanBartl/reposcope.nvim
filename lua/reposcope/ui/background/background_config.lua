@@ -1,16 +1,11 @@
----@class BackgroundConfig
+---@module 'reposcope.ui.background.background_config'
 ---@brief Configures the layout and appearance of the background window.
 ---@description
 --- This module provides the configuration settings for the background window.
 --- It allows for customization of the background color, transparency, border, 
 --- and size. These settings are applied whenever the background window is opened.
----@field row number The starting row position of the background window.
----@field col number The starting column position of the background window.
----@field width number The width of the background window.
----@field height number The height of the background window.
----@field border string The type of window border ("none", "single", "double").
----@field update_layout fun(row?: number, col?: number, width?: number, height?: number): nil Dynamically updates the background layout settings
----@field update_colors fun(bg: string):nil Dynamically updates the background colors
+
+---@class BackgroundConfig : BackgroundConfigModule
 local M = {}
 
 -- Project-Specific Configuration (Global UI Config)

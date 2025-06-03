@@ -1,22 +1,19 @@
----@class UIPromptConfig
+---@module 'reposcope.ui.prompt.prompt_config'
 ---@brief Static configuration values for the prompt input layout
 ---@description
 --- This module defines the configuration used to render the prompt input UI,
 --- including visual layout constants and the active prompt fields. Field access is
 --- managed through `set_fields()` and `get_fields()` to ensure normalization,
 --- deduplication and ordering. This ensures correct window generation and layout.
----@field prefix string Icon/prefix displayed left of user input
----@field prefix_len integer Display width of prefix (used for window sizing)
----@field height integer Height of the prompt input window in lines
----@field set_fields fun(fields: string[]): nil Sets the prompt fields with validation and normalization
----@field get_fields fun(): string[] Returns the active prompt fields (deduplicated and sorted)
----@field get_available_fields fun(): string[] Returns all valid prompt fields (whitelist)
+
+---@class UIPromptConfig : UIPromptConfigModule
 local M = {}
 
 -- UI Config
 local ui_config = require("reposcope.ui.config")
 -- Utilities
-local core = require("reposcope.utils.core")
+local dedupe_list = require("reposcope.utils.core").dedupe_list
+local put_to_front_if_present = require("reposcope.utils.core").put_to_front_if_present
 local notify = require("reposcope.utils.debug").notify
 
 
@@ -53,7 +50,7 @@ local _fields = {}
 
 --- Sets the active prompt fields with deduplication and prefix reordering.
 --- Invalid fields are ignored with a warning.
----@param fields PromptField List of valid field names
+---@param fields PromptField[] List of valid field names
 ---@return nil
 function M.set_fields(fields)
   if type(fields) ~= "table" then
@@ -70,8 +67,8 @@ function M.set_fields(fields)
     end
   end
 
-  local deduped = core.dedupe_list(filtered)
-  _fields = core.put_to_front_if_present(deduped, "prefix")
+  local deduped = dedupe_list(filtered)
+  _fields = put_to_front_if_present(deduped, "prefix")
 end
 
 --- Returns the normalized prompt field list

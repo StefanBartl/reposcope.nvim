@@ -1,19 +1,21 @@
----@class UIPrompt
+---@module 'reposcope.ui.prompt.init'
 ---@brief Entry point to open the dynamic prompt layout.
 ---@description
 --- This module initializes the full prompt UI. It creates buffers, calculates layout,
 --- opens windows, sets up autocmds, and optionally starts insert mode.
----@field initialize fun(): nil Initializes the prompt UI
 
+---@class UIPrompt : UIPromptModule
 local M = {}
 
+-- Vim Utilities
+local schedule = vim.schedule
 -- Config
 local config = require("reposcope.config")
+--  Prompt Core
+local prompt_setup_autocmds = require("reposcope.ui.prompt.prompt_autocmds").setup_autocmds
+local prompt_manager_open_windows = require("reposcope.ui.prompt.prompt_manager").open_windows
 -- Utilities
 local notify = require("reposcope.utils.debug").notify
---  Prompt Core
-local prompt_autocmds = require("reposcope.ui.prompt.prompt_autocmds")
-local prompt_manager = require("reposcope.ui.prompt.prompt_manager")
 
 
 ---Opens the prompt UI
@@ -24,10 +26,10 @@ function M.initialize()
     config.options.layout = "default"
   end
 
-  prompt_manager.open_windows()
-  prompt_autocmds.setup_autocmds()
+  prompt_manager_open_windows()
+  prompt_setup_autocmds()
 
-  vim.schedule(function()
+  schedule(function()
     vim.cmd("startinsert")
   end)
 end
