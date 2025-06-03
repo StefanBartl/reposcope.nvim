@@ -45,7 +45,7 @@ local function _fetch_from_api_fallback(owner, repo_name, branch, uuid)
       update_preview(repo_name)
       request_state.end_request(uuid)
     end)
-  end, uuid)
+  end)
 end
 
 ---@private
@@ -124,7 +124,7 @@ function M.fetch_for_selected(uuid)
       notify("[reposcope] Raw fetch failed: " .. (err or "unknown error"), vim.log.levels.WARN)
       _fetch_from_api_fallback(owner, repo_name, branch, uuid)
     end
-  end, uuid)
+  end)
 end
 
 return M

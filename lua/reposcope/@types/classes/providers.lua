@@ -2,8 +2,8 @@
 ---@brief Type definitions for GitHub provider modules.
 
 ---@class ReadmeFetcherModule
----@field fetch_raw fun(owner: string, repo: string, branch: string, cb: fun(success: boolean, content: string|nil, err: string|nil): nil, uuid: UUID): nil # Fetches the README using the raw Github URL
----@field fetch_api fun(owner: string, repo: string, branch: string, cb: fun(success: boolean, content: string|nil, err: string|nil): nil, uuid: UUID): nil Fetches the README from the GitHub API (base64-encoded)
+---@field fetch_raw fun(owner: string, repo: string, branch: string, cb: fun(success: boolean, content: string|nil, err: string|nil): nil): nil # Fetches the README using the raw Github URL
+---@field fetch_api fun(owner: string, repo: string, branch: string, cb: fun(success: boolean, content: string|nil, err: string|nil): nil): nil Fetches the README from the GitHub API (base64-encoded)
 
 ---@class ReadmeManagerModule
 ---@field fetch_for_selected fun(uuid: string): nil Fetches the README for the currently selected repository

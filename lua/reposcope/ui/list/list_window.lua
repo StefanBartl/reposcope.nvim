@@ -87,7 +87,7 @@ function M.open_window()
       height = M.Layouts.Normal.height,
       style = "minimal",
       border = config.border or "none",
-      focusable = false,
+      focusable = true, -- TEST: 
       noautocmd = true,
     })
 

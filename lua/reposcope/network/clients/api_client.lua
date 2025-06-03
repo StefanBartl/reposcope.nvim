@@ -9,13 +9,6 @@ local M = {}
 
 -- HTTP Client
 local http_client_request = require("reposcope.network.clients.http_client").request
--- Request UUID State
-local request_is_registered = require("reposcope.state.requests_state").is_registered
-local request_is_active = require("reposcope.state.requests_state").is_request_active
-local request_start = require("reposcope.state.requests_state").start_request
-local request_end = require("reposcope.state.requests_state").end_request
--- Debug
-local notify = require("reposcope.utils.debug").notify
 
 
 ---Sends a generalized API request (GET, POST, etc.)
@@ -24,9 +17,8 @@ local notify = require("reposcope.utils.debug").notify
 ---@param callback fun(response: string|nil, error?: string|nil)
 ---@param headers? table
 ---@param context? string
----@param uuid string
 ---@return nil
-function M.request(method, url, callback, headers, context, uuid)
+function M.request(method, url, callback, headers, context)
   context = context or "general"
 
   headers = vim.tbl_extend("force", { ["Accept"] = "application/vnd.github+json" }, type(headers) == "table" and headers or {})

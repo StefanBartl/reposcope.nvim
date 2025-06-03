@@ -57,7 +57,7 @@ function M.open_window()
       height = preview_config.height,
       style = "minimal",
       border = preview_config.border or "none",
-      focusable = false,
+      focusable = true,  -- TEST: 
       noautocmd = true,
     })
 
