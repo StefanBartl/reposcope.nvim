@@ -1,5 +1,4 @@
----@modul 'curl_request'
----@class CurlRequest
+---@module 'reposcope.network.request_tools.curl_request'
 ---@brief Executes HTTP requests using the `curl` CLI.
 ---@description
 --- This module provides an asynchronous wrapper for performing HTTP requests
@@ -7,14 +6,17 @@
 --- tracking, debug output, and response piping via Neovim's `uv.spawn`.
 --- It is a low-level utility for network access and is used by fetchers.
 
--- System Module
-local uv = vim.loop
+---@class CurlRequest : CurlRequestModule
+local M = {}
 
+-- libuv Utilities
+local new_pipe = vim.uv.new_pipe
+local hrtime = vim.uv.hrtime
+local spawn = vim.uv.spawn
 -- Utilities and Debugging
 local notify = require("reposcope.utils.debug").notify
 local metrics = require("reposcope.utils.metrics")
 
-local M = {}
 
 ---Issues a CURL request asynchronously and returns the response via callback
 ---@param method string HTTP method to use (e.g. "GET", "POST")
@@ -27,9 +29,9 @@ local M = {}
 ---@return nil
 ---@raises string if curl spawn fails or if output pipes fail
 function M.request(method, url, callback, headers, debug, context, uuid)
-  local start_time = uv.hrtime()
-  local stdout = uv.new_pipe(false)
-  local stderr = uv.new_pipe(false)
+  local start_time = hrtime()
+  local stdout = new_pipe(false)
+  local stderr = new_pipe(false)
   local safe_uuid = uuid or "n/a"
   local safe_context = context or "unspecified"
   local response_data = {}
@@ -42,7 +44,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
   notify(string.format("[reposcope] CURL Request: curl %s", table.concat(args, " ")), vim.log.levels.TRACE)
 
-  local handle = uv.spawn("curl", {
+  local handle = spawn("curl", {
     args = args,
     stdio = { nil, stdout, stderr },
   }, function(code)
@@ -51,7 +53,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   ---@diagnostic disable-next-line: undefined-field
     stderr:close()
 
-    local duration = (uv.hrtime() - start_time) / 1e6 -- ms
+    local duration = (hrtime() - start_time) / 1e6 -- ms
 
     if code ~= 0 then
       if metrics.record_metrics() then
@@ -70,7 +72,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
   ---@diagnostic disable-next-line: undefined-field
   stdout:read_start(function(err, data)
-    local duration_ms = (uv.hrtime() - start_time) / 1e6
+    local duration_ms = (hrtime() - start_time) / 1e6
 
     if err then
       if metrics.record_metrics() then
@@ -93,18 +95,18 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
   ---@diagnostic disable-next-line: undefined-field
   stderr:read_start(function(err, data)
-    local duration_ms = (uv.hrtime() - start_time) / 1e6
+    local duration_ms = (hrtime() - start_time) / 1e6
 
     if err then
       if context and metrics.record_metrics() then
         metrics.increase_failed(safe_uuid, url, "curl", context, duration_ms, 0, "Error reading curl stderr: " .. err)
       end
-      notify(string.format("[reposcope] curl stderr read error: %s", err), vim.log.levels.ERROR)
+      notify(string.format("[reposcope] curl stderr read error: %s", err), 5)
       return
     end
 
     if debug and data then
-      notify(string.format("[reposcope] curl stderr: %s", data), vim.log.levels.TRACE)
+      notify(string.format("[reposcope] curl stderr: %s", data), 4)
     end
   end)
 end

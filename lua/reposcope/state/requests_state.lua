@@ -1,17 +1,13 @@
----@class RequestStateManager
+---@module 'reposcope.state.requests_state'
 ---@brief Manages the lifecycle state of asynchronous requests using UUIDs
 ---@description
 --- This module tracks ongoing requests using UUIDs. It supports registering new
 --- requests with an initial inactive state, marking them active, ending them,
 --- and checking if they are registered or currently active.
----@field register_request fun(uuid: string): nil Registers a new UUID in an inactive state
----@field start_request fun(uuid: string): nil Marks a registered UUID as active
----@field end_request fun(uuid: string): nil Marks a UUID request as completed
----@field is_registered fun(uuid: string): boolean Returns true if the UUID was registered
----@field is_request_active fun(uuid: string): boolean Returns true if UUID is active
----@field clear_all_requests fun(): nil Clears all tracked UUID requests
 
+---@class RequestStateManager : RequestStateManagerModule
 local M = {}
+
 
 ---@type table<string, boolean>
 M.requests = {}
@@ -24,6 +20,7 @@ function M.register_request(uuid)
   end
 end
 
+
 ---Marks a registered UUID as active
 ---@param uuid string
 function M.start_request(uuid)
@@ -32,11 +29,13 @@ function M.start_request(uuid)
   end
 end
 
+
 ---Marks a UUID request as completed
 ---@param uuid string
 function M.end_request(uuid)
   M.requests[uuid] = nil
 end
+
 
 ---Checks if a UUID was registered
 ---@param uuid string
@@ -45,12 +44,14 @@ function M.is_registered(uuid)
   return M.requests[uuid] ~= nil
 end
 
+
 ---Checks if a UUID is currently marked active
 ---@param uuid string
 ---@return boolean
 function M.is_request_active(uuid)
   return M.requests[uuid] == true
 end
+
 
 ---Clears all tracked UUID requests
 function M.clear_all_requests()

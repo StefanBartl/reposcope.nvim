@@ -1,5 +1,11 @@
 ---@module 'reposcope.@types.classes.general'
----@brief Class definitions for all utility modules in `reposcope.utils`
+---@brief General-purpose class definitions used across Reposcope
+---@description
+--- This module defines shared class structures for modules that do not have
+--- dedicated type or class definition files. It is primarily intended for
+--- lightweight functional modules that don't warrant their own types file.
+--- All general-purpose or fallback class annotations should be placed here
+--- to ensure consistent typing throughout the project.
 
 ---@class UIInitModule Functions to start and close the Reposcope UI
 ---@field setup fun(opts: table|nil): nil Initializes the UI and performs prechecks

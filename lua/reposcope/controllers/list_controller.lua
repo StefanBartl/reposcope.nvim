@@ -1,35 +1,37 @@
----@class ListController
+---@module 'reposcope.controllers.list_controller'
 ---@brief Manages the interaction between the state and list UI.
 ---@description
 --- The ListController is responsible for displaying the list of repositories
 --- based on the current state. It does not perform API requests but only manages
 --- the UI and the state interaction.
----@field display_repositories fun(): nil Displays the list of repositories from state.
+
+---@class ListController : ListControllerModule
 local M = {}
 
 -- UI Components (List Window and Management)
-local list_window = require("reposcope.ui.list.list_window")
-local list_manager = require("reposcope.ui.list.list_manager")
+local open_window = require("reposcope.ui.list.list_window").open_window
+local clear_list = require("reposcope.ui.list.list_manager").clear_list
+local set_and_display_list = require("reposcope.ui.list.list_manager").set_and_display_list
 local list_config = require("reposcope.ui.list.list_config")
 -- State Management (Repositories State)
-local repository_cache = require("reposcope.cache.repository_cache")
+local repository_cache_get = require("reposcope.cache.repository_cache").get
 -- Utility Modules (Text Manipulation, Debugging)
-local text_utils = require("reposcope.utils.text")
+local cut_text_for_line = require("reposcope.utils.text").cut_text_for_line
 local notify = require("reposcope.utils.debug").notify
 
 
 ---Displays the list of repositories from the state.
 ---@return nil
 function M.display_repositories()
-  if not list_window.open_window() then
+  if not open_window() then
     notify("[reposcope] List window initialization failed.", 4)
     return
   end
 
-  local json_data = repository_cache.get()
+  local json_data = repository_cache_get()
   if not json_data or not json_data.items then
     notify("[reposcope] No repositories loaded.", 3)
-    list_manager.clear_list()
+    clear_list()
     return
   end
 
@@ -47,10 +49,10 @@ function M.display_repositories()
       desc = "No description"
     end
     local line = owner .. "/" .. name .. ": " .. desc
-    table.insert(lines, text_utils.cut_text_for_line(0, list_width, line))
+    table.insert(lines, cut_text_for_line(0, list_width, line))
   end
 
-  list_manager.set_and_display_list(lines)
+  set_and_display_list(lines)
 end
 
 return M

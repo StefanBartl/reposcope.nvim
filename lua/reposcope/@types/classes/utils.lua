@@ -1,14 +1,12 @@
 ---@module 'reposcope.@types.classes.utils'
 ---@brief Class definitions for all utility modules in `reposcope.utils`
 
---- === checks ===
 ---@class ReposcopeChecksModule Utility functions for checking environment conditions and available binaries.
 ---@field has_binary fun(name: string): boolean Returns true if the given binary is executable on the system.
 ---@field first_available fun(binaries: string[]): string|nil Returns the first available binary from a list or nil if none found.
 ---@field resolve_request_tool fun(requesters?: string[]): nil Selects the preferred available request tool and sets it in config.
 ---@field has_env fun(name: string): boolean Returns true if the given environment variable is set and non-empty.
 
----- === core ====
 ---@class CoreUtilsModule
 ---@field tbl_find fun(tbl: table, value: any): integer|nil Searches for a value in the table and returns its index
 ---@field tbl_islist fun(t: any): boolean Checks if a table is a proper list: integer keys 1..#t without gaps or non-integer keys.
@@ -18,7 +16,6 @@
 ---@field ensure_string fun(val: string): string Ensures that a given argument 'val' is from type string, else returns empty string
 ---@field generate_uuid fun(): string  Creates a UUID based on actual timestamp
 
---- === debug ===
 ---@class DebugUtilsModule Debug utilities for inspecting UI-related buffers and windows.
 ---@field options DebugOptions Configurations options for debugging of reposcope
 ---@field is_dev_mode fun(): boolean Checks if developer mode is enabled
@@ -28,12 +25,10 @@
 ---@field debugf fun(msg: string, level?: number, log_level?: number, _schedule?: boolean): nil Enhanced debugging function for logging
 ---@field print_win_buf_state fun(): nil Prints actual state for debugging to the console
 
---- === encoding ===
 ---@class EncodingUtilsModule
 ---@field urlencode fun(str: string): string Encodes a string for safe URL usage
 ---@field decode_base64 fun(encoded: string): string Decodes a Base64-encoded string (compatible with Lua)
 
---- === metrics ===
 ---@class ReposcopeMetricsModule
 ---@field req_count ReqCount Stores API request count for profiling purposes
 ---@field rate_limits RateLimits Stores the rate limits for the GitHub API (Core and Search)
@@ -62,11 +57,9 @@
 ---@field remaining number The remaining requests in the current rate limit window
 ---@field reset number The UNIX timestamp when the rate limit will reset
 
---- === os ===
 ---@class OSUtilsModule
 ---@field open_url fun(url: string): nil Opens the given URL in the system's default web browser
 
---- === protection ===
 ---@class UtilsProtectionModule
 ---@brief Utility functions related to value normalization, path validation, and buffer management
 ---@field count_or_default fun(val: table|number|string, default: number): number Returns the item count if `val` is a table, the number if `val` is a number, or `default` otherwise
@@ -77,14 +70,12 @@
 ---@field is_dir_writeable fun(path: string): boolean Checks if a directory is writable by attempting a test write
 ---@field safe_execute_shell fun(command: string): boolean, string Executes a shell command safely and returns the success status and output
 
---- === stats ===
 ---@class StatsModule
 ---@field show_stats fun(): nil Opens a floating stats window with session and total statistics
 ---@field close_stats fun(): nil Closes the stats popup and cleans up associated resources
 ---@field calculate_extended_stats fun(): (number, string) Computes the average duration and most frequent query from log
 ---@field get_most_frequent_query fun(query_count: table<string, number>): string Returns the most frequent query from a query count map
 
---- === utils ===
 ---@class TextUtilsModule
 ---@field center_text fun(text: string, width: number): string[] Centers given text input and returns it, splitting lines without breaking words
 ---@field center_text_lines fun(lines: string[], width: number): string[] Centers an array of text lines within a specified width

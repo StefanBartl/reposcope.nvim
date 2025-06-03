@@ -175,6 +175,7 @@ end
 ---Removes the AutoCmd for automatically closing all related UI windows (Reposcope UI).
 --- This prevents the UI from being closed automatically when :q or :q! is used.
 --- The AutoCmd ID is cleared (`close_autocmd_id = nil`) to avoid conflicts.
+---@return nil
 function M.remove_ui_autocmd()
   if close_autocmd_id then
     nvim_del_autocmd(close_autocmd_id)

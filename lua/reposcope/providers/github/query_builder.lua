@@ -1,15 +1,14 @@
----@class QueryBuilder
+---@module 'reposcope.providers.github.query_builder'
 ---@brief Builds GitHub-compatible search query strings from prompt input.
 ---@description
 --- This module transforms a structured input table (from `prompt_input.collect()`)
 --- into a GitHub search query string, respecting filter keys like `owner`, `language`, `topic`
 --- and appending all other text as loose keywords.
----@field build fun(input: table<string, string>): string
 
+---@class QueryBuilder : QueryBuilderModule
 local M = {}
 
-
--- List of known GitHub filter keys (must be formatted as `key:value`)
+-- List of Reposcope Prompt filter keys for Github
 local FILTER_KEYS = {
   owner = "user",
   topic = "topic",
@@ -17,6 +16,7 @@ local FILTER_KEYS = {
   stars = "stars",
   org = "org",
 }
+
 
 ---Builds a search query string from prompt input
 ---@param input table<string, string>

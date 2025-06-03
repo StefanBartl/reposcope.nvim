@@ -1,9 +1,5 @@
 ---@module 'reposcope.types.configs'
 ---@brief Type definitions for user configuration
----@description
---- This module defines the ReposcopeConfig structure used to manage and validate
---- user-provided configuration options. These types ensure correctness across
---- the setup process, runtime queries, and UI rendering.
 
 ---@class CloneOptions
 ---@brief Repository clone settings

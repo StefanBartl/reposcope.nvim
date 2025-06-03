@@ -5,7 +5,13 @@
 local M = {}
 
 -- Vim Utilities
-local fn = vim.fn
+local fnameescape = vim.fn.fnameescape
+local fnamemodify = vim.fn.fnamemodify
+local isdirectory = vim.fn.isdirectory
+local mkdir = vim.fn.mkdir
+local system = vim.fn.system
+local expand = vim.fn.expand
+local bufnr = vim.fn.bufnr
 local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 local nvim_buf_delete = vim.api.nvim_buf_delete
 local nvim_create_buf = vim.api.nvim_create_buf
@@ -40,7 +46,7 @@ end
 ---@param name string Buffer name (e.g. "reposcope://preview")
 ---@return Buffer Created buffer handle or nil if creation failed
 function M.create_named_buffer(name)
-  local existing = fn.bufnr(name)
+  local existing = bufnr(name)
   if existing ~= -1 and nvim_buf_is_valid(existing) then
     local ok, err = pcall(nvim_buf_delete, existing, { force = true })
     if not ok then
@@ -100,17 +106,17 @@ end
 ---@param nec_filename? boolean Optional parameter to toggle testing filename
 ---@return boolean
 function M.is_valid_path(path, nec_filename)
-  path = fn.expand(path)
+  path = expand(path)
 
   local filename = nil
   if nec_filename == true then
-    filename = fn.fnamemodify(path, ":t")
+    filename = fnamemodify(path, ":t")
   elseif not path:match("/$") then  -- This check is needed for user safety. `fnamemodify()` doesnt recognizy directories without ending '/'
     path = path .. "/"
   end
 
   -- Extract directory and filename
-  local dir = fn.fnamemodify(path, ":h")
+  local dir = fnamemodify(path, ":h")
   local dir_ok = M.safe_mkdir(dir)
 
   if dir_ok == false then
@@ -137,17 +143,17 @@ end
 ---@param path string The directory path to create
 ---@return boolean
 function M.safe_mkdir(path)
-  if fn.isdirectory(path) == 1 then
+  if isdirectory(path) == 1 then
     return true
   end
 
-  local created = fn.mkdir(path, "p")
+  local created = mkdir(path, "p")
   if created == 0 then
     notify("[reposcope] Error: Directory could not be created: " .. path, 4)
     return false
   end
 
-  if fn.isdirectory(path) == 1 then
+  if isdirectory(path) == 1 then
     if M.is_dir_writeable(path) then
       return true
     else
@@ -165,7 +171,7 @@ end
 -- Check if the directory is writable
 ---@return boolean
 function M.is_dir_writeable(dir)
- local testfile = fn.fnameescape(dir .. "/.rs_write_test")
+ local testfile = fnameescape(dir .. "/.rs_write_test")
  local file, err = io.open(testfile, "w")
  if file then
    file:close()
@@ -186,7 +192,7 @@ end
 ---@return boolean success True if the command succeeded (exit code 0)
 ---@return string output The standard output (or error output) of the command
 function M.safe_execute_shell(command)
-  local result = fn.system(command)
+  local result = system(command)
   if vim.v.shell_error ~= 0 then
     return false, result
   end

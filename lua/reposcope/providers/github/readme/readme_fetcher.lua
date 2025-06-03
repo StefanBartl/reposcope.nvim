@@ -1,4 +1,4 @@
----@class ReadmeFetcher
+---@module 'reposcope.providers.github.readme.readme_fetcher'
 ---@brief Downloads README content from GitHub using raw URL or API fallback
 ---@description
 --- This module provides functions to fetch a README either from the raw GitHub URL
@@ -7,14 +7,15 @@
 ---
 --- All responses are returned through callback functions, ensuring that calling
 --- modules can schedule or process as needed.
----@field fetch_raw fun(owner: string, repo: string, branch: string, cb: fun(success: boolean, content: string|nil, err: string|nil): nil): nil # Fetches the README using the raw Github URL
----@field fetch_api fun(owner: string, repo: string, branch: string, cb: fun(success: boolean, content: string|nil, err: string|nil): nil): nil Fetches the README from the GitHub API (base64-encoded)
+
+---@class ReadmeFetcher :ReadmeFetcherModule
 local M = {}
 
 -- Network utilities
 local request = require("reposcope.network.clients.api_client").request
 local decode_base64 = require("reposcope.utils.encoding").decode_base64
 local get_urls = require("reposcope.providers.github.readme.readme_urls").get_urls
+
 
 ---Fetches the README using the raw GitHub URL
 ---@param owner string Repository owner
@@ -23,8 +24,6 @@ local get_urls = require("reposcope.providers.github.readme.readme_urls").get_ur
 ---@param cb fun(success: boolean, content: string|nil, err: string|nil): nil Callback receiving result
 ---@return nil
 function M.fetch_raw(owner, repo, branch, cb)
-  assert(type(cb) == "function", "Callback must be provided")
-
   local urls = get_urls(owner, repo, branch)
   request("GET", urls.raw, function(response, err)
     if err or not response then
@@ -35,6 +34,7 @@ function M.fetch_raw(owner, repo, branch, cb)
   end, nil, "readme_fetch_raw")
 end
 
+
 ---Fetches the README from the GitHub API (base64-encoded)
 ---@param owner string Repository owner
 ---@param repo string Repository name
@@ -42,8 +42,6 @@ end
 ---@param cb fun(success: boolean, content: string|nil, err: string|nil): nil Callback receiving result
 ---@return nil
 function M.fetch_api(owner, repo, branch, cb)
-  assert(type(cb) == "function", "Callback must be provided")
-
   local urls = get_urls(owner, repo, branch)
   request("GET", urls.api, function(response, err)
     if err or not response then

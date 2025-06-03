@@ -1,69 +1,32 @@
----@class RepositoryOwner
----@field login string Owner login name
-
----@class Repository
----@field name string Repository name
----@field description string Repository description
----@field html_url string Repository URL
----@field owner RepositoryOwner Owner of the repository
----@field default_branch? string The default branch of the repository (optional)
-
----@class RepositoryResponse
----@field total_count number Total number of repositories found
----@field items Repository[] List of repositories
----@field list string[] List of all repositories with most important informations
-
----@class RepositoryCache
+---@module 'reposcope.cache.repository_cach'
 ---@brief Caches the most recent GitHub repository results in memory
 ---@description
 --- This module temporarily caches the result of repository queries from the GitHub API.
 --- It is not persistent and is overwritten on each new query. Other modules can
 --- access and use this data (e.g., list UI, README fetcher, etc.)
----@field set fun(json: RepositoryResponse): nil Caches the repository response
----@field get fun(): RepositoryResponse Returns the currently cached repositories
----@field get_by_name fun(repo_name: string): Repository|nil Returns a repository object by name
----@field get_selected fun(): Repository|nil Returns the currently selected repository
----@field get_list fun(): string[] Returns the display-ready list for the UI
----@field clear fun(): nil Clears the repository cache
+
+---@class RepositoryCache : RepositoryCacheModule
 local M = {}
 
----@description Forward declarations for private functions
-local _sanitize_repo, _build_repo_line, _validate_repo_list
-
--- State Management (UI State, List Window)
+-- Vim Utilities
+local nvim_buf_get_lines = vim.api.nvim_buf_get_lines
+local nvim_buf_line_count = vim.api.nvim_buf_line_count
+-- State Management
 local ui_state = require("reposcope.state.ui.ui_state")
 local list_window = require("reposcope.ui.list.list_window")
 -- Debugging & Utility
 local notify = require("reposcope.utils.debug").notify
 local ensure_string = require("reposcope.utils.core").ensure_string
-local api = vim.api
 
 ---@type RepositoryResponse
 M.repositories = { total_count = 0, items = {}, list = {} }
 
 
----Stores the JSON response of repositories, sanitizes each repo entry and builds lines
----@param json RepositoryResponse
----@return nil
-function M.set(json)
-  M.repositories.total_count = json.total_count or 0
-  M.repositories.items = json.items or {}
-  M.repositories.list = { [#M.repositories.items] = false } -- reserve cap 
-
-  for i, repo in ipairs(M.repositories.items) do
-    local sanitized = _sanitize_repo(repo, i)
-    local line = _build_repo_line(sanitized)
-    M.repositories.list[i] = line
-  end
-
-  _validate_repo_list()
-end
-
 ---@private
 ---@param repo table
 ---@param index integer
 ---@return table
-function _sanitize_repo(repo, index)
+local function _sanitize_repo(repo, index)
   ---@type string
   local name = ensure_string(repo.name)
   if name == "" then
@@ -96,20 +59,38 @@ end
 ---@private
 ---@param repo table
 ---@return string
-function _build_repo_line(repo)
+local function _build_repo_line(repo)
   return string.format("%s/%s: %s", repo.owner.login, repo.name, repo.description)
 end
 
 
 ---@private
 ---@return nil
-function _validate_repo_list()
+local function _validate_repo_list()
   for i, line in ipairs(M.repositories.list) do
     if type(line) ~= "string" then
       notify(string.format("[reposcope] [dev] Repo list line %d is not a string: %s", i, type(line)), 4)
       notify(vim.inspect(line), 4)
     end
   end
+end
+
+
+---Stores the JSON response of repositories, sanitizes each repo entry and builds lines
+---@param json RepositoryResponse
+---@return nil
+function M.set(json)
+  M.repositories.total_count = json.total_count or 0
+  M.repositories.items = json.items or {}
+  M.repositories.list = { [#M.repositories.items] = false } -- reserve cap 
+
+  for i, repo in ipairs(M.repositories.items) do
+    local sanitized = _sanitize_repo(repo, i)
+    local line = _build_repo_line(sanitized)
+    M.repositories.list[i] = line
+  end
+
+  _validate_repo_list()
 end
 
 
@@ -122,6 +103,7 @@ end
 
 ---Returns a repository by its name
 ---@param repo_name string Repository name to search for
+---@return Repository|nil
 function M.get_by_name(repo_name)
   for _, repo in ipairs(M.repositories.items or {}) do
     if repo.name == repo_name then
@@ -161,14 +143,14 @@ function M.get_selected()
   end
 
   -- Avoid accessing a row that does not yet exist
-  local line_count = api.nvim_buf_line_count(ui_state.buffers.list)
+  local line_count = nvim_buf_line_count(ui_state.buffers.list)
   if selected_line > line_count then
     notify(string.format("[reposcope] Selected line (%d) exceeds list buffer line count (%d)", selected_line, line_count), 3)
     return nil
   end
 
   -- Read the repository entry in the list (format: "username/reponame: description")
-  local line_text = api.nvim_buf_get_lines(ui_state.buffers.list, selected_line - 1, selected_line, false)[1]
+  local line_text = nvim_buf_get_lines(ui_state.buffers.list, selected_line - 1, selected_line, false)[1]
   if not line_text or line_text == "" then
     notify(string.format("[reposcope] No content found at line %d in list buffer.", selected_line), 3)
     return nil
