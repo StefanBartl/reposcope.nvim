@@ -4,6 +4,12 @@
 --- This module coordinates the download and caching of README files using
 --- the readme_fetcher module. It checks for cached data and handles UI updates
 --- after successfully retrieving README content, either from RAM, file, or network.
+---
+---All readme fetch calls must go through this manager to ensure
+--- proper lifecycle tracking via UUIDs and `request_state`. This ensures
+--- that requests are not duplicated and are tracked cleanly.
+--- The manager performs UUID validation, request registration, and
+--- fallback handling on failure.
 
 ---@class ReadmeManager : ReadmeManagerModule
 local M = {}
@@ -94,7 +100,6 @@ function M.fetch_for_selected(uuid)
   local branch = repo.default_branch or "main"
 
   local urls = require("reposcope.providers.github.readme.readme_urls").get_urls(owner, repo_name, branch)
-  notify("[reposcope] Raw URL: " .. tostring(urls.raw), vim.log.levels.TRACE)
 
   if not is_valid_url(urls.raw) then
     request_state.end_request(uuid)

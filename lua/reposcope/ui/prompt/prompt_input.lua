@@ -8,7 +8,7 @@ local M = {}
 local get_fields = require("reposcope.ui.prompt.prompt_config").get_fields
 local get_field_text = require("reposcope.state.ui.prompt_state").get_field_text
 -- Providers
-local fetch_repositories = require("reposcope.controllers.provider_controller").fetch_repositories
+local fetch_repositories_and_display = require("reposcope.controllers.provider_controller").fetch_repositories_and_display
 -- Utilities
 local notify = require("reposcope.utils.debug").notify
 local query_builder = require("reposcope.providers.github.query_builder").build
@@ -41,7 +41,7 @@ function M.on_enter()
     return
   end
 
-  fetch_repositories(query)
+  fetch_repositories_and_display(query)
 end
 
 return M

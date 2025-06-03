@@ -53,10 +53,10 @@ end
 ---UUID is registered for later activation and deduplication.
 ---@param query string The search query string for repositories
 ---@return nil
-function M.fetch_repositories(query)
+function M.fetch_repositories_and_display(query)
   local uuid = generate_uuid()
   register_request(uuid)
-  providers[_get_provider()].repo_fetcher.fetch_repositories(query, uuid)
+  providers[_get_provider()].repo_fetcher.fetch_and_display(query, uuid)
 end
 
 
