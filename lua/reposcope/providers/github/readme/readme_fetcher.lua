@@ -22,16 +22,22 @@ local get_urls = require("reposcope.providers.github.readme.readme_urls").get_ur
 ---@param repo string Repository name
 ---@param branch string Target branch (e.g., "main")
 ---@param cb fun(success: boolean, content: string|nil, err: string|nil): nil Callback receiving result
+---@param uuid string Unique request identifier
 ---@return nil
-function M.fetch_raw(owner, repo, branch, cb)
+function M.fetch_raw(owner, repo, branch, cb, uuid)
   local urls = get_urls(owner, repo, branch)
+  if not urls or not urls.raw then
+    cb(false, nil, "Missing raw URL")
+    return
+  end
+
   request("GET", urls.raw, function(response, err)
     if err or not response then
-      cb(false, nil, err or "No response")
+      cb(false, nil, nil) -- Silent failure, no error shown to user
       return
     end
     cb(true, response)
-  end, nil, "readme_fetch_raw")
+  end, nil, "readme_fetch_raw", uuid)
 end
 
 
@@ -40,12 +46,18 @@ end
 ---@param repo string Repository name
 ---@param branch string Target branch (e.g., "main")
 ---@param cb fun(success: boolean, content: string|nil, err: string|nil): nil Callback receiving result
+---@param uuid string Unique request identifier
 ---@return nil
-function M.fetch_api(owner, repo, branch, cb)
+function M.fetch_api(owner, repo, branch, cb, uuid)
   local urls = get_urls(owner, repo, branch)
+  if not urls or not urls.api then
+    cb(false, nil, "Missing API URL")
+    return
+  end
+
   request("GET", urls.api, function(response, err)
     if err or not response then
-      cb(false, nil, err or "No response")
+      cb(false, nil, nil) -- Silent fallback
       return
     end
 
@@ -57,7 +69,7 @@ function M.fetch_api(owner, repo, branch, cb)
 
     local content = decode_base64(decoded.content)
     cb(true, content)
-  end, nil, "readme_fetch_api")
+  end, nil, "readme_fetch_api", uuid)
 end
 
 return M

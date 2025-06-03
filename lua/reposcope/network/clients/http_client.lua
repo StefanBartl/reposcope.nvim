@@ -45,6 +45,11 @@ end
 ---@param metrics_context? string Optional metrics context identifier
 ---@return nil
 function M.request(method, url, callback, headers, debug, metrics_context)
+  if type(url) ~= "string" or url == "" then
+    callback(nil, nil) -- Silent error to clear preview window
+    return
+  end
+
   local uuid = require("reposcope.utils.core").generate_uuid()
   local request_module
   local default_tool = get_option("request_tool")

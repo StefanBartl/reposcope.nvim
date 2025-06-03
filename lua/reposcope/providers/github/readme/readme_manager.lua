@@ -45,7 +45,7 @@ local function _fetch_from_api_fallback(owner, repo_name, branch, uuid)
       update_preview(repo_name)
       request_state.end_request(uuid)
     end)
-  end)
+  end, uuid)
 end
 
 ---@private
@@ -67,6 +67,11 @@ local function _record_metrics(repo, repo_name)
   end
 end
 
+local function is_valid_url(url)
+  return type(url) == "string" and url:match("^https?://")
+end
+
+
 ---Fetches the README for the currently selected repository
 ---@param uuid string
 ---@return nil
@@ -77,13 +82,27 @@ function M.fetch_for_selected(uuid)
 
   local repo = get_selected_repo()
   if not repo or not repo.name or not repo.owner or not repo.owner.login then
-    notify("[reposcope] Invalid repository selection", 4)
+    request_state.end_request(uuid)
+    schedule(function()
+      require("reposcope.ui.preview.preview_manager").clear_preview()
+    end)
     return
   end
 
   local owner = repo.owner.login
   local repo_name = repo.name
   local branch = repo.default_branch or "main"
+
+  local urls = require("reposcope.providers.github.readme.readme_urls").get_urls(owner, repo_name, branch)
+  notify("[reposcope] Raw URL: " .. tostring(urls.raw), vim.log.levels.TRACE)
+
+  if not is_valid_url(urls.raw) then
+    request_state.end_request(uuid)
+    schedule(function()
+      require("reposcope.ui.preview.preview_manager").clear_preview()
+    end)
+    return
+  end
 
   if has(repo_name) then
     _record_metrics(repo, repo_name)
@@ -105,7 +124,7 @@ function M.fetch_for_selected(uuid)
       notify("[reposcope] Raw fetch failed: " .. (err or "unknown error"), vim.log.levels.WARN)
       _fetch_from_api_fallback(owner, repo_name, branch, uuid)
     end
-  end)
+  end, uuid)
 end
 
 return M

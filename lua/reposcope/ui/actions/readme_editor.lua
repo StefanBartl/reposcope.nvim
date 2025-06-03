@@ -10,7 +10,7 @@ local M  = {}
 -- Vim Utilities
 local nvim_create_buf  = vim.api.nvim_create_buf
 local nvim_buf_set_lines = vim.api.nvim_buf_set_lines
-local nvim_buf_set_name = im.api.nvim_buf_set_name
+local nvim_buf_set_name = vim.api.nvim_buf_set_name
 -- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
 -- Cache Management

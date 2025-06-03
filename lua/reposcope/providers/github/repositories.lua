@@ -115,7 +115,7 @@ function M.fetch_repositories(query, uuid)
         end
       end, 100) -- Delay slightly to ensure list is displayed
     end)
-  end, nil, "fetch_repositories")
+  end, nil, "fetch_repositories", uuid)
 end
 
 return M
