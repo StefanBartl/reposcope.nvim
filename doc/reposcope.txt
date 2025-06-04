@@ -1,7 +1,7 @@
-*reposcope.txt*   Plugin documentation for reposcope.nvim     Last Change:  June 2025
+*reposcope.txt* Plugin documentation for reposcope.nvim Last Change: June 2025
 
 ==============================================================================
-INTRODUCTION                                                        *:Reposcope*
+INTRODUCTION                                                       *:Reposcope
 
 reposcope.nvim is a modular Neovim plugin for browsing and managing GitHub
 repositories directly from within the editor. It provides a dynamic UI
@@ -10,7 +10,7 @@ repositories directly from within the editor. It provides a dynamic UI
 Written in Lua and designed for clean architecture and maximum extensibility.
 
 ==============================================================================
-USAGE                                                               *reposcope-usage*
+USAGE                                                        *reposcope-usage*
 
 To launch the plugin UI:
 
@@ -25,7 +25,7 @@ To reload visible prompt fields:
     :ReposcopePromptReload prefix topic
 
 ==============================================================================
-CONFIGURATION                                                      *reposcope-config*
+CONFIGURATION                                               *reposcope-config*
 
 Basic setup:
 
@@ -36,9 +36,12 @@ Advanced setup:
 
 >lua
   require("reposcope").setup({
-    provider = "github",               -- backend provider (currently only GitHub)
-    request_tool = "curl",             -- "gh", "curl", or "wget"
-    layout = "default",                -- UI layout
+    provider = "github",           -- backend provider (currently only GitHub)
+    request_tool = "curl",         -- "gh", "curl", or "wget"
+    -- If higher API Limits neeeded set set the token here. 
+    -- If that doesn't works see reposcope-auth
+    github_token = os.getenv("GITHUB_TOKEN"),
+    layout = "default",            -- UI layout
     prompt_fields = {
       "prefix", "owner", "keywords", "language", "topic", "stars"
     },
@@ -54,22 +57,47 @@ Advanced setup:
   })
 
 ==============================================================================
-AUTHENTICATION                                                    *reposcope-auth*
+AUTHENTICATION                                                *reposcope-auth*
 
-reposcope.nvim works out of the box — no authentication is required.
+reposcope.nvim works out of the box — no authentication is required for
+basic usage.
 
-However, if using `gh` as request tool, you MUST set a valid token:
+However, if you use `gh` as your request tool, you MUST provide a valid
+GitHub token:
 
->bash
-  export GITHUB_TOKEN=ghp_your_token
+  >bash
+    export GITHUB_TOKEN=ghp_your_token_here
 
-> ⚠️ `gh auth login` is NOT sufficient — `uv.spawn()` in Neovim does not inherit
-GitHub CLI sessions. Use environment variables instead.
+⚠️  `gh auth login` is NOT sufficient — child processes spawned via `uv.spawn()`
+   (used internally by Reposcope) do not inherit the GitHub CLI session.
 
-Using `curl` or `wget` works without authentication, but imposes stricter API limits.
+Instead, define `GITHUB_TOKEN` as an environment variable
+before launching Neovim.
 
 ==============================================================================
-KEYMAPS                                                           *reposcope-keymaps*
+
+RECOMMENDED SETUP                                       *reposcope-auth-setup*
+
+In some environments (e.g. GUI-based Neovim, `zsh`, or plugin managers
+like Lazy.nvim), `os.getenv("GITHUB_TOKEN")` might return nil 
+even if the token is set e.g. in system global `.env`-files.
+
+To ensure the token is always available to Reposcope:
+
+  • Prefer setting it explicitly in your setup block:
+
+>lua
+  require("reposcope").setup({
+    github_token = os.getenv("GITHUB_TOKEN") or "gh_token",-- ✅ Explicit
+    ...
+  })
+
+• You may still use `curl` or `wget` as request tools without authentication,
+  but this will apply GitHub's stricter anonymous
+  rate limits (typically 60 requests/hour).
+
+==============================================================================
+KEYMAPS                                                    *reposcope-keymaps*
 
 Inside the Reposcope UI:
 
@@ -84,25 +112,26 @@ Inside the Reposcope UI:
 | `<CR>`      | Trigger search                              |
 
 ==============================================================================
-COMMANDS                                                        *reposcope-commands*
+COMMANDS                                                  *reposcope-commands*
 
 The following user commands are available:
 
-| Command                        | Description                                                              |
-|-------------------------------|--------------------------------------------------------------------------|
-| `:ReposcopeStart`             | Opens the Reposcope UI                                                   |
-| `:ReposcopeClose`             | Closes the UI                                                            |
-| `:ReposcopePromptReload ...`  | Dynamically reloads prompt fields shown in the UI                        |
-| `:ReposcopeSkippedReadmes`    | Prints number of skipped (debounced) README fetches                     |
-| `:ReposcopeStats`             | Displays request statistics (metrics)                                    |
-| `:ReposcopeToggleDev`         | Toggles developer mode (verbose logging, mock injections)                |
-| `:ReposcopePrintDev`          | Prints current developer mode status                                     |
+| Command                    | Description                                 |
+|------------------------------|---------------------------------------------|
+| `:ReposcopeStart`            | Opens the Reposcope UI                      |
+| `:ReposcopeClose`            | Closes the UI                               |
+| `:ReposcopePromptReload ...` | Dynamically reloads prompt fields in the UI |
+| `:ReposcopeSkippedReadmes`   | Prints number of debounced README fetches   |
+| `:ReposcopeStats`            | Displays request statistics (metrics)       |
+| `:ReposcopeToggleDev`        | Toggles developer mode (logging, mocking)   |
+| `:ReposcopePrintDev`         | Prints current developer mode status        |
 
 Example:
-                                                        *:ReposcopePromptReload*
+                                                      *:ReposcopePromptReload*
 :ReposcopePromptReload {fields}
 
-Sets the prompt fields shown in the Reposcope UI. Automatically restarts the UI to apply changes.
+Sets the prompt fields shown in the Reposcope UI.
+Automatically restarts the UI to apply changes.
 
 - If no fields are given, defaults to: `keywords`, `owner`, `language`.
 - Autocompletion lists all available prompt fields.
@@ -117,7 +146,7 @@ You can also simply run:
 To reset to the default prompt layout.
 
 ==============================================================================
-CACHE                                                            *reposcope-cache*
+CACHE                                                        *reposcope-cache*
 
 README caching is handled on two levels:
 
@@ -127,7 +156,7 @@ README caching is handled on two levels:
 Caches are automatically used and updated. File cache survives restarts.
 
 ==============================================================================
-CLONING                                                         *reposcope-clone*
+CLONING                                                      *reposcope-clone*
 
 Repositories can be cloned using:
 
@@ -139,11 +168,39 @@ Repositories can be cloned using:
 Cloning requires a valid `clone.std_dir` and tool configuration.
 
 ==============================================================================
-TROUBLESHOOTING                                                *reposcope-troubleshooting*
+TROUBLESHOOTING                                    *reposcope-troubleshooting*
 
 - If nothing shows in preview: check for missing README or invalid API token
 - If `gh` requests silently fail: ensure `GITHUB_TOKEN` is set
 - For logs/metrics: enable `metrics = true` and inspect `reposcope.log`
+
+==============================================================================
+HEALTHCHECK                                                *reposcope-health*
+
+Reposcope provides a built-in health module to verify installation, tool
+availability, environment variables, and configuration.
+
+To run the health check:
+
+  :checkhealth reposcope
+
+This will perform the following diagnostics:
+
+• Check if all core modules are loadable
+• Verify configured request tool (gh, curl, wget)
+• Test if the selected request binary is available in $PATH
+• Detect presence of the GitHub token (GITHUB_TOKEN)
+
+Example output:
+
+> 
+  ## Reposcope: plugin healthcheck
+  OK   Core modules loaded
+  OK   curl is installed
+  WARN No GitHub token set (you may hit rate limits)
+
+If you see any errors, consult |reposcope-auth| or |reposcope.setup|
+for correction.
 
 ==============================================================================
 SEE ALSO                                                       *reposcope-links*

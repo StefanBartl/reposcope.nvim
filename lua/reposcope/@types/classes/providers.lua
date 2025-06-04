@@ -35,7 +35,7 @@
 
 ---@class GithubRepositoryFetcherModule
 ---@field build_url fun(query: string): string Builds the full GitHub API URL from the search query
----@field fetch_repositories fun(query: string, uuid: string, on_success: fun(): nil, on_failure: fun(): nil): nil Performs the API request and updates the cache
+---@field fetch_repositories fun(query: string, on_success: fun(): nil, on_failure: fun(): nil): nil Performs the API request and updates the cache
 
 ---@class GithubRepositoryUILoaderModule
 ---@field load_ui_after_fetch fun(): nil Populates the list UI and optionally triggers README load
