@@ -6,6 +6,6 @@
 return {
   readme_manager = require("reposcope.providers.github.readme.readme_manager"),
   repo_fetcher = require("reposcope.providers.github.repositories.repository_manager"),
-  cloner = require("reposcope.providers.github.clone"),
+  cloner = require("reposcope.providers.github.clone.clone_manager"),
 }
 

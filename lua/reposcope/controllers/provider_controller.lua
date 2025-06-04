@@ -76,7 +76,7 @@ function M.prompt_and_clone()
       local uuid = generate_uuid()
       register_request(uuid)
       schedule(function ()
-        providers[_get_provider()].cloner.clone_repository(input, uuid)
+        providers[_get_provider()].cloner.clone(input, uuid)
       end)
     else
       notify("[reposcope] Cloning canceled.", 2)
