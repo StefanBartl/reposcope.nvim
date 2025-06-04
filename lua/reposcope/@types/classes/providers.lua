@@ -16,7 +16,19 @@
 
 ---@class CloneInfo
 ---@field name string The name of the repository
----@field url string The URL of the repository
+---@field url string The GitHub URL of the repository
+
+---@class GithubCloneManagerModule
+---@field clone fun(path: string, uuid: string): nil Starts a clone operation for the selected repository
+
+---@class GithubCloneInfoModule
+---@field get_clone_informations fun(): CloneInfo|nil
+
+---@class GithubCloneCommandBuilderModule
+---@field build_command fun(clone_type: string, repo_url: string, output_dir: string): string
+
+---@class GithubCloneExecutorModule
+---@field execute fun(cmd: string, uuid: string, repo_name: string): nil
 
 ---@class QueryBuilderModule
 ---@field build fun(input: table<string, string>): string
