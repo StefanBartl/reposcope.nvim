@@ -51,21 +51,33 @@ nvim_create_user_command("ReposcopeStats", function()
 end, {})
 
 
---- Sets new prompt fields dynamically (e.g. prefix, keywords, owner)
+--- Sets new prompt fields dynamically (e.g. prefix, keywords, owner) and restarts the UI
+--- Sets new prompt fields dynamically and restarts the UI
 nvim_create_user_command("ReposcopePromptReload", function(opts)
   local fields = opts.fargs
+  local default_fields = { "keywords", "owner", "language" }
+
   if not fields or #fields == 0 then
-    notify("[reposcope] Please provide one or more prompt fields", vim.log.levels.WARN)
-    return
+    fields = default_fields
+    notify("[reposcope] No fields provided. Using default fields: keywords, owner, language", vim.log.levels.WARN)
   end
 
   set_fields(fields)
   notify("[reposcope] Prompt fields set to: " .. table.concat(fields, ", "), vim.log.levels.INFO)
+
+  -- Restart UI to apply changes
+  local ui = require("reposcope.init")
+  pcall(ui.close_ui)
+  vim.defer_fn(function()
+    pcall(ui.open_ui)
+  end, 80)
 end, {
-  desc = "Set and apply new prompt fields (e.g. :ReposcopePromptReload prefix keywords)",
-  nargs = "+",  -- one or more arguments
+  desc = "Reload visible prompt fields (e.g. :ReposcopePromptReload prefix keywords)",
+  nargs = "*",
   complete = function()
-    return get_available_fields()
+    local fields = require("reposcope.ui.prompt.prompt_config").get_available_fields()
+    table.insert(fields, "default: keywords owner language")
+    return fields
   end,
 })
 
