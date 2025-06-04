@@ -14,6 +14,7 @@ local M = {}
 local schedule = vim.schedule
 local ui_input = vim.ui.input
 -- Utilities and Core
+local debounce_with_counter = require("reposcope.utils.protection").debounce_with_counter
 local generate_uuid = require("reposcope.utils.core").generate_uuid
 -- Request Tracking
 local register_request = require("reposcope.state.requests_state").register_request
@@ -38,6 +39,23 @@ local function _get_provider()
   return require("reposcope.config").get_option("provider")
 end
 
+---@private
+---Dispatches a throttled README fetch request with skipped-call tracking.
+---@description
+--- This function wraps the README fetch in a debounced call with a 100ms delay.
+--- It prevents redundant fetches during rapid UI navigation by skipping intermediate calls.
+--- A counter is maintained to track how many fetches were skipped.
+---
+--- Use `schedule_readme_fetch_with_counter(uuid)` to trigger the fetch,
+--- and `get_skipped_fetches()` to retrieve the number of skipped calls.
+---
+--- This is useful for diagnostics and performance tuning in the list navigation logic.
+---@diagnostic disable-next-line: redundant-parameter
+local _schedule_readme_fetch_with_counter, get_skipped = debounce_with_counter(function(uuid)
+  providers[_get_provider()].readme_manager.fetch_for_selected(uuid)
+end, 100)
+M.get_skipped_fetches = get_skipped
+
 
 ---Dispatches a README fetch request to the active provider.
 ---A UUID is generated and marked active via request_state.
@@ -45,7 +63,9 @@ end
 function M.fetch_readme_for_selected()
   local uuid = generate_uuid()
   register_request(uuid)
-  providers[_get_provider()].readme_manager.fetch_for_selected(uuid)
+
+  ---@diagnostic disable-next-line: redundant-parameter
+   _schedule_readme_fetch_with_counter(uuid)
 end
 
 

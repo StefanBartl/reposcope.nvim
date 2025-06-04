@@ -62,6 +62,8 @@
 
 ---@class UtilsProtectionModule
 ---@brief Utility functions related to value normalization, path validation, and buffer management
+---@field debounce fun(fn: fun(...: any): any, delay_ms: number): fun(...: any): any Ensures that rapid repeated invocations will only trigger the final call after the delay interval.
+---@field debounce_with_counter fun(fn: fun(...: any): any, delay_ms: number): fun(...: any): any Ensures that rapid repeated invocations will only trigger the final call after the delay interval.
 ---@field count_or_default fun(val: table|number|string, default: number): number Returns the item count if `val` is a table, the number if `val` is a number, or `default` otherwise
 ---@field create_named_buffer fun(name: string): integer|nil Creates a named scratch buffer, replacing any existing one with the same name
 ---@field is_valid_filename fun(filename: string|nil): boolean, string Returns true and empty string if valid, false and error message otherwise
