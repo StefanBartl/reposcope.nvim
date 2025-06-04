@@ -1,8 +1,9 @@
--- Dependecies
+-- Dependencies
 local nvim_create_user_command = vim.api.nvim_create_user_command
 local notify = require("reposcope.utils.debug").notify
 local set_fields = require("reposcope.ui.prompt.prompt_config").set_fields
 local get_available_fields = require("reposcope.ui.prompt.prompt_config").get_available_fields
+
 
 ---This command safely starts the reposcope UI by calling `require("reposcope.init").open_ui()`
 ---and logs an error notification if an exception occurs.
@@ -17,6 +18,7 @@ end, {
   desc = "Open Reposcope",
 })
 
+
 ---This command safely closes the reposcope UI by calling `require("reposcope.init").close_ui()`
 ---and logs an error notification if an exception occurs.
 nvim_create_user_command("ReposcopeClose", function(_)
@@ -30,15 +32,18 @@ end, {
   desc = "Close reposcope",
 })
 
+
 ---This command toggles the developer mode for reposcope.
 nvim_create_user_command("ReposcopeToggleDev", function()
   require("reposcope.utils.debug").toggle_dev_mode()
 end, { desc = "Toggle reposcope dev mode" })
 
+
 ---This command prints the state of developer mode for reposcope.
 nvim_create_user_command("ReposcopePrintDev", function()
   print("dev_mode:", require("reposcope.utils.debug").options.dev_mode)
 end, { desc = "Print reposcope dev mode" })
+
 
 --- Command to show statistics directly with :ReposcopeStats
 nvim_create_user_command("ReposcopeStats", function()
@@ -46,7 +51,7 @@ nvim_create_user_command("ReposcopeStats", function()
 end, {})
 
 
-
+--- Sets new prompt fields dynamically (e.g. prefix, keywords, owner)
 nvim_create_user_command("ReposcopePromptReload", function(opts)
   local fields = opts.fargs
   if not fields or #fields == 0 then
@@ -63,4 +68,10 @@ end, {
     return get_available_fields()
   end,
 })
+
+
+--- Prints the number of skipped README fetches due to debounce
+nvim_create_user_command("ReposcopeSkippedReadmes", function()
+  print("Skipped readme fetches: ", require("reposcope.controllers.provider_controller").get_skipped_fetches())
+end, {})
 

@@ -5,6 +5,7 @@
 local M = {}
 
 -- Vim Utilities
+local defer_fn = vim.defer_fn
 local fnameescape = vim.fn.fnameescape
 local fnamemodify = vim.fn.fnamemodify
 local isdirectory = vim.fn.isdirectory
@@ -20,6 +21,63 @@ local nvim_buf_set_name = vim.api.nvim_buf_set_name
 local debug = require("reposcope.utils.debug")
 local debugf = debug.debugf
 local notify = debug.notify
+
+
+---@param fn fun()
+---@param delay_ms integer
+---@return fun()
+function M.debounce(fn, delay_ms)
+  local timer = nil
+  local args = {}
+
+   ---@diagnostic disable-next-line: redundant-parameter
+  return function(...)
+    args = { ... }
+
+    if timer then
+      timer:stop()
+      timer:close()
+    end
+
+    timer = vim.defer_fn(function()
+      ---@diagnostic disable-next-line: redundant-parameter
+      fn(unpack(args))
+      timer = nil
+    end, delay_ms)
+  end
+end
+
+
+---@param fn fun()
+---@param delay_ms integer
+---@return fun(), fun(): integer
+function M.debounce_with_counter(fn, delay_ms)
+  local timer = nil
+  local skipped = 0
+  local args = {}
+
+  local function call(...)
+    args = { ... }
+
+    if timer then
+      timer:stop()
+      timer:close()
+      skipped = skipped + 1
+    end
+
+    timer = vim.defer_fn(function()
+      ---@diagnostic disable-next-line: redundant-parameter
+      fn(unpack(args))
+      timer = nil
+    end, delay_ms)
+  end
+
+  local function get_skipped()
+    return skipped
+  end
+
+  return call, get_skipped
+end
 
 
 ---Normalizes a value into a non-zero count.
