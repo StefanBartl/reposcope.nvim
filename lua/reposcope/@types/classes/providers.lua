@@ -41,5 +41,5 @@
 ---@field load_ui_after_fetch fun(): nil Populates the list UI and optionally triggers README load
 
 ---@class GithubRepositoryManagerModule
----@field fetch fun(query: string, uuid: string, on_success?: fun(): nil, on_failure?: fun(): nil): nil Fetches repositories without UI
+---@field fetch fun(query: string, uuid: string, on_success: (fun(): nil) | nil, on_failure: (fun(): nil) | nil): nil
 ---@field fetch_and_display fun(query: string, uuid: string, on_failure?: fun(): nil): nil Fetches repositories and updates the list UI
