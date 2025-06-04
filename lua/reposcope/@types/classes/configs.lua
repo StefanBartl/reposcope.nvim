@@ -12,7 +12,7 @@
 ---@field provider string API provider used for search requests (e.g. "github")
 ---@field preferred_requesters string[] Fallback order of CLI tools to use for HTTP requests
 ---@field request_tool string Main tool to perform HTTP requests (used unless unavailable)
----@field github_token string Optional GitHub token for authenticated API calls
+---@field github_token? string Optional GitHub token for authenticated API calls
 ---@field results_limit number Maximum number of search results to show
 ---@field layout LayoutType Default layout for result view
 ---@field clone CloneOptions Options related to downloading/cloning repositories

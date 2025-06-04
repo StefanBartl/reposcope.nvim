@@ -39,7 +39,7 @@ function M.debounce(fn, delay_ms)
       timer:close()
     end
 
-    timer = vim.defer_fn(function()
+    timer = defer_fn(function()
       ---@diagnostic disable-next-line: redundant-parameter
       fn(unpack(args))
       timer = nil
@@ -65,7 +65,7 @@ function M.debounce_with_counter(fn, delay_ms)
       skipped = skipped + 1
     end
 
-    timer = vim.defer_fn(function()
+    timer = defer_fn(function()
       ---@diagnostic disable-next-line: redundant-parameter
       fn(unpack(args))
       timer = nil

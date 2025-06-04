@@ -35,11 +35,10 @@ end
 
 --- Fetches repositories from GitHub API and updates the repository cache
 ---@param query string The search query for GitHub repositories
----@param uuid string A unique identifier for this request
 ---@param on_success fun(): nil Callback if the fetch succeeds
 ---@param on_failure fun(): nil Callback if the fetch fails
 ---@return nil
-function M.fetch_repositories(query, uuid, on_success, on_failure)
+function M.fetch_repositories(query, on_success, on_failure)
   if query == "" then
     notify("[reposcope] Error: Search query is empty.", 4)
     on_failure()

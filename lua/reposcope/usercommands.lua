@@ -75,7 +75,7 @@ end, {
   desc = "Reload visible prompt fields (e.g. :ReposcopePromptReload prefix keywords)",
   nargs = "*",
   complete = function()
-    local fields = require("reposcope.ui.prompt.prompt_config").get_available_fields()
+    local fields = get_available_fields()
     table.insert(fields, "default: keywords owner language")
     return fields
   end,

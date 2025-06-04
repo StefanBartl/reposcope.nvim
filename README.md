@@ -1,7 +1,9 @@
 # reposcope.nvim
 ![version](https://img.shields.io/badge/version-0.1-blue.svg)
-![license](https://img.shields.io/github/license/StefanBartl/reposcope.nvim)
+![State](https://img.shields.io/badge/status-beta-orange.svg)
 ![Lazy.nvim compatible](https://img.shields.io/badge/lazy.nvim-supported-success)
+![Neovim](https://img.shields.io/badge/Neovim-0.9+-success.svg)
+![Lua](https://img.shields.io/badge/language-Lua-yellow.svg)
 
 > 🔧 Beta stage – under active development. Changes possible.
 
@@ -96,19 +98,20 @@ Or define a custom setup with fine-grained control:
 require("reposcope").setup({
   prompt_fields = {
     "prefix", "owner", "keywords", "language", "topic", "stars"
-  },                              -- Prompt fields shown to the user
-  provider = "github",            -- Which backend to use: "github" (default), "gitlab" (planned)
-  request_tool = "curl",          -- Tool for API requests: "gh", "curl", "wget"
-  layout = "default",             -- Currently only "default" supported
-  keymaps = {
-    open = "<leader>rs",          -- Mapping to open the UI
-    close = "<leader>rc",         -- Mapping to close the UI
+  },                                        -- Prompt fields shown to the user
+  provider = "github",                      -- Which backend to use: "github" (default), "gitlab" (planned)
+  request_tool = "curl",                    -- Tool for API requests: "gh", "curl", "wget"
+  layout = "default",                       -- Currently only "default" supported
+  github_token = os.getenv("GITHUB_TOKEN"), -- If higher API Limits neeeded set the token here. If that doesn't works: [Authentication](#authentication)
+    keymaps = {
+    open = "<leader>rs",                    -- Mapping to open the UI
+    close = "<leader>rc",                   -- Mapping to close the UI
   },
   clone = {
-    std_dir = "~/projects",       -- Default directory to clone into
-    type = "git",                 -- Clone method: "git", "gh", "wget", "curl"
+    std_dir = "~/projects",                 -- Default directory to clone into
+    type = "git",                           -- Clone method: "git", "gh", "wget", "curl"
   },
-  metrics = true,                 -- Enables request timing and logging (for debugging)
+  metrics = true,                           -- Enables request timing and logging (for debugging)
 })
 ```
 
@@ -205,6 +208,25 @@ export GITHUB_TOKEN=ghp_your_token_here
 ⚠️ **Important:** Logged-in `gh` sessions (via `gh auth login`) are **not** accessible to child processes started via `uv.spawn()` inside Neovim. Without an explicit `GITHUB_TOKEN`, `gh`-based requests will silently fail.
 
 As an alternative, you can use `curl` or `wget` without authentication — but you’ll have lower API rate limits.
+
+---
+
+### Recommended: Set it explicitly in `setup({ ... })`
+
+In some systems or plugin managers, Neovim **does not inherit** environment variables defined in `.zshenv`, `.profile`, or GUI launch contexts.
+
+To avoid issues, we recommend passing the token directly during setup:
+
+```lua
+require("reposcope").setup({
+  github_token = os.getenv("GITHUB_TOKEN") or "gh__example_token", -- Explicitly forward the env variable
+  ...
+})
+```
+
+This ensures the token is correctly passed to internal request handlers, regardless of how Neovim was started.
+
+If you do not set a token, `curl` or `wget` will still work — but you may hit GitHub's anonymous rate limits.
 
 ---
 

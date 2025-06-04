@@ -31,6 +31,7 @@ function M.request(method, url, callback, _headers, debug, context, uuid)
     return
   end
 
+  local _ = _headers
   local stdout = uv.new_pipe(false)
   local stderr = uv.new_pipe(false)
   local start_time = uv.hrtime()

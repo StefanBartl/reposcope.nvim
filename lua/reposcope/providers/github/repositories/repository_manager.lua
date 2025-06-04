@@ -55,7 +55,7 @@ function M.fetch(query, uuid, on_success, on_failure)
 
   request_state.start_request(uuid)
 
-  fetcher.fetch_repositories(query, uuid, function()
+  fetcher.fetch_repositories(query, function()
     if on_success then on_success() end
   end, function()
     if on_failure then
@@ -82,7 +82,7 @@ function M.fetch_and_display(query, uuid, on_failure)
 
   request_state.start_request(uuid)
 
-  fetcher.fetch_repositories(query, uuid, function()
+  fetcher.fetch_repositories(query, function()
     ui_loader.load_ui_after_fetch()
   end, function()
     if on_failure then
