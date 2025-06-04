@@ -1,0 +1,155 @@
+*reposcope.txt*   Plugin documentation for reposcope.nvim     Last Change:  June 2025
+
+==============================================================================
+INTRODUCTION                                                        *:Reposcope*
+
+reposcope.nvim is a modular Neovim plugin for browsing and managing GitHub
+repositories directly from within the editor. It provides a dynamic UI
+(prompt, list, preview), README caching, and cloning functionality.
+
+Written in Lua and designed for clean architecture and maximum extensibility.
+
+==============================================================================
+USAGE                                                               *reposcope-usage*
+
+To launch the plugin UI:
+
+    :ReposcopeStart
+
+To close it manually:
+
+    :ReposcopeClose
+
+To reload visible prompt fields:
+
+    :ReposcopePromptReload prefix topic
+
+==============================================================================
+CONFIGURATION                                                      *reposcope-config*
+
+Basic setup:
+
+>lua
+  require("reposcope").setup({})
+
+Advanced setup:
+
+>lua
+  require("reposcope").setup({
+    provider = "github",               -- backend provider (currently only GitHub)
+    request_tool = "curl",             -- "gh", "curl", or "wget"
+    layout = "default",                -- UI layout
+    prompt_fields = {
+      "prefix", "owner", "keywords", "language", "topic", "stars"
+    },
+    keymaps = {
+      open = "<leader>rs",
+      close = "<leader>rc",
+    },
+    clone = {
+      std_dir = "~/projects",          -- directory to clone into
+      type = "git",                    -- "git", "gh", "wget", or "curl"
+    },
+    metrics = true                     -- enable request logging & metrics
+  })
+
+==============================================================================
+AUTHENTICATION                                                    *reposcope-auth*
+
+reposcope.nvim works out of the box — no authentication is required.
+
+However, if using `gh` as request tool, you MUST set a valid token:
+
+>bash
+  export GITHUB_TOKEN=ghp_your_token
+
+> ⚠️ `gh auth login` is NOT sufficient — `uv.spawn()` in Neovim does not inherit
+GitHub CLI sessions. Use environment variables instead.
+
+Using `curl` or `wget` works without authentication, but imposes stricter API limits.
+
+==============================================================================
+KEYMAPS                                                           *reposcope-keymaps*
+
+Inside the Reposcope UI:
+
+| Key         | Action                                      |
+|-------------|---------------------------------------------|
+| `<Esc>`     | Close the entire UI                         |
+| `<C-v>`     | View the README in a floating viewer        |
+| `<C-b>`     | Open README in an editable buffer           |
+| `<C-c>`     | Clone the selected repository               |
+| `<Tab>`     | Next prompt field (in insert mode)          |
+| `<S-Tab>`   | Previous prompt field (in insert mode)      |
+| `<CR>`      | Trigger search                              |
+
+==============================================================================
+COMMANDS                                                        *reposcope-commands*
+
+The following user commands are available:
+
+| Command                        | Description                                                              |
+|-------------------------------|--------------------------------------------------------------------------|
+| `:ReposcopeStart`             | Opens the Reposcope UI                                                   |
+| `:ReposcopeClose`             | Closes the UI                                                            |
+| `:ReposcopePromptReload ...`  | Dynamically reloads prompt fields shown in the UI                        |
+| `:ReposcopeSkippedReadmes`    | Prints number of skipped (debounced) README fetches                     |
+| `:ReposcopeStats`             | Displays request statistics (metrics)                                    |
+| `:ReposcopeToggleDev`         | Toggles developer mode (verbose logging, mock injections)                |
+| `:ReposcopePrintDev`          | Prints current developer mode status                                     |
+
+Example:
+                                                        *:ReposcopePromptReload*
+:ReposcopePromptReload {fields}
+
+Sets the prompt fields shown in the Reposcope UI. Automatically restarts the UI to apply changes.
+
+- If no fields are given, defaults to: `keywords`, `owner`, `language`.
+- Autocompletion lists all available prompt fields.
+- Example:
+
+    :ReposcopePromptReload prefix topic stars
+
+You can also simply run:
+
+    :ReposcopePromptReload
+
+To reset to the default prompt layout.
+
+==============================================================================
+CACHE                                                            *reposcope-cache*
+
+README caching is handled on two levels:
+
+- RAM cache (fast)
+- File cache (~/.local/share/nvim/reposcope/data/readme/)
+
+Caches are automatically used and updated. File cache survives restarts.
+
+==============================================================================
+CLONING                                                         *reposcope-clone*
+
+Repositories can be cloned using:
+
+- `git` (default)
+- `gh`
+- `wget`
+- `curl`
+
+Cloning requires a valid `clone.std_dir` and tool configuration.
+
+==============================================================================
+TROUBLESHOOTING                                                *reposcope-troubleshooting*
+
+- If nothing shows in preview: check for missing README or invalid API token
+- If `gh` requests silently fail: ensure `GITHUB_TOKEN` is set
+- For logs/metrics: enable `metrics = true` and inspect `reposcope.log`
+
+==============================================================================
+SEE ALSO                                                       *reposcope-links*
+
+- GitHub: https://github.com/StefanBartl/reposcope.nvim
+- ripgrep globs: https://github.com/BurntSushi/ripgrep/blob/master/GLOB.md
+
+==============================================================================
+vim:tw=78:ts=8:ft=help:norl:

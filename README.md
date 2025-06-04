@@ -3,7 +3,7 @@
 ![license](https://img.shields.io/github/license/StefanBartl/reposcope.nvim)
 ![Lazy.nvim compatible](https://img.shields.io/badge/lazy.nvim-supported-success)
 
-⚠️ This plugin is in **alpha stage**. Expect breaking changes, missing features, and sharp edges.
+> 🔧 Beta stage – under active development. Changes possible.
 
 ```
  _ __   ___  _ __    ___   ___   ___   ___   _ __    ___
@@ -14,30 +14,39 @@
             |_|                             |_|
 ```
 
-Search and preview repositories from GitHub (and other code forges) directly inside Neovim — powered by Telescope.
+Search, preview and clone GitHub repositories – directly from inside Neovim.
+Modular, minimal, Telescope-inspired interface.
 
 ---
 
 ## Features
 
-- 🔍 Search public GitHub repositories by keyword or topic
-- 📄 Preview the `README.md` content of each repo inline
-- 🧩 Designed as a modular provider system (GitLab, Codeberg, etc. coming soon)
-- 📦 Telescope-powered fuzzy search UI
-- ⚙️ Low coupling, high cohesion — clean and extendable architecture
-- 🔐 Supports GitHub API token authentication
+- 🔍 Dynamic GitHub repository search by topic, owner, language, etc.
+- 📄 Live preview of `README.md` with inline Markdown rendering
+- 🧠 Persistent README caching (RAM + file system)
+- 🔧 Clone support: `git`, `gh`, `wget`, `curl`
+- 🔁 Debounced README fetches to avoid redundant API calls
+- 📦 Clean, fully modular architecture (UI, state, providers, controllers)
+- 🧪 Strongly annotated with EmmyLua for LuaLS support
+- 📊 Built-in request metrics and logging (optional toggle)
+- 📑 README viewer (`<C-v>`) or README editor buffer (`<C-b>`)
+- ⌨️ Keymaps for navigation, cloning, and UI control
+- 📁 Customizable prompt fields (e.g. `prefix`, `keywords`, `owner`, ...)
 
 ---
 
 ## Roadmap
 
-- [ ] GitHub repo search (basic)
-- [ ] GitHub README preview (Base64 decode + render)
-- [ ] Telescope UI integration
-- [ ] GitHub topic filtering
-- [ ] GitLab provider support
-- [ ] Clone repo via `gh` or `git`
-- [ ] Local cache support
+- [x] GitHub repository search (field-based)
+- [x] GitHub README rendering (raw + API fallback)
+- [x] Clone repo with tool of choice (`git`, `gh`, `curl`, `wget`)
+- [x] File-based README cache
+- [x] Full UI (list, prompt, preview, background) in dynamic layout
+- [x] Metrics, logging, and developer diagnostics
+- [x] Viewer/editor for README content
+- [x] Help docs via `:h reposcope`
+- [ ] GitLab + Codeberg provider support
+- [ ] Persistent session save/restore
 
 ---
 
@@ -66,16 +75,66 @@ use {
     "nvim-telescope/telescope.nvim",
   },
   config = function()
-    require("reposcope.init").setup()
+    require("reposcope").setup()
   end,
 }
 ```
 
 ---
 
+## Configuration
+
+`reposcope.nvim` is fully configurable. You can start with the defaults:
+
+```lua
+require("reposcope").setup({})
+```
+
+Or define a custom setup with fine-grained control:
+
+```lua
+require("reposcope").setup({
+  prompt_fields = {
+    "prefix", "owner", "keywords", "language", "topic", "stars"
+  },                              -- Prompt fields shown to the user
+  provider = "github",            -- Which backend to use: "github" (default), "gitlab" (planned)
+  request_tool = "curl",          -- Tool for API requests: "gh", "curl", "wget"
+  layout = "default",             -- Currently only "default" supported
+  keymaps = {
+    open = "<leader>rs",          -- Mapping to open the UI
+    close = "<leader>rc",         -- Mapping to close the UI
+  },
+  clone = {
+    std_dir = "~/projects",       -- Default directory to clone into
+    type = "git",                 -- Clone method: "git", "gh", "wget", "curl"
+  },
+  metrics = true,                 -- Enables request timing and logging (for debugging)
+})
+```
+
+---
+
+### Available Options
+
+| Option          | Type       | Description                                                        |
+| --------------- | ---------- | ------------------------------------------------------------------ |
+| `prompt_fields` | `string[]` | Controls which input fields appear in the prompt UI                |
+| `provider`      | `string`   | Active backend (currently only `"github"` supported)               |
+| `request_tool`  | `string`   | CLI tool to fetch data: `"gh"`, `"curl"`, `"wget"`                 |
+| `layout`        | `string`   | UI layout style (currently only `"default"`)                       |
+| `keymaps.open`  | `string`   | Keymap to open Reposcope UI                                        |
+| `keymaps.close` | `string`   | Keymap to close the UI cleanly                                     |
+| `clone.std_dir` | `string`   | Base path for repository cloning                                   |
+| `clone.type`    | `string`   | Tool used to perform clone: `"git"`, `"gh"`, `"wget"`, or `"curl"` |
+| `metrics`       | `boolean`  | Enable internal request logging and performance tracking           |
+
+> ℹ️ You can dynamically reload prompt fields with `:ReposcopePromptReload prefix topic`.
+
+---
+
 ## Usage
 
-After installing and configuring, launch the UI via command:
+Launch Reposcope UI:
 
 ```vim
 :ReposcopeStart
@@ -86,48 +145,112 @@ Or map it in your Neovim config:
 ```lua
 vim.keymap.set("n", "<leader>rs", function()
   vim.cmd("ReposcopeStart")
-end, { desc = "Search GitHub repositories" })
+end, { desc = "Open Reposcope" })
 ```
 
-### Closing the UI
+### UI Keymaps
 
-The UI can be closed via:
+| Key           | Mode | Action                                |
+| ------------- | ---- | ------------------------------------- |
+| `<Esc>`       | any  | Close Reposcope UI                    |
+| `<Up>/<Down>` | n/i  | Navigate repository list              |
+| `<C-v>`       | n/i  | View README in floating window        |
+| `<C-b>`       | n/i  | Open README in editable hidden buffer |
+| `<C-c>`       | n/i  | Clone selected repository             |
+| `<Tab>`       | i    | Cycle to next prompt field            |
+| `<S-Tab>`     | i    | Cycle to previous prompt field        |
 
-* `<Esc>` (in any prompt or list window)
-* `:ReposcopeClose` command
+---
+
+### Available Commands
+
+| Command                      | Description                                                              |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| `:ReposcopeStart`            | Opens the Reposcope UI                                                   |
+| `:ReposcopeClose`            | Closes all Reposcope windows and buffers                                 |
+| `:ReposcopePromptReload ...` | Dynamically sets new prompt fields (e.g. `prefix`, `keywords`, ...)      |
+| `:ReposcopeSkippedReadmes`   | Shows number of skipped README fetches (debounced during fast scrolling) |
+| `:ReposcopeStats`            | Displays collected request stats and metrics                             |
+| `:ReposcopeToggleDev`        | Toggles developer mode (enables debug logging etc.)                      |
+| `:ReposcopePrintDev`         | Prints whether developer mode is active                                  |
+
+
+#### `:ReposcopePromptReload ...`
+
+This user command updates the active prompt fields dynamically. It closes and reopens the Reposcope UI to apply the new configuration — the specified fields will then appear in the prompt layout.
+
+> 🧠 Prompt fields must be chosen from: `prefix`, `keywords`, `owner`, `language`, `topic`, `stars`.
+> If no fields are given, it defaults to: `keywords`, `owner`, `language`.
+
+Example:
+
+```vim
+:ReposcopePromptReload keywords topic         "prompt without prefix: 
+:ReposcopePromptReload prefix topic stars     "prompt with prefix, topice and stars field
+:ReposcopePromptReload                        "resets to default
+```
 
 ---
 
 ## Authentication
 
-To use authenticated GitHub API requests (higher rate limits):
+`reposcope.nvim` works out of the box — **no authentication is required** for basic usage.
+
+However, if you want to use the `gh` CLI as your request backend, you **must** set a valid `GITHUB_TOKEN` manually:
 
 ```sh
 export GITHUB_TOKEN=ghp_your_token_here
 ```
 
-This will be used internally for GitHub API access.
+⚠️ **Important:** Logged-in `gh` sessions (via `gh auth login`) are **not** accessible to child processes started via `uv.spawn()` inside Neovim. Without an explicit `GITHUB_TOKEN`, `gh`-based requests will silently fail.
+
+As an alternative, you can use `curl` or `wget` without authentication — but you’ll have lower API rate limits.
 
 ---
 
-## Architecture
+## Architecture Overview
 
-* `reposcope/init.lua` handles UI lifecycle: `setup`, `open_ui`, `close_ui`
-* `reposcope/ui/*` contains modular window components (background, prompt, list, preview)
-* Keymaps are centrally managed and tracked in `reposcope/keymaps.lua`
-* User commands are registered via `reposcope/usercommands.lua`
-* Provider logic is located in `reposcope/ui/prompt/input.lua`
+```
+reposcope/
+│
+├── init.lua                 → Setup and UI lifecycle
+├── config.lua               → User options and dynamic resolution
+├── ui/                      → Modular UI: prompt, list, preview, background
+├── providers/               → GitHub (others coming soon)
+├── cache/                   → In-memory and file-based caching
+├── controllers/             → Unified dispatch: readme, repositories, clone
+├── state/                   → Buffers, windows, user input state
+├── network/                 → HTTP clients and request tools (curl, gh, ...)
+├── utils/                   → Debug, protection, encoding, os-tools
+```
+
+---
+
+## Development & Debugging
+
+* Use `:ReposcopePromptReload prefix topic` to dynamically reload prompt fields
+* Use `require("reposcope.utils.debug").notify(...)` for developer output
+* Toggle metrics in config: `metrics = true`
+* Debug file paths and logs are stored in:
+
+  * `~/.local/share/nvim/reposcope/data/readme/`
+  * `~/.local/share/nvim/reposcope/logs/request_log.json`
+
+---
 
 ## License
 
-[MIT License © 2025](./LICENSE)
+[MIT © 2025 Stefan Bartl](./LICENSE)
 
 ---
 
-## Status, Development & Contribution
+## Contribution
 
-`reposcope.nvim` is under active development. Contributions, feature requests and issue reports are welcome!
+Issues, suggestions and pull requests are welcome!
+Clone, symlink into your Neovim config, and hack away.
 
-Clone the repository and either symlink or load it into your Neovim runtime path.
+```
+git clone https://github.com/StefanBartl/reposcope.nvim ~/.config/nvim/reposcope.nvim
+```
 
 ---
