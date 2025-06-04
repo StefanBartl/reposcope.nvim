@@ -3,14 +3,12 @@
 
 local M = {}
 
--- Vim Utilities 
-local fn = vim.fn
 -- Neovim health integration
 local health = vim.health or require("health")
 -- Dependencies
 local config = require("reposcope.config")
 local checks = require("reposcope.utils.checks")
-
+local env_has = require("reposcope.utils.env").has
 
 ---@return nil
 function M.check()
@@ -55,7 +53,7 @@ function M.check()
   ---------------------------------------------------------------------------
   -- Environment variables
   ---------------------------------------------------------------------------
-  if checks.has_env("GITHUB_TOKEN") then
+  if env_has("GITHUB_TOKEN") then
     health.ok("GITHUB_TOKEN environment variable set")
   else
     health.warn("GITHUB_TOKEN not set – GitHub API may be rate-limited")

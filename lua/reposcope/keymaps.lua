@@ -14,6 +14,7 @@ local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 local nvim_feedkeys = vim.api.nvim_feedkeys
 local nvim_replace_termcodes = vim.api.nvim_replace_termcodes
 --- Project dependencies
+local cfg_get_option = require("reposcope.config").get_option
 local ui_state = require("reposcope.state.ui.ui_state")
 local fetch_readme_for_selected = require("reposcope.controllers.provider_controller").fetch_readme_for_selected
 local prompt_and_clone = require("reposcope.controllers.provider_controller").prompt_and_clone
@@ -24,7 +25,6 @@ local navigate = require("reposcope.ui.prompt.prompt_focus").navigate
 local notify = require("reposcope.utils.debug").notify
 local flatten_table = require("reposcope.utils.core").flatten_table
 local tbl_islist = require("reposcope.utils.core").tbl_islist
-local defaults = require("reposcope.defaults")
 
 local _registry = {}
 local map_over_bufs
@@ -334,19 +334,19 @@ end
 
 
 ---Sets user keymaps for opening/closing Reposcope
----@param map_cfg? table Optional map override: { rs = "...", rc = "..." }
+---@param map_cfg? table Optional map override: { open = "...", close = "..." }
 ---@param opts? table Optional map opts (e.g. { silent = false })
 ---@return nil
 function M.set_user_keymaps(map_cfg, opts)
-  map_cfg = map_cfg or defaults.options.keymaps
-  opts = opts or defaults.options.keymap_opts
+  map_cfg = map_cfg or cfg_get_option("keymaps")
+  opts = opts or cfg_get_option("keymap_opts")
 
   set_km("n", map_cfg.open, function()
     local ok, err = pcall(function()
       require("reposcope.init").open_ui()
     end)
     if not ok then
-      print("Error while opening reposcope: " .. err)
+      print("Error while opening Reposcope: " .. err)
     end
   end, tbl_extend("force", { desc = "Open Reposcope" }, opts))
 
@@ -355,7 +355,7 @@ function M.set_user_keymaps(map_cfg, opts)
       require("reposcope.init").close_ui()
     end)
     if not ok then
-      print("Error while closing reposcope: " .. err)
+      print("Error while closing Reposcope: " .. err)
     end
   end, tbl_extend("force", { desc = "Close Reposcope" }, opts))
 end
