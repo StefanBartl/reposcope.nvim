@@ -50,12 +50,4 @@ function M.resolve_request_tool(requesters)
   end
 end
 
-
----Checks if an environment variable is set and non-empty
----@param name string The name of the environment variable
----@return boolean is_set True if the variable exists and is not empty
-function M.has_env(name)
-  return vim.env[name] and #vim.env[name] > 0
-end
-
 return M

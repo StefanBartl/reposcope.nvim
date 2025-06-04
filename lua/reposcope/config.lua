@@ -18,39 +18,36 @@
 ---@class ReposcopeConfig : ReposcopeConfigModule
 local M = {}
 
----@description Forward declarations for private functions
-local _sanitize_opts
-
 -- Utility Modules (Protection and Debugging)
-local defaults = require("reposcope.defaults").options
 local set_prompt_fields = require("reposcope.ui.prompt.prompt_config").set_fields
+-- ENV-VAR Utility
+local env_get = require("reposcope.utils.env").get
 
----@type ConfigOptionKey[]
+---@type ConfigOptions
 M.options = {
-  prompt_fields = {},        -- Default fields for the prompt in the UI
-  provider = "",             -- Default provider for Reposcope (GitHub)
-  preferred_requesters = {}, -- Preferred tools for API requests
-  request_tool = "",         -- Default request tool (GitHub CLI)
-  github_token = "",         -- Github authorization token (for higher request limits)
-  results_limit = 0,         -- Default result limit for search queries
-  ---@type LayoutType
-  layout = "",               -- Default UI layout
+  prompt_fields = { "prefix", "keywords", "owner", "language" }, -- Default fields for the prompt in the UI
+  provider = "github", -- Default provider for Reposcope (GitHub)
+  preferred_requesters = { "gh", "curl", "wget" }, -- Preferred tools for API requests
+  request_tool = "gh", -- Default request tool (GitHub CLI)
+  github_token =  env_get("GITHUB_TOKEN") or "", -- Github authorization token (for higher request limits)
+  results_limit = 25, -- Default result limit for search queries
+  layout = "default", -- Default UI layout
   clone = {
-    std_dir = "",            -- Standard path for cloning repositories
-    type = "",               -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
+    std_dir = "~/temp",  -- Standard path for cloning repositories
+    type = "", -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
   },
   keymaps = {
-    open = "",  -- Set the keymap to open Repsocope
-    close = "", -- Set the keymap to close Reposcope
+    open = "<leader>rs",  -- Set the keymap to open Repsocope
+    close = "<leader>rc",  -- Set the keymap to close Reposcope
   },
   keymap_opts = {
     silent = true,  -- Silent option for open and close keymap
-    noremap = true, -- noremap option for open and close keymap
+    noremap = true,  -- noremap option for open and close keymap
   },
 
   -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
   metrics = false,
-  log_max = 0, -- Controls the size of the log file
+  log_max = 1000, -- Controls the size of the log file
 }
 
 ---@private
@@ -69,19 +66,9 @@ local logfile_path = base_cache .. "/logs/request_log.json"
 ---Setup function for configuration
 ---@param opts PartialConfigOptions|nil User configuration options
 function M.setup(opts)
-  local sanitized = _sanitize_opts(opts or {})
-
-  -- Merges configuration in three priority levels:
-  -- 1. Base: `defaults.options` provides standard fallback values.
-  -- 2. Middle: `M.options` (values from config.lua) are preserved where set and not overwritten by defaults.
-  -- 3. Highest: User-provided `opts` via `.setup({ ... })` override both.
-  -- This guarantees safe defaults, respects values declared in `config.lua`,
-  -- and allows users to override any setting via setup().
+  -- Merges configuration
   ---@type ConfigOptions
-  M.options = vim.tbl_deep_extend("force",
-    vim.tbl_deep_extend("keep", {}, defaults, M.options or {}),
-    sanitized
-  )
+  M.options = vim.tbl_deep_extend("force", M.options, opts or {})
 
   set_prompt_fields(M.options.prompt_fields)
 end
@@ -133,41 +120,6 @@ function M.get_option(key)
   end
 
   return value
-end
-
-
----@private
---- Sanitizes user-provided options: removes empty strings and unknown fields.
---- Dynamically derives valid fields from defaults.options
----@param opts table
----@return table
-function _sanitize_opts(opts)
-  local options = M.options
-  if type(opts) ~= "table" then return {} end
-
-  local clean = {}
-
-  for key, value in pairs(opts) do
-    local default_value = options[key]
-
-    -- Only allow fields that exist in defaults
-    if default_value ~= nil and value ~= nil and value ~= "" then
-      if type(value) == "table" and type(default_value) == "table" then
-        -- Clean nested tables (shallow clone only)
-        local nested = {}
-        for k, v in pairs(value) do
-          if v ~= nil and v ~= "" then
-            nested[k] = v
-          end
-        end
-        clean[key] = nested
-      else
-        clean[key] = value
-      end
-    end
-  end
-
-  return clean
 end
 
 return M
