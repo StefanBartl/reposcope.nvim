@@ -14,8 +14,6 @@
 ---@class ReadmeManager : ReadmeManagerModule
 local M = {}
 
--- Vim Utilities
-local schedule = vim.schedule
 -- Debugging and Utilities
 local notify = require("reposcope.utils.debug").notify
 local generate_uuid = require("reposcope.utils.core").generate_uuid
@@ -45,7 +43,7 @@ local function _fetch_from_api_fallback(owner, repo_name, branch, uuid)
       return
     end
 
-    schedule(function()
+    vim.schedule(function()
       set_ram(repo_name, content)
       set_file(repo_name, content)
       update_preview(repo_name)
@@ -89,7 +87,7 @@ function M.fetch_for_selected(uuid)
   local repo = get_selected_repo()
   if not repo or not repo.name or not repo.owner or not repo.owner.login then
     request_state.end_request(uuid)
-    schedule(function()
+    vim.schedule(function()
       require("reposcope.ui.preview.preview_manager").clear_preview()
     end)
     return
@@ -103,7 +101,7 @@ function M.fetch_for_selected(uuid)
 
   if not is_valid_url(urls.raw) then
     request_state.end_request(uuid)
-    schedule(function()
+    vim.schedule(function()
       require("reposcope.ui.preview.preview_manager").clear_preview()
     end)
     return
@@ -111,7 +109,7 @@ function M.fetch_for_selected(uuid)
 
   if has(repo_name) then
     _record_metrics(repo, repo_name)
-    schedule(function()
+    vim.schedule(function()
       update_preview(repo_name)
     end)
     return
@@ -119,7 +117,7 @@ function M.fetch_for_selected(uuid)
 
   readme_fetch_raw(owner, repo_name, branch, function(success, content, err)
     if success and content then
-      schedule(function()
+      vim.schedule(function()
         set_ram(repo_name, content)
         set_file(repo_name, content)
         update_preview(repo_name)

@@ -8,8 +8,6 @@
 ---@class ListUI : ListUIModule
 local M = {}
 
--- Vim Utilities
-local schedule = vim.schedule
 -- UI Components
 local open_window = require("reposcope.ui.list.list_window").open_window
 local set_and_display_list = require("reposcope.ui.list.list_manager").set_and_display_list
@@ -30,7 +28,7 @@ function M.initialize()
   -- Check if there are reseults from former prompt search in the list
   local actual_repo_list = get_list()
   if #actual_repo_list[1] > 1 then
-    schedule(function()
+    vim.schedule(function()
       set_and_display_list(actual_repo_list)
     end)
   end

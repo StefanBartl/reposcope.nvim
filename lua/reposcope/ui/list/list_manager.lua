@@ -9,7 +9,6 @@
 local M = {}
 
 -- Vim Utilities
-local schedule = vim.schedule
 local api = vim.api
 local nvim_buf_set_lines = api.nvim_buf_set_lines
 local nvim_win_get_cursor = vim.api.nvim_win_get_cursor
@@ -79,7 +78,7 @@ function M.update_list(lines)
     return false
   end
 
-  schedule(function()
+  vim.schedule(function()
     vim.bo[buf].modifiable = true
     nvim_buf_set_lines(buf, 0, -1, false, lines)
     vim.bo[buf].modifiable = false
@@ -89,7 +88,7 @@ function M.update_list(lines)
     -- Update preview if possible   REF:  these imports maybe at filescope ?
     local selected_repo = require("reposcope.cache.repository_cache").get_selected()
     if selected_repo then
-      schedule(function()
+      vim.schedule(function()
         require("reposcope.ui.preview.preview_manager").update_preview(selected_repo.name)
       end)
     else

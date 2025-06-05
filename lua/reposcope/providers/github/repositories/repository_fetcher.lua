@@ -9,8 +9,6 @@
 ---@class GithubRepositoryFetcher : GithubRepositoryFetcherModule
 local M = {}
 
--- Vim API
-local schedule = vim.schedule
 -- API Request
 local client_request = require("reposcope.network.clients.api_client").request
 -- State & Cache
@@ -65,7 +63,7 @@ function M.fetch_repositories(query, on_success, on_failure)
 
     repo_cache_set(parsed)
     notify(string.format("[reposcope] %d repositories received from GitHub.", #parsed.items or 0), 2)
-    schedule(on_success)
+    vim.schedule(on_success)
   end, nil, "fetch_repositories")
 end
 

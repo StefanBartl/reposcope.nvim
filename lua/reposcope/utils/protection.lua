@@ -12,7 +12,6 @@ local isdirectory = vim.fn.isdirectory
 local mkdir = vim.fn.mkdir
 local system = vim.fn.system
 local expand = vim.fn.expand
-local bufnr = vim.fn.bufnr
 local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 local nvim_buf_delete = vim.api.nvim_buf_delete
 local nvim_create_buf = vim.api.nvim_create_buf
@@ -116,22 +115,22 @@ function M.create_named_buffer(name)
   local existing_buf = buf_key and ui_state.buffers[buf_key] or nil
 
   if existing_buf and nvim_buf_is_valid(existing_buf) then
-    local ok_del, err = pcall(vim.api.nvim_buf_delete, existing_buf, { force = true })
+    local ok_del, err = pcall(nvim_buf_delete, existing_buf, { force = true })
     if not ok_del then
-      notify("[reposcope] Failed to delete buffer '" .. name .. "': " .. tostring(err), vim.log.levels.WARN)
+      notify("[reposcope] Failed to delete buffer '" .. name .. "': " .. tostring(err), 4)
     end
     ui_state.buffers[buf_key] = nil
   end
 
-  local ok_new, buf = pcall(vim.api.nvim_create_buf, false, true)
+  local ok_new, buf = pcall(nvim_create_buf, false, true)
   if not ok_new or not buf then
-    notify("[reposcope] Failed to create buffer '" .. name .. "'", vim.log.levels.ERROR)
+    notify("[reposcope] Failed to create buffer '" .. name .. "'", 5)
     return nil
   end
 
-  local ok_setname, err = pcall(vim.api.nvim_buf_set_name, buf, name)
+  local ok_setname, err = pcall(nvim_buf_set_name, buf, name)
   if not ok_setname then
-    notify("[reposcope] Failed to name buffer '" .. name .. "': " .. tostring(err), vim.log.levels.WARN)
+    notify("[reposcope] Failed to name buffer '" .. name .. "': " .. tostring(err), 4)
   end
 
   if buf_key then

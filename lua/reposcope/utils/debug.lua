@@ -11,7 +11,6 @@ local M = {}
 
 -- Vim Utilities
 local notify = vim.notify
-local schedule = vim.schedule
 
 
 ---@class DebugOptions
@@ -58,7 +57,7 @@ end
 function M.notify(message, level)
   level = level or 2
   if M.is_dev_mode() or level >= 3 then
-    schedule(function()
+    vim.schedule(function()
       notify(message, level)
     end)
   end
@@ -68,7 +67,7 @@ end
 ---@param msg string The debug message to display
 ---@param level number? The stack level to analyze (default is 2)
 ---@param log_level number? The log level (DEBUG by default)
----@param _schedule boolean? Optional: Use vim.schedule for async notification
+---@param _schedule boolean? Optional: Use vim.vim.schedule for async notification
 ---@return nil
 function M.debugf(msg, level, log_level, _schedule)
   if M.is_dev_mode() then
@@ -91,7 +90,7 @@ function M.debugf(msg, level, log_level, _schedule)
     if not _schedule then
       notify(dmsg, log_level)
     else
-      schedule(function()
+      vim.schedule(function()
         notify(dmsg, log_level)
       end)
     end
