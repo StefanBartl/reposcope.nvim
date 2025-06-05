@@ -1,6 +1,20 @@
 ---@module 'reposcope.@types.classes.utils'
 ---@brief Class definitions for all utility modules in `reposcope.utils`
 
+---@class ErrorUtilsModule
+---@field safe_call fun(fn: fun(...): any, ...: any): Result Wraps a function call in a standardized error handling pattern
+---@field new_error fun(type: ErrorType, message: string, details?: table): Error Creates a new error object
+
+---@class Result
+---@field ok boolean Whether the operation succeeded
+---@field result any The result of the operation if successful
+---@field err string|nil The error message if the operation failed
+
+---@class Error
+---@field type ErrorType
+---@field message string
+---@field details? table
+
 ---@class ReposcopeChecksModule Utility functions for checking environment conditions and available binaries.
 ---@field has_binary fun(name: string): boolean Returns true if the given binary is executable on the system.
 ---@field first_available fun(binaries: string[]): string|nil Returns the first available binary from a list or nil if none found.
@@ -83,4 +97,3 @@
 ---@field center_text_lines fun(lines: string[], width: number): string[] Centers an array of text lines within a specified width
 ---@field cut_text_for_line fun(offset: number, width: number, input: string): string Cuts given input to fit in 1 row and postfix it with '...'
 ---@field gen_padded_lines fun(height: number, content: string|string[]): string[] Pads or trims content to a specific number of lines
-

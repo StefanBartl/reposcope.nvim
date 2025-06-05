@@ -48,9 +48,9 @@ function M.request(method, url, callback, headers, debug, context, uuid)
     args = args,
     stdio = { nil, stdout, stderr },
   }, function(code)
- ---@diagnostic disable-next-line: undefined-field
+    ---@diagnostic disable-next-line: undefined-field
     stdout:close()
-  ---@diagnostic disable-next-line: undefined-field
+    ---@diagnostic disable-next-line: undefined-field
     stderr:close()
 
     local duration = (hrtime() - start_time) / 1e6 -- ms
@@ -76,7 +76,8 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
     if err then
       if metrics.record_metrics() then
-        metrics.increase_failed(safe_uuid, url, "curl", safe_context, duration_ms, 0, "Error reading curl stdout: " .. err)
+        metrics.increase_failed(safe_uuid, url, "curl", safe_context, duration_ms, 0,
+          "Error reading curl stdout: " .. err)
       end
       callback(nil, "curl stdout error: " .. err)
       return

@@ -4,7 +4,7 @@
 --- Provides a high-level wrapper around HTTP requests for Reposcope.
 --- Prevents duplicate requests by UUID, injects headers, and delegates execution.
 
----@class API : APIModule
+---@class APIClient : APIClientModule
 local M = {}
 
 -- HTTP Client

@@ -17,7 +17,7 @@ local schedule = vim.schedule
 ---@class DebugOptions
 ---@field dev_mode boolean Enables developer mode (default: false)
 M.options = {
-  dev_mode = true, -- Print all notifys  
+  dev_mode = true, -- Print all notifys
 }
 
 
@@ -39,20 +39,17 @@ function M.is_dev_mode()
   return M.options.dev_mode
 end
 
-
----Toggle dev mode config option 
+---Toggle dev mode config option
 ---@return nil
 function M.toggle_dev_mode()
   M.options.dev_mode = not M.options.dev_mode
 end
-
 
 ---Sets the debug mode to a specific value
 ---@return nil
 function M.set_dev_mode(value)
   M.options.dev_mode = value
 end
-
 
 ---Sends a notification message with an optional log level.
 ---@param message string The notification message
@@ -100,7 +97,6 @@ function M.debugf(msg, level, log_level, _schedule)
     end
   end
 end
-
 
 ---Prints actual state for debugging to the console
 ---@return nil
