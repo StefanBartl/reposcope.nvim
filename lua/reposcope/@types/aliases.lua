@@ -1,11 +1,15 @@
 ---@module 'reposcope.@types.aliases'
 ---@brief Global type aliases for Reposcope
 
+---@alias ListValueTypes "string" | "number" | "boolean" | "table" | "any"
+
 ---@alias ErrorType
----| '"InvalidStateError"'
----| '"InvalidQueryError"'
----| '"NetworkError"'
----| '"UnexpectedError"'
+---| "UnexpectedError"
+---| "InvalidStateError"
+---| "InvalidQueryError"
+---| "NetworkError"
+---| "FileReadError"
+---| "JsonDecodeError"
 
 ---@alias ConfigOptionKey
 ---| "provider"

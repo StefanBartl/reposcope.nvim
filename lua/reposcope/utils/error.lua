@@ -7,6 +7,7 @@
 ---@class ErrorUtils : ErrorUtilsModule
 local M = {}
 
+
 ---Wraps a function call in a standardized error handling pattern
 ---@param fn fun(...): any The function to call
 ---@param ... any Arguments to pass to the function

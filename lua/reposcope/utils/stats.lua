@@ -27,6 +27,7 @@ local metrics = require("reposcope.utils.metrics")
 local stats_state = require("reposcope.state.popups.stats_popup").stats
 -- Configuration & Debugging
 local get_option = require("reposcope.config").get_option
+local safe_call = require("reposcope.utils.error").safe_call
 local notify = require("reposcope.utils.debug").notify
 
 
@@ -115,18 +116,18 @@ function M.calculate_extended_stats()
     return 0, "N/A"
   end
 
-  local ok, raw = pcall(readfile, file_path)
+  local ok, result, err = safe_call(readfile, file_path)
   if not ok then
-    notify("[reposcope] Error reading file: " .. file_path .. " - " .. raw, 4)
+    notify("[reposcope] Error reading file " .. file_path .. " - " .. err, 4)
     return 0, "N/A"
   end
 
-  if not raw or #raw == 0 then
+  if not result or #result == 0 then
     notify("[reposcope] File is empty: " .. file_path, 4)
     return 0, "N/A"
   end
 
-  local logs = vim.json.decode(table.concat(raw, "\n")) or {}
+  local logs = vim.json.decode(table.concat(result, "\n")) or {}
   local total_duration = 0
   local query_count = {}
   local success_count = 0

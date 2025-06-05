@@ -16,6 +16,7 @@ local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 local ui_state = require("reposcope.state.ui.ui_state")
 local list_window = require("reposcope.ui.list.list_window")
 -- Debugging & Utility
+local reserve_list = require("reposcope.utils.core").reserve_list
 local is_dev_mode = require("reposcope.utils.debug").is_dev_mode
 local notify = require("reposcope.utils.debug").notify
 local ensure_string = require("reposcope.utils.core").ensure_string
@@ -93,12 +94,12 @@ end
 ---@param json RepositoryResponse
 ---@return nil
 function M.set(json)
-  local items = json.items or {}
-  local list = {}
   local sanitize = _sanitize_repo
   local build = _build_repo_line
-
-  for i = 1, #items do
+  local items = json.items or {}
+  local n = #items
+  local list = reserve_list(n, "string")
+  for i = 1, n do
     local repo = sanitize(items[i], i)
     list[i] = build(repo)
   end
@@ -134,7 +135,7 @@ function M.get_by_name(repo_name)
   return nil
 end
 
----Returns the list of the actual repositories or table with empty string if thte list is empty
+---Returns the list of the actual repositories or table with empty string if the list is empty
 ---@return string[]
 function M.get_list()
   local list = M.repositories.list

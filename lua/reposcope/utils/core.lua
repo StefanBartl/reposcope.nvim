@@ -11,6 +11,27 @@ local M = {}
 -- System Access
 local uv = vim.loop
 
+
+---Reserves a list with a given length and dummy values based on type (avoid  reallocating capacity)
+---@param length integer Length of the table
+---@param value_type ListValueTypes
+---@return table Reserved table with one dummy value at index [length]
+function M.reserve_list(length, value_type)
+  local dummy
+
+  if value_type == "string" then
+    dummy = ""
+  elseif value_type == "number" then
+    dummy = 0
+  elseif value_type == "boolean" then
+    dummy = false
+  else
+    dummy = nil
+  end
+
+  return { [length] = dummy }
+end
+
 ---Returns the index of a value in a list-style table
 ---@param tbl any[] The table to search in
 ---@param value any The value to search for
