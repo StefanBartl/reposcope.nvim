@@ -20,6 +20,7 @@ local nvim_buf_set_name = vim.api.nvim_buf_set_name
 local debug = require("reposcope.utils.debug")
 local debugf = debug.debugf
 local notify = debug.notify
+local safe_call = require("reposcope.utils.error").safe_call
 -- State
 local ui_state = require("reposcope.state.ui.ui_state")
 
