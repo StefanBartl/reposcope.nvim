@@ -28,6 +28,7 @@ function M.display_repositories()
     return
   end
 
+  ---@type RepositoryResponse
   local json_data = repository_cache_get()
   if not json_data or not json_data.items then
     notify("[reposcope] No repositories loaded.", 3)
@@ -35,24 +36,32 @@ function M.display_repositories()
     return
   end
 
-  -- Dynamically get the list window width
   local list_width = math.floor(list_config.width - 1)
 
-  local lines = {}
-  for _, repo in ipairs(json_data.items) do
-    local owner = repo.owner and repo.owner.login or "Unknown"
+  -- Prepare local aliases for hot-loop efficiency
+  ---@type Repository[]
+  local items = json_data.items or {} -- Safely fallback to empty table
+  local linebuf = {}                  -- Preallocated line buffer (avoids table.insert overhead)
+  local fmt = string.format           -- Localize string.format to reduce global lookups
+  local cut = cut_text_for_line       -- Local alias for line trimming function
+
+  for i = 1, #items do
+    local repo = items[i]
+
+    local owner = (repo.owner and repo.owner.login) or "Unknown"
     local name = repo.name or "No name"
-    local desc = repo.description or "No description"
+    local desc = repo.description
+
     if type(desc) ~= "string" then
-      notify(string.format("[reposcope] Skipped invalid repo description for %s/%s (type: %s)",
-      repo.owner.login, repo.name, type(desc)), 3)
+      notify(fmt("[reposcope] Skipped invalid repo description for %s/%s (type: %s)", owner, name, type(desc)), 3)
       desc = "No description"
     end
-    local line = owner .. "/" .. name .. ": " .. desc
-    table.insert(lines, cut_text_for_line(0, list_width, line))
+
+    local line = fmt("%s/%s: %s", owner, name, desc)
+    linebuf[#linebuf + 1] = cut(0, list_width, line)
   end
 
-  set_and_display_list(lines)
+  set_and_display_list(linebuf)
 end
 
 return M

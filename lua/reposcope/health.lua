@@ -28,18 +28,22 @@ function M.check()
   health.info("At least one of: gh, curl, or wget must be available")
 
   local tools = { "gh", "curl", "wget" }
-  for _, bin in ipairs(tools) do
-    if checks.has_binary(bin) then
+  local has_any = false
+  local has = checks.has_binary
+
+  for i = 1, #tools do
+    local bin = tools[i]
+    if has(bin) then
       health.ok(bin .. " is installed")
+      has_any = true
     else
       health.error(bin .. " is NOT installed")
     end
   end
 
-  if not checks.first_available(tools) then
+  if not has_any then
     health.error("No usable request tool found (gh, curl, or wget)")
   end
-
   ---------------------------------------------------------------------------
   -- Configured request tool
   ---------------------------------------------------------------------------

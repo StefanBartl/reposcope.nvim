@@ -8,6 +8,7 @@ local M = {}
 local tbl_extend = vim.tbl_extend
 local list_extend = vim.list_extend
 local set_km = vim.keymap.set
+local del_km = vim.keymap.del
 local nvim_get_current_buf = vim.api.nvim_get_current_buf
 local nvim_win_get_cursor = vim.api.nvim_win_get_cursor
 local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
@@ -29,7 +30,6 @@ local tbl_islist = require("reposcope.utils.core").tbl_islist
 local _registry = {}
 local map_over_bufs
 local unmap_over_bufs
-local clear_registered_keymaps
 
 ---Apply all UI-related keymaps
 ---@return nil
@@ -38,14 +38,12 @@ function M.set_ui_keymaps()
   M.set_prompt_keymaps()
 end
 
-
 ---Remove all UI-related keymaps
 ---@return nil
 function M.unset_ui_keymaps()
   M.unset_close_ui_keymaps()
   M.unset_prompt_keymaps()
 end
-
 
 ---Sets the same keymap for multiple buffers.
 ---@param modes string|string[] Keymap modes (e.g. "n", "i", {"n", "i"})
@@ -71,20 +69,23 @@ function map_over_bufs(modes, lhs, rhs, bufs, opts, tag)
     end
   end
 
-  for _, buf in ipairs(resolved) do
-    if type(buf) == "number" and nvim_buf_is_valid(buf) then
-      set_km(modes, lhs, rhs, vim.tbl_extend("force", opts, { buffer = buf }))
 
-      table.insert(_registry, {
+  for i = 1, #resolved do
+    local buf = resolved[i]
+    if type(buf) == "number" and nvim_buf_is_valid(buf) then
+      local map_opts = tbl_extend("force", opts, { buffer = buf })
+
+      set_km(modes, lhs, rhs, map_opts)
+
+      _registry[#_registry + 1] = {
         mode = modes,
         lhs = lhs,
         buffer = buf,
         tag = tag,
-      })
+      }
     end
   end
 end
-
 
 ---@private
 ---Unsets a keymap from one or more buffers
@@ -105,13 +106,16 @@ function unmap_over_bufs(mode, lhs, bufs)
     end
   end
 
-  for _, buf in ipairs(resolved) do
+  for i = 1, #resolved do
+    local buf = resolved[i]
     if type(buf) == "number" and nvim_buf_is_valid(buf) then
-      pcall(vim.keymap.del, mode, lhs, { buffer = buf })
+      local ok, err = pcall(del_km, mode, lhs, { buffer = buf })
+      if not ok then
+        notify("[reposcope] Failed to remove keymap: " .. tostring(err), 2)
+      end
     end
   end
 end
-
 
 ---Set prompt-specific <CR> and arrow key keymaps
 ---@return nil
@@ -131,7 +135,7 @@ function M.set_prompt_keymaps()
       end,
     },
     {
-      mode = {"n", "i"},
+      mode = { "n", "i" },
       lhs = "<Up>",
       rhs = function()
         navigate_list_in_prompt("up")
@@ -139,7 +143,7 @@ function M.set_prompt_keymaps()
       end,
     },
     {
-      mode = {"n", "i"},
+      mode = { "n", "i" },
       lhs = "<Down>",
       rhs = function()
         navigate_list_in_prompt("down")
@@ -148,63 +152,63 @@ function M.set_prompt_keymaps()
       end,
     },
     {
-      mode = {"n", "i"},
+      mode = { "n", "i" },
       lhs = "<C-w>",
       rhs = function()
         navigate("next")
       end,
     },
     {
-      mode = {"i"},
+      mode = { "i" },
       lhs = "<C-h>",
       rhs = function()
         navigate("prev")
       end,
     },
     {
-      mode = {"i"},
+      mode = { "i" },
       lhs = "<S-Tab>",
       rhs = function()
         navigate("prev")
       end,
     },
     {
-      mode = {"i"},
+      mode = { "i" },
       lhs = "<C-l>",
       rhs = function()
         navigate("next")
       end,
     },
     {
-      mode = {"i"},
+      mode = { "i" },
       lhs = "<Tab>",
       rhs = function()
         navigate("next")
       end,
     },
     {
-      mode = {"n", "i"},
+      mode = { "n", "i" },
       lhs = "<C-v>",
       rhs = function()
-      open_viewer()
+        open_viewer()
       end,
     },
-   {
-      mode = {"n", "i"},
+    {
+      mode = { "n", "i" },
       lhs = "<C-b>",
       rhs = function()
         open_editor()
       end,
     },
     {
-      mode = {"n", "i"},
+      mode = { "n", "i" },
       lhs = "<C-c>",
       rhs = function()
         prompt_and_clone()
       end,
     },
     {
-      mode = {"n", "i"},
+      mode = { "n", "i" },
       lhs = "<BS>",
       rhs = function()
         local buf = nvim_get_current_buf()
@@ -216,20 +220,23 @@ function M.set_prompt_keymaps()
           nvim_feedkeys(nvim_replace_termcodes("<BS>", true, false, true), "n", false)
         end
       end,
-   }
+    }
 
   }
 
   for field, buf in pairs(prompt_bufs) do
     if type(buf) == "number" and nvim_buf_is_valid(buf) then
-      for _, map in ipairs(mappings) do
+      for i = 1, #mappings do
+        local map = mappings[i]
+
         set_km(map.mode, map.lhs, map.rhs, { buffer = buf, silent = true })
-        table.insert(_registry, {
+
+        _registry[#_registry + 1] = {
           mode = map.mode,
           lhs = map.lhs,
           buffer = buf,
           tag = "reposcope_prompt_" .. field,
-        })
+        }
       end
     end
   end
@@ -290,7 +297,6 @@ function M.set_close_ui_keymaps()
     { silent = true, noremap = true },
     "reposcope_ui"
   )
-
 end
 
 ---@private
@@ -298,40 +304,38 @@ end
 ---If no tag is provided, only 'reposcope_'-prefixed tags are accepted.
 ---@param tag string|nil
 ---@return nil
-function clear_registered_keymaps(tag)
-  if not tag or not tag:find("^reposcope_") then
-    notify(
-      "[reposcope] Refusing to clear keymaps without valid reposcope_* tag",
-      3
-    )
+local function _clear_registered_keymaps(tag)
+  if type(tag) ~= "string" or not tag:find("^reposcope_") then
+    notify("[reposcope] Refusing to clear keymaps without valid reposcope_* tag", 3)
     return
   end
 
   local remaining = {}
-  for _, map in ipairs(_registry) do
+  local unmap = unmap_over_bufs
+
+  for i = 1, #_registry do
+    local map = _registry[i]
     if map.tag == tag then
-      unmap_over_bufs(map.mode, map.lhs, { map.buffer })
+      unmap(map.mode, map.lhs, { map.buffer })
     else
-      table.insert(remaining, map)
+      remaining[#remaining + 1] = map
     end
   end
+
   _registry = remaining
 end
-
 
 ---Remove all prompt-specific keymaps
 ---@return nil
 function M.unset_prompt_keymaps()
-  clear_registered_keymaps("reposcope_prompt")
+  _clear_registered_keymaps("reposcope_prompt")
 end
-
 
 ---Remove all ui-specific keymaps
 ---@return nil
 function M.unset_close_ui_keymaps()
-  clear_registered_keymaps("reposcope_ui")
+  _clear_registered_keymaps("reposcope_ui")
 end
-
 
 ---Sets user keymaps for opening/closing Reposcope
 ---@param map_cfg? table Optional map override: { open = "...", close = "..." }

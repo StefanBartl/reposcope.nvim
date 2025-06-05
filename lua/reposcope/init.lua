@@ -56,14 +56,13 @@ local close_autocmd_id
 ---Initializes the Reposcope UI by applying user options and performing tool checks.
 --- This function should be called once during plugin setup.
 ---@param opts PartialConfigOptions Optional configuration options to override defaults
----@return nil
 function M.setup(opts)
   config.setup(opts or {})
   checks.resolve_request_tool()
 
-
-  if opts and opts.keymaps ~= false then
-    keymaps.set_user_keymaps(opts.keymaps, opts.keymap_opts)
+  local keymaps_opt = config.get_option("keymaps")
+  if keymaps_opt ~= false then
+    keymaps.set_user_keymaps(keymaps_opt, config.get_option("keymap_opts"))
   end
 end
 
@@ -124,15 +123,12 @@ function M.close_ui()
     })
   end
 
-  -- Close all Reposcope-related windows safely
-  for _, win in ipairs(nvim_list_wins()) do
-    if nvim_win_is_valid(win) then
-      local ok_buf, buf = pcall(nvim_win_get_buf, win)
-      if ok_buf and nvim_buf_is_valid(buf) then
-        local name = nvim_buf_get_name(buf)
-        if type(name) == "string" and name:find("^reposcope://") then
-          pcall(vim.api.nvim_win_close, win, true)
-        end
+  -- Close all Reposcope-related buffers as well
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if vim.api.nvim_buf_is_valid(buf) then
+      local name = vim.api.nvim_buf_get_name(buf)
+      if type(name) == "string" and name:find("^reposcope://") then
+        vim.api.nvim_buf_delete(buf, { force = true })
       end
     end
   end

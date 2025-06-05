@@ -7,9 +7,6 @@
 ---| '"NetworkError"'
 ---| '"UnexpectedError"'
 
----@alias Buffer integer|nil
----@alias Window integer|nil
-
 ---@alias ConfigOptionKey
 ---| "provider"
 ---| "preferred_requesters"
@@ -25,13 +22,21 @@
 ---| "logfile_path"
 ---| "log_max"
 
----@alias PromptField
+---@alias PromptField # The field key (e.g. "keywords", "owner") REF: CHECK if this is lsp ok
 ---| "prefix"
 ---| "keywords"
 ---| "owner"
 ---| "language"
 ---| "topic"
 ---| "stars"
+
+---@class PromptBufferMap
+---@field prefix Buffer
+---@field keywords Buffer
+---@field owner Buffer
+---@field language Buffer
+---@field topic Buffer
+---@field stars Buffer
 
 ---@alias RequestToolName
 ---| "gh"
@@ -45,12 +50,14 @@
 ---| "float"
 ---| ""
 
+---@alias Buffer integer|nil
+---@alias Window integer|nil
 
----@alias Query string
-
+---@alias Query string # A query attached from prompt input fields and build to request provider --REF:
 
 ---@alias RequestMetricsData { successful: number, failed: number, cache_hitted: number, fcache_hitted: number }
 ---@alias UUID string A string in the format XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX (hexadecimal UUID)
 
-
 ---@alias ReadmeURLs { raw: string, api: string }
+
+---@alias PromptInput string # The user-entered value

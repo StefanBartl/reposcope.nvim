@@ -20,7 +20,7 @@ local notify = require("reposcope.utils.debug").notify
 -- Static layout values
 M.row = ui_config.row
 M.col = ui_config.col
-  M.width = ui_config.width / 2
+M.width = ui_config.width / 2
 M.height = 3
 
 -- Prefix
@@ -48,8 +48,8 @@ local VALID_FIELDS = {
 ---@type PromptField[]
 local _fields = {}
 
---- Sets the active prompt fields with deduplication and prefix reordering.
---- Invalid fields are ignored with a warning.
+---Sets the active prompt fields with deduplication and prefix reordering.
+---Invalid fields are ignored with a warning.
 ---@param fields PromptField[] List of valid field names
 ---@return nil
 function M.set_fields(fields)
@@ -59,14 +59,20 @@ function M.set_fields(fields)
   end
 
   local filtered = {}
-  for _, field in ipairs(fields) do
-    if VALID_FIELDS[field] then
-      table.insert(filtered, field)
+  local valid = VALID_FIELDS
+  local notify_invalid = notify
+
+  -- Filter only valid fields
+  for i = 1, #fields do
+    local field = fields[i]
+    if valid[field] then
+      filtered[#filtered + 1] = field
     else
-      notify("[reposcope] Ignored invalid field: " .. tostring(field), 2)
+      notify_invalid("[reposcope] Ignored invalid field: " .. tostring(field), 2)
     end
   end
 
+  -- Remove duplicates and ensure 'prefix' is front if present
   local deduped = dedupe_list(filtered)
   _fields = put_to_front_if_present(deduped, "prefix")
 end
@@ -76,7 +82,6 @@ end
 function M.get_fields()
   return _fields
 end
-
 
 ---Returns all valid prompt field names (whitelist)
 ---@return string[]

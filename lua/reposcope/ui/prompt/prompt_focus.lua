@@ -30,14 +30,17 @@ function M.set_current_index(index)
   current_index = index
 end
 
-
---- Focuses the first focusable prompt input window (skips prefix).
+---Focuses the first focusable prompt input window (skips prefix).
 ---@return nil
 function M.focus_first_input()
   local fields = get_fields()
-  for _, field in ipairs(fields) do
-    local win = ui_state.windows.prompt and ui_state.windows.prompt[field]
-    if win and nvim_win_is_valid(win) then
+  local wins = ui_state.windows.prompt or {}
+
+  for i = 1, #fields do
+    local field = fields[i]
+    local win = wins[field]
+
+    if type(win) == "number" and nvim_win_is_valid(win) then
       local config = nvim_win_get_config(win)
       if config.focusable then
         nvim_set_current_win(win)
@@ -47,7 +50,6 @@ function M.focus_first_input()
     end
   end
 end
-
 
 ---Focuses the prompt field at the given index
 ---@param index integer
@@ -74,26 +76,26 @@ function M.focus_field_index(index)
   nvim_win_set_cursor(win, { 2, 0 })
 end
 
-
----Focuses a field by its name, only if it is focusable
----@param field string
+---Focuses a prompt field by its name, only if it is focusable
+---@param field string Field name to focus (e.g. "keywords")
 ---@return nil
 function M.focus_field(field)
   local fields = get_fields()
-  for i, name in ipairs(fields) do
-    if name == field then
-      local win = ui_state.windows.prompt and ui_state.windows.prompt[field]
-      if win and nvim_win_is_valid(win) then
+  local wins = ui_state.windows.prompt or {}
+
+  for i = 1, #fields do
+    if fields[i] == field then
+      local win = wins[field]
+      if type(win) == "number" and nvim_win_is_valid(win) then
         local cfg = nvim_win_get_config(win)
         if cfg.focusable then
-          return M.focus_field_index(i)
+          M.focus_field_index(i)
         end
       end
-      break -- found field, but it’s not focusable
+      break -- no need to keep searching after match
     end
   end
 end
-
 
 ---Navigates to the next or previous prompt field, skipping non-focusable ones (e.g. prefix)
 ---@param direction "next"|"prev"

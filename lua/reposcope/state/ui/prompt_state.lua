@@ -8,14 +8,15 @@
 ---@class PromptStateManager : PromptStateManagerModule
 local M = {}
 
+
 --- Stores current text input for each prompt field
----@type table<string, string>
+---@type PromptInputMap
 M.input = {}
 
 
 --- Sets the current input text for a given prompt field
----@param field string The field key (e.g. "keywords", "owner")
----@param text string The user-entered value
+---@param field PromptField
+---@param text PromptInput
 ---@return nil
 function M.set_field_text(field, text)
   if type(field) == "string" and type(text) == "string" then
@@ -23,10 +24,9 @@ function M.set_field_text(field, text)
   end
 end
 
-
 --- Retrieves the input text for a given prompt field
----@param field string The field key
----@return string The current value (or empty string if unset)
+---@param field PromptField
+---@return PromptInput|""
 function M.get_field_text(field)
   return M.input[field] or ""
 end
