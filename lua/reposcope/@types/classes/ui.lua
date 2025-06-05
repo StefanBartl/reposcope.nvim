@@ -48,7 +48,7 @@
 
 ---@class ListManagerModule
 ---@field set_and_display_list fun(entries: string[]): nil Sets the list entries and displays them
----@field update_list fun(lines: string[]): boolean Updates the list content and returns status 
+---@field update_list fun(lines: string[]): boolean Updates the list content and returns status
 ---@field clear_list fun(): nil Clears the list content
 ---@field get_selected fun(): string|nil Returns the currently selected list entry  --NUIY
 ---@field select_entry fun(index: number): nil Selects a specific list entry  --NUIY
@@ -70,7 +70,6 @@
 
 ---@class PreviewBannerModule
 ---@field get_banner fun(preview_width: number): string[] Function to dynamically generate a default, centered preview banner
----@field private apply_vertical_centering fun(lines: string[]): string[] Applies vertical centering to the banner text, maintaining a 3/3 height ratio 
 
 ---@class PreviewConfigModule
 ---@field width number Width of the preview window

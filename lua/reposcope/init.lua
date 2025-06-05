@@ -67,7 +67,6 @@ function M.setup(opts)
   end
 end
 
-
 ---Opens the Reposcope UI. Captures caller position, creates background, preview, list, and prompt windows, and sets keymaps.
 ---@return nil
 function M.open_ui()
@@ -110,7 +109,6 @@ function M.open_ui()
   notify("[reposcope] REPOSCOPE START SEQUENCE FINISHED")
 end
 
-
 ---Closes the Reposcope UI. Restores the caller window, closes all Reposcope windows, and unsets keymaps.
 ---@return nil
 function M.close_ui()
@@ -148,7 +146,6 @@ function M.close_ui()
   vim.cmd("stopinsert")
 end
 
-
 ---Sets up an AutoCmd for automatically closing all related UI windows (Reposcope UI).
 --- The AutoCmd triggers on `QuitPre` for any window that matches the pattern `reposcope://*`.
 --- If one of these windows is closed (via :q, :q!, or :wq), all related UI windows are closed.
@@ -170,7 +167,6 @@ function M.setup_ui_close()
     end,
   })
 end
-
 
 ---Removes the AutoCmd for automatically closing all related UI windows (Reposcope UI).
 --- This prevents the UI from being closed automatically when :q or :q! is used.

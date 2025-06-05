@@ -1,9 +1,14 @@
 ---@module 'reposcope.@types.aliases'
 ---@brief Global type aliases for Reposcope
 
+---@alias ErrorType
+---| '"InvalidStateError"'
+---| '"InvalidQueryError"'
+---| '"NetworkError"'
+---| '"UnexpectedError"'
+
 ---@alias Buffer integer|nil
 ---@alias Window integer|nil
-
 
 ---@alias ConfigOptionKey
 ---| "provider"
@@ -28,7 +33,7 @@
 ---| "topic"
 ---| "stars"
 
----@alias RequestTool
+---@alias RequestToolName
 ---| "gh"
 ---| "curl"
 ---| "wget"

@@ -1,12 +1,10 @@
 ---@module 'reposcope.network.clients.http_client'
----@brief Central HTTP request dispatcher for all supported tools
+---@brief High-level HTTP client for Reposcope
 ---@description
---- This module provides a unified interface to dispatch HTTP requests
---- using different CLI tools (`gh`, `curl`, `wget`). It injects authorization
---- headers when needed and routes requests to the appropriate implementation
---- in `request_tools`. It also supports debugging and metric context tracking.
+--- Provides a unified interface for making HTTP requests using different tools.
+--- Handles error cases, metrics, and request lifecycle management.
 
----@class HTTPClient
+---@class HTTPClient : HTTPClientModule
 local M = {}
 
 -- Vim Utilities
@@ -16,8 +14,9 @@ local gh = require("reposcope.network.request_tools.gh")
 local curl = require("reposcope.network.request_tools.curl")
 local wget = require("reposcope.network.request_tools.wget")
 -- Debug and Config dependencies
-local notify = require("reposcope.utils.debug").notify
 local get_option = require("reposcope.config").get_option
+local new_error = require("reposcope.utils.error").new_error
+local safe_call = require("reposcope.utils.error").safe_call
 
 
 ---@private
@@ -27,22 +26,25 @@ local get_option = require("reposcope.config").get_option
 ---@return table<string, string> Authorization headers (or empty)
 local function _build_auth_header(token, tool)
   if type(token) ~= "string" or token == "" then return {} end
-  if tool == "curl" or tool == "wget" then
-    return { ["Authorization"] = "Bearer " .. token }
-  elseif tool == "gh" then
-    return {} -- gh uses env
+
+
+  if tool == "gh" then
+    return {} -- GH CLI handles auth internally
+  else
+    return {
+      ["Authorization"] = "Bearer " .. token
+    }
   end
-  return {}
 end
 
 
----Dispatches a request using the appropriate CLI tool backend
----@param method string HTTP method (e.g. "GET", "POST")
----@param url string Full URL to request
----@param callback fun(response: string|nil, error_msg?: string|nil) Called with response or error
----@param headers? table<string, string> Optional HTTP headers
----@param debug? boolean Enable debug output
----@param metrics_context? string Optional metrics context identifier
+---Makes an HTTP request using the configured tool
+---@param method string HTTP method
+---@param url string Target URL
+---@param callback fun(response: string|nil, error?: string|nil)
+---@param headers? table<string, string>
+---@param debug? boolean
+---@param metrics_context? string
 ---@return nil
 function M.request(method, url, callback, headers, debug, metrics_context)
   if type(url) ~= "string" or url == "" then
@@ -55,6 +57,7 @@ function M.request(method, url, callback, headers, debug, metrics_context)
   local default_tool = get_option("request_tool")
   local default_token = get_option("github_token")
 
+  -- Select request tool
   if default_tool == "gh" then
     request_module = gh
   elseif default_tool == "curl" then
@@ -62,16 +65,23 @@ function M.request(method, url, callback, headers, debug, metrics_context)
   elseif default_tool == "wget" then
     request_module = wget
   else
-    notify("[reposcope] Unknown request default_tool: " .. tostring(default_tool), 4)
-    callback(nil, "Unsupported request default_tool")
+    local err = new_error("InvalidStateError", "Unsupported request tool: " .. tostring(default_tool))
+    callback(nil, err.message)
     return
   end
 
+  -- Build and merge headers
   local auth_headers = _build_auth_header(default_token, default_tool)
   headers = tbl_extend("force", headers or {}, auth_headers)
 
-  request_module.request(method, url, callback, headers, debug, metrics_context, uuid)
+  -- Make the request
+  local result = safe_call(request_module.request, method, url, callback, headers, debug, metrics_context,
+    uuid)
+
+  if not result.ok then
+    local err = new_error("NetworkError", "Request failed: " .. tostring(result.err))
+    callback(nil, err.message)
+  end
 end
 
 return M
-

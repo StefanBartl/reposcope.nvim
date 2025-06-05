@@ -68,7 +68,6 @@ function M.request(method, url, callback, headers, debug, context, uuid)
     table.insert(env, "GITHUB_TOKEN=" .. token)
   end
 
-
   notify("[reposcope] GH Request: gh " .. table.concat(args, " "), 2)
 
   local handle = spawn("gh", {
@@ -76,9 +75,9 @@ function M.request(method, url, callback, headers, debug, context, uuid)
     stdio = { nil, stdout, stderr },
     env = env,
   }, function(code)
-  ---@diagnostic disable-next-line: undefined-field
+    ---@diagnostic disable-next-line: undefined-field
     stdout:close()
-  ---@diagnostic disable-next-line: undefined-field
+    ---@diagnostic disable-next-line: undefined-field
     stderr:close()
 
     local duration = (hrtime() - start_time) / 1e6 -- ms
