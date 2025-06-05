@@ -1,7 +1,7 @@
 ---@module 'reposcope.utils.checks'
 ---@brief Checks Utility module for Reposcope
 
----@class ReposcopeChecks : ReposcopeChecksModule 
+---@class ReposcopeChecks : ReposcopeChecksModule
 local M = {}
 
 -- Configuration (Global Configuration)
@@ -17,17 +17,21 @@ function M.has_binary(name)
   return vim.fn.executable(name) == 1
 end
 
-
 ---Returns the first available binary from a list
 ---@param binaries string[] A list of binary names to check
 ---@return string|nil available_binary The name of the first available binary, or nil if none found
 function M.first_available(binaries)
-  for _, bin in ipairs(binaries) do
-    if M.has_binary(bin) then return bin end
+  local has = M.has_binary
+
+  for i = 1, #binaries do
+    local bin = binaries[i]
+    if has(bin) then
+      return bin
+    end
   end
+
   return nil
 end
-
 
 ---Resolves and sets the preferred request tool for Reposcope.
 ---Uses user config, fallback list, and system availability to set a valid requester.

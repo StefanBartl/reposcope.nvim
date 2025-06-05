@@ -11,6 +11,7 @@ local M = {}
 -- Vim Utilities
 local nvim_buf_get_lines = vim.api.nvim_buf_get_lines
 local nvim_buf_line_count = vim.api.nvim_buf_line_count
+local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 -- State Management
 local ui_state = require("reposcope.state.ui.ui_state")
 local list_window = require("reposcope.ui.list.list_window")
@@ -67,10 +68,15 @@ end
 ---@private
 ---@return nil
 local function _validate_repo_list()
-  for i, line in ipairs(M.repositories.list) do
+  local list = M.repositories.list
+  local inspect = vim.inspect
+  local log = notify
+
+  for i = 1, #list do
+    local line = list[i]
     if type(line) ~= "string" then
-      notify(string.format("[reposcope] [dev] Repo list line %d is not a string: %s", i, type(line)), 4)
-      notify(vim.inspect(line), 4)
+      log(string.format("[reposcope] [dev] Repo list line %d is not a string: %s", i, type(line)), 4)
+      log(inspect(line), 4)
     end
   end
 end
@@ -80,19 +86,22 @@ end
 ---@param json RepositoryResponse
 ---@return nil
 function M.set(json)
-  M.repositories.total_count = json.total_count or 0
-  M.repositories.items = json.items or {}
-  M.repositories.list = { [#M.repositories.items] = false } -- reserve cap 
+  local items = json.items or {}
+  local list = {}
+  local sanitize = _sanitize_repo
+  local build = _build_repo_line
 
-  for i, repo in ipairs(M.repositories.items) do
-    local sanitized = _sanitize_repo(repo, i)
-    local line = _build_repo_line(sanitized)
-    M.repositories.list[i] = line
+  for i = 1, #items do
+    local repo = sanitize(items[i], i)
+    list[i] = build(repo)
   end
+
+  M.repositories.total_count = json.total_count or 0
+  M.repositories.items = items
+  M.repositories.list = list
 
   _validate_repo_list()
 end
-
 
 ---Returns the cached JSON response
 ---@return RepositoryResponse
@@ -100,19 +109,23 @@ function M.get()
   return M.repositories
 end
 
-
 ---Returns a repository by its name
 ---@param repo_name string Repository name to search for
 ---@return Repository|nil
 function M.get_by_name(repo_name)
-  for _, repo in ipairs(M.repositories.items or {}) do
+  local items = M.repositories.items
+  if type(items) ~= "table" then return nil end
+
+  for i = 1, #items do
+    local repo = items[i]
     if repo.name == repo_name then
       return repo
     end
   end
+
+  notify("[reposcope] Repository not found: " .. repo_name, 3)
   return nil
 end
-
 
 ---Returns the list of the actual repositories or table with empty string if thte list is empty
 ---@return string[]
@@ -126,57 +139,60 @@ function M.get_list()
   return list
 end
 
-
 ---Retrieves the currently selected repository based on the list entry.
 ---@return Repository|nil
 function M.get_selected()
-  local json_data = M.get()
-  if not json_data or not json_data.items or json_data.total_count == 0 then
+  local data = M.get()
+  local items = data and data.items
+  if not items or data.total_count == 0 then
     return nil
   end
 
-  -- Read the currently selected line in the list
-  local selected_line = list_window.highlighted_line
-  if not selected_line then
+  local selected = list_window.highlighted_line
+  if not selected then
     notify("[reposcope] No list item is currently selected.", 3)
     return nil
   end
 
+  local list_buf = ui_state.buffers.list
+  if type(list_buf) ~= "number" or not nvim_buf_is_valid(list_buf) then
+    notify("[reposcope] List buffer invalid or missing", 3)
+    return nil
+  end
+
   -- Avoid accessing a row that does not yet exist
-  local line_count = nvim_buf_line_count(ui_state.buffers.list)
-  if selected_line > line_count then
-    notify(string.format("[reposcope] Selected line (%d) exceeds list buffer line count (%d)", selected_line, line_count), 3)
+  local line_count = nvim_buf_line_count(list_buf)
+  if selected > line_count then
+    notify(string.format("[reposcope] Selected line (%d) exceeds buffer line count (%d)", selected, line_count), 3)
     return nil
   end
 
   -- Read the repository entry in the list (format: "username/reponame: description")
-  local line_text = nvim_buf_get_lines(ui_state.buffers.list, selected_line - 1, selected_line, false)[1]
-  if not line_text or line_text == "" then
-    notify(string.format("[reposcope] No content found at line %d in list buffer.", selected_line), 3)
+  local line = nvim_buf_get_lines(list_buf, selected - 1, selected, false)[1]
+  if type(line) ~= "string" or line == "" then
+    notify(string.format("[reposcope] No content at selected line %d", selected), 3)
     return nil
   end
 
   -- Expected format: "username/reponame: description"
-  local owner, repo_name = line_text:match("([^/]+)/([^:]+)")
+  local owner, repo_name = line:match("([^/]+)/([^:]+)")
   if not owner or not repo_name then
-    notify("[reposcope] Invalid list format: " .. line_text, 4)
+    notify("[reposcope] Invalid list line format: " .. line, 4)
     return nil
   end
 
-  -- Search for the repository by owner and name in the cached list
-  for _, repo in ipairs(json_data.items) do
-    if repo.owner and repo.owner.login == owner and repo.name == repo_name then
+  for i = 1, #items do
+    local repo = items[i]
+    if repo.name == repo_name and repo.owner and repo.owner.login == owner then
       return repo
     end
   end
 
-  notify("[reposcope] Repository not found: " .. owner .. "/" .. repo_name, 3)
+  notify(string.format("[reposcope] Repository not found: %s/%s", owner, repo_name), 3)
   return nil
-
 end
 
-
---- Clears the repository cache 
+--- Clears the repository cache
 ---@return nil
 function M.clear()
   for k in pairs(M.repositories.items) do M.repositories.items[k] = nil end

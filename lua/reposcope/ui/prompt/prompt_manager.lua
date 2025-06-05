@@ -67,33 +67,39 @@ local function _add_title_to_prompt_buffer(buf, field, width)
 end
 
 
----Loads prompt field values from prompt_state and injects them into the corresponding buffers
 ---@private
+---Injects prompt_state values into associated buffers
 ---@return nil
 local function _load_state_into_prompt()
   local fields = get_fields()
+  local buffers = ui_state.buffers.prompt or {}
+  local get = get_field_text
 
-  for _, field in ipairs(fields) do
-    local buf = ui_state.buffers.prompt[field]
-    if buf and nvim_buf_is_valid(buf) then
-      local text = get_field_text(field)
+  for i = 1, #fields do
+    local field = fields[i]
+    local buf = buffers[field]
+
+    if type(buf) == "number" and nvim_buf_is_valid(buf) then
+      local text = get(field)
       if type(text) == "string" and text ~= "" then
         nvim_buf_set_lines(buf, 1, 2, false, { text })
       end
     end
   end
-
 end
 
----Set the field starting index for prompt
 ---@private
+---Sets the current navigation index to the first focusable window
 ---@return nil
 local function _set_prompt_start_idx()
   local fields = get_fields()
+  local wins = ui_state.windows.prompt or {}
 
-  for i, field in ipairs(fields) do
-    local win = ui_state.windows.prompt and ui_state.windows.prompt[field]
-    if win and nvim_win_is_valid(win) then
+  for i = 1, #fields do
+    local field = fields[i]
+    local win = wins[field]
+
+    if type(win) == "number" and nvim_win_is_valid(win) then
       local cfg = nvim_win_get_config(win)
       if cfg.focusable then
         navigate_set_current_index(i)
@@ -110,48 +116,54 @@ function M.open_windows()
   setup_buffers()
 
   local layout = prompt_build_layout()
-  if not layout or #layout == 0 then
+  if type(layout) ~= "table" or #layout == 0 then
     notify("[reposcope] Layout empty or invalid", 4)
     return
   end
 
   ui_state.windows.prompt = {}
 
-  -- Initialize all prompt buffers and windows
-  for _, section in ipairs(layout) do
-    local buf = section.buffer
-    local width = section.width
-    local field = section.name
-    local col = section.col
+  local cfg = prompt_config
+  local win_store = ui_state.windows.prompt
+  local open_win = nvim_open_win
+  local buf_valid = nvim_buf_is_valid
+  local win_valid = nvim_win_is_valid
 
-    if not buf or not nvim_buf_is_valid(buf) then
+  for i = 1, #layout do
+    local section = layout[i]
+    local field = section.name
+    local buf = section.buffer
+    local col = section.col
+    local width = section.width
+
+    if type(buf) ~= "number" or not buf_valid(buf) then
       notify("[reposcope] Invalid buffer for field: " .. tostring(field), 2)
       goto continue
     end
 
-    local focusable = field ~= "prefix"
+    local focusable = (field ~= "prefix")
 
-    local ok, win = pcall(nvim_open_win, buf, true, {
+    local ok, win = pcall(open_win, buf, true, {
       relative = "editor",
-      row = prompt_config.row,
+      row = cfg.row,
       col = col,
       width = width,
-      height = prompt_config.height,
+      height = cfg.height,
       style = "minimal",
       border = "none",
       focusable = focusable,
     })
 
-    if not ok or not nvim_win_is_valid(win) then
+    if not ok or not win_valid(win) then
       notify("[reposcope] Failed to open window for field: " .. tostring(field), 4)
       goto continue
     end
 
-    ui_state.windows.prompt[field] = win
+    win_store[field] = win
 
-    if field ~= "prefix" then
-      local success, err = pcall(_add_title_to_prompt_buffer, buf, string.upper(" " .. field .. " "), section.width)
-      if not success then
+    if focusable then
+      local ok_title, err = pcall(_add_title_to_prompt_buffer, buf, string.upper(" " .. field .. " "), width)
+      if not ok_title then
         notify("[reposcope] Failed to add title to " .. field .. ": " .. tostring(err), 2)
       end
     end
@@ -163,7 +175,6 @@ function M.open_windows()
   _set_prompt_start_idx()
   focus_first_input()
 end
-
 
 ---Closes all prompt-related windows safely
 ---@return nil
@@ -177,6 +188,5 @@ function M.close_windows()
     ui_state.windows.prompt[field] = nil
   end
 end
-
 
 return M

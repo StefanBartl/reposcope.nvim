@@ -22,39 +22,44 @@ local notify = require("reposcope.utils.debug").notify
 ---@return {name: string, buffer: integer, width: integer, col: integer}[] List of window layouts
 function M.build_layout()
   local fields = get_fields()
-  local remaining_width = prompt_config.width
-  local current_col = prompt_config.col
+  local buffers = ui_state.buffers.prompt or {}
+  local config = prompt_config
+
+  local remaining_width = config.width
+  local current_col = config.col
+
+  ---@type {name: string, buffer: integer, width: integer, col: integer}[]
   local layout = {}
 
-  local field_count = 0
-  for _, f in ipairs(fields) do
-    if f ~= "prefix" then
-      field_count = field_count + 1
+  -- Count dynamic (non-prefix) fields and subtract fixed prefix width
+  local dynamic_count = 0
+  for i = 1, #fields do
+    if fields[i] ~= "prefix" then
+      dynamic_count = dynamic_count + 1
     else
-      remaining_width = remaining_width - prompt_config.prefix_win_width
+      remaining_width = remaining_width - config.prefix_win_width
     end
   end
 
-  local dynamic_width = field_count > 0 and math.floor(remaining_width / field_count) or 0
+  local dynamic_width = dynamic_count > 0 and math.floor(remaining_width / dynamic_count) or 0
 
-  for _, field in ipairs(fields) do
-    local buf = ui_state.buffers.prompt and ui_state.buffers.prompt[field]
-    if not buf or not nvim_buf_is_valid(buf) then
+  -- Build layout structure
+  for i = 1, #fields do
+    local field = fields[i]
+    local buf = buffers[field]
+
+    if type(buf) ~= "number" or not nvim_buf_is_valid(buf) then
       notify("[reposcope] Skipped invalid buffer: " .. tostring(field), 4)
-      goto continue
+    else
+      local width = (field == "prefix") and config.prefix_win_width or dynamic_width
+      layout[#layout + 1] = {
+        name = field,
+        buffer = buf,
+        width = width,
+        col = current_col,
+      }
+      current_col = current_col + width
     end
-
-    local width = (field == "prefix") and prompt_config.prefix_win_width or dynamic_width
-
-    table.insert(layout, {
-      name = field,
-      buffer = buf,
-      width = width,
-      col = current_col,
-    })
-
-    current_col = current_col + width
-    ::continue::
   end
 
   return layout

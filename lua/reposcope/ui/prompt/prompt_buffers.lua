@@ -28,35 +28,35 @@ local FIELDS = get_available_fields()
 function M.setup_buffers()
   ui_state.buffers.prompt = ui_state.buffers.prompt or {}
 
-  for _, field in ipairs(FIELDS) do
+  local buf_create = create_named_buf
+  local config = prompt_config
+  local set_lines = nvim_buf_set_lines
+  local buffers = ui_state.buffers.prompt
+
+  for i = 1, #FIELDS do
+    local field = FIELDS[i]
     local name = "reposcope://prompt_" .. field
-    local ok, buf = pcall(create_named_buf, name)
+
+    local ok, buf = pcall(buf_create, name)
     if not ok or not buf or not nvim_buf_is_valid(buf) then
       notify("[prompt_buffers] Failed to create buffer for field: " .. field, 4)
-
     else
+      vim.bo[buf].buftype = "nofile"
+      vim.bo[buf].bufhidden = "hide"
+      vim.bo[buf].swapfile = false
+      vim.bo[buf].modifiable = true
 
-       vim.bo[buf].buftype = "nofile"
-       vim.bo[buf].bufhidden = "hide"
-       vim.bo[buf].swapfile = false
-       vim.bo[buf].modifiable = true
-
-        if field == "prefix" then
-          nvim_buf_set_lines(buf, 0, -1, false, {
-            " ",
-            prompt_config.prefix
-          })
-          vim.bo[buf].modifiable = false
-          vim.bo[buf].readonly = true
-        else
-          nvim_buf_set_lines(buf, 0, -1, false, {
-            " ",
-            ""
-          })
-        end
-
-        ui_state.buffers.prompt[field] = buf
+      -- Set initial content based on field type
+      if field == "prefix" then
+        set_lines(buf, 0, -1, false, { " ", config.prefix })
+        vim.bo[buf].modifiable = false
+        vim.bo[buf].readonly = true
+      else
+        set_lines(buf, 0, -1, false, { " ", "" })
       end
+
+      buffers[field] = buf
+    end
   end
 end
 

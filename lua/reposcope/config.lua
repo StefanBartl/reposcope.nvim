@@ -26,23 +26,23 @@ local env_get = require("reposcope.utils.env").get
 ---@type ConfigOptions
 M.options = {
   prompt_fields = { "prefix", "keywords", "owner", "language" }, -- Default fields for the prompt in the UI
-  provider = "github", -- Default provider for Reposcope (GitHub)
-  preferred_requesters = { "gh", "curl", "wget" }, -- Preferred tools for API requests
-  request_tool = "gh", -- Default request tool (GitHub CLI)
-  github_token =  env_get("GITHUB_TOKEN") or "", -- Github authorization token (for higher request limits)
-  results_limit = 25, -- Default result limit for search queries
-  layout = "default", -- Default UI layout
+  provider = "github",                                           -- Default provider for Reposcope (GitHub)
+  preferred_requesters = { "gh", "curl", "wget" },               -- Preferred tools for API requests
+  request_tool = "gh",                                           -- Default request tool (GitHub CLI)
+  github_token = env_get("GITHUB_TOKEN") or "",                  -- Github authorization token (for higher request limits)
+  results_limit = 25,                                            -- Default result limit for search queries
+  layout = "default",                                            -- Default UI layout
   clone = {
-    std_dir = "~/temp",  -- Standard path for cloning repositories
-    type = "", -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
+    std_dir = "~/temp",                                          -- Standard path for cloning repositories
+    type = "",                                                   -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
   },
   keymaps = {
     open = "<leader>rs",  -- Set the keymap to open Repsocope
-    close = "<leader>rc",  -- Set the keymap to close Reposcope
+    close = "<leader>rc", -- Set the keymap to close Reposcope
   },
   keymap_opts = {
     silent = true,  -- Silent option for open and close keymap
-    noremap = true,  -- noremap option for open and close keymap
+    noremap = true, -- noremap option for open and close keymap
   },
 
   -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
@@ -65,21 +65,25 @@ local logfile_path = base_cache .. "/logs/request_log.json"
 
 ---Setup function for configuration
 ---@param opts PartialConfigOptions|nil User configuration options
+---@return nil
 function M.setup(opts)
-  -- Merges configuration
-  ---@type ConfigOptions
-  M.options = vim.tbl_deep_extend("force", M.options, opts or {})
+  if type(opts) ~= "table" and opts ~= nil then
+    require("reposcope.utils.debug").notify("[reposcope] Ignoring config: expected table, got " .. type(opts), 4)
+    opts = {}
+  end
 
+  ---@type ConfigOptions
+  M.options = vim.tbl_deep_extend("force", M.options, opts)
+
+  -- Prompt fields must always be normalized
   set_prompt_fields(M.options.prompt_fields)
 end
-
 
 ---Returns the current filecache directory
 ---@return string The current filecache directory
 function M.get_readme_filecache_dir()
   return filecache_path .. "/readme"
 end
-
 
 ---@param key ConfigOptionKey
 ---@return any

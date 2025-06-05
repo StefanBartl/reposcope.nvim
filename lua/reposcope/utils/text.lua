@@ -28,7 +28,7 @@ function M.center_text(text, width)
           segment = text:sub(start, start + last_space - 1)
           start = start + last_space -- Move past the last space
         else
-          start = start + width -- Move to the next segment
+          start = start + width      -- Move to the next segment
         end
       else
         start = start + #segment
@@ -47,23 +47,24 @@ function M.center_text(text, width)
   return { string.rep(" ", math.max(pad, 0)) .. text }
 end
 
-
 ---Centers an array of text lines within a specified width
 ---@param lines string[] List of text lines to be centered
 ---@param width number The maximum width for centering
----@return string[]
+---@return string[] List of centered text lines
 function M.center_text_lines(lines, width)
+  ---@type string[]
   local centered_lines = {}
+  local center = M.center_text
 
-  for _, line in ipairs(lines) do
-    for _, centered in ipairs(M.center_text(line, width)) do
-      table.insert(centered_lines, centered)
+  for i = 1, #lines do
+    local centered = center(lines[i], width)
+    for j = 1, #centered do
+      centered_lines[#centered_lines + 1] = centered[j]
     end
   end
 
   return centered_lines
 end
-
 
 ---Cuts given input to fit in 1 row and postfix it with '...'
 ---@param offset integer Number of characters before the actual text (e.g. indent)
@@ -77,7 +78,6 @@ function M.cut_text_for_line(offset, width, input)
   end
   return string.sub(input, 1, max_length) .. "..."
 end
-
 
 ---Pads or trims content to a specific number of lines
 ---@param height number

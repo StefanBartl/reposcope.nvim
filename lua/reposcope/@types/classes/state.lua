@@ -5,12 +5,15 @@
 ---@field stats StatsPopupState State for buffer and window for the stats popup
 
 ---@class StatsPopupState
----@field buf number|nil Buffer of the stats popup
----@field win number|nil Window of the stats popup
+---@field buf Buffer Buffer of the stats popup
+---@field win Window of the stats popup
 
 ---@class PromptStateManagerModule
 ---@field set_field_text fun(field: string, text: string): nil Sets the current input text for a given prompt field
 ---@field get_field_text fun(field: string): string Retrieves the input text for a given prompt field
+
+---@class PromptInputMap
+---@field [PromptField] string?
 
 ---@class UIStateManagerModule
 ---@field invocation UIStateInvocation Invocation editor state before UI activation
@@ -32,7 +35,7 @@
 ---@field set_list_populated fun(val: boolean): nil Sets internal flag indicating list was populated
 
 ---@class UIStateInvocation
----@field win integer|nil window ID before UI was opened
+---@field win Window window ID before UI was opened
 ---@field cursor UIStateCursor cursor position before UI was opened
 
 ---@class UIStateCursor
@@ -40,20 +43,20 @@
 ---@field col integer|nil
 
 ---@class UIStateBuffers
----@field backg integer|nil
----@field preview integer|nil
----@field prompt table|nil
----@field prompt_prefix integer|nil
----@field list integer|nil
----@field readme_viewer integer|nil
+---@field backg Buffer
+---@field preview Buffer
+---@field prompt PromptBufferMap|nil
+---@field prompt_prefix Buffer
+---@field list Buffer
+---@field readme_viewer Buffer
 
 ---@class UIStateWindows
----@field backg integer|nil
----@field preview integer|nil
+---@field backg Window
+---@field preview Window
 ---@field prompt table|nil
----@field prompt_prefix integer|nil
----@field list integer|nil
----@field readme_viewer integer|nil
+---@field prompt_prefix Window
+---@field list Window
+---@field readme_viewer Window
 
 ---@class UIStateList
 ---@field last_selected_line integer|nil The last selected line number in the list
