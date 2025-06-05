@@ -245,10 +245,7 @@ function M.is_dir_writeable(dir)
     os.remove(testfile)
     return true
   else
-    notify(
-      string.format("[reposcope] Error: Directory is not writable (%s). Reason: %s", dir, err),
-      4
-    )
+    notify("[reposcope] Error: Directory " .. dir .. " is not writable. Reason: " .. err, 4)
     return false
   end
 end

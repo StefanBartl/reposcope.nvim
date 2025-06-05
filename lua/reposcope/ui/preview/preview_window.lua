@@ -53,11 +53,11 @@ function M.open_window()
       relative = "editor",
       row = preview_config.row,
       col = preview_config.col,
-      width = preview_config.width,
-      height = preview_config.height,
+      width = math.floor(preview_config.width),
+      height = math.floor(preview_config.height),
       style = "minimal",
       border = preview_config.border or "none",
-      focusable = true,  -- TEST: 
+      focusable = true,
       noautocmd = true,
     })
 
@@ -69,7 +69,6 @@ function M.open_window()
     return true
   end
 end
-
 
 ---Closes the preview window
 ---@return nil
@@ -83,7 +82,6 @@ function M.close_window()
   win = nil
   ui_state.buffers.preview = nil
 end
-
 
 ---Applies layout and highlight styling
 ---@return nil

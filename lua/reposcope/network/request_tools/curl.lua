@@ -42,7 +42,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
     table.insert(args, k .. ": " .. v)
   end
 
-  notify(string.format("[reposcope] CURL Request: curl %s", table.concat(args, " ")), vim.log.levels.TRACE)
+  notify("[reposcope] CURL Request: curl " .. table.concat(args, " "), 1)
 
   local handle = spawn("curl", {
     args = args,
@@ -102,12 +102,12 @@ function M.request(method, url, callback, headers, debug, context, uuid)
       if context and metrics.record_metrics() then
         metrics.increase_failed(safe_uuid, url, "curl", context, duration_ms, 0, "Error reading curl stderr: " .. err)
       end
-      notify(string.format("[reposcope] curl stderr read error: %s", err), 5)
+      notify("[reposcope] curl stderr read error: " .. err, 5)
       return
     end
 
     if debug and data then
-      notify(string.format("[reposcope] curl stderr: %s", data), 4)
+      notify("[reposcope] curl stderr: " .. data, 4)
     end
   end)
 end

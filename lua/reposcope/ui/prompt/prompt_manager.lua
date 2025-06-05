@@ -134,7 +134,7 @@ function M.open_windows()
     local field = section.name
     local buf = section.buffer
     local col = section.col
-    local width = section.width
+    local width = math.floor(section.width)
 
     if type(buf) ~= "number" or not buf_valid(buf) then
       notify("[reposcope] Invalid buffer for field: " .. tostring(field), 2)

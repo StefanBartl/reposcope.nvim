@@ -30,7 +30,6 @@ function M.build_url(query)
   return string.format(GITHUB_API_SEARCH_URL, encoded_query)
 end
 
-
 --- Fetches repositories from GitHub API and updates the repository cache
 ---@param query string The search query for GitHub repositories
 ---@param on_success fun(): nil Callback if the fetch succeeds
@@ -62,7 +61,7 @@ function M.fetch_repositories(query, on_success, on_failure)
     end
 
     repo_cache_set(parsed)
-    notify(string.format("[reposcope] %d repositories received from GitHub.", #parsed.items or 0), 2)
+    notify("[reposcope] " .. #parsed.items or 0 .. " repositories received from GitHub.", 2)
     vim.schedule(on_success)
   end, nil, "fetch_repositories")
 end

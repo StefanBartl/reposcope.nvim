@@ -47,7 +47,6 @@ function M.set_and_display_list(entries)
   end
 end
 
-
 ---Updates the list content with the provided lines and returns status
 ---@nodiscard
 ---@param lines string[] The list of repository entries to display
@@ -67,7 +66,7 @@ function M.update_list(lines)
 
   if type(lines[1]) ~= "string" then
     notify("[reposcope] 'lines'-table must consist of string(s)", 4)
-    notify(string.format("[reposcope] lines type: %s", type(lines[1])), 4)
+    notify("[reposcope] lines type: " .. type(lines[1]), 4)
     return false
   end
 
@@ -99,14 +98,12 @@ function M.update_list(lines)
   return true
 end
 
-
 ---Clears the list content and closes the list window
 ---@return nil
 function M.clear_list()
   close_window()
   ui_state.set_list_populated(false)
 end
-
 
 ---Returns the currently selected list entry
 ---@return string|nil The selected list entry text
@@ -128,7 +125,6 @@ function M.get_selected()
   return lines[1]
 end
 
-
 ---Selects a specific list entry (highlights it)
 ---@param index number The index of the entry to select
 ---@return nil
@@ -142,12 +138,11 @@ function M.select_entry(index)
   notify("[reposcope] List entry selected at index: " .. index, 2)
 end
 
-
 ---Resets the last selected line and the line highlight
 ---@return nil
 function M.reset_selected_line()
-    ui_state.list.last_selected_line = 1
-    highlight_selected(1)
+  ui_state.list.last_selected_line = 1
+  highlight_selected(1)
 end
 
 return M

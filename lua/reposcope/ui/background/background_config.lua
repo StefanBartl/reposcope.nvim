@@ -2,7 +2,7 @@
 ---@brief Configures the layout and appearance of the background window.
 ---@description
 --- This module provides the configuration settings for the background window.
---- It allows for customization of the background color, transparency, border, 
+--- It allows for customization of the background color, transparency, border,
 --- and size. These settings are applied whenever the background window is opened.
 
 ---@class BackgroundConfig : BackgroundConfigModule
@@ -14,8 +14,8 @@ local ui_config = require("reposcope.ui.config")
 
 M.row = ui_config.row
 M.col = ui_config.col
-M.width = ui_config.width
-M.height = ui_config.height
+M.width = math.floor(ui_config.width)
+M.height = math.floor(ui_config.height)
 M.color_bg = ui_config.colortheme.background
 M.border = "none"
 
@@ -32,7 +32,6 @@ function M.update_layout(row, col, width, height)
   M.width = width or M.width
   M.height = height or M.height
 end
-
 
 ---Dynamically updates the background colors
 ---@param bg? string Optional new background color

@@ -20,7 +20,7 @@ local notify = require("reposcope.utils.debug").notify
 -- Static layout values
 M.row = ui_config.row
 M.col = ui_config.col
-M.width = ui_config.width / 2
+M.width = math.floor(ui_config.width / 2)
 M.height = 3
 
 -- Prefix
