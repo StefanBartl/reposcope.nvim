@@ -16,7 +16,7 @@ M.col = 0
 
 -- Default Colors (Dark Theme)
 M.highlight_color = "#44475a" -- Color for the selected line
-M.normal_color = "#0eea36" -- Default text color
+M.normal_color = "#0eea36"    -- Default text color
 M.border = "none"
 
 
@@ -27,12 +27,11 @@ M.border = "none"
 ---@param col? number Optional new column position
 ---@return nil
 function M.update_layout(width, height, row, col)
-  M.width = width or M.width
-  M.height = height or M.height
+  M.width = math.floor(width or M.width)
+  M.height = math.floor(height or M.height)
   M.row = row or M.row
   M.col = col or M.col
 end
-
 
 ---Dynamically updates the colors of the list window
 ---@param highlight_color? string Optional new highlight color
@@ -42,7 +41,6 @@ function M.update_colors(highlight_color, normal_color)
   M.highlight_color = highlight_color or M.highlight_color
   M.normal_color = normal_color or M.normal_color
 end
-
 
 ---Dynamically updates the border layout
 ---@param border_layout "none"|"single"|"double" Border layout

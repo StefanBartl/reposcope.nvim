@@ -33,25 +33,25 @@ local create_named_buffer = require("reposcope.utils.protection").create_named_b
 local HIGHLIGHT_NS = vim.api.nvim_create_namespace("reposcope.list")
 M.highlighted_line = 1
 
--- List of available test layouts --- LAYOUTS! 
+-- List of available test layouts --- LAYOUTS!
 M.Layouts = {
   Normal = {
-    row = ui_config.row + prompt_config.height + 1,
-    col = ui_config.col + 1,
-    width = (ui_config.width / 2) - 1,
-    height = ui_config.height - prompt_config.height - 2,
+    row = math.floor(ui_config.row + prompt_config.height + 1),
+    col = math.floor(ui_config.col + 1),
+    width = math.floor((ui_config.width / 2) - 1),
+    height = math.floor(ui_config.height - prompt_config.height - 2),
   },
   Compact = {
-    row = ui_config.row + 1,
-    col = ui_config.col + 1,
-    width = (ui_config.width / 2.5) - 1,
-    height = ui_config.height - prompt_config.height - 4,
+    row = math.floor(ui_config.row + 1),
+    col = math.floor(ui_config.col + 1),
+    width = math.floor((ui_config.width / 2.5) - 1),
+    height = math.floor(ui_config.height - prompt_config.height - 4),
   },
   Fullscreen = {
     row = 0,
     col = 0,
-    width = vim.o.columns,
-    height = vim.o.lines,
+    width = math.floor(vim.o.columns),
+    height = math.floor(vim.o.lines),
   }
 }
 
@@ -79,7 +79,7 @@ function M.open_window()
     vim.bo[ui_state.buffers.list].modifiable = false
     vim.bo[ui_state.buffers.list].bufhidden = "wipe"
 
-    ui_state.windows.list = nvim_open_win(buf, false, {  -- NOTE: LAYOUTS!
+    ui_state.windows.list = nvim_open_win(buf, false, { -- NOTE: LAYOUTS!
       relative = "editor",
       row = M.Layouts.Normal.row,
       col = M.Layouts.Normal.col,
@@ -87,7 +87,7 @@ function M.open_window()
       height = M.Layouts.Normal.height,
       style = "minimal",
       border = config.border or "none",
-      focusable = true, -- TEST: 
+      focusable = true, -- TEST:
       noautocmd = true,
     })
 
@@ -97,7 +97,6 @@ function M.open_window()
     return true
   end
 end
-
 
 ---Closes the list window
 ---@return nil
@@ -109,22 +108,20 @@ function M.close_window()
   ui_state.buffers.list = nil
 end
 
-
 ---Configures the list buffer with UI settings (no editing, restricted keymaps).
 ---@return nil
 function M.configure()
   local buf = ui_state.buffers.list
-   if not buf or not nvim_buf_is_valid(buf) then
-     notify("[reposcope] List buffer configure failed", 4)
-     return
-   end
+  if not buf or not nvim_buf_is_valid(buf) then
+    notify("[reposcope] List buffer configure failed", 4)
+    return
+  end
 
   vim.bo[buf].buftype = "nofile"
   vim.bo[buf].swapfile = false
 
   notify("[reposcope] List buffer configured.", 2)
 end
-
 
 ---Applies the layout and styling to the list window
 ---@return nil
@@ -157,7 +154,6 @@ function M.apply_layout()
   })
 end
 
-
 ---Highlights the selected list entry at the specified index
 ---@param index number The index of the entry to highlight
 ---@return nil
@@ -187,7 +183,7 @@ function M.highlight_selected(index)
   -- Clear previous highlights
   nvim_buf_clear_namespace(buf, HIGHLIGHT_NS, 0, -1)
 
- local line =nvim_buf_get_lines(buf, index - 1, index, false)[1] or ""
+  local line = nvim_buf_get_lines(buf, index - 1, index, false)[1] or ""
   -- Apply persistent highlight using extmark
   nvim_buf_set_extmark(buf, HIGHLIGHT_NS, index - 1, 0, {
     end_row = index - 1,
@@ -197,7 +193,6 @@ function M.highlight_selected(index)
 
   M.highlighted_line = index
 end
-
 
 ---Sets the highlighted line in the list UI.
 ---@param line number The line number to highlight
@@ -224,7 +219,6 @@ function M.set_highlighted_line(line)
 
   M.highlighted_line = line
 end
-
 
 ---Returns the currently highlighted list entry
 ---@return string|nil The text of the highlighted list entry

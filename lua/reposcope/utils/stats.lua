@@ -47,24 +47,24 @@ function M.show_stats()
     "Reposcope Request Statistics",
     "================================",
     "Session:",
-    string.format(" - Successful requests: %d", session_stats.successful),
-    string.format(" - Failed requests: %d", session_stats.failed),
+    " - Successful requests: " .. session_stats.successful,
+    " - Failed requests: " .. session_stats.failed,
     "",
-    string.format(" - Cache Hits: %d", session_stats.cache_hitted),
-    string.format(" - Filecache Hits: %d", session_stats.fcache_hitted),
+    " - Cache Hits: " .. session_stats.cache_hitted,
+    " - Filecache Hits: " .. session_stats.fcache_hitted,
     "",
     "--------------------------------",
     "Total:",
-    string.format(" - Successful requests: %d", total_stats.successful),
-    string.format(" - Failed requests: %d", total_stats.failed),
+    " - Successful requests: " .. total_stats.successful,
+    " - Failed requests: " .. total_stats.failed,
     "",
-    string.format(" - Cache Hits: %d", total_stats.cache_hitted),
-    string.format(" - Filecache Hits: %d", total_stats.fcache_hitted),
+    " - Cache Hits: " .. total_stats.cache_hitted,
+    " - Filecache Hits: " .. total_stats.fcache_hitted,
     "",
     "--------------------------------",
     "",
-    string.format("Average Duration (ms): %.2f", average_duration),
-    string.format("Most Frequent Query: %s", most_frequent_query or "N/A"),
+    "Average Duration (ms): " .. average_duration,
+    "Most Frequent Query: " .. (most_frequent_query or "N/A"),
   }
 
   stats_state.buf = require("reposcope.utils.protection").create_named_buffer("reposcope://stats")
@@ -88,7 +88,6 @@ function M.show_stats()
   set_keymap("n", "<Esc>", function() M.close_stats() end, { noremap = true, silent = true, buffer = stats_state.buf })
 end
 
-
 ---Closes the statistics popup window and removes associated keymaps.
 ---@return nil
 function M.close_stats()
@@ -104,7 +103,6 @@ function M.close_stats()
     stats_state.win = nil
   end
 end
-
 
 ---Calculates the average request duration and most frequent query from logs.
 ---@return number average_duration The average request duration in milliseconds
@@ -152,7 +150,6 @@ function M.calculate_extended_stats()
   return average_duration, most_frequent_query
 end
 
-
 ---Finds the most frequently used query from a table of query counts.
 ---@param query_count table<string, number> Map of query strings to occurrence count
 ---@return string most_frequent_query The most frequent query or "N/A"
@@ -171,4 +168,3 @@ function M.get_most_frequent_query(query_count)
 end
 
 return M
-

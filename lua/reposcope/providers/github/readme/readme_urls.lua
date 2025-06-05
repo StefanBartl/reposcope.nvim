@@ -4,7 +4,7 @@
 --- This module provides utility functions for generating standardized URLs for fetching
 --- README files from GitHub. It supports both the RAW GitHub content URL and the GitHub
 --- API endpoint used to fetch metadata (and encoded content).
---- 
+---
 --- It is used by the readme_fetcher and manager modules to construct targets for HTTP requests.
 
 ---@class ReadmeUrlBuilder : ReadmeUrlBuilderModule
@@ -22,8 +22,8 @@ function M.get_urls(owner, repo, branch)
   branch = branch or "main"
   assert(type(branch) == "string" and branch ~= "", "Invalid branch")
 
-  local raw_url = string.format("https://raw.githubusercontent.com/%s/%s/%s/README.md", owner, repo, branch)
-  local api_url = string.format("https://api.github.com/repos/%s/%s/contents/README.md", owner, repo)
+  local raw_url = "https://raw.githubusercontent.com/" .. owner .. "/" .. repo .. "/" .. branch .. "/README.md"
+  local api_url = "https://api.github.com/repos/" .. owner .. "/" .. repo .. "/contents/README.md"
 
   return {
     raw = raw_url,

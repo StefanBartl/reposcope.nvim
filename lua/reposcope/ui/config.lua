@@ -33,12 +33,11 @@ M.colortheme = {
 ---@param row? number Optional new row position (vertical center)
 ---@return nil
 function M.update_layout(width, height, col, row)
-  M.width = width or M.width
-  M.height = height or M.height
+  M.width = math.floor(width or M.width)
+  M.height = math.floor(height or M.height)
   M.col = col or math.floor((vim.o.columns - M.width) / 2)
   M.row = row or math.floor((vim.o.lines - M.height) / 2)
 end
-
 
 --- Applies a pre-defined theme (dark, light) or custom colors
 ---@param theme string The theme to apply ("dark", "light", "custom")

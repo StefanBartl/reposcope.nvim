@@ -1,12 +1,12 @@
 ---@module 'reposcope.ui.background.background_window'
 ---@brief Manages the background window for the UI.
 ---@description
---- This module is responsible for creating, configuring, and managing the 
---- background window for the UI. It provides functions to open, close, 
---- and apply layout configurations to the background window, ensuring 
+--- This module is responsible for creating, configuring, and managing the
+--- background window for the UI. It provides functions to open, close,
+--- and apply layout configurations to the background window, ensuring
 --- consistent appearance across all UI components.
 ---
---- The background window serves as a visual base for other UI elements 
+--- The background window serves as a visual base for other UI elements
 --- (Prompt, List, Preview) and can be customized via the background_config.lua.
 
 ---@class BackgroundWindow : BackgroundWindowModule
@@ -75,11 +75,11 @@ function M.open_window()
     relative = "editor",
     row = config.row,
     col = config.col,
-    width = config.width,
-    height = config.height,
+    width = math.floor(config.width),
+    height = math.floor(config.height),
     style = "minimal",
     border = config.border or "none",
-    zindex =  10,
+    zindex = 10,
     focusable = false,
     noautocmd = true,
   })
@@ -87,7 +87,6 @@ function M.open_window()
   ui_state.windows.backg = win
   _apply_background_layout()
 end
-
 
 ---Closes the background window.
 ---@return nil

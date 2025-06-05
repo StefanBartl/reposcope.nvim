@@ -31,10 +31,10 @@ function M.build(input)
     if type(value) == "string" and value ~= "" then
       if FILTER_KEYS[field] then
         table.insert(query_parts, field .. ":" .. value)
-        debug_parts[#debug_parts+1] = string.format("filter %s=%s", field, value)
+        debug_parts[#debug_parts + 1] = "filter " .. field .. "=" .. value
       elseif field ~= "prefix" then
         table.insert(query_parts, value)
-        debug_parts[#debug_parts+1] = string.format("keyword = %s", value)
+        debug_parts[#debug_parts + 1] = "keyword = " .. value
       end
     end
   end

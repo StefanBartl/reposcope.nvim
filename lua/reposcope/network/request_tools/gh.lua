@@ -44,8 +44,8 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
   -- Add headers
   for k, v in pairs(headers or {}) do
-    table.insert(args, "--header")
-    table.insert(args, string.format("%s: %s", k, v))
+    args[#args + 1] = "--header"
+    args[#args + 1] = k .. ": " .. v
   end
 
   -- Debug CLI output

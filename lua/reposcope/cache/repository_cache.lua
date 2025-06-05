@@ -16,6 +16,7 @@ local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 local ui_state = require("reposcope.state.ui.ui_state")
 local list_window = require("reposcope.ui.list.list_window")
 -- Debugging & Utility
+local is_dev_mode = require("reposcope.utils.debug").is_dev_mode
 local notify = require("reposcope.utils.debug").notify
 local ensure_string = require("reposcope.utils.core").ensure_string
 
@@ -31,14 +32,14 @@ local function _sanitize_repo(repo, index)
   ---@type string
   local name = ensure_string(repo.name)
   if name == "" then
-    notify(string.format("[reposcope] Repository [%d] missing valid 'name', inserted fallback", index), 2)
+    notify("[reposcope] Repository " .. index .. " missing valid 'name', inserted fallback", 2)
     name = "No name"
   end
 
   ---@type string
   local owner = ensure_string(repo.owner and repo.owner.login)
   if owner == "" then
-    notify(string.format("[reposcope] Repository [%d] missing valid 'owner.login', inserted fallback", index), 2)
+    notify("[reposcope] Repository " .. index .. " missing valid 'owner.login', inserted fallback", 2)
     owner = "Unknown"
   end
 
@@ -61,7 +62,13 @@ end
 ---@param repo table
 ---@return string
 local function _build_repo_line(repo)
-  return string.format("%s/%s: %s", repo.owner.login, repo.name, repo.description)
+  local parts = {}
+  parts[#parts + 1] = repo.owner.login
+  parts[#parts + 1] = "/"
+  parts[#parts + 1] = repo.name
+  parts[#parts + 1] = ": "
+  parts[#parts + 1] = repo.description
+  return table.concat(parts)
 end
 
 
@@ -75,7 +82,7 @@ local function _validate_repo_list()
   for i = 1, #list do
     local line = list[i]
     if type(line) ~= "string" then
-      log(string.format("[reposcope] [dev] Repo list line %d is not a string: %s", i, type(line)), 4)
+      log("[reposcope] [dev] Repo list line " .. i .. " is not a string: " .. type(line), 4)
       log(inspect(line), 4)
     end
   end
@@ -100,7 +107,7 @@ function M.set(json)
   M.repositories.items = items
   M.repositories.list = list
 
-  _validate_repo_list()
+  if is_dev_mode() then _validate_repo_list() end
 end
 
 ---Returns the cached JSON response
@@ -144,9 +151,7 @@ end
 function M.get_selected()
   local data = M.get()
   local items = data and data.items
-  if not items or data.total_count == 0 then
-    return nil
-  end
+  if type(items) ~= "table" or #items == 0 then return nil end
 
   local selected = list_window.highlighted_line
   if not selected then
@@ -161,16 +166,16 @@ function M.get_selected()
   end
 
   -- Avoid accessing a row that does not yet exist
-  local line_count = nvim_buf_line_count(list_buf)
-  if selected > line_count then
-    notify(string.format("[reposcope] Selected line (%d) exceeds buffer line count (%d)", selected, line_count), 3)
+  if selected > nvim_buf_line_count(list_buf) then
+    local line_count = nvim_buf_line_count(list_buf)
+    notify("[reposcope] Selected line " .. selected .. " exceeds buffer line count " .. line_count, 3)
     return nil
   end
 
   -- Read the repository entry in the list (format: "username/reponame: description")
   local line = nvim_buf_get_lines(list_buf, selected - 1, selected, false)[1]
   if type(line) ~= "string" or line == "" then
-    notify(string.format("[reposcope] No content at selected line %d", selected), 3)
+    notify("[reposcope] No content at selected line " .. selected, 3)
     return nil
   end
 
@@ -188,7 +193,7 @@ function M.get_selected()
     end
   end
 
-  notify(string.format("[reposcope] Repository not found: %s/%s", owner, repo_name), 3)
+  notify("[reposcope] Repository not found: " .. owner .. "/" .. repo_name, 3)
   return nil
 end
 

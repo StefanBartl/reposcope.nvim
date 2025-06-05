@@ -41,7 +41,7 @@ function M.build_layout()
     end
   end
 
-  local dynamic_width = dynamic_count > 0 and math.floor(remaining_width / dynamic_count) or 0
+  local dynamic_width = math.floor(dynamic_count > 0 and math.floor(remaining_width / dynamic_count) or 0)
 
   -- Build layout structure
   for i = 1, #fields do

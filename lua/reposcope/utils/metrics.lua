@@ -164,7 +164,6 @@ local function log_request(uuid, data)
       return
     end
     writefile(vim.split(json_or_err, "\n"), log_path)
-
   end)
 end
 
@@ -211,7 +210,6 @@ function M.increase_failed(uuid, query, source, context, duration_ms, status_cod
   })
 end
 
-
 ---Increases the cache hit count
 ---@param uuid UUID
 ---@param query Query
@@ -228,7 +226,6 @@ function M.increase_cache_hit(uuid, query, source, context)
     context = context,
   })
 end
-
 
 ---Increases the cache hit count
 ---@param uuid UUID
@@ -247,58 +244,51 @@ function M.increase_fcache_hit(uuid, query, source, context)
   })
 end
 
-
 ---Checks the current GitHub rate limit and displays a warning if low
 ---@return nil
 function M.check_rate_limit()
   if M.rate_limits.core.limit > 0 and M.rate_limits.search.limit > 0 then
     local core_used = M.req_count.successful + M.req_count.failed
     local core_remaining = M.rate_limits.core.remaining
-    local core_usage = 1 - (core_remaining / M.rate_limits.core.limit)
+    local core_limit = M.rate_limits.core.limit
+    local core_usage = 1 - (core_remaining / core_limit)
 
     if core_usage >= 0.9 then
       vim.schedule(function()
-        notify(string.format(
-          "[Reposcope] WARNING: GitHub API Core limit critical (%d/%d, remaining: %d)",
-          core_used, M.rate_limits.core.limit, core_remaining
-        ), 3)
+        notify(("[Reposcope] WARNING: GitHub API Core limit critical.\n" ..
+            "  Used: %d  Limit: %d  Remaining: %d")
+          :format(core_used, core_limit, core_remaining), 3)
       end)
     elseif core_usage >= 0.75 then
       vim.schedule(function()
-        notify(string.format(
-          "[Reposcope] INFO: GitHub API Core limit approaching (%d/%d, remaining: %d)",
-          core_used, M.rate_limits.core.limit, core_remaining
-        ), 2)
+        notify(("[Reposcope] INFO: GitHub API Core limit approaching.\n" ..
+            "  Used: %d  Limit: %d  Remaining: %d")
+          :format(core_used, core_limit, core_remaining), 2)
       end)
     end
 
     local search_remaining = M.rate_limits.search.remaining
-    local search_usage = 1 - (search_remaining / M.rate_limits.search.limit)
+    local search_limit = M.rate_limits.search.limit
+    local search_usage = 1 - (search_remaining / search_limit)
 
     if search_usage >= 0.9 then
       vim.schedule(function()
-        notify(string.format(
-          "[Reposcope] WARNING: GitHub API Search limit critical (remaining: %d)",
-          search_remaining
-        ), 3)
+        notify("[Reposcope] WARNING: GitHub API Search limit critical (remaining: " .. search_remaining .. ")", 3)
       end)
     elseif search_usage >= 0.75 then
       vim.schedule(function()
-        notify(string.format(
-          "[Reposcope] INFO: GitHub API Search limit approaching (remaining: %d)",
-          search_remaining
-        ), 2)
+        notify("[Reposcope] INFO: GitHub API Search limit approaching (remaining: " .. search_remaining .. ")", 2)
       end)
     end
 
     return
   end
 
-  -- If no limits set request api and cache it in ram
+  -- Fallback: Fetch new rate limit data
   local http = require("reposcope.network.http")
   local token = config.options.github_token
-
   local headers = { "Accept: application/vnd.github+json" }
+
   if token then
     table.insert(headers, "Authorization: Bearer " .. token)
   end

@@ -104,8 +104,8 @@ local function _open_readme_window(buf)
 
   local win = nvim_open_win(buf, true, {
     relative = "editor",
-    width = vim.o.columns,
-    height = vim.o.lines - 4,
+    width = math.floor(vim.o.columns),
+    height = math.floor(vim.o.lines - 4),
     col = 0,
     row = 0,
     style = "minimal",
@@ -152,7 +152,6 @@ function M.open_viewer()
 
   _open_readme_window(buf)
 end
-
 
 --- Closes the README viewer window and buffer
 ---@return nil
