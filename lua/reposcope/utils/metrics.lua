@@ -11,7 +11,6 @@ local filereadable = vim.fn.filereadable
 local readfile = vim.fn.readfile
 local writefile = vim.fn.writefile
 local fs_stat = vim.uv.fs_stat
-local schedule = vim.schedule
 local decode = vim.json.decode
 -- Project Imports
 local notify = require("reposcope.utils.debug").notify
@@ -121,7 +120,7 @@ local function log_request(uuid, data)
     return
   end
 
-  schedule(function()
+  vim.schedule(function()
     local logs = {}
 
     -- Read existing log file if available
@@ -258,14 +257,14 @@ function M.check_rate_limit()
     local core_usage = 1 - (core_remaining / M.rate_limits.core.limit)
 
     if core_usage >= 0.9 then
-      schedule(function()
+      vim.schedule(function()
         notify(string.format(
           "[Reposcope] WARNING: GitHub API Core limit critical (%d/%d, remaining: %d)",
           core_used, M.rate_limits.core.limit, core_remaining
         ), 3)
       end)
     elseif core_usage >= 0.75 then
-      schedule(function()
+      vim.schedule(function()
         notify(string.format(
           "[Reposcope] INFO: GitHub API Core limit approaching (%d/%d, remaining: %d)",
           core_used, M.rate_limits.core.limit, core_remaining
@@ -277,14 +276,14 @@ function M.check_rate_limit()
     local search_usage = 1 - (search_remaining / M.rate_limits.search.limit)
 
     if search_usage >= 0.9 then
-      schedule(function()
+      vim.schedule(function()
         notify(string.format(
           "[Reposcope] WARNING: GitHub API Search limit critical (remaining: %d)",
           search_remaining
         ), 3)
       end)
     elseif search_usage >= 0.75 then
-      schedule(function()
+      vim.schedule(function()
         notify(string.format(
           "[Reposcope] INFO: GitHub API Search limit approaching (remaining: %d)",
           search_remaining
@@ -306,7 +305,7 @@ function M.check_rate_limit()
 
   http.get("https://api.github.com/rate_limit", function(response)
     if not response then
-      schedule(function()
+      vim.schedule(function()
         notify("[Reposcope] Failed to fetch GitHub rate limit.", 4)
       end)
       return

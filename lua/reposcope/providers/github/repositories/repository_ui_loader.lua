@@ -9,7 +9,6 @@
 local M = {}
 
 -- Vim API
-local schedule = vim.schedule
 local defer_fn = vim.defer_fn
 local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 -- UI and State
@@ -22,7 +21,7 @@ local notify = require("reposcope.utils.debug").notify
 ---Initializes the list UI and optionally triggers README loading
 ---@return nil
 function M.load_ui_after_fetch()
-  schedule(function()
+  vim.schedule(function()
     reset_selected_line()
     display_repositories()
 

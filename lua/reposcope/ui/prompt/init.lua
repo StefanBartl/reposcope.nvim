@@ -7,8 +7,6 @@
 ---@class UIPrompt : UIPromptModule
 local M = {}
 
--- Vim Utilities
-local schedule = vim.schedule
 -- Config
 local config = require("reposcope.config")
 --  Prompt Core
@@ -29,7 +27,7 @@ function M.initialize()
   prompt_manager_open_windows()
   prompt_setup_autocmds()
 
-  schedule(function()
+  vim.schedule(function()
     vim.cmd("startinsert")
   end)
 end

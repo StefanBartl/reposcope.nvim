@@ -11,7 +11,6 @@
 local M = {}
 
 -- Vim Utilities
-local schedule = vim.schedule
 -- Preview UI Components
 local open_window = require("reposcope.ui.preview.preview_window").open_window
 local inject_banner = require("reposcope.ui.preview.preview_manager").inject_banner
@@ -39,7 +38,7 @@ function M.initialize()
   end
 
   if ui_state.is_list_populated() then
-    schedule(function()
+    vim.schedule(function()
       local selected_repo = repo_cache_get_selected()
       if selected_repo and selected_repo.name then
           update_preview(selected_repo.name)

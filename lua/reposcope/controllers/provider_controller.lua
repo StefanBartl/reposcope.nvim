@@ -11,7 +11,6 @@
 local M = {}
 
 -- Vim Utilties
-local schedule = vim.schedule
 local ui_input = vim.ui.input
 -- Utilities and Core
 local debounce_with_counter = require("reposcope.utils.protection").debounce_with_counter
@@ -95,7 +94,7 @@ function M.prompt_and_clone()
     if input then
       local uuid = generate_uuid()
       register_request(uuid)
-      schedule(function ()
+      vim.schedule(function ()
         providers[_get_provider()].cloner.clone(input, uuid)
       end)
     else
