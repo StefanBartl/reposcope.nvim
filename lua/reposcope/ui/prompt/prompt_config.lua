@@ -34,19 +34,35 @@ M.prefix_win_width = M.prefix_len + 2
 --- This class defines the allowed field names for prompt input configuration.
 --- It is used for validation, autocomplete suggestions, and type safety.
 
----@type table<PromptField, boolean>
+---@type PromptField[]
 local VALID_FIELDS = {
-  prefix = true,
-  keywords = true,
-  owner = true,
-  topic = true,
-  language = true,
-  stars = true,
+  "prefix",
+  "keywords",
+  "owner",
+  "topic",
+  "language",
+  "stars",
 }
+
 
 -- Internal storage for prompt fields (controlled by set_fields)
 ---@type PromptField[]
 local _fields = {}
+
+
+---@private
+---Checks whether a field name is valid based on the predefined VALID_FIELDS list.
+---@param field string The field name to validate (e.g., "keywords", "owner")
+---@return boolean # True if the field exists in VALID_FIELDS, false otherwise
+local function _is_valid_field(field)
+  for i = 1, #VALID_FIELDS do
+    if VALID_FIELDS[i] == field then
+      return true
+    end
+  end
+  return false
+end
+
 
 ---Sets the active prompt fields with deduplication and prefix reordering.
 ---Invalid fields are ignored with a warning.
@@ -58,24 +74,24 @@ function M.set_fields(fields)
     return
   end
 
-  local filtered = {}
-  local valid = VALID_FIELDS
   local notify_invalid = notify
 
   -- Filter only valid fields
+  local filtered = {}
   for i = 1, #fields do
     local field = fields[i]
-    if valid[field] then
+    if _is_valid_field(field) then
       filtered[#filtered + 1] = field
     else
       notify_invalid("[reposcope] Ignored invalid field: " .. tostring(field), 2)
     end
   end
 
-  -- Remove duplicates and ensure 'prefix' is front if present
+  --Remove duplicates and ensure 'prefix' is front if present
   local deduped = dedupe_list(filtered)
   _fields = put_to_front_if_present(deduped, "prefix")
 end
+
 
 --- Returns the normalized prompt field list
 ---@return PromptField[]
@@ -83,14 +99,15 @@ function M.get_fields()
   return _fields
 end
 
+
 ---Returns all valid prompt field names (whitelist)
----@return string[]
+---@return PromptField[] # Sorted list of valid prompt field names
 function M.get_available_fields()
-  local result = {}
-  for field, _ in pairs(VALID_FIELDS) do
-    table.insert(result, field)
+  local result = { [#VALID_FIELDS] = "" }
+  for i = 1, #VALID_FIELDS do
+    result[i] = VALID_FIELDS[i]
   end
-  table.sort(result) -- optional alphabetisch
+  table.sort(result)
   return result
 end
 
