@@ -16,7 +16,6 @@ local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 local ui_state = require("reposcope.state.ui.ui_state")
 local list_window = require("reposcope.ui.list.list_window")
 -- Debugging & Utility
-local reserve_list = require("reposcope.utils.core").reserve_list
 local is_dev_mode = require("reposcope.utils.debug").is_dev_mode
 local notify = require("reposcope.utils.debug").notify
 local ensure_string = require("reposcope.utils.core").ensure_string
@@ -98,7 +97,8 @@ function M.set(json)
   local build = _build_repo_line
   local items = json.items or {}
   local n = #items
-  local list = reserve_list(n, "string")
+  local list = { [n] = "" }
+
   for i = 1, n do
     local repo = sanitize(items[i], i)
     list[i] = build(repo)

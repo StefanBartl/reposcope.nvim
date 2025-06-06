@@ -18,7 +18,6 @@ local notify = require("reposcope.utils.debug").notify
 local safe_mkdir = require("reposcope.utils.protection").safe_mkdir
 
 
-M.active_requests = {}
 M.readme_cache = {}
 
 ---Returns the README content for a given repository from cache (RAM or file)
