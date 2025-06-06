@@ -170,6 +170,7 @@ function M.get_selected()
   if selected > nvim_buf_line_count(list_buf) then
     local line_count = nvim_buf_line_count(list_buf)
     notify("[reposcope] Selected line " .. selected .. " exceeds buffer line count " .. line_count, 3)
+    selected = 1
     return nil
   end
 
