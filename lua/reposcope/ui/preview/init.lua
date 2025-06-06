@@ -11,6 +11,7 @@
 local M = {}
 
 -- Vim Utilities
+local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 -- Preview UI Components
 local open_window = require("reposcope.ui.preview.preview_window").open_window
 local inject_banner = require("reposcope.ui.preview.preview_manager").inject_banner
@@ -32,18 +33,18 @@ function M.initialize()
   end
 
   local buf = ui_state.buffers.preview
-  if not buf or not vim.api.nvim_buf_is_valid(buf) then
+  if not buf or not nvim_buf_is_valid(buf) then
     notify("[reposcope] Preview buffer invalid, initialization failed.", 4)
     return
   end
 
   if ui_state.is_list_populated() then
-    vim.schedule(function()
+    vim.defer_fn(function()
       local selected_repo = repo_cache_get_selected()
       if selected_repo and selected_repo.name then
           update_preview(selected_repo.name)
       end
-    end)
+    end, 100)
   else
     inject_banner(buf)
   end

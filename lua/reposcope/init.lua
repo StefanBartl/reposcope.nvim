@@ -22,7 +22,6 @@ local M = {}
 -- Vim Utilities
 local nvim_get_current_win = vim.api.nvim_get_current_win
 local nvim_win_get_buf = vim.api.nvim_win_get_buf
-local nvim_list_wins = vim.api.nvim_list_wins
 local nvim_set_current_win = vim.api.nvim_set_current_win
 local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 local nvim_buf_get_name = vim.api.nvim_buf_get_name
@@ -125,7 +124,7 @@ function M.close_ui()
 
   -- Close all Reposcope-related buffers as well
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_valid(buf) then
+    if nvim_buf_is_valid(buf) then
       local name = vim.api.nvim_buf_get_name(buf)
       if type(name) == "string" and name:find("^reposcope://") then
         vim.api.nvim_buf_delete(buf, { force = true })
