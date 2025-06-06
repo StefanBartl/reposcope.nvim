@@ -22,7 +22,6 @@
 ---@field has_env fun(name: string): boolean Returns true if the given environment variable is set and non-empty.
 
 ---@class CoreUtilsModule
----@field reserve_list fun(length: number, value_type: ListValueTypes): table Reserves a table with a given length and dummy values based on type
 ---@field tbl_find fun(tbl: table, value: any): integer|nil Searches for a value in the table and returns its index
 ---@field tbl_islist fun(t: any): boolean Checks if a table is a proper list: integer keys 1..#t without gaps or non-integer keys.
 ---@field flatten_table fun(input: table, result?: table): table Recursively flattens a nested table into a flat list
