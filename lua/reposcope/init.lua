@@ -65,6 +65,31 @@ function M.setup(opts)
   end
 end
 
+
+---@private
+---Clears the second line of each prompt buffer (in case user input or external message was inserted).
+---@description
+--- This function ensures that any unintended input (e.g. from `:messages` or stray keystrokes) is removed
+--- from the actual input line of the prompt buffers (usually line index 1).
+--- It temporarily makes the buffer modifiable, performs the deletion, and then restores the lock.
+---@return nil
+local function _clear_prompt_inputs()
+  local bufs = ui_state.buffers.prompt
+  if not bufs then return end
+
+  for _, buf in pairs(bufs) do
+    if type(buf) == "number" and vim.api.nvim_buf_is_valid(buf) then
+      local line = vim.api.nvim_buf_get_lines(buf, 1, 2, false)[1]
+      if type(line) == "string" and line ~= "" then
+        vim.bo[buf].modifiable = true
+        vim.api.nvim_buf_set_lines(buf, 1, 2, false, { "" })
+        vim.bo[buf].modifiable = false
+      end
+    end
+  end
+end
+
+
 ---Opens the Reposcope UI. Captures caller position, creates background, preview, list, and prompt windows, and sets keymaps.
 ---@return nil
 function M.open_ui()
@@ -103,6 +128,11 @@ function M.open_ui()
   notify("[reposcope] SETUP UI CLOSE SEQUENCE")
   -- Setup UI Close Handler
   M.setup_ui_close()
+
+
+  notify("[reposcope] CLEAR PROMPT INPUT SEQUENCE")
+  -- Clears the prompt input fields from symbols not supposed to be in them
+  _clear_prompt_inputs()
 
   notify("[reposcope] REPOSCOPE START SEQUENCE FINISHED")
 end
