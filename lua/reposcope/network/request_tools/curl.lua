@@ -49,9 +49,9 @@ function M.request(method, url, callback, headers, debug, context, uuid)
     stdio = { nil, stdout, stderr },
   }, function(code)
     ---@diagnostic disable-next-line: undefined-field
-    stdout:close()
+    if stdout then stdout:close() end
     ---@diagnostic disable-next-line: undefined-field
-    stderr:close()
+    if stderr then stderr:close() end
 
     local duration = (hrtime() - start_time) / 1e6 -- ms
 
@@ -71,45 +71,47 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   end
 
   ---@diagnostic disable-next-line: undefined-field
-  stdout:read_start(function(err, data)
-    local duration_ms = (hrtime() - start_time) / 1e6
+  if stdout then stdout:read_start(function(err, data)
+      local duration_ms = (hrtime() - start_time) / 1e6
 
-    if err then
-      if metrics.record_metrics() then
-        metrics.increase_failed(safe_uuid, url, "curl", safe_context, duration_ms, 0,
-          "Error reading curl stdout: " .. err)
+      if err then
+        if metrics.record_metrics() then
+          metrics.increase_failed(safe_uuid, url, "curl", safe_context, duration_ms, 0,
+            "Error reading curl stdout: " .. err)
+        end
+        callback(nil, "curl stdout error: " .. err)
+        return
       end
-      callback(nil, "curl stdout error: " .. err)
-      return
-    end
 
-    if data then
-      table.insert(response_data, data)
-    else
-      local response = table.concat(response_data)
-      if metrics.record_metrics() then
-        metrics.increase_success(safe_uuid, url, "curl", safe_context, duration_ms, 200)
+      if data then
+        table.insert(response_data, data)
+      else
+        local response = table.concat(response_data)
+        if metrics.record_metrics() then
+          metrics.increase_success(safe_uuid, url, "curl", safe_context, duration_ms, 200)
+        end
+        callback(response)
       end
-      callback(response)
-    end
-  end)
+    end)
+  end
 
   ---@diagnostic disable-next-line: undefined-field
-  stderr:read_start(function(err, data)
-    local duration_ms = (hrtime() - start_time) / 1e6
+  if stderr then stderr:read_start(function(err, data)
+      local duration_ms = (hrtime() - start_time) / 1e6
 
-    if err then
-      if context and metrics.record_metrics() then
-        metrics.increase_failed(safe_uuid, url, "curl", context, duration_ms, 0, "Error reading curl stderr: " .. err)
+      if err then
+        if context and metrics.record_metrics() then
+          metrics.increase_failed(safe_uuid, url, "curl", context, duration_ms, 0, "Error reading curl stderr: " .. err)
+        end
+        notify("[reposcope] curl stderr read error: " .. err, 5)
+        return
       end
-      notify("[reposcope] curl stderr read error: " .. err, 5)
-      return
-    end
 
-    if debug and data then
-      notify("[reposcope] curl stderr: " .. data, 4)
-    end
-  end)
+      if debug and data then
+        notify("[reposcope] curl stderr: " .. data, 4)
+      end
+    end)
+  end
 end
 
 return M

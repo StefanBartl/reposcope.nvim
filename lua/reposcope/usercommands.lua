@@ -1,9 +1,17 @@
--- Dependencies
 local nvim_create_user_command = vim.api.nvim_create_user_command
-local notify = require("reposcope.utils.debug").notify
+-- State and Cache
+local repository_cache_get = require("reposcope.cache.repository_cache").get
+local repository_cache_set = require("reposcope.cache.repository_cache").set
+local restore_relevance_sorting = require("reposcope.cache.repository_cache").restore_relevance_sorting
+local display_repositories = require("reposcope.controllers.list_controller").display_repositories
+-- Project Dependencies
 local set_fields = require("reposcope.ui.prompt.prompt_config").set_fields
 local get_available_fields = require("reposcope.ui.prompt.prompt_config").get_available_fields
-
+local prompt_filter = require("reposcope.ui.actions.filter_prompt").prompt_filter
+local prompt_sort = require("reposcope.ui.actions.sort_prompt").prompt_sort
+local fetch_readme_for_selected = require("reposcope.controllers.provider_controller").fetch_readme_for_selected
+-- Debugging
+local notify = require("reposcope.utils.debug").notify
 
 ---This command safely starts the reposcope UI by calling `require("reposcope.init").open_ui()`
 ---and logs an error notification if an exception occurs.
@@ -81,6 +89,77 @@ end, {
   end,
 })
 
+
+---@private
+---@brief Sorts a given repository item list based on the given mode.
+---@description
+--- Accepts a list of repository items and a sort mode.
+--- Supports sorting by `name`, `owner`, `stars`, or resetting to `relevance` (original API order).
+--- Returns a newly sorted table unless `relevance`, which triggers in-place restoration.
+---@param items Repository[] The list of repositories to sort
+---@param mode "name"|"owner"|"stars"|"relevance" The sorting strategy
+---@return Repository[]|nil Sorted list (unless `relevance` mode, which restores in-place)
+local function _sort_items(items, mode)
+  if mode == "name" then
+    table.sort(items, function(a, b) return a.name < b.name end)
+  elseif mode == "owner" then
+    table.sort(items, function(a, b) return a.owner.login < b.owner.login end)
+  elseif mode == "stars" then
+    table.sort(items, function(a, b)
+      return (a.stargazers_count or 0) > (b.stargazers_count or 0)
+    end)
+  elseif mode == "relevance" then
+    restore_relevance_sorting()
+    return nil
+  end
+  return items
+end
+
+
+
+-- REF:  Functiuons outsourcen
+
+---Sorts the currently cached repositories by the specified mode and updates the list display.
+nvim_create_user_command("ReposcopeSortPrompt", function()
+  prompt_sort()
+end, {
+  desc = "Interactive prompt to sort repositories",
+})
+
+
+---Filters the currently cached repositories based on a case-insensitive substring search.
+---Usage: `:ReposcopeFilterRepos <query>`
+---@param opts { fargs: string[] } Command arguments
+---@return nil
+nvim_create_user_command("ReposcopeFilterRepos", function(opts)
+  local query = table.concat(opts.fargs, " "):lower()
+  if query == "" then
+    print("[reposcope] Filter query required")
+    return
+  end
+
+  local filtered = {}
+  for _, repo in ipairs(repository_cache_get().items or {}) do
+    local full = (repo.owner.login .. "/" .. repo.name .. ": " .. (repo.description or "")):lower()
+    if full:find(query, 1, true) then
+      table.insert(filtered, repo)
+    end
+  end
+
+  repository_cache_set({ total_count = #filtered, items = filtered }, false)
+  display_repositories()
+  fetch_readme_for_selected()
+end, {
+  nargs = "+",
+  desc = "Filter repository list by substring (e.g. :ReposcopeFilterRepos typescript web)",
+})
+
+
+nvim_create_user_command("ReposcopeFilterPrompt", function()
+  prompt_filter()
+end, {
+  desc = "Open floating prompt to filter repositories",
+})
 
 --- Prints the number of skipped README fetches due to debounce
 nvim_create_user_command("ReposcopeSkippedReadmes", function()

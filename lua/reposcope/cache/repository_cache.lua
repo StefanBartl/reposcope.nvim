@@ -23,6 +23,10 @@ local ensure_string = require("reposcope.utils.core").ensure_string
 ---@type RepositoryResponse
 M.repositories = { total_count = 0, items = {}, list = {} }
 
+---First response from API (sorted after relevance)
+---@type RepositoryApiResult
+M.relevance_result = nil
+
 
 ---@private
 ---@param repo table
@@ -89,10 +93,14 @@ local function _validate_repo_list()
 end
 
 
----Stores the JSON response of repositories, sanitizes each repo entry and builds lines
----@param json RepositoryResponse
+---Sets the repository cache and optionally stores the original relevance result.
+---@param json RepositoryApiResult
+---@param is_original? boolean Whether this is the original API response (default: false)
 ---@return nil
-function M.set(json)
+function M.set(json, is_original)
+  if is_original == true then
+    M.relevance_result = vim.deepcopy(json)
+  end
   local sanitize = _sanitize_repo
   local build = _build_repo_line
   local items = json.items or {}
@@ -206,6 +214,33 @@ function M.clear()
   for k in pairs(M.repositories.list) do M.repositories.list[k] = nil end
   M.repositories.total_count = 0
   notify("[reposcope] Repository state cleared.", 2)
+end
+
+
+---Restores the cached API result in original relevance order and updates the UI
+---@description
+--- This function resets the currently displayed repository list to match the
+--- original API response (as received from the provider, sorted by relevance).
+--- It replaces the current list with `M.relevance_result`, if available.
+--- This is typically triggered by `:ReposcopeSort relevance`.
+---@return nil
+function M.restore_relevance_sorting()
+  if not M.relevance_result then return end
+  M.set(M.relevance_result)
+
+  require("reposcope.controllers.list_controller").display_repositories()
+  require("reposcope.controllers.provider_controller").fetch_readme_for_selected()
+end
+
+
+---Clears the stored API response for relevance sorting
+---@description
+--- Removes the stored `relevance_result` object. This is typically done
+--- before a new repository search is initiated, to ensure outdated results
+--- are not reused when `:ReposcopeSort relevance` is triggered.
+---@return nil
+function M.clear_relevance_result()
+  M.relevance_result = nil
 end
 
 return M

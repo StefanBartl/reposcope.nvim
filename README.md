@@ -167,15 +167,18 @@ end, { desc = "Open Reposcope" })
 
 ### Available Commands
 
-| Command                      | Description                                                              |
-| ---------------------------- | ------------------------------------------------------------------------ |
-| `:ReposcopeStart`            | Opens the Reposcope UI                                                   |
-| `:ReposcopeClose`            | Closes all Reposcope windows and buffers                                 |
-| `:ReposcopePromptReload ...` | Dynamically sets new prompt fields (e.g. `prefix`, `keywords`, ...)      |
-| `:ReposcopeSkippedReadmes`   | Shows number of skipped README fetches (debounced during fast scrolling) |
-| `:ReposcopeStats`            | Displays collected request stats and metrics                             |
-| `:ReposcopeToggleDev`        | Toggles developer mode (enables debug logging etc.)                      |
-| `:ReposcopePrintDev`         | Prints whether developer mode is active                                  |
+| Command                        | Description                                                                   |
+| ------------------------------ | ----------------------------------------------------------------------------- |
+| `:ReposcopeStart`              | Opens the Reposcope UI                                                        |
+| `:ReposcopeClose`              | Closes all Reposcope windows and buffers                                      |
+| `:ReposcopePromptReload ...`   | Dynamically sets new prompt fields (e.g. `prefix`, `keywords`, ...)           |
+| `:ReposcopeSkippedReadmes`     | Shows number of skipped README fetches (debounced during fast scrolling)      |
+| `:ReposcopeStats`              | Displays collected request stats and metrics                                  |
+| `:ReposcopeToggleDev`          | Toggles developer mode (enables debug logging etc.)                           |
+| `:ReposcopePrintDev`           | Prints whether developer mode is active                                       |
+| `:ReposcopeSortPrompt`         | Opens an interactive selection menu to choose a sort mode                     |
+| `:ReposcopeFilterRepos {text}` | Filters the currently shown repositories by case-insensitive substring        |
+| `:ReposcopeFilterPrompt`       | Opens a small prompt window to input a filter string                          |
 
 
 #### `:ReposcopePromptReload ...`

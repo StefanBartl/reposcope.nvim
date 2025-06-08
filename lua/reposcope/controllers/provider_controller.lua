@@ -21,7 +21,7 @@ local register_request = require("reposcope.state.requests_state").register_requ
 local get_config_option = require("reposcope.config").get_option
 -- Debug Output
 local notify = require("reposcope.utils.debug").notify
-
+local clear_relevance_result = require("reposcope.cache.repository_cache").clear_relevance_result
 
 -- Provider Entry Points
 local providers = {
@@ -73,6 +73,7 @@ end
 ---@param query string The search query string for repositories
 ---@return nil
 function M.fetch_repositories_and_display(query)
+  clear_relevance_result()
   local uuid = generate_uuid()
   register_request(uuid)
   providers[_get_provider()].repo_fetcher.fetch_and_display(query, uuid)
