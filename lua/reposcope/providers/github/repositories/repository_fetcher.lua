@@ -60,7 +60,7 @@ function M.fetch_repositories(query, on_success, on_failure)
       return
     end
 
-    repo_cache_set(parsed)
+    repo_cache_set(parsed, true)
     notify("[reposcope] " .. #parsed.items or 0 .. " repositories received from GitHub.", 2)
     vim.schedule(on_success)
   end, nil, "fetch_repositories")

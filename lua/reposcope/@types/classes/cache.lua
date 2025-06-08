@@ -27,6 +27,7 @@
 ---@field html_url string Repository URL
 ---@field owner RepositoryOwner Owner of the repository
 ---@field default_branch? string The default branch of the repository (optional)
+---@field stargazers_count? number
 
 ---@class RepositoryResponse
 ---@field total_count number Total number of repositories found
@@ -34,7 +35,7 @@
 ---@field list string[] List of all repositories with most important informations
 
 ---@class RepositoryCacheModule
----@field set fun(json: RepositoryResponse): nil Caches the repository response
+---@field set fun(json: RepositoryResponse, is_original?: boolean): nil Caches the repository response
 ---@field get fun(): RepositoryResponse Returns the currently cached repositories
 ---@field get_by_name fun(repo_name: string): Repository|nil Returns a repository object by name
 ---@field get_selected fun(): Repository|nil Returns the currently selected repository

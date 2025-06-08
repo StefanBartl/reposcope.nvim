@@ -116,8 +116,8 @@ COMMANDS                                                  *reposcope-commands*
 
 The following user commands are available:
 
-| Command                    | Description                                 |
-|------------------------------|---------------------------------------------|
+| Command                      | Description                                 |
+|-----------------------------|----------------------------------------------|
 | `:ReposcopeStart`            | Opens the Reposcope UI                      |
 | `:ReposcopeClose`            | Closes the UI                               |
 | `:ReposcopePromptReload ...` | Dynamically reloads prompt fields in the UI |
@@ -125,9 +125,11 @@ The following user commands are available:
 | `:ReposcopeStats`            | Displays request statistics (metrics)       |
 | `:ReposcopeToggleDev`        | Toggles developer mode (logging, mocking)   |
 | `:ReposcopePrintDev`         | Prints current developer mode status        |
+| `:ReposcopeSortPrompt`       | Opens interactive menu to choose sort mode |
+| `:ReposcopeFilterRepos {text}` | Filters list by substring                |
+| `:ReposcopeFilterPrompt`     | Prompt input for interactive filtering     |
 
-Example:
-                                                      *:ReposcopePromptReload*
+Example:                                             *:ReposcopePromptReload*
 :ReposcopePromptReload {fields}
 
 Sets the prompt fields shown in the Reposcope UI.
@@ -144,6 +146,26 @@ You can also simply run:
     :ReposcopePromptReload
 
 To reset to the default prompt layout.
+
+                                                        *:ReposcopeSortPrompt*
+:ReposcopeSortPrompt
+
+Opens an interactive menu (via `vim.ui.select`) to choose a sort mode.
+
+                                                        *:ReposcopeFilterRepos*
+:ReposcopeFilterRepos {text}
+
+Filters the current list of repositories by a case-insensitive substring
+that matches `owner/name: description`.
+
+- Example:
+    :ReposcopeFilterRepos bun typescript
+
+                                                       *:ReposcopeFilterPrompt*
+:ReposcopeFilterPrompt
+
+Opens a prompt input field (via `vim.ui.input`) to interactively enter
+a filter term for the repository list.
 
 ==============================================================================
 CACHE                                                        *reposcope-cache*

@@ -76,9 +76,9 @@ function M.request(method, url, callback, headers, debug, context, uuid)
     env = env,
   }, function(code)
     ---@diagnostic disable-next-line: undefined-field
-    stdout:close()
+    if stdout then stdout:close() end
     ---@diagnostic disable-next-line: undefined-field
-    stderr:close()
+    if stderr then stderr:close() end
 
     local duration = (hrtime() - start_time) / 1e6 -- ms
 
@@ -104,29 +104,31 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   end
 
   ---@diagnostic disable-next-line: undefined-field
-  stdout:read_start(function(err, data)
-    if err then
-      callback(nil, "gh stdout error: " .. err)
-      return
-    end
-    if data then
-      table.insert(response_data, data)
-    end
-  end)
+  if stdout then stdout:read_start(function(err, data)
+      if err then
+        callback(nil, "gh stdout error: " .. err)
+        return
+      end
+      if data then
+        table.insert(response_data, data)
+      end
+    end)
+  end
 
   ---@diagnostic disable-next-line: undefined-field
-  stderr:read_start(function(err, data)
-    if err then
-      notify("[reposcope] gh stderr read error: " .. err, 5)
-      return
-    end
-    if data then
-      table.insert(stderr_data, data)
-      if debug then
-        notify("[reposcope] gh stderr: " .. data, 4)
+  if stderr then stderr:read_start(function(err, data)
+      if err then
+        notify("[reposcope] gh stderr read error: " .. err, 5)
+        return
       end
-    end
-  end)
+      if data then
+        table.insert(stderr_data, data)
+        if debug then
+          notify("[reposcope] gh stderr: " .. data, 4)
+        end
+      end
+    end)
+  end
 end
 
 return M
