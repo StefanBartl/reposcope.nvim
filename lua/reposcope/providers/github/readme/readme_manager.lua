@@ -28,37 +28,42 @@ local has = require("reposcope.cache.readme_cache").has
 local get_selected_repo = require("reposcope.cache.repository_cache").get_selected
 -- UI related
 local update_preview = require("reposcope.ui.preview.preview_manager").update_preview
-
+local inject_content = require("reposcope.ui.preview.preview_manager").inject_content
+local clear_preview = require("reposcope.ui.preview.preview_manager").clear_preview
+local ui_state = require("reposcope.state.ui.ui_state")
 
 ---@private
 ---@param owner string
 ---@param repo_name string
 ---@param branch string
 ---@param uuid string
----@return nil
+---@return boolean
 local function _fetch_from_api_fallback(owner, repo_name, branch, uuid)
   readme_fetch_api(owner, repo_name, branch, function(success, content, err)
     if not success or not content then
       notify("[reposcope] API fetch failed: " .. (err or "unknown error"), 4)
-      return
+      return false
     end
 
     vim.schedule(function()
-      set_ram(repo_name, content)
-      set_file(repo_name, content)
-      update_preview(repo_name)
+      set_ram(owner, repo_name, content)
+      set_file(owner, repo_name, content)
+      update_preview(owner, repo_name)
       request_state.end_request(uuid)
     end)
   end)
+
+  return true
 end
 
 ---@private
----@param repo table
+---@param repo Repository
+---@param owner string
 ---@param repo_name string
 ---@return nil
-local function _record_metrics(repo, repo_name)
+local function _record_metrics(repo, owner, repo_name)
   local uuid = generate_uuid()
-  local ok, source = has(repo_name)
+  local ok, source = has(owner, repo_name)
 
   if not ok or not metrics.record_metrics() then
     return
@@ -107,10 +112,10 @@ function M.fetch_for_selected(uuid)
     return
   end
 
-  if has(repo_name) then
-    _record_metrics(repo, repo_name)
+  if has(owner, repo_name) then
+    _record_metrics(repo, owner, repo_name)
     vim.schedule(function()
-      update_preview(repo_name)
+      update_preview(owner, repo_name)
     end)
     return
   end
@@ -118,14 +123,25 @@ function M.fetch_for_selected(uuid)
   readme_fetch_raw(owner, repo_name, branch, function(success, content, err)
     if success and content then
       vim.schedule(function()
-        set_ram(repo_name, content)
-        set_file(repo_name, content)
-        update_preview(repo_name)
+        set_ram(owner, repo_name, content)
+        set_file(owner, repo_name, content)
+        update_preview(owner, repo_name)
         request_state.end_request(uuid)
       end)
     else
       notify("[reposcope] Raw fetch failed: " .. (err or "unknown error"), vim.log.levels.WARN)
-      _fetch_from_api_fallback(owner, repo_name, branch, uuid)
+      if not _fetch_from_api_fallback(owner, repo_name, branch, uuid) then
+        -- If neither readme raw or api fetch was valid, let user know README is not available
+        local buf = ui_state.buffers.preview
+        if not buf then
+          clear_preview()
+          notify("[reposcope] README couldn't be fetched. Preview window cleared.")
+        else
+          local lines = "README from this repository couldn't be fetched."
+          inject_content(buf, { lines }, "text")
+          notify("[reposcope] README couldn't be fetched. User message in preview window.")
+        end
+      end
     end
   end)
 end

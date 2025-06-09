@@ -7,16 +7,15 @@
 --- Handles all cache operations for repository READMEs.
 --- Includes RAM- and file-based caching as well as inspection and clearing.
 ---@alias Readme table<string, string>
----@field active_requests table<string, boolean> Tracks active readme requests
----@field readme_cache Readme RAM cache for fetched README contents
----@field get fun(repo_name: string): string|nil Returns README content from cache
----@field has fun(repo_name: string): boolean, "ram"|"file"|nil Checks if README exists in cache
----@field set_ram fun(repo_name: string, text: string): nil Stores README in RAM cache
----@field get_ram fun(repo_name: string): string|nil Retrieves README from RAM cache
----@field set_file fun(repo_name: string, text: string): boolean Saves README to file cache
----@field get_file fun(repo_name: string): string|nil Loads README from file cache
----@field clear fun(repo_name: string, target?: "ram"|"file"|"both"): boolean Clears README cache (RAM/file)
----@field clear_all fun(): boolean Clears all README cache entries (RAM/file)
+---@field readme_cache table<string, string> Readme RAM cache for fetched README contents (keyed by "owner/repo")
+---@field get fun(owner: string, repo_name: string): string|nil Returns README content from cache (RAM or file)
+---@field has fun(owner: string, repo_name: string): boolean, "ram"|"file"|nil Checks if README exists in cache
+---@field set_ram fun(owner: string, repo_name: string, text: string): nil Stores README in RAM cache
+---@field get_ram fun(owner: string, repo_name: string): string|nil Retrieves README from RAM cache
+---@field set_file fun(owner: string, repo_name: string, text: string): boolean Saves README to file cache
+---@field get_file fun(owner: string, repo_name: string): string|nil Loads README from file cache
+---@field clear fun(owner: string, repo_name: string, target?: "ram"|"file"|"both"): boolean Clears README cache (RAM/file)
+---@field clear_all fun(): boolean Clears all README cache entries (RAM and file)
 
 ---@class RepositoryOwner
 ---@field login string Owner login name

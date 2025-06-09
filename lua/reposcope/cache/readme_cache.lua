@@ -20,32 +20,49 @@ local safe_mkdir = require("reposcope.utils.protection").safe_mkdir
 
 M.readme_cache = {}
 
+---@private
+---@param owner string
+---@param repo_name string
+---@return string
+local function _get_key(owner, repo_name)
+  return owner .. "/" .. repo_name
+end
+
+
+---@private
+---@param owner string
+---@param repo_name string
+---@return string
+local function _get_file_path(owner, repo_name)
+  return get_readme_filecache_dir() .. "/" .. owner .. "__" .. repo_name .. ".md"
+end
+
+
 ---Returns the README content for a given repository from cache (RAM or file)
+---@param owner string
 ---@param repo_name string
 ---@return string|nil
-function M.get(repo_name)
-  local ok, source = M.has(repo_name)
+function M.get(owner, repo_name)
+  local ok, source = M.has(owner, repo_name)
   if not ok then return nil end
 
   if source == "ram" then
-    return M.get_ram(repo_name)
+    return M.get_ram(owner, repo_name)
   elseif source == "file" then
-    return M.get_file(repo_name)
+    return M.get_file(owner, repo_name)
   end
-
-  return nil
 end
 
 ---Checks if a README is cached (RAM or File)
+---@param owner string
 ---@param repo_name string
 ---@return boolean, "ram"|"file"|nil
-function M.has(repo_name)
-  if M.get_ram(repo_name) then
+function M.has(owner, repo_name)
+  if M.get_ram(owner, repo_name) then
     return true, "ram"
   end
 
-  local path = get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
-  if filereadable(path) == 1 then
+  if filereadable(_get_file_path(owner, repo_name)) == 1 then
     return true, "file"
   end
 
@@ -53,29 +70,31 @@ function M.has(repo_name)
 end
 
 ---Stores a README in RAM cache
----@param repo_name string
----@param readme_text string
----@return nil
-function M.set_ram(repo_name, readme_text)
-  M.readme_cache[repo_name] = readme_text
-end
-
----Returns a README from RAM cache
+---@param owner string
 ---@param repo_name string
 ---@return string|nil
-function M.get_ram(repo_name)
-  return M.readme_cache[repo_name]
+function M.get_ram(owner, repo_name)
+  return M.readme_cache[_get_key(owner, repo_name)]
+end
+
+
+---Returns a README from RAM cache
+---@param owner string
+---@param repo_name string
+---@param readme_text string
+function M.set_ram(owner, repo_name, readme_text)
+  M.readme_cache[_get_key(owner, repo_name)] = readme_text
 end
 
 ---Writes README content to the file cache
+---@param owner string
 ---@param repo_name string
 ---@param readme_text string
 ---@return boolean
-function M.set_file(repo_name, readme_text)
-  local dir = get_readme_filecache_dir()
-  safe_mkdir(dir)
+function M.set_file(owner, repo_name, readme_text)
+  local path = _get_file_path(owner, repo_name)
+  safe_mkdir(get_readme_filecache_dir())
 
-  local path = dir .. "/" .. repo_name .. ".md"
   if filereadable(path) == 1 then
     return false
   end
@@ -95,10 +114,11 @@ function M.set_file(repo_name, readme_text)
 end
 
 ---Loads README content from the file cache
+---@param owner string
 ---@param repo_name string
 ---@return string|nil
-function M.get_file(repo_name)
-  local path = get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
+function M.get_file(owner, repo_name)
+  local path = _get_file_path(owner, repo_name)
   if filereadable(path) == 0 then return nil end
 
   local ok, content = pcall(function()
@@ -113,34 +133,32 @@ function M.get_file(repo_name)
     return nil
   end
 
-  -- Optionale RAM-Aktualisierung
-  if content then M.readme_cache[repo_name] = content end
+  if content then
+    M.readme_cache[_get_key(owner, repo_name)] = content
+  end
+
   return content
 end
 
 ---Clears README cache for a repository (RAM, file or both)
+---@param owner string
 ---@param repo_name string
 ---@param target? "ram"|"file"|"both"
 ---@return boolean
-function M.clear(repo_name, target)
+function M.clear(owner, repo_name, target)
   target = target or "both"
-
-  if target ~= "ram" and target ~= "file" and target ~= "both" then
-    notify("[reposcope] Invalid target for clear: " .. tostring(target), vim.log.levels.ERROR)
-    return false
-  end
-
+  local key = _get_key(owner, repo_name)
+  local path = _get_file_path(owner, repo_name)
   local cleared = false
 
   if target == "ram" or target == "both" then
-    if M.readme_cache[repo_name] then
-      M.readme_cache[repo_name] = nil
+    if M.readme_cache[key] then
+      M.readme_cache[key] = nil
       cleared = true
     end
   end
 
   if target == "file" or target == "both" then
-    local path = get_readme_filecache_dir() .. "/" .. repo_name .. ".md"
     if filereadable(path) == 1 then
       os.remove(path)
       cleared = true
