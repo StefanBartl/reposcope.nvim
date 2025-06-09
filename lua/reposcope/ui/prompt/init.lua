@@ -17,7 +17,7 @@ local notify = require("reposcope.utils.debug").notify
 
 
 ---Opens the prompt UI
----@returns nil
+---@return nil
 function M.initialize()
   if config.options.layout ~= "default" then  -- REF: If layouts are implemented, change
     notify("[reposcope] Unsupported prompt layout: " .. config.options.layout, 3)

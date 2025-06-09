@@ -26,6 +26,7 @@ local current_index = 1
 
 ---Sets the current prompt navigation index
 ---@param index integer
+---@return nil
 function M.set_current_index(index)
   current_index = index
 end
@@ -44,6 +45,7 @@ function M.focus_first_input()
       local config = nvim_win_get_config(win)
       if config.focusable then
         nvim_set_current_win(win)
+        M.set_current_index(i)
         vim.cmd("startinsert")
         return
       end

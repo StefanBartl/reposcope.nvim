@@ -15,7 +15,6 @@ local nvim_buf_get_lines = api.nvim_buf_get_lines
 local nvim_buf_set_extmark = api.nvim_buf_set_extmark
 local nvim_win_is_valid = api.nvim_win_is_valid
 local nvim_win_close = api.nvim_win_close
-local nvim_win_get_config = api.nvim_win_get_config
 local nvim_open_win = api.nvim_open_win
 local nvim_set_hl = api.nvim_set_hl
 local nvim_create_namespace = api.nvim_create_namespace
@@ -30,7 +29,6 @@ local get_field_text = require("reposcope.state.ui.prompt_state").get_field_text
 local setup_buffers = require("reposcope.ui.prompt.prompt_buffers").setup_buffers
 local prompt_build_layout = require("reposcope.ui.prompt.prompt_layout").build_layout
 local focus_first_input = require("reposcope.ui.prompt.prompt_focus").focus_first_input
-local navigate_set_current_index = require("reposcope.ui.prompt.prompt_focus").set_current_index
 
 
 ---@private
@@ -83,27 +81,6 @@ local function _load_state_into_prompt()
       local text = get(field)
       if type(text) == "string" and text ~= "" then
         nvim_buf_set_lines(buf, 1, 2, false, { text })
-      end
-    end
-  end
-end
-
----@private
----Sets the current navigation index to the first focusable window
----@return nil
-local function _set_prompt_start_idx()
-  local fields = get_fields()
-  local wins = ui_state.windows.prompt or {}
-
-  for i = 1, #fields do
-    local field = fields[i]
-    local win = wins[field]
-
-    if type(win) == "number" and nvim_win_is_valid(win) then
-      local cfg = nvim_win_get_config(win)
-      if cfg.focusable then
-        navigate_set_current_index(i)
-        break
       end
     end
   end
@@ -162,7 +139,7 @@ function M.open_windows()
     win_store[field] = win
 
     if focusable then
-      local ok_title, err = pcall(_add_title_to_prompt_buffer, buf, string.upper(" " .. field .. " "), width)
+      local ok_title, err = pcall(_add_title_to_prompt_buffer, buf, field, width)
       if not ok_title then
         notify("[reposcope] Failed to add title to " .. field .. ": " .. tostring(err), 2)
       end
@@ -172,7 +149,6 @@ function M.open_windows()
   end
 
   _load_state_into_prompt()
-  _set_prompt_start_idx()
   focus_first_input()
 end
 
