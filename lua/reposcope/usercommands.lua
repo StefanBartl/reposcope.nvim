@@ -2,7 +2,6 @@ local nvim_create_user_command = vim.api.nvim_create_user_command
 -- State and Cache
 local repository_cache_get = require("reposcope.cache.repository_cache").get
 local repository_cache_set = require("reposcope.cache.repository_cache").set
-local restore_relevance_sorting = require("reposcope.cache.repository_cache").restore_relevance_sorting
 local display_repositories = require("reposcope.controllers.list_controller").display_repositories
 -- Project Dependencies
 local set_fields = require("reposcope.ui.prompt.prompt_config").set_fields
@@ -88,34 +87,6 @@ end, {
     return fields
   end,
 })
-
-
----@private
----@brief Sorts a given repository item list based on the given mode.
----@description
---- Accepts a list of repository items and a sort mode.
---- Supports sorting by `name`, `owner`, `stars`, or resetting to `relevance` (original API order).
---- Returns a newly sorted table unless `relevance`, which triggers in-place restoration.
----@param items Repository[] The list of repositories to sort
----@param mode "name"|"owner"|"stars"|"relevance" The sorting strategy
----@return Repository[]|nil Sorted list (unless `relevance` mode, which restores in-place)
-local function _sort_items(items, mode)
-  if mode == "name" then
-    table.sort(items, function(a, b) return a.name < b.name end)
-  elseif mode == "owner" then
-    table.sort(items, function(a, b) return a.owner.login < b.owner.login end)
-  elseif mode == "stars" then
-    table.sort(items, function(a, b)
-      return (a.stargazers_count or 0) > (b.stargazers_count or 0)
-    end)
-  elseif mode == "relevance" then
-    restore_relevance_sorting()
-    return nil
-  end
-  return items
-end
-
-
 
 -- REF:  Functiuons outsourcen
 

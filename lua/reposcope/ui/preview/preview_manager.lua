@@ -25,17 +25,18 @@ local notify = require("reposcope.utils.debug").notify
 
 --- Updates the preview buffer with the README of the given repository.
 --- Attempts to load the README from cache and inject it into the buffer.
----@param repo_name string The repository name to fetch the README for
+---@param owner string
+---@param repo_name string
 ---@return nil
-function M.update_preview(repo_name)
-  if type(repo_name) ~= "string" or repo_name == "" then
-    notify("[reposcope] Invalid repository name for preview update.", 4)
+function M.update_preview(owner, repo_name)
+  if type(owner) ~= "string" or owner == "" or type(repo_name) ~= "string" or repo_name == "" then
+    notify("[reposcope] Invalid repository owner or name for preview update.", 4)
     return
   end
 
-  local content = readme_cache_get(repo_name)
+  local content = readme_cache_get(owner, repo_name)
   if not content then
-    notify("[reposcope] No README content found for: " .. repo_name, 4)
+    notify("[reposcope] No README content found for: " .. owner .. "/" .. repo_name, 4)
     return
   end
 

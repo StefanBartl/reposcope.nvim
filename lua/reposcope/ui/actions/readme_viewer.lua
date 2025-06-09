@@ -139,7 +139,7 @@ function M.open_viewer()
     return
   end
 
-  local content = readme_cache_get(repo.name)
+  local content = readme_cache_get(repo.owner.login, repo.name)
   if not content then return end
 
   if _is_html_content(content) then

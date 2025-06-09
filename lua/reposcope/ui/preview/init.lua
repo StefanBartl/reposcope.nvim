@@ -42,7 +42,7 @@ function M.initialize()
     vim.defer_fn(function()
       local selected_repo = repo_cache_get_selected()
       if selected_repo and selected_repo.name then
-          update_preview(selected_repo.name)
+          update_preview(selected_repo.owner.login, selected_repo.name)
       end
     end, 100)
   else

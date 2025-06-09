@@ -10,25 +10,34 @@
 ---@class ReadmeUrlBuilder : ReadmeUrlBuilderModule
 local M = {}
 
-
----Returns both the raw content and API URLs for a given repository README
----@param owner string The owner of the repository
----@param repo string The repository name
----@param branch? string The branch to target (usually "main" or "master", defaults to 'main' if nil)
+---Returns both the raw content and API URLs for a given repository README.
+---Accepts either explicit `owner`, `repo`, `branch` or a GitHub blob URL.
+---@param owner string GitHub owner OR full blob URL (e.g. https://github.com/user/repo/blob/branch/README.md)
+---@param repo? string Repository name
+---@param branch? string Branch name (optional, defaults to "main")
 ---@return ReadmeURLs
 function M.get_urls(owner, repo, branch)
-  assert(type(owner) == "string" and owner ~= "", "Invalid owner")
-  assert(type(repo) == "string" and repo ~= "", "Invalid repository name")
-  branch = branch or "main"
-  assert(type(branch) == "string" and branch ~= "", "Invalid branch")
+  -- Case 1: full GitHub blob URL
+  if owner:match("^https://github.com/.+/blob/.+/README%.md$") then
+    local o, r, b = owner:match("github%.com/([^/]+)/([^/]+)/blob/([^/]+)/README%.md")
+    assert(o and r and b, "Invalid GitHub blob URL")
+    owner, repo, branch = o, r, b
+  else
+    -- Normal argument-based mode
+    assert(type(owner) == "string" and owner ~= "", "Invalid owner")
+    assert(type(repo) == "string" and repo ~= "", "Invalid repository name")
+    branch = branch or "main"
+    assert(type(branch) == "string" and branch ~= "", "Invalid branch")
+  end
 
   local raw_url = "https://raw.githubusercontent.com/" .. owner .. "/" .. repo .. "/" .. branch .. "/README.md"
   local api_url = "https://api.github.com/repos/" .. owner .. "/" .. repo .. "/contents/README.md"
 
   return {
     raw = raw_url,
-    api = api_url
+    api = api_url,
   }
 end
 
 return M
+
