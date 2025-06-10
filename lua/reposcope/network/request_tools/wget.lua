@@ -48,6 +48,7 @@ function M.request(method, url, callback, _headers, debug, context, uuid)
 
   notify("[reposcope] WGET Request: wget " .. table.concat(args, " "), vim.log.levels.TRACE)
 
+  ---@diagnostic disable-next-line: missing-fields
   local handle = uv.spawn("wget", {
     args = args,
     stdio = { nil, stdout, stderr },

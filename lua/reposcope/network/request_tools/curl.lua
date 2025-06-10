@@ -44,6 +44,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
   notify("[reposcope] CURL Request: curl " .. table.concat(args, " "), 1)
 
+  ---@diagnostic disable-next-line: missing-fields
   local handle = spawn("curl", {
     args = args,
     stdio = { nil, stdout, stderr },

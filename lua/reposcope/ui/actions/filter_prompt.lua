@@ -12,9 +12,6 @@ local repository_cache_get = require("reposcope.cache.repository_cache").get
 local repository_cache_set = require("reposcope.cache.repository_cache").set
 local display_repositories = require("reposcope.controllers.list_controller").display_repositories
 local fetch_readme_for_selected = require("reposcope.controllers.provider_controller").fetch_readme_for_selected
-local restore_relevance_sorting = require("reposcope.cache.repository_cache").restore_relevance_sorting
--- Debugging
-local notify = require("reposcope.utils.debug").notify
 
 
 ---Opens a floating input window to enter a filter query.

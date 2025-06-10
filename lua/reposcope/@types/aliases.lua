@@ -26,7 +26,7 @@
 ---| "logfile_path"
 ---| "log_max"
 
----@alias PromptField # The field key (e.g. "keywords", "owner") REF: CHECK if this is lsp ok
+---@alias PromptField # The field key (e.g. "keywords", "owner")
 ---| "prefix"
 ---| "keywords"
 ---| "owner"
@@ -57,7 +57,7 @@
 ---@alias Buffer integer|nil
 ---@alias Window integer|nil
 
----@alias Query string # A query attached from prompt input fields and build to request provider --REF:
+---@alias Query string # A query attached from prompt input fields and build to request provider
 
 ---@alias RequestMetricsData { successful: number, failed: number, cache_hitted: number, fcache_hitted: number }
 ---@alias UUID string A string in the format XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX (hexadecimal UUID)

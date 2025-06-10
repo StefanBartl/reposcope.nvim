@@ -19,8 +19,6 @@
 ---@class WgetRequestModule
 ---@field request fun(method: "GET", url: string, callback: fun(response: string|nil, err?: string|nil), _headers?: table<string, string>, debug?: boolean, context?: string, uuid?: string): nil
 
-
---REF: implement these types
 ---@class NetworkRequest
 ---@field method string HTTP method (GET, POST, etc.)
 ---@field url string Target URL
