@@ -119,9 +119,17 @@ end
 ---@return number[]|nil List of active buffer handles
 function M.get_buffers()
   local bufs = {}
-  for _, buf in pairs(M.buffers) do
-    if type(buf) == "number" then
-      table.insert(bufs, buf)
+
+  for _, entry in pairs(M.buffers) do
+    if type(entry) == "number" then
+      table.insert(bufs, entry)
+
+    elseif type(entry) == "table" then
+      for _, sub in pairs(entry) do
+        if type(sub) == "number" then
+          table.insert(bufs, sub)
+        end
+      end
     end
   end
 
@@ -129,18 +137,28 @@ function M.get_buffers()
 end
 
 
+
 ---Returns all window handles in the state table which are not nil
 ---@return number[]|nil List of active window handles
 function M.get_windows()
   local wins = {}
-  for _, win in pairs(M.windows) do
-    if type(win) == "number" then
-      table.insert(wins, win)
+
+  for _, entry in pairs(M.windows) do
+    if type(entry) == "number" then
+      table.insert(wins, entry)
+
+    elseif type(entry) == "table" then
+      for _, sub in pairs(entry) do
+        if type(sub) == "number" then
+          table.insert(wins, sub)
+        end
+      end
     end
   end
 
   return #wins > 0 and wins or nil
 end
+
 
 
 ---@type UIStateList

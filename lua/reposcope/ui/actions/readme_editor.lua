@@ -60,7 +60,7 @@ function M.open_editor()
   vim.bo[buf].filetype = "markdown"
   vim.bo[buf].modifiable = true
   vim.bo[buf].readonly = false
-  vim.bo[buf].buftype = ""
+  --vim.bo[buf].buftype = ""
 end
 
 return M
