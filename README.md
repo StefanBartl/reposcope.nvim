@@ -167,19 +167,33 @@ end, { desc = "Open Reposcope" })
 
 ### Available Commands
 
-| Command                        | Description                                                                   |
-| ------------------------------ | ----------------------------------------------------------------------------- |
-| `:ReposcopeStart`              | Opens the Reposcope UI                                                        |
-| `:ReposcopeClose`              | Closes all Reposcope windows and buffers                                      |
-| `:ReposcopePromptReload ...`   | Dynamically sets new prompt fields (e.g. `prefix`, `keywords`, ...)           |
-| `:ReposcopeSkippedReadmes`     | Shows number of skipped README fetches (debounced during fast scrolling)      |
-| `:ReposcopeStats`              | Displays collected request stats and metrics                                  |
-| `:ReposcopeToggleDev`          | Toggles developer mode (enables debug logging etc.)                           |
-| `:ReposcopePrintDev`           | Prints whether developer mode is active                                       |
-| `:ReposcopeSortPrompt`         | Opens an interactive selection menu to choose a sort mode                     |
-| `:ReposcopeFilterRepos {text}` | Filters the currently shown repositories by case-insensitive substring        |
-| `:ReposcopeFilterPrompt`       | Opens a small prompt window to input a filter string                          |
+**UI Lifecycle & Prompt Configuration**
 
+| Command                      | Description                                                         |
+| ---------------------------- | ------------------------------------------------------------------- |
+| `:ReposcopeStart`            | Opens the Reposcope UI                                              |
+| `:ReposcopeClose`            | Closes all Reposcope windows and buffers                            |
+| `:ReposcopePromptReload ...` | Dynamically sets new prompt fields (e.g. `prefix`, `keywords`, ...) |
+
+**Repository List: Sorting & Filtering**
+
+| Command                        | Description                                                            |
+| ------------------------------ | ---------------------------------------------------------------------- |
+| `:ReposcopeSortPrompt`         | Opens an interactive selection menu to choose a sort mode              |
+| `:ReposcopeFilterRepos {text}` | Filters the currently shown repositories by case-insensitive substring |
+| `:ReposcopeFilterPrompt`       | Opens a floating prompt window to input a filter string interactively  |
+| `:ReposcopeFilterClear`        | Clears any active filter and restores the full list of repositories    |
+
+**Debugging, Stats & Metrics**
+
+| Command                    | Description                                                              |
+| -------------------------- | ------------------------------------------------------------------------ |
+| `:ReposcopeToggleDev`      | Toggles developer mode (enables debug logging, internal info, etc.)      |
+| `:ReposcopePrintDev`       | Prints whether developer mode is currently active                        |
+| `:ReposcopeSkippedReadmes` | Shows number of skipped README fetches (debounced during fast scrolling) |
+| `:ReposcopeStats`          | Displays collected request stats and metrics                             |
+
+---
 
 #### `:ReposcopePromptReload ...`
 
@@ -195,6 +209,39 @@ Example:
 :ReposcopePromptReload prefix topic stars     "prompt with prefix, topice and stars field
 :ReposcopePromptReload                        "resets to default
 ```
+
+---
+
+#### `:ReposcopeFilterRepos {text}`
+
+Filters the current list of repositories using a case-insensitive substring
+match.
+The input is matched against the format: `owner/name: description`.
+
+> If called without arguments, it resets the list to the original API result.
+
+Examples:
+
+```vim
+:ReposcopeFilterRepos typescript bun "matches any repository with strings
+:ReposcopeFilterRepos openai         "filter by organization or description
+:ReposcopeFilterRepos                "clears filter and restores all results
+```
+
+---
+
+#### `:ReposcopeFilterPrompt`
+
+Opens a small floating input field where you can type a filter query.
+The behavior is identical to `:ReposcopeFilterRepos`, but interactively.
+
+Examples:
+
+```vim
+:ReposcopeFilterPrompt    "opens floating input to enter 'react', 'api', etc.
+```
+
+> Press `<Enter>` to confirm and filter; leave input empty to cancel.
 
 ---
 
