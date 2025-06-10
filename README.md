@@ -39,7 +39,7 @@ Modular, minimal, Telescope-inspired interface.
 
 ## Features Demo:
 
-[![Watch the demo](https://img.shields.io/badge/video-demo-blue?style=flat-square)](https://github.com/StefanBartl/reposcope.nvim/issues/1#issue-3133151538)
+https://github.com/user-attachments/assets/85dece1d-d755-4de9-9cd1-84a751901fc2
 
 ---
 
