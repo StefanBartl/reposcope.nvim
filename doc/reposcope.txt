@@ -75,7 +75,6 @@ Instead, define `GITHUB_TOKEN` as an environment variable
 before launching Neovim.
 
 ==============================================================================
-
 RECOMMENDED SETUP                                       *reposcope-auth-setup*
 
 In some environments (e.g. GUI-based Neovim, `zsh`, or plugin managers
@@ -116,7 +115,7 @@ COMMANDS                                                  *reposcope-commands*
 
 The following user commands are available:
 
-| Command                      | Description                                 |
+| Command                      | Description                               |
 |-----------------------------|----------------------------------------------|
 | `:ReposcopeStart`            | Opens the Reposcope UI                      |
 | `:ReposcopeClose`            | Closes the UI                               |
@@ -128,8 +127,10 @@ The following user commands are available:
 | `:ReposcopeSortPrompt`       | Opens interactive menu to choose sort mode |
 | `:ReposcopeFilterRepos {text}` | Filters list by substring                |
 | `:ReposcopeFilterPrompt`     | Prompt input for interactive filtering     |
+| `:ReposcopeFilterClear`     | Resets the filter and restores full list    |
 
-Example:                                             *:ReposcopePromptReload*
+------------------------------------------------------------------------------
+                                                     *:ReposcopePromptReload*
 :ReposcopePromptReload {fields}
 
 Sets the prompt fields shown in the Reposcope UI.
@@ -147,25 +148,44 @@ You can also simply run:
 
 To reset to the default prompt layout.
 
+------------------------------------------------------------------------------
                                                         *:ReposcopeSortPrompt*
 :ReposcopeSortPrompt
 
-Opens an interactive menu (via `vim.ui.select`) to choose a sort mode.
+Opens an interactive menu (via `vim.ui.select`) to choose a sort mode
+(e.g. `"name"`, `"owner"`, `"stars"`, or `"relevance"`).
 
-                                                        *:ReposcopeFilterRepos*
+------------------------------------------------------------------------------
+                                                       *:ReposcopeFilterRepos*
 :ReposcopeFilterRepos {text}
 
 Filters the current list of repositories by a case-insensitive substring
 that matches `owner/name: description`.
 
+If called without any arguments, the filter will be cleared and the original
+API result (sorted by relevance) will be restored.
+
 - Example:
     :ReposcopeFilterRepos bun typescript
+    :ReposcopeFilterRepos
 
+------------------------------------------------------------------------------
                                                        *:ReposcopeFilterPrompt*
 :ReposcopeFilterPrompt
 
-Opens a prompt input field (via `vim.ui.input`) to interactively enter
+Opens a prompt input field to interactively enter
 a filter term for the repository list.
+------------------------------------------------------------------------------
+                                                       *:ReposcopeFilterClear*
+:ReposcopeFilterClear
+
+Clears any active filter and restores the original list of repositories,
+as returned by the last successful API search (sorted by relevance).
+
+This command is functionally equivalent to calling: >
+    :ReposcopeFilterRepos
+<
+Use this as a shortcut when you want to reset filtering explicitly.
 
 ==============================================================================
 CACHE                                                        *reposcope-cache*
