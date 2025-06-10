@@ -70,6 +70,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
   notify("[reposcope] GH Request: gh " .. table.concat(args, " "), 2)
 
+  ---@diagnostic disable-next-line: missing-fields
   local handle = spawn("gh", {
     args = args,
     stdio = { nil, stdout, stderr },
