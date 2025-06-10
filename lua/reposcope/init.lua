@@ -125,13 +125,15 @@ function M.close_ui()
   end
 
   -- Close all Reposcope-related buffers as well
-  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-    if nvim_buf_is_valid(buf) then
-      local name = vim.api.nvim_buf_get_name(buf)
-      if type(name) == "string" and name:find("^reposcope://") then
-        vim.api.nvim_buf_delete(buf, { force = true })
+  local bufs = ui_state.get_buffers()
+  if bufs then
+    for i = 1, #bufs do
+      if nvim_buf_is_valid(bufs[i]) then
+          vim.api.nvim_buf_delete(bufs[i], { force = true })
       end
     end
+  else
+    notify("[reposcope] No bufs available to close", 4)
   end
 
   prompt_autocmds.cleanup_autocmds()

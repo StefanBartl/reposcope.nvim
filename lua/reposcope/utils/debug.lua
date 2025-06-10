@@ -16,7 +16,7 @@ local notify = vim.notify
 ---@class DebugOptions
 ---@field dev_mode boolean Enables developer mode (default: false)
 M.options = {
-  dev_mode = true, -- Print all notifys
+  dev_mode = false, -- Print all notifys
 }
 
 
