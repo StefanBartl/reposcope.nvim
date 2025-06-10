@@ -36,7 +36,7 @@ function M.update_preview(owner, repo_name)
 
   local content = readme_cache_get(owner, repo_name)
   if not content then
-    notify("[reposcope] No README content found for: " .. owner .. "/" .. repo_name, 4)
+    notify("[reposcope] No README content found for: " .. owner .. "/" .. repo_name, 2)
     return
   end
 
