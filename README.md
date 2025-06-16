@@ -21,6 +21,28 @@ Modular, minimal, Telescope-inspired interface.
 
 ---
 
+- [Features](#features)
+- [Features Demo](#features-demo)
+- [Roadmap](#roadmap)
+- [Installation](#installation)
+  - [With Lazy.nvim](#with-lazynvim)
+  - [With packer.nvim](#with-packernvim)
+- [Configuration](#configuration)
+  - [Available Options](#available-options)
+- [Usage](#usage)
+  - [UI Keymaps](#ui-keymaps)
+  - [Available Commands](#available-commands)
+    - [:ReposcopePromptReload](#reposcopepromptreload-)
+    - [:ReposcopeFilterRepos](#reposcopefilterrepos-text)
+    - [:ReposcopeFilterPrompt](#reposcopefilterprompt)
+- [Authentication](#authentication)
+- [Architecture Overview](#architecture-overview)
+- [Development & Debugging](#development--debugging)
+- [License](#license)
+- [Contribution](#contribution)
+
+---
+
 ## Features
 
 - 🔍 Dynamic GitHub repository search by topic, owner, language, etc.
