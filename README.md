@@ -37,7 +37,7 @@ Modular, minimal, Telescope-inspired interface.
     - [:ReposcopeFilterPrompt](#reposcopefilterprompt)
 - [Authentication](#authentication)
 - [Architecture Overview](#architecture-overview)
-- [Development & Debugging](#development--debugging)
+- [Development & Debugging](#development-debugging)
 - [License](#license)
 - [Contribution](#contribution)
 
@@ -338,7 +338,6 @@ reposcope/
 * Use `require("reposcope.utils.debug").notify(...)` for developer output
 * Toggle metrics in config: `metrics = true`
 * Debug file paths and logs are stored in:
-
   * `~/.local/share/nvim/reposcope/data/readme/`
   * `~/.local/share/nvim/reposcope/logs/request_log.json`
 
@@ -346,7 +345,7 @@ reposcope/
 
 ## License
 
-[MIT © 2025 Stefan Bartl](./LICENSE)
+[MIT-License](./LICENSE)
 
 ---
 
