@@ -30,6 +30,9 @@
 ---@class GithubCloneExecutorModule
 ---@field execute fun(cmd: string, uuid: string, repo_name: string): nil
 
+---@class GithubCloneUpdaterModule
+---@field update_all fun(path: string|nil, on_complete?: fun(updated: integer, errors: string[]): nil): nil Bulk-updates all cloned git repositories in the resolved base directory
+
 ---@class QueryBuilderModule
 ---@field build fun(input: table<string, string>): string
 

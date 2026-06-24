@@ -129,6 +129,44 @@ end, {
 })
 
 
+---Updates all cloned git repositories in the clone directory.
+---Runs `git fetch --all --prune` followed by `git pull --ff-only` for every git
+---repository found directly inside the target directory. The directory defaults to
+---the configured clone directory (`clone.std_dir`) and can be overridden with an
+---explicit path argument. Non-git directories are skipped; the operation runs
+---asynchronously and reports a summary when finished.
+---
+---Usage:
+---  `:ReposcopeUpdateRepos`            (uses the configured clone directory)
+---  `:ReposcopeUpdateRepos ~/projects` (updates repositories in the given directory)
+---@param opts { args: string } Command arguments
+---@return nil
+nvim_create_user_command("ReposcopeUpdateRepos", function(opts)
+  local path = (opts.args ~= "" and opts.args) or nil
+
+  vim.notify("[reposcope] Updating cloned repositories...", vim.log.levels.INFO)
+
+  require("reposcope.providers.github.clone.clone_updater").update_all(path, function(updated, errors)
+    local plural = updated == 1 and "y" or "ies"
+    if #errors > 0 then
+      vim.notify(
+        ("[reposcope] Updated %d repositor%s, %d failed:\n\n%s"):format(updated, plural, #errors, table.concat(errors, "\n\n")),
+        vim.log.levels.WARN
+      )
+    else
+      vim.notify(
+        ("[reposcope] Updated %d repositor%s successfully"):format(updated, plural),
+        vim.log.levels.INFO
+      )
+    end
+  end)
+end, {
+  desc = "Update (fetch + ff-only pull) all cloned git repositories in the clone directory",
+  nargs = "?",
+  complete = "dir",
+})
+
+
 -- === Usercommands for Debugging and Stats/Metrics ===
 
 ---This command toggles the developer mode for reposcope.

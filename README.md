@@ -35,6 +35,7 @@ Modular, minimal, Telescope-inspired interface.
     - [:ReposcopePromptReload](#reposcopepromptreload-)
     - [:ReposcopeFilterRepos](#reposcopefilterrepos-text)
     - [:ReposcopeFilterPrompt](#reposcopefilterprompt)
+    - [:ReposcopeUpdateRepos](#reposcopeupdaterepos-dir)
 - [Authentication](#authentication)
 - [Architecture Overview](#architecture-overview)
 - [Development & Debugging](#development-debugging)
@@ -49,6 +50,7 @@ Modular, minimal, Telescope-inspired interface.
 - 📄 Live preview of `README.md` with inline Markdown rendering
 - 🧠 Persistent README caching (RAM + file system)
 - 🔧 Clone support: `git`, `gh`, `wget`, `curl`
+- 🔄 Bulk-update all cloned repositories (`git fetch` + ff-only `pull`) in one command
 - 🔁 Debounced README fetches to avoid redundant API calls
 - 📦 Clean, fully modular architecture (UI, state, providers, controllers)
 - 🧪 Strongly annotated with EmmyLua for LuaLS support
@@ -70,6 +72,7 @@ https://github.com/user-attachments/assets/85dece1d-d755-4de9-9cd1-84a751901fc2
 - [x] GitHub repository search (field-based)
 - [x] GitHub README rendering (raw + API fallback)
 - [x] Clone repo with tool of choice (`git`, `gh`, `curl`, `wget`)
+- [x] Bulk-update all cloned repositories (`:ReposcopeUpdateRepos`)
 - [x] File-based README cache
 - [x] Full UI (list, prompt, preview, background) in dynamic layout
 - [x] Metrics, logging, and developer diagnostics
@@ -218,6 +221,12 @@ end, { desc = "Open Reposcope" })
 | `:ReposcopeFilterPrompt`       | Opens a floating prompt window to input a filter string interactively  |
 | `:ReposcopeFilterClear`        | Clears any active filter and restores the full list of repositories    |
 
+**Repository Maintenance**
+
+| Command                       | Description                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------- |
+| `:ReposcopeUpdateRepos [dir]` | Updates all cloned git repositories (`git fetch --all --prune` + `git pull --ff-only`) in `clone.std_dir` (or the given directory) |
+
 **Debugging, Stats & Metrics**
 
 | Command                    | Description                                                              |
@@ -276,6 +285,30 @@ Examples:
 ```
 
 > Press `<Enter>` to confirm and filter; leave input empty to cancel.
+
+---
+
+#### `:ReposcopeUpdateRepos [dir]`
+
+Bulk-updates every cloned git repository found **directly inside** a directory.
+For each repository it runs `git fetch --all --prune` followed by
+`git pull --ff-only`, sequentially and asynchronously, so Neovim stays responsive.
+Non-git subdirectories are skipped, errors are collected, and a summary is shown
+when the run finishes.
+
+If no argument is given, the configured clone directory (`clone.std_dir`) is used —
+i.e. the place Reposcope clones repositories into. This makes the command the
+natural continuation of the clone lifecycle: *discover → clone → update*.
+
+> ℹ️ Only immediate subdirectories are scanned (non-recursive). The fast-forward-only
+> pull never rewrites local history; diverged branches are reported as errors instead.
+
+Examples:
+
+```vim
+:ReposcopeUpdateRepos              "update all repos in clone.std_dir
+:ReposcopeUpdateRepos ~/projects   "update all repos inside ~/projects
+```
 
 ---
 
