@@ -1,4 +1,4 @@
-*reposcope.txt* Plugin documentation for reposcope.nvim Last Change: June 2025
+*reposcope.txt* Plugin documentation for reposcope.nvim Last Change: June 2026
 
 ==============================================================================
 INTRODUCTION                                                       *:Reposcope
@@ -128,6 +128,7 @@ The following user commands are available:
 | `:ReposcopeFilterRepos {text}` | Filters list by substring                |
 | `:ReposcopeFilterPrompt`     | Prompt input for interactive filtering     |
 | `:ReposcopeFilterClear`     | Resets the filter and restores full list    |
+| `:ReposcopeUpdateRepos [dir]` | Updates all cloned git repositories        |
 
 ------------------------------------------------------------------------------
                                                      *:ReposcopePromptReload*
@@ -187,6 +188,35 @@ This command is functionally equivalent to calling: >
 <
 Use this as a shortcut when you want to reset filtering explicitly.
 
+------------------------------------------------------------------------------
+                                                      *:ReposcopeUpdateRepos*
+:ReposcopeUpdateRepos [dir]
+
+Bulk-updates every cloned git repository found directly inside a directory.
+For each repository it runs, sequentially and asynchronously: >
+    git fetch --all --prune
+    git pull --ff-only
+<
+Non-git subdirectories are skipped. Errors (e.g. diverged branches that cannot
+be fast-forwarded) are collected and reported together in a summary once the
+run finishes.
+
+If no {dir} argument is given, the configured clone directory (`clone.std_dir`,
+see |reposcope-config|) is used — i.e. the directory Reposcope clones into.
+This makes the command the natural continuation of the clone lifecycle:
+discover -> clone -> update.
+
+Notes:
+- Only immediate subdirectories are scanned (non-recursive).
+- The fast-forward-only pull never rewrites local history.
+- Requires `git` to be available in $PATH.
+
+- Example: >
+    :ReposcopeUpdateRepos
+    :ReposcopeUpdateRepos ~/projects
+<
+See also |reposcope-clone|.
+
 ==============================================================================
 CACHE                                                        *reposcope-cache*
 
@@ -208,6 +238,8 @@ Repositories can be cloned using:
 - `curl`
 
 Cloning requires a valid `clone.std_dir` and tool configuration.
+
+Already cloned repositories can be updated in bulk with |:ReposcopeUpdateRepos|.
 
 ==============================================================================
 TROUBLESHOOTING                                    *reposcope-troubleshooting*
