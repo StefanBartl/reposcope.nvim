@@ -222,7 +222,7 @@ end
 --- This function resets the currently displayed repository list to match the
 --- original API response (as received from the provider, sorted by relevance).
 --- It replaces the current list with `M.relevance_result`, if available.
---- This is typically triggered by `:ReposcopeSort relevance`.
+--- This is typically triggered by selecting `relevance` in `:Reposcope sort`.
 ---@return nil
 function M.restore_relevance_sorting()
   if not M.relevance_result then return end
@@ -237,7 +237,7 @@ end
 ---@description
 --- Removes the stored `relevance_result` object. This is typically done
 --- before a new repository search is initiated, to ensure outdated results
---- are not reused when `:ReposcopeSort relevance` is triggered.
+--- are not reused when `relevance` sorting is triggered via `:Reposcope sort`.
 ---@return nil
 function M.clear_relevance_result()
   M.relevance_result = nil

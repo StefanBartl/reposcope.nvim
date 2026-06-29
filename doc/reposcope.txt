@@ -12,17 +12,22 @@ Written in Lua and designed for clean architecture and maximum extensibility.
 ==============================================================================
 USAGE                                                        *reposcope-usage*
 
+All functionality is exposed through a single dispatching command,
+`:Reposcope <subcommand> [args]`. Run `:Reposcope` with no subcommand to print
+the list of available subcommands; `<Tab>` completion offers subcommand names
+first, then per-subcommand arguments.
+
 To launch the plugin UI:
 
-    :ReposcopeStart
+    :Reposcope start
 
 To close it manually:
 
-    :ReposcopeClose
+    :Reposcope close
 
 To reload visible prompt fields:
 
-    :ReposcopePromptReload prefix topic
+    :Reposcope prompt prefix topic
 
 ==============================================================================
 CONFIGURATION                                               *reposcope-config*
@@ -113,26 +118,30 @@ Inside the Reposcope UI:
 ==============================================================================
 COMMANDS                                                  *reposcope-commands*
 
-The following user commands are available:
+All functionality lives under one command: `:Reposcope <subcommand> [args]`.
+The following subcommands are available:
 
-| Command                      | Description                               |
-|-----------------------------|----------------------------------------------|
-| `:ReposcopeStart`            | Opens the Reposcope UI                      |
-| `:ReposcopeClose`            | Closes the UI                               |
-| `:ReposcopePromptReload ...` | Dynamically reloads prompt fields in the UI |
-| `:ReposcopeSkippedReadmes`   | Prints number of debounced README fetches   |
-| `:ReposcopeStats`            | Displays request statistics (metrics)       |
-| `:ReposcopeToggleDev`        | Toggles developer mode (logging, mocking)   |
-| `:ReposcopePrintDev`         | Prints current developer mode status        |
-| `:ReposcopeSortPrompt`       | Opens interactive menu to choose sort mode |
-| `:ReposcopeFilterRepos {text}` | Filters list by substring                |
-| `:ReposcopeFilterPrompt`     | Prompt input for interactive filtering     |
-| `:ReposcopeFilterClear`     | Resets the filter and restores full list    |
-| `:ReposcopeUpdateRepos [dir]` | Updates all cloned git repositories        |
+| Command                       | Description                                  |
+|-------------------------------|----------------------------------------------|
+| `:Reposcope start`            | Opens the Reposcope UI                       |
+| `:Reposcope close`            | Closes the UI                                |
+| `:Reposcope prompt ...`       | Dynamically reloads prompt fields in the UI  |
+| `:Reposcope sort`             | Opens interactive menu to choose sort mode   |
+| `:Reposcope filter {text}`    | Filters list by substring                    |
+| `:Reposcope filter-prompt`    | Prompt input for interactive filtering       |
+| `:Reposcope filter-clear`     | Resets the filter and restores full list     |
+| `:Reposcope update [dir]`     | Updates all cloned git repositories          |
+| `:Reposcope status [dir]`     | Shows git status overview of repositories    |
+| `:Reposcope skipped-readmes`  | Prints number of debounced README fetches    |
+| `:Reposcope stats`            | Displays request statistics (metrics)        |
+| `:Reposcope toggle-dev`       | Toggles developer mode (logging, mocking)    |
+| `:Reposcope print-dev`        | Prints current developer mode status         |
+
+Running `:Reposcope` with no subcommand prints this list inside Neovim.
 
 ------------------------------------------------------------------------------
-                                                     *:ReposcopePromptReload*
-:ReposcopePromptReload {fields}
+                                                          *:Reposcope-prompt*
+:Reposcope prompt {fields}
 
 Sets the prompt fields shown in the Reposcope UI.
 Automatically restarts the UI to apply changes.
@@ -141,24 +150,24 @@ Automatically restarts the UI to apply changes.
 - Autocompletion lists all available prompt fields.
 - Example:
 
-    :ReposcopePromptReload prefix topic stars
+    :Reposcope prompt prefix topic stars
 
 You can also simply run:
 
-    :ReposcopePromptReload
+    :Reposcope prompt
 
 To reset to the default prompt layout.
 
 ------------------------------------------------------------------------------
-                                                        *:ReposcopeSortPrompt*
-:ReposcopeSortPrompt
+                                                            *:Reposcope-sort*
+:Reposcope sort
 
 Opens an interactive menu (via `vim.ui.select`) to choose a sort mode
 (e.g. `"name"`, `"owner"`, `"stars"`, or `"relevance"`).
 
 ------------------------------------------------------------------------------
-                                                       *:ReposcopeFilterRepos*
-:ReposcopeFilterRepos {text}
+                                                          *:Reposcope-filter*
+:Reposcope filter {text}
 
 Filters the current list of repositories by a case-insensitive substring
 that matches `owner/name: description`.
@@ -167,30 +176,30 @@ If called without any arguments, the filter will be cleared and the original
 API result (sorted by relevance) will be restored.
 
 - Example:
-    :ReposcopeFilterRepos bun typescript
-    :ReposcopeFilterRepos
+    :Reposcope filter bun typescript
+    :Reposcope filter
 
 ------------------------------------------------------------------------------
-                                                       *:ReposcopeFilterPrompt*
-:ReposcopeFilterPrompt
+                                                   *:Reposcope-filter-prompt*
+:Reposcope filter-prompt
 
 Opens a prompt input field to interactively enter
 a filter term for the repository list.
 ------------------------------------------------------------------------------
-                                                       *:ReposcopeFilterClear*
-:ReposcopeFilterClear
+                                                    *:Reposcope-filter-clear*
+:Reposcope filter-clear
 
 Clears any active filter and restores the original list of repositories,
 as returned by the last successful API search (sorted by relevance).
 
 This command is functionally equivalent to calling: >
-    :ReposcopeFilterRepos
+    :Reposcope filter
 <
 Use this as a shortcut when you want to reset filtering explicitly.
 
 ------------------------------------------------------------------------------
-                                                      *:ReposcopeUpdateRepos*
-:ReposcopeUpdateRepos [dir]
+                                                          *:Reposcope-update*
+:Reposcope update [dir]
 
 Bulk-updates every cloned git repository found directly inside a directory.
 For each repository it runs, sequentially and asynchronously: >
@@ -212,8 +221,39 @@ Notes:
 - Requires `git` to be available in $PATH.
 
 - Example: >
-    :ReposcopeUpdateRepos
-    :ReposcopeUpdateRepos ~/projects
+    :Reposcope update
+    :Reposcope update ~/projects
+<
+See also |reposcope-clone|.
+
+------------------------------------------------------------------------------
+                                                          *:Reposcope-status*
+:Reposcope status [dir]
+
+Reads the git status of every cloned git repository found directly inside a
+directory and prints a compact, aligned overview. For each repository it runs,
+asynchronously: >
+    git status --porcelain=v2 --branch
+<
+The machine-readable output is distilled into the current branch, ahead/behind
+counts relative to the upstream, and the number of uncommitted files (the
+*dirty* count), summarized as one of the states `clean`, `dirty`, `ahead`,
+`behind` or `diverged`.
+
+If no {dir} argument is given, the configured clone directory (`clone.std_dir`,
+see |reposcope-config|) is used. If {dir} is itself a git repository, only that
+single repository is reported; otherwise its immediate subdirectories are
+scanned. This is the read-only counterpart to |:Reposcope-update|.
+
+Notes:
+- Only immediate subdirectories are scanned (non-recursive).
+- The command never modifies anything; it only reads.
+- Requires `git` to be available in $PATH.
+
+- Example: >
+    :Reposcope status
+    :Reposcope status ~/projects
+    :Reposcope status ~/projects/foo
 <
 See also |reposcope-clone|.
 
@@ -239,7 +279,8 @@ Repositories can be cloned using:
 
 Cloning requires a valid `clone.std_dir` and tool configuration.
 
-Already cloned repositories can be updated in bulk with |:ReposcopeUpdateRepos|.
+Already cloned repositories can be updated in bulk with |:Reposcope-update|,
+and inspected read-only with |:Reposcope-status|.
 
 ==============================================================================
 TROUBLESHOOTING                                    *reposcope-troubleshooting*
