@@ -4,7 +4,7 @@
 --- This module implements the logic for filtering the cached list of repositories
 --- based on a case-insensitive substring query. The filtering operates on the format
 --- "owner/name: description" and is intended for use with commands like
---- `:ReposcopeFilterRepos`. An empty or missing query resets the original list
+--- `:Reposcope filter`. An empty or missing query resets the original list
 --- as received from the API (sorted by relevance).
 
 local M = {}

@@ -10,7 +10,7 @@
 --- The base directory defaults to the configured clone directory
 --- (`config.options.clone.std_dir`) — i.e. the place Reposcope clones repositories
 --- into — and can be overridden with an explicit path argument. This makes
---- `:ReposcopeUpdateRepos` the natural continuation of the clone lifecycle:
+--- `:Reposcope update` the natural continuation of the clone lifecycle:
 --- discover → clone → update.
 ---
 --- Notifications follow the Reposcope convention (`utils.debug.notify`): progress
@@ -21,70 +21,16 @@
 local M = {}
 
 -- Vim Utilities
-local uv = vim.uv or vim.loop
 local fnamemodify = vim.fn.fnamemodify
-local expand = vim.fn.expand
 -- Configuration and Utils
-local config = require("reposcope.config")
+local uv = vim.uv or vim.loop
 local has_binary = require("reposcope.utils.checks").has_binary
 local notify = require("reposcope.utils.debug").notify
+-- Shared repository discovery helpers
+local repos_util = require("reposcope.utils.repos")
+local resolve_base_dir = repos_util.resolve_base_dir
+local collect_repos = repos_util.collect_repos
 
-
----Checks whether a directory is a git repository.
----Accepts both a `.git` directory (normal clone) and a `.git` file (worktree/submodule).
----@param path string Absolute path to the candidate directory
----@return boolean
-local function is_git_repo(path)
-  local stat = uv.fs_stat(path .. "/.git")
-  return stat ~= nil and (stat.type == "directory" or stat.type == "file")
-end
-
----Resolves the base directory whose immediate subdirectories are scanned for repos.
----Precedence: explicit override > configured clone directory (`clone.std_dir`).
----@param override string|nil Explicit directory passed on the command line
----@return string|nil base_dir Expanded path without trailing separator, or nil if unresolved
-local function resolve_base_dir(override)
-  local dir = override
-
-  if not dir or dir == "" then
-    dir = config.options.clone and config.options.clone.std_dir or nil
-  end
-
-  if not dir or dir == "" then
-    return nil
-  end
-
-  return fnamemodify(expand(dir), ":p"):gsub("[\\/]+$", "")
-end
-
----Collects all immediate subdirectories of `base_dir` that are git repositories.
----@param base_dir string Absolute path to scan (without trailing separator)
----@return string[] repos Absolute paths of discovered repositories
-local function collect_repos(base_dir)
-  ---@type string[]
-  local repos = {}
-
-  local handle = uv.fs_scandir(base_dir)
-  if not handle then
-    return repos
-  end
-
-  while true do
-    local name, typ = uv.fs_scandir_next(handle)
-    if not name then
-      break
-    end
-
-    if typ == "directory" then
-      local path = base_dir .. "/" .. name
-      if is_git_repo(path) then
-        repos[#repos + 1] = path
-      end
-    end
-  end
-
-  return repos
-end
 
 ---Runs `git fetch --all --prune` then `git pull --ff-only` for a single repository.
 ---@param repo string Absolute path to the repository
