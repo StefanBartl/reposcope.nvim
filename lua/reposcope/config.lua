@@ -44,6 +44,17 @@ M.options = {
     silent = true,  -- Silent option for open and close keymap
     noremap = true, -- noremap option for open and close keymap
   },
+  prompt_keymaps = {
+    confirm     = "<CR>",                     -- Confirm prompt input
+    nav_up      = "<Up>",                     -- Navigate list up
+    nav_down    = "<Down>",                   -- Navigate list down
+    focus_next  = { "<C-w>", "<C-l>", "<Tab>" },   -- Focus next prompt field
+    focus_prev  = { "<C-h>", "<S-Tab>" },          -- Focus previous prompt field
+    open_viewer = "<C-v>",                    -- Open README viewer
+    open_editor = "<C-b>",                    -- Open README editor
+    clone       = "<C-c>",                    -- Clone selected repository
+    backspace   = "<BS>",                     -- Backspace (disabled at column 0, line 2)
+  },                                           -- Set an action to `false` or `""` to disable it
 
   -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
   metrics = false,

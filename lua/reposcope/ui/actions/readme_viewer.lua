@@ -179,6 +179,7 @@ function M.set_viewer_keymap(buf)
     noremap = true,
     silent = true,
     nowait = true,
+    desc = "Close README viewer",
   })
 
   notify("[reposcope] Keymap 'q' set for quitting README viewer", 2)

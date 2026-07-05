@@ -117,7 +117,111 @@ function unmap_over_bufs(mode, lhs, bufs)
   end
 end
 
----Set prompt-specific <CR> and arrow key keymaps
+---Action handlers for prompt keymaps, keyed by `PromptKeymapAction`.
+---Each entry provides the callback (`rhs`), its modes, and a which-key description.
+---@type table<PromptKeymapAction, { mode: string|string[], rhs: function, desc: string }>
+local prompt_keymap_actions = {
+  confirm = {
+    mode = "i",
+    desc = "Confirm prompt input",
+    rhs = function()
+      require("reposcope.ui.prompt.prompt_input").on_enter()
+    end,
+  },
+  nav_up = {
+    mode = { "n", "i" },
+    desc = "Navigate list up",
+    rhs = function()
+      navigate_list_in_prompt("up")
+      fetch_readme_for_selected()
+    end,
+  },
+  nav_down = {
+    mode = { "n", "i" },
+    desc = "Navigate list down",
+    rhs = function()
+      navigate_list_in_prompt("down")
+      fetch_readme_for_selected()
+    end,
+  },
+  focus_next = {
+    mode = { "n", "i" },
+    desc = "Focus next prompt field",
+    rhs = function()
+      navigate("next")
+    end,
+  },
+  focus_prev = {
+    mode = { "n", "i" },
+    desc = "Focus previous prompt field",
+    rhs = function()
+      navigate("prev")
+    end,
+  },
+  open_viewer = {
+    mode = { "n", "i" },
+    desc = "Open README viewer",
+    rhs = function()
+      open_viewer()
+    end,
+  },
+  open_editor = {
+    mode = { "n", "i" },
+    desc = "Open README editor",
+    rhs = function()
+      open_editor()
+    end,
+  },
+  clone = {
+    mode = { "n", "i" },
+    desc = "Clone selected repository",
+    rhs = function()
+      prompt_and_clone()
+    end,
+  },
+  backspace = {
+    mode = { "n", "i" },
+    desc = "Backspace",
+    rhs = function()
+      local buf = nvim_get_current_buf()
+      local cursor_pos = nvim_win_get_cursor(0)
+
+      if ui_state.buffers.prompt and buf == ui_state.buffers.prompt.keywords and cursor_pos[1] == 2 and cursor_pos[2] == 0 then
+        notify("[reposcope] Backspace disabled in column 0 of line 2", 2)
+      else
+        nvim_feedkeys(nvim_replace_termcodes("<BS>", true, false, true), "n", false)
+      end
+    end,
+  },
+}
+
+---Builds the flat list of `{ mode, lhs, rhs, desc }` mappings from `config.prompt_keymaps`.
+---An action is skipped entirely if its configured key(s) are `false`, `""`, or `nil`.
+---@return { mode: string|string[], lhs: string, rhs: function, desc: string }[]
+local function build_prompt_mappings()
+  local configured = cfg_get_option("prompt_keymaps") or {}
+  local mappings = {}
+
+  for action, handler in pairs(prompt_keymap_actions) do
+    local lhs_cfg = configured[action]
+    if lhs_cfg and lhs_cfg ~= "" then
+      local keys = type(lhs_cfg) == "table" and lhs_cfg or { lhs_cfg }
+      for i = 1, #keys do
+        mappings[#mappings + 1] = {
+          mode = handler.mode,
+          lhs = keys[i],
+          rhs = handler.rhs,
+          desc = handler.desc,
+        }
+      end
+    end
+  end
+
+  return mappings
+end
+
+---Set prompt-specific keymaps (confirm, navigation, viewer/editor, clone, backspace).
+---Keys are read from `config.prompt_keymaps`; an action set to `false`/`""` is skipped.
 ---@return nil
 function M.set_prompt_keymaps()
   local prompt_bufs = ui_state.buffers.prompt
@@ -126,110 +230,14 @@ function M.set_prompt_keymaps()
     return
   end
 
-  local mappings = {
-    {
-      mode = "i",
-      lhs = "<CR>",
-      rhs = function()
-        require("reposcope.ui.prompt.prompt_input").on_enter()
-      end,
-    },
-    {
-      mode = { "n", "i" },
-      lhs = "<Up>",
-      rhs = function()
-        navigate_list_in_prompt("up")
-        fetch_readme_for_selected()
-      end,
-    },
-    {
-      mode = { "n", "i" },
-      lhs = "<Down>",
-      rhs = function()
-        navigate_list_in_prompt("down")
-
-        fetch_readme_for_selected()
-      end,
-    },
-    {
-      mode = { "n", "i" },
-      lhs = "<C-w>",
-      rhs = function()
-        navigate("next")
-      end,
-    },
-    {
-      mode = { "i" },
-      lhs = "<C-h>",
-      rhs = function()
-        navigate("prev")
-      end,
-    },
-    {
-      mode = { "i" },
-      lhs = "<S-Tab>",
-      rhs = function()
-        navigate("prev")
-      end,
-    },
-    {
-      mode = { "i" },
-      lhs = "<C-l>",
-      rhs = function()
-        navigate("next")
-      end,
-    },
-    {
-      mode = { "i" },
-      lhs = "<Tab>",
-      rhs = function()
-        navigate("next")
-      end,
-    },
-    {
-      mode = { "n", "i" },
-      lhs = "<C-v>",
-      rhs = function()
-        open_viewer()
-      end,
-    },
-    {
-      mode = { "n", "i" },
-      lhs = "<C-b>",
-      rhs = function()
-        open_editor()
-      end,
-    },
-    {
-      mode = { "n", "i" },
-      lhs = "<C-c>",
-      rhs = function()
-        prompt_and_clone()
-      end,
-    },
-    {
-      mode = { "n", "i" },
-      lhs = "<BS>",
-      rhs = function()
-        local buf = nvim_get_current_buf()
-        local cursor_pos = nvim_win_get_cursor(0)
-
-        if ui_state.buffers.prompt and buf == ui_state.buffers.prompt.keywords and cursor_pos[1] == 2 and cursor_pos[2] == 0 then
-          notify("[reposcope] Backspace disabled in column 0 of line 2", 2)
-        else
-          nvim_feedkeys(nvim_replace_termcodes("<BS>", true, false, true), "n", false)
-        end
-      end,
-    }
-
-  }
+  local mappings = build_prompt_mappings()
 
   for field, buf in pairs(prompt_bufs) do
     if type(buf) == "number" and nvim_buf_is_valid(buf) then
       for i = 1, #mappings do
         local map = mappings[i]
 
-        set_km(map.mode, map.lhs, map.rhs, { buffer = buf, silent = true })
+        set_km(map.mode, map.lhs, map.rhs, { buffer = buf, silent = true, desc = map.desc })
 
         _registry[#_registry + 1] = {
           mode = map.mode,
@@ -264,7 +272,7 @@ function M.set_close_ui_keymaps()
       require("reposcope.init").close_ui()
     end,
     buffers,
-    { silent = true },
+    { silent = true, desc = "Close Reposcope" },
     "reposcope_ui"
   )
 
@@ -273,7 +281,7 @@ function M.set_close_ui_keymaps()
     { "i", "t", "v" }, "<Esc>",
     "<C-\\><C-n>",
     buffers,
-    { silent = true },
+    { silent = true, desc = "Switch to normal mode" },
     "reposcope_ui"
   )
 
@@ -284,7 +292,7 @@ function M.set_close_ui_keymaps()
       require("reposcope.init").close_ui()
     end,
     buffers,
-    { silent = true },
+    { silent = true, desc = "Close Reposcope" },
     "reposcope_ui"
   )
 
@@ -294,7 +302,7 @@ function M.set_close_ui_keymaps()
     { "i", "t", "v" }, "<C-w>",
     "<Nop>",
     buffers,
-    { silent = true, noremap = true },
+    { silent = true, noremap = true, desc = "Disabled" },
     "reposcope_ui"
   )
 end
@@ -337,7 +345,8 @@ function M.unset_close_ui_keymaps()
   _clear_registered_keymaps("reposcope_ui")
 end
 
----Sets user keymaps for opening/closing Reposcope
+---Sets user keymaps for opening/closing Reposcope.
+---Set `map_cfg.open`/`map_cfg.close` to `false` or `""` to disable that keymap.
 ---@param map_cfg? table Optional map override: { open = "...", close = "..." }
 ---@param opts? table Optional map opts (e.g. { silent = false })
 ---@return nil
@@ -345,23 +354,27 @@ function M.set_user_keymaps(map_cfg, opts)
   map_cfg = map_cfg or cfg_get_option("keymaps")
   opts = opts or cfg_get_option("keymap_opts")
 
-  set_km("n", map_cfg.open, function()
-    local ok, err = pcall(function()
-      require("reposcope.init").open_ui()
-    end)
-    if not ok then
-      print("Error while opening Reposcope: " .. err)
-    end
-  end, tbl_extend("force", { desc = "Open Reposcope" }, opts))
+  if map_cfg.open and map_cfg.open ~= "" then
+    set_km("n", map_cfg.open, function()
+      local ok, err = pcall(function()
+        require("reposcope.init").open_ui()
+      end)
+      if not ok then
+        print("Error while opening Reposcope: " .. err)
+      end
+    end, tbl_extend("force", { desc = "Open Reposcope" }, opts))
+  end
 
-  set_km("n", map_cfg.close, function()
-    local ok, err = pcall(function()
-      require("reposcope.init").close_ui()
-    end)
-    if not ok then
-      print("Error while closing Reposcope: " .. err)
-    end
-  end, tbl_extend("force", { desc = "Close Reposcope" }, opts))
+  if map_cfg.close and map_cfg.close ~= "" then
+    set_km("n", map_cfg.close, function()
+      local ok, err = pcall(function()
+        require("reposcope.init").close_ui()
+      end)
+      if not ok then
+        print("Error while closing Reposcope: " .. err)
+      end
+    end, tbl_extend("force", { desc = "Close Reposcope" }, opts))
+  end
 end
 
 return M

@@ -144,8 +144,11 @@ require("reposcope").setup({
   layout = "default",                       -- Currently only "default" supported
   github_token = os.getenv("GITHUB_TOKEN"), -- If higher API Limits neeeded set the token here. If that doesn't works: [Authentication](#authentication)
     keymaps = {
-    open = "<leader>rs",                    -- Mapping to open the UI
-    close = "<leader>rc",                   -- Mapping to close the UI
+    open = "<leader>rs",                    -- Mapping to open the UI (set to false/"" to disable)
+    close = "<leader>rc",                   -- Mapping to close the UI (set to false/"" to disable)
+  },
+  prompt_keymaps = {
+    open_viewer = "<C-v>",                  -- Rebind or set to false/"" to disable; see docs/BINDINGS.md
   },
   clone = {
     std_dir = "~/projects",                 -- Default directory to clone into
@@ -165,8 +168,9 @@ require("reposcope").setup({
 | `provider`      | `string`   | Active backend (currently only `"github"` supported)               |
 | `request_tool`  | `string`   | CLI tool to fetch data: `"gh"`, `"curl"`, `"wget"`                 |
 | `layout`        | `string`   | UI layout style (currently only `"default"`)                       |
-| `keymaps.open`  | `string`   | Keymap to open Reposcope UI                                        |
-| `keymaps.close` | `string`   | Keymap to close the UI cleanly                                     |
+| `keymaps.open`  | `string\|false`   | Keymap to open Reposcope UI (`false`/`""` disables it)       |
+| `keymaps.close` | `string\|false`   | Keymap to close the UI cleanly (`false`/`""` disables it)    |
+| `prompt_keymaps`| `table`    | Per-action keymaps for the prompt buffers; see [docs/BINDINGS.md](docs/BINDINGS.md) |
 | `clone.std_dir` | `string`   | Base path for repository cloning                                   |
 | `clone.type`    | `string`   | Tool used to perform clone: `"git"`, `"gh"`, `"wget"`, or `"curl"` |
 | `metrics`       | `boolean`  | Enable internal request logging and performance tracking           |
@@ -207,6 +211,11 @@ end, { desc = "Open Reposcope" })
 | `<C-c>`       | n/i  | Clone selected repository             |
 | `<Tab>`       | i    | Cycle to next prompt field            |
 | `<S-Tab>`     | i    | Cycle to previous prompt field        |
+
+All prompt keymaps above are configurable and disableable via `prompt_keymaps`,
+and are picked up automatically by [which-key](https://github.com/folke/which-key.nvim)
+if installed. See [docs/BINDINGS.md](docs/BINDINGS.md) for the full, authoritative
+list of keymaps, user commands, and autocommands.
 
 ---
 

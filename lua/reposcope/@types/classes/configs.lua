@@ -18,6 +18,7 @@
 ---@field clone CloneOptions Options related to downloading/cloning repositories
 ---@field keymaps table<string, string> Custom key mappings for plugin actions
 ---@field keymap_opts table Options passed to all keymaps (e.g. `noremap`, `silent`)
+---@field prompt_keymaps table<PromptKeymapAction, string|string[]|false> Custom key mappings for prompt-buffer actions. Set an action to `false` or `""` to disable it.
 ---@field metrics boolean Enable or disable anonymous usage metrics
 ---@field log_max number Maximum log size (lines)
 
@@ -39,6 +40,7 @@
 ---@field clone? CloneOptions
 ---@field keymaps? table<string, string>
 ---@field keymap_opts? table
+---@field prompt_keymaps? table<PromptKeymapAction, string|string[]|false>
 ---@field metrics? boolean
 ---@field log_max? number
 
