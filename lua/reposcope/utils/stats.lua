@@ -85,8 +85,8 @@ function M.show_stats()
 
   vim.bo[stats_state.buf].modifiable = false
 
-  set_keymap("n", "q", function() M.close_stats() end, { noremap = true, silent = true, buffer = stats_state.buf })
-  set_keymap("n", "<Esc>", function() M.close_stats() end, { noremap = true, silent = true, buffer = stats_state.buf })
+  set_keymap("n", "q", function() M.close_stats() end, { noremap = true, silent = true, buffer = stats_state.buf, desc = "Close stats popup" })
+  set_keymap("n", "<Esc>", function() M.close_stats() end, { noremap = true, silent = true, buffer = stats_state.buf, desc = "Close stats popup" })
 end
 
 ---Closes the statistics popup window and removes associated keymaps.

@@ -21,6 +21,7 @@
 ---| "clone"
 ---| "keymaps"
 ---| "keymap_opts"
+---| "prompt_keymaps"
 ---| "metrics"
 ---| "cache_dir"
 ---| "logfile_path"
@@ -46,6 +47,17 @@
 ---| "gh"
 ---| "curl"
 ---| "wget"
+
+---@alias PromptKeymapAction # A configurable prompt-buffer action (see `keymaps.lua`)
+---| "confirm"
+---| "nav_up"
+---| "nav_down"
+---| "focus_next"
+---| "focus_prev"
+---| "open_viewer"
+---| "open_editor"
+---| "clone"
+---| "backspace"
 
 ---@alias LayoutType
 ---| "default"
