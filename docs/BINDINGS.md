@@ -18,9 +18,9 @@ Reposcope.
 
 ### 1.1 Global (user-configurable)
 
-Defined in [`lua/reposcope/keymaps.lua`](../lua/reposcope/keymaps.lua)
+Defined in [`lua/reposcope/bindings/keymaps.lua`](../lua/reposcope/bindings/keymaps.lua)
 (`set_user_keymaps`), sourced from `config.keymaps` /
-`config.keymap_opts` (see [`lua/reposcope/config.lua`](../lua/reposcope/config.lua)).
+`config.keymap_opts` (see [`lua/reposcope/config/init.lua`](../lua/reposcope/config/init.lua)).
 Mode: `n` (normal). Set `keymaps.open`/`keymaps.close` to `false` or `""` to
 disable that mapping entirely.
 
@@ -33,7 +33,7 @@ Both keys and `silent`/`noremap` options can be overridden via `setup({ keymaps 
 
 ### 1.2 Prompt buffers
 
-Defined in [`lua/reposcope/keymaps.lua`](../lua/reposcope/keymaps.lua)
+Defined in [`lua/reposcope/bindings/keymaps.lua`](../lua/reposcope/bindings/keymaps.lua)
 (`set_prompt_keymaps`), sourced from `config.prompt_keymaps`. Applied
 buffer-local to all prompt field buffers (`ui_state.buffers.prompt`). Each
 action can be rebound to a different key (or a list of keys), or disabled by
@@ -57,7 +57,7 @@ extra registration needed.
 
 ### 1.3 Close-UI (all Reposcope buffers)
 
-Defined in [`lua/reposcope/keymaps.lua`](../lua/reposcope/keymaps.lua)
+Defined in [`lua/reposcope/bindings/keymaps.lua`](../lua/reposcope/bindings/keymaps.lua)
 (`set_close_ui_keymaps`). Applied to background, preview, list, and all
 prompt buffers.
 
@@ -72,7 +72,7 @@ prompt buffers.
 
 ## 2. User Commands
 
-Defined in [`lua/reposcope/usercommands.lua`](../lua/reposcope/usercommands.lua)
+Defined in [`lua/reposcope/bindings/usrcmds.lua`](../lua/reposcope/bindings/usrcmds.lua)
 as subcommands of the single dispatcher `:Reposcope <subcommand> [args]`.
 Running `:Reposcope` with no arguments prints this list. Tab-completion is
 available for subcommand names and, where noted, their arguments.
@@ -99,7 +99,8 @@ available for subcommand names and, where noted, their arguments.
 
 ### Global
 
-Defined in [`lua/reposcope/init.lua`](../lua/reposcope/init.lua) (`setup_ui_close`).
+Defined in [`lua/reposcope/bindings/autocmds.lua`](../lua/reposcope/bindings/autocmds.lua),
+registered via `reposcope.init`'s `setup_ui_close`.
 
 | Event     | Pattern                | Group | Action                                                        |
 | --------- | ----------------------- | ----- | ---------------------------------------------------------------- |

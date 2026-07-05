@@ -414,7 +414,8 @@ If you do not set a token, `curl` or `wget` will still work — but you may hit 
 reposcope/
 │
 ├── init.lua                 → Setup and UI lifecycle
-├── config.lua               → User options and dynamic resolution
+├── config/                  → User options (init.lua) and defaults (DEFAULTS.lua)
+├── bindings/                → Keymaps, user commands, top-level autocmds
 ├── ui/                      → Modular UI: prompt, list, preview, background
 ├── providers/               → GitHub (others coming soon)
 ├── cache/                   → In-memory and file-based caching

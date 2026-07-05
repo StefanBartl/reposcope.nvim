@@ -18,7 +18,6 @@ For everything already implemented, see [BINDINGS.md](BINDINGS.md).
 - [ ] GitLab provider support
 - [ ] Codeberg provider support
 - [ ] Persistent session save/restore (last search, filters, sort)
-- [ ] Which-key integration for all keymaps
 
 ---
 
@@ -31,8 +30,8 @@ For everything already implemented, see [BINDINGS.md](BINDINGS.md).
 
 ## 3. Planned Keymaps
 
-- [ ] User-configurable keymaps for prompt-navigation actions currently hardcoded in
-  [`keymaps.lua`](../lua/reposcope/keymaps.lua) (`<C-v>`, `<C-b>`, `<C-c>`, field navigation)
+- [ ] None currently planned — all keymaps are user-configurable and disableable,
+  see [`bindings/keymaps.lua`](../lua/reposcope/bindings/keymaps.lua) and [BINDINGS.md](BINDINGS.md)
 
 ---
 

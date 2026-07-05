@@ -1,4 +1,4 @@
----@module 'reposcope.keymaps'
+---@module 'reposcope.bindings.keymaps'
 ---@brief Definition of the keymaps for the Reposcope Plugin
 
 ---@class UIKeymaps: UIKeymapsModule
