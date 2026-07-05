@@ -96,10 +96,6 @@ https://github.com/user-attachments/assets/85dece1d-d755-4de9-9cd1-84a751901fc2
   "StefanBartl/reposcope.nvim",
   name = "reposcope",
   event = "VeryLazy",
-  dependencies = {
-    "nvim-lua/plenary.nvim",
-    "nvim-telescope/telescope.nvim",
-  },
   config = function()
     require("reposcope.init").setup({})
   end,
@@ -113,10 +109,6 @@ use {
   "StefanBartl/reposcope.nvim",
   name = "reposcope",
   event = "VeryLazy",
-  requires = {
-    "nvim-lua/plenary.nvim",
-    "nvim-telescope/telescope.nvim",
-  },
   config = function()
     require("reposcope.init").setup({})
   end,
