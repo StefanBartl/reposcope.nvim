@@ -4,7 +4,17 @@
 ---@class EncodingUtils : EncodingUtilsModule
 local M = {}
 
-local system = vim.fn.system
+local bit = require("bit")
+local lshift, rshift, bor, band = bit.lshift, bit.rshift, bit.bor, bit.band
+
+local base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+
+---@private
+---Reverse lookup table: base64 character -> its 6-bit index
+local base64_index = {}
+for i = 1, #base64_chars do
+  base64_index[base64_chars:sub(i, i)] = i - 1
+end
 
 --- Encodes a string for safe URL usage (percent-encoding)
 ---@param str string The string to be URL-encoded
@@ -22,13 +32,30 @@ function M.urlencode(str)
 end
 
 
----Decodes a Base64-encoded string compatible with Lua
+---Decodes a Base64-encoded string. Pure-Lua implementation (no shell-out),
+---so it works identically on every platform, including Windows.
 ---@param encoded string The Base64-encoded string to decode
 ---@return string The decoded string
 function M.decode_base64(encoded)
-  -- Use Lua's native base64 decoding
-  local decoded = system("echo '" .. encoded .. "' | base64 --decode")
-  return decoded
+  encoded = encoded:gsub("[^" .. base64_chars .. "=]", "")
+
+  local decoded = {}
+  local bits, value = 0, 0
+
+  for i = 1, #encoded do
+    local char = encoded:sub(i, i)
+    if char ~= "=" then
+      value = bor(lshift(value, 6), base64_index[char])
+      bits = bits + 6
+
+      if bits >= 8 then
+        bits = bits - 8
+        decoded[#decoded + 1] = string.char(band(rshift(value, bits), 0xFF))
+      end
+    end
+  end
+
+  return table.concat(decoded)
 end
 
 return M

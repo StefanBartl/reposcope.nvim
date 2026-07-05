@@ -73,11 +73,15 @@ function M.get_option(key)
     local dir = M.options.clone.std_dir
     local resolved = ""
 
-    if dir ~= "" and dir and vim.fn.isdirectory(dir) then
-      resolved = dir
-    else
-      ---@diagnostic disable-next-line vim.loop or vim.uv os_uname exists
-      local is_windows = vim.loop.os_uname().sysname:match("Windows")
+    if dir and dir ~= "" then
+      local expanded = vim.fn.expand(dir)
+      if vim.fn.isdirectory(expanded) == 1 then
+        resolved = expanded
+      end
+    end
+
+    if resolved == "" then
+      local is_windows = require("reposcope.utils.os").is_windows()
       resolved = is_windows and (os.getenv("USERPROFILE") or "./") or (os.getenv("HOME") or "./")
     end
 

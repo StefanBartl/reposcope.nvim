@@ -55,7 +55,9 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
   -- Optional: write CLI command to file
   pcall(function()
-    local file = io.open("/tmp/gh-debug.txt", "a")
+    local debug_path = vim.fn.stdpath("cache") .. "/reposcope/logs/gh-debug.txt"
+    vim.fn.mkdir(vim.fn.fnamemodify(debug_path, ":h"), "p")
+    local file = io.open(debug_path, "a")
     if file then
       file:write("GH Request: gh " .. table.concat(args, " ") .. "\n")
       file:close()

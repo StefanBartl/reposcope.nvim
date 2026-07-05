@@ -13,7 +13,7 @@ local metrics = require("reposcope.utils.metrics")
 local safe_execute_shell = require("reposcope.utils.protection").safe_execute_shell
 
 
----@param cmd string
+---@param cmd string[]
 ---@param uuid string
 ---@param repo_name string
 ---@return nil

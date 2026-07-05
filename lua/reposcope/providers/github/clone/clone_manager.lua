@@ -26,7 +26,6 @@ local execute_clone = require("reposcope.providers.github.clone.clone_executor")
 local notify = require("reposcope.utils.debug").notify
 local safe_mkdir = require("reposcope.utils.protection").safe_mkdir
 local isdirectory = vim.fn.isdirectory
-local fnameescape = vim.fn.fnameescape
 
 
 ---Starts a clone operation using the given path and UUID
@@ -63,7 +62,7 @@ function M.clone(path, uuid)
 
   -- Normalize the path and create target directory
   path = path:gsub("/+$", "") .. "/"
-  local output_dir = fnameescape(path .. repo_name)
+  local output_dir = path .. repo_name
 
   if not isdirectory(output_dir) then
     safe_mkdir(output_dir)
