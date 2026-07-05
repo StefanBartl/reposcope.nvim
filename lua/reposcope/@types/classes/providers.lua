@@ -25,10 +25,10 @@
 ---@field get_clone_informations fun(): CloneInfo|nil
 
 ---@class GithubCloneCommandBuilderModule
----@field build_command fun(clone_type: string, repo_url: string, output_dir: string): string
+---@field build_command fun(clone_type: string, repo_url: string, output_dir: string): string[]
 
 ---@class GithubCloneExecutorModule
----@field execute fun(cmd: string, uuid: string, repo_name: string): nil
+---@field execute fun(cmd: string[], uuid: string, repo_name: string): nil
 
 ---@class GithubCloneUpdaterModule
 ---@field update_all fun(path: string|nil, on_complete?: fun(updated: integer, errors: string[]): nil): nil Bulk-updates all cloned git repositories in the resolved base directory

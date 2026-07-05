@@ -73,6 +73,7 @@
 
 ---@class OSUtilsModule
 ---@field open_url fun(url: string): nil Opens the given URL in the system's default web browser
+---@field is_windows fun(): boolean Returns true when running on Windows
 
 ---@class UtilsProtectionModule
 ---@brief Utility functions related to value normalization, path validation, and buffer management
@@ -84,7 +85,7 @@
 ---@field is_valid_path fun(path: string, nec_filename?: boolean): boolean Validates if a given path or optional filepath is a valid and writable file path
 ---@field safe_mkdir fun(path: string): boolean Safely creates a directory (including parent directories)
 ---@field is_dir_writeable fun(path: string): boolean Checks if a directory is writable by attempting a test write
----@field safe_execute_shell fun(command: string): boolean, string Executes a shell command safely and returns the success status and output
+---@field safe_execute_shell fun(command: string|string[]): boolean, string Executes a shell command (string) or argv (table) safely and returns the success status and output
 
 ---@class StatsModule
 ---@field show_stats fun(): nil Opens a floating stats window with session and total statistics

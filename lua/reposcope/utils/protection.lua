@@ -251,7 +251,10 @@ function M.is_dir_writeable(dir)
 end
 
 ---Executes a shell command safely and returns the success status and output.
----@param command string The shell command to be executed
+---Accepts either a shell string or an argv table; a table is passed straight
+---to the executable without shell interpretation, avoiding quoting pitfalls
+---for arguments (e.g. paths with spaces) across platforms.
+---@param command string|string[] The shell command (string) or argv (table) to be executed
 ---@return boolean success True if the command succeeded (exit code 0)
 ---@return string output The standard output (or error output) of the command
 function M.safe_execute_shell(command)
