@@ -1,4 +1,4 @@
----@module 'reposcope.usercommands'
+---@module 'reposcope.bindings.usrcmds'
 ---@brief Registers the single `:Reposcope` user command and its subcommands.
 ---@description
 --- Reposcope exposes all of its functionality through one dispatching command,
