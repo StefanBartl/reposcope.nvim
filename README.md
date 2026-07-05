@@ -7,6 +7,8 @@
 
 > 🔧 Beta stage – under active development. Changes possible.
 
+> 📁 Cloned a repo with Reposcope? Browse it locally with [filetree.nvim](https://github.com/StefanBartl/filetree.nvim).
+
 ```
  _ __   ___  _ __    ___   ___   ___   ___   _ __    ___
 | '__| / _ \| '_ \  / _ \ / __| / __| / _ \ | '_ \  / _ \
@@ -40,7 +42,6 @@ Modular, minimal, Telescope-inspired interface.
 - [Authentication](#authentication)
 - [Architecture Overview](#architecture-overview)
 - [Development & Debugging](#development-debugging)
-- [License](#license)
 - [Contribution](#contribution)
 
 ---
@@ -94,7 +95,7 @@ https://github.com/user-attachments/assets/85dece1d-d755-4de9-9cd1-84a751901fc2
 {
   "StefanBartl/reposcope.nvim",
   name = "reposcope",
-  event = ""VeryLazy,
+  event = "VeryLazy",
   dependencies = {
     "nvim-lua/plenary.nvim",
     "nvim-telescope/telescope.nvim",
@@ -111,7 +112,7 @@ https://github.com/user-attachments/assets/85dece1d-d755-4de9-9cd1-84a751901fc2
 use {
   "StefanBartl/reposcope.nvim",
   name = "reposcope",
-  event = ""VeryLazy,
+  event = "VeryLazy",
   requires = {
     "nvim-lua/plenary.nvim",
     "nvim-telescope/telescope.nvim",
@@ -433,12 +434,6 @@ reposcope/
 * Debug file paths and logs are stored in:
   * `~/.local/share/nvim/reposcope/data/readme/`
   * `~/.local/share/nvim/reposcope/logs/request_log.json`
-
----
-
-## License
-
-[MIT-License](./LICENSE)
 
 ---
 
