@@ -5,7 +5,6 @@
 local M = {}
 
 -- Vim Utilities
-local defer_fn = vim.defer_fn
 local fnameescape = vim.fn.fnameescape
 local fnamemodify = vim.fn.fnamemodify
 local isdirectory = vim.fn.isdirectory
@@ -22,54 +21,36 @@ local debugf = debug.debugf
 local notify = debug.notify
 -- State
 local ui_state = require("reposcope.state.ui.ui_state")
-
+-- Debounce (delegates to lib.nvim's libuv-timer implementation)
+local lib_debounce = require("lib.nvim.debounce")
 
 ---@param fn fun()
 ---@param delay_ms integer
 ---@return fun()
 function M.debounce(fn, delay_ms)
-  local timer = nil
-  local args = {}
-
-  ---@diagnostic disable-next-line: redundant-parameter
-  return function(...)
-    args = { ... }
-
-    if timer then
-      timer:stop()
-      timer:close()
-    end
-
-    timer = defer_fn(function()
-      ---@diagnostic disable-next-line: redundant-parameter
-      fn(unpack(args))
-      timer = nil
-    end, delay_ms)
-  end
+  return lib_debounce.new(fn, delay_ms).call
 end
 
+---Debounced call that also counts how many calls arrived while a previous
+---timer was still pending (i.e. got superseded before firing).
 ---@param fn fun()
 ---@param delay_ms integer
 ---@return fun(), fun(): integer
 function M.debounce_with_counter(fn, delay_ms)
-  local timer = nil
   local skipped = 0
-  local args = {}
+  local pending = false
+
+  local handle = lib_debounce.new(function(...)
+    pending = false
+    fn(...)
+  end, delay_ms)
 
   local function call(...)
-    args = { ... }
-
-    if timer then
-      timer:stop()
-      timer:close()
+    if pending then
       skipped = skipped + 1
     end
-
-    timer = defer_fn(function()
-      ---@diagnostic disable-next-line: redundant-parameter
-      fn(unpack(args))
-      timer = nil
-    end, delay_ms)
+    pending = true
+    handle.call(...)
   end
 
   local function get_skipped()
