@@ -95,6 +95,7 @@ https://github.com/user-attachments/assets/85dece1d-d755-4de9-9cd1-84a751901fc2
 {
   "StefanBartl/reposcope.nvim",
   name = "reposcope",
+  dependencies = { "StefanBartl/lib.nvim" },
   event = "VeryLazy",
   config = function()
     require("reposcope.init").setup({})
@@ -108,6 +109,7 @@ https://github.com/user-attachments/assets/85dece1d-d755-4de9-9cd1-84a751901fc2
 use {
   "StefanBartl/reposcope.nvim",
   name = "reposcope",
+  dependencies = { "StefanBartl/lib.nvim" },
   event = "VeryLazy",
   config = function()
     require("reposcope.init").setup({})

@@ -258,6 +258,9 @@ end
 ---@return boolean success True if the command succeeded (exit code 0)
 ---@return string output The standard output (or error output) of the command
 function M.safe_execute_shell(command)
+  if type(command) == "table" then
+    return require("lib.nvim.cross.run_argv").run_blocking_captured(command)
+  end
   local result = system(command)
   if vim.v.shell_error ~= 0 then
     return false, result

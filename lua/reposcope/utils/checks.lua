@@ -11,26 +11,19 @@ local notify = require("reposcope.utils.debug").notify
 local tbl_find = require("reposcope.utils.core").tbl_find
 
 ---Checks if a given binary is available in the system's PATH
+---Delegates to lib.nvim.core.has_exec, which memoizes the result per binary
+---name (this module's own version re-checked vim.fn.executable every call).
 ---@param name string The name of the binary to check
 ---@return boolean available True if the binary is executable in PATH
 function M.has_binary(name)
-  return vim.fn.executable(name) == 1
+  return require("lib.nvim.core").has_exec(name)
 end
 
 ---Returns the first available binary from a list
 ---@param binaries string[] A list of binary names to check
 ---@return string|nil available_binary The name of the first available binary, or nil if none found
 function M.first_available(binaries)
-  local has = M.has_binary
-
-  for i = 1, #binaries do
-    local bin = binaries[i]
-    if has(bin) then
-      return bin
-    end
-  end
-
-  return nil
+  return require("lib.nvim.core").first_available(binaries)
 end
 
 ---Resolves and sets the preferred request tool for Reposcope.
