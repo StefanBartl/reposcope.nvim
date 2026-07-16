@@ -71,15 +71,7 @@ end
 ---@return string[]
 function M.dedupe_list(list)
   if type(list) ~= "table" then return {} end
-  local seen, result = {}, {}
-  for i = 1, #list do
-    local item = list[i]
-    if not seen[item] then
-      seen[item] = true
-      result[#result + 1] = item
-    end
-  end
-  return result
+  return require("lib.lua.tables").dedup_list(list)
 end
 
 ---Moves a value to the front of the list, if present
