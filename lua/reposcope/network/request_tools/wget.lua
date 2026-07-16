@@ -11,6 +11,8 @@ local M = {}
 
 -- libuv
 local uv = vim.uv or vim.loop
+-- Async spawn+capture (delegates the pipe/timer/handle bookkeeping)
+local spawn_capture = require("lib.nvim.cross.uv.spawn_capture")
 
 -- Utilities
 local notify = require("reposcope.utils.debug").notify
@@ -31,14 +33,9 @@ function M.request(method, url, callback, _headers, debug, context, uuid)
     return
   end
 
-  local _ = _headers
-  local stdout = uv.new_pipe(false)
-  local stderr = uv.new_pipe(false)
   local start_time = uv.hrtime()
   local safe_uuid = uuid or "n/a"
   local safe_context = context or "unspecified"
-  local response_data = {}
-  local stderr_data = {}
 
   local args = {
     "--quiet",
@@ -48,56 +45,26 @@ function M.request(method, url, callback, _headers, debug, context, uuid)
 
   notify("[reposcope] WGET Request: wget " .. table.concat(args, " "), vim.log.levels.TRACE)
 
-  ---@diagnostic disable-next-line: missing-fields
-  local handle = uv.spawn("wget", {
-    args = args,
-    stdio = { nil, stdout, stderr },
-  }, function(code)
-    ---@diagnostic disable-next-line
-    stdout:close()
-    ---@diagnostic disable-next-line
-    stderr:close()
+  local argv = { "wget" }
+  for _, a in ipairs(args) do argv[#argv + 1] = a end
 
+  spawn_capture(argv, {}, function(result)
     local duration = (uv.hrtime() - start_time) / 1e6
 
-    if code ~= 0 then
+    if debug and result.stderr ~= "" then
+      notify("[reposcope] wget stderr: " .. result.stderr, vim.log.levels.TRACE)
+    end
+
+    if not result.ok then
       if metrics.record_metrics() then
-        metrics.increase_failed(safe_uuid, url, "wget", safe_context, duration, code, "wget error")
+        metrics.increase_failed(safe_uuid, url, "wget", safe_context, duration, result.code, "wget error")
       end
-      callback(nil, "wget request failed (code " .. code .. ")")
+      callback(nil, "wget request failed (code " .. result.code .. ")")
     else
       if metrics.record_metrics() then
         metrics.increase_success(safe_uuid, url, "wget", safe_context, duration, 200)
       end
-      callback(table.concat(response_data))
-    end
-  end)
-
-  if not handle then
-    callback(nil, "Failed to spawn wget CLI")
-    return
-  end
-
-  ---@diagnostic disable-next-line
-  stdout:read_start(function(err, data)
-    if err then
-      callback(nil, "wget stdout error: " .. err)
-      return
-    end
-    if data then
-      table.insert(response_data, data)
-    end
-  end)
-
-  ---@diagnostic disable-next-line
-  stderr:read_start(function(err, data)
-    if err then
-      notify("[reposcope] wget stderr read error: " .. err, vim.log.levels.ERROR)
-      return
-    end
-    if debug and data then
-      table.insert(stderr_data, data)
-      notify("[reposcope] wget stderr: " .. data, vim.log.levels.TRACE)
+      callback(result.stdout)
     end
   end)
 end

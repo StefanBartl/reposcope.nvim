@@ -10,9 +10,9 @@
 local M = {}
 
 -- libuv Utilities
-local new_pipe = vim.uv.new_pipe
 local hrtime = vim.uv.hrtime
-local spawn = vim.uv.spawn
+-- Async spawn+capture (delegates the pipe/timer/handle bookkeeping)
+local spawn_capture = require("lib.nvim.cross.uv.spawn_capture")
 -- Utilities and Debugging
 local notify = require("reposcope.utils.debug").notify
 local metrics = require("reposcope.utils.metrics")
@@ -28,15 +28,10 @@ local config = require("reposcope.config")
 ---@param context? string Optional metrics label (e.g. "fetch_readme")
 ---@param uuid? string Optional unique identifier for request tracking
 ---@return nil
----@raises string if CLI spawning or pipe reading fails
 function M.request(method, url, callback, headers, debug, context, uuid)
   local start_time = hrtime()
-  local stdout = new_pipe(false)
-  local stderr = new_pipe(false)
   local safe_uuid = uuid or "n/a"
   local safe_context = context or "unspecified"
-  local response_data = {}
-  local stderr_data = {}
 
   local token = config.options.github_token
   local parsed = url:gsub("^https://api%.github%.com", "")
@@ -64,7 +59,9 @@ function M.request(method, url, callback, headers, debug, context, uuid)
     end
   end)
 
-  -- Environment variable (token)
+  -- Environment variable (token). NOTE: libuv's spawn env option is an array
+  -- of "KEY=VALUE" strings, not a dict — spawn_capture passes opts.env
+  -- straight through without converting it.
   local env = {}
   if token and token ~= "" then
     table.insert(env, "GITHUB_TOKEN=" .. token)
@@ -72,66 +69,29 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
   notify("[reposcope] GH Request: gh " .. table.concat(args, " "), 2)
 
-  ---@diagnostic disable-next-line: missing-fields
-  local handle = spawn("gh", {
-    args = args,
-    stdio = { nil, stdout, stderr },
-    env = env,
-  }, function(code)
-    ---@diagnostic disable-next-line: undefined-field
-    if stdout then stdout:close() end
-    ---@diagnostic disable-next-line: undefined-field
-    if stderr then stderr:close() end
+  local argv = { "gh" }
+  for _, a in ipairs(args) do argv[#argv + 1] = a end
 
+  spawn_capture(argv, { env = env }, function(result)
     local duration = (hrtime() - start_time) / 1e6 -- ms
 
-    if code ~= 0 then
+    if not result.ok then
       if metrics.record_metrics() then
-        metrics.increase_failed(safe_uuid, url, "gh", safe_context, duration, code, "gh CLI error")
+        metrics.increase_failed(safe_uuid, url, "gh", safe_context, duration, result.code, "gh CLI error")
       end
-      notify("[reposcope] gh exited with code " .. code, 4)
-      notify("[reposcope] stderr: " .. table.concat(stderr_data, ""), 2)
-      callback(nil, "gh request failed (code " .. code .. ")")
+      notify("[reposcope] gh exited with code " .. result.code, 4)
+      notify("[reposcope] stderr: " .. result.stderr, 2)
+      callback(nil, "gh request failed (code " .. result.code .. ")")
     else
-      local result = table.concat(response_data)
+      if debug and result.stderr ~= "" then
+        notify("[reposcope] gh stderr: " .. result.stderr, 4)
+      end
       if metrics.record_metrics() then
         metrics.increase_success(safe_uuid, url, "gh", safe_context, duration, 200)
       end
-      callback(result)
+      callback(result.stdout)
     end
   end)
-
-  if not handle then
-    callback(nil, "Failed to spawn gh CLI")
-    return
-  end
-
-  ---@diagnostic disable-next-line: undefined-field
-  if stdout then stdout:read_start(function(err, data)
-      if err then
-        callback(nil, "gh stdout error: " .. err)
-        return
-      end
-      if data then
-        table.insert(response_data, data)
-      end
-    end)
-  end
-
-  ---@diagnostic disable-next-line: undefined-field
-  if stderr then stderr:read_start(function(err, data)
-      if err then
-        notify("[reposcope] gh stderr read error: " .. err, 5)
-        return
-      end
-      if data then
-        table.insert(stderr_data, data)
-        if debug then
-          notify("[reposcope] gh stderr: " .. data, 4)
-        end
-      end
-    end)
-  end
 end
 
 return M
