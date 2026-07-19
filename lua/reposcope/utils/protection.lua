@@ -8,7 +8,6 @@ local M = {}
 local fnameescape = vim.fn.fnameescape
 local fnamemodify = vim.fn.fnamemodify
 local isdirectory = vim.fn.isdirectory
-local mkdir = vim.fn.mkdir
 local system = vim.fn.system
 local expand = vim.fn.expand
 local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
@@ -37,27 +36,8 @@ end
 ---@param delay_ms integer
 ---@return fun(), fun(): integer
 function M.debounce_with_counter(fn, delay_ms)
-  local skipped = 0
-  local pending = false
-
-  local handle = lib_debounce.new(function(...)
-    pending = false
-    fn(...)
-  end, delay_ms)
-
-  local function call(...)
-    if pending then
-      skipped = skipped + 1
-    end
-    pending = true
-    handle.call(...)
-  end
-
-  local function get_skipped()
-    return skipped
-  end
-
-  return call, get_skipped
+  local handle, get_skipped = lib_debounce.new_with_counter(fn, delay_ms)
+  return handle.call, get_skipped
 end
 
 ---Normalizes a value into a non-zero count.
@@ -197,9 +177,12 @@ function M.safe_mkdir(path)
     return true
   end
 
-  local created = mkdir(path, "p")
-  if created == 0 then
-    notify("[reposcope] Error: Directory could not be created: " .. path, 4)
+  -- Delegates the actual mkdir -p to lib.nvim.fs.mkdirp (libuv-only, safe to
+  -- call from a fast event context, unlike vim.fn.mkdir); this function's
+  -- own value-add is the writability check layered on top.
+  local created, err = require("lib.nvim.fs.mkdirp")(path)
+  if not created then
+    notify("[reposcope] Error: Directory could not be created: " .. path .. " (" .. tostring(err) .. ")", 4)
     return false
   end
 
@@ -211,7 +194,7 @@ function M.safe_mkdir(path)
       return false
     end
   else
-    notify("[reposcope] Error: Directory was not created, but mkdir did not return an error: " .. path, 4)
+    notify("[reposcope] Error: Directory was not created, but mkdirp did not return an error: " .. path, 4)
     return false
   end
 end
