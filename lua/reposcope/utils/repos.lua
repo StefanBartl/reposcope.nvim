@@ -18,7 +18,7 @@ local M = {}
 -- Vim Utilities
 local uv = vim.uv or vim.loop
 local fnamemodify = vim.fn.fnamemodify
-local expand = vim.fn.expand
+local expand = require("lib.nvim.cross.fs.expand_path")
 -- Configuration
 local config = require("reposcope.config")
 
