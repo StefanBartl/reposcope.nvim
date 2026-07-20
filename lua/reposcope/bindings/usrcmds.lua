@@ -23,44 +23,20 @@ local reload_prompt = require("reposcope.ui.actions.prompt_reload").reload_promp
 local prompt_filter = require("reposcope.ui.actions.filter_prompt").prompt_filter
 local apply_filter = require("reposcope.ui.actions.filter_repos").apply_filter
 local fetch_readme_for_selected = require("reposcope.controllers.provider_controller").fetch_readme_for_selected
+local status_view = require("reposcope.ui.actions.status_view")
 -- Debugging
 local notify = require("reposcope.utils.debug").notify
 
 
----Renders a list of repository status records into an aligned, human-readable block.
----@param records RepoStatusRecord[] Status records in discovery order
----@return string rendered Multi-line, column-aligned overview
-local function render_status(records)
-  -- Determine column widths from the data so the table stays compact but aligned.
-  local name_w, branch_w = #"REPOSITORY", #"BRANCH"
-  for _, r in ipairs(records) do
-    name_w = math.max(name_w, #r.name)
-    branch_w = math.max(branch_w, #r.branch)
-  end
-
-  local lines = {
-    ("%-" .. name_w .. "s  %-" .. branch_w .. "s  %-9s  %s"):format("REPOSITORY", "BRANCH", "AHEAD/BEH", "STATE"),
-  }
-
-  for _, r in ipairs(records) do
-    local ab = r.has_upstream and ("+%d/-%d"):format(r.ahead, r.behind) or "no upstream"
-    local state = r.state
-    if r.state == "dirty" then
-      state = ("dirty (%d)"):format(r.dirty)
-    end
-    lines[#lines + 1] = ("%-" .. name_w .. "s  %-" .. branch_w .. "s  %-9s  %s"):format(r.name, r.branch, ab, state)
-  end
-
-  return table.concat(lines, "\n")
-end
-
 ---Reads and displays the git status overview for a directory (or single repository).
 ---@param path string|nil Optional directory or single-repo override
+---@param output StatusOutputMode|nil Output backend (default: "popup")
+---@param out_path string|nil Target file path, only used when output == "path"
 ---@return nil
-local function run_status(path)
+local function run_status(path, output, out_path)
   require("reposcope.utils.repo_status").status_all(path, function(records, errors)
     if #records > 0 then
-      vim.notify("[reposcope] Repository status\n\n" .. render_status(records), vim.log.levels.INFO)
+      status_view.show(records, { output = output, path = out_path })
     end
     if #errors > 0 then
       vim.notify(
@@ -190,14 +166,6 @@ local subcommands = {
     complete = complete_dir,
   },
 
-  status = {
-    desc = "Show the git status overview of all repositories in a directory (or one repository)",
-    run = function(args)
-      run_status(args[1])
-    end,
-    complete = complete_dir,
-  },
-
   stats = {
     desc = "Display collected request stats and metrics",
     run = function()
@@ -274,8 +242,27 @@ local function build_routes()
   return routes
 end
 
+---Dedicated route for `status`: it needs `--out`/`--to` flags, which the
+--- generic per-subcommand wrapper above (single optional positional) can't
+--- express, so it is built by hand instead of going through `subcommands`.
+---@type table
+local status_route = {
+  path = { "status" },
+  desc = "Show the git status overview of all repositories in a directory (or one repository)",
+  args = { { name = "dir", type = "DIR", optional = true } },
+  flags = {
+    { name = "out", type = "STRING", enum = { "popup", "buffer", "split", "vsplit", "clipboard", "path" } },
+    { name = "to", type = "PATH" },
+  },
+  run = function(ctx)
+    run_status(ctx.args.dir, ctx.flags.out, ctx.flags.to)
+  end,
+}
+
 ---Registers the single dispatching `:Reposcope` user command.
+local routes = build_routes()
+routes[#routes + 1] = status_route
 composer.verb("Reposcope", {
   desc = "Reposcope: <subcommand> [args] (start, close, status, update, filter, prompt, ...)",
-  routes = build_routes(),
+  routes = routes,
 })

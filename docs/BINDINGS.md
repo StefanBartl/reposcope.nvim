@@ -87,11 +87,16 @@ available for subcommand names and, where noted, their arguments.
 | `filter-prompt`     | –                      | Open a floating prompt to filter repositories interactively            |
 | `filter-clear`      | –                      | Clear the active filter and show the full list again                   |
 | `update`            | `[dir]`                | Update (fetch + ff-only pull) all cloned repositories in a directory   |
-| `status`            | `[dir]`                | Show the git status overview of repositories in a directory            |
+| `status`            | `[dir] [--out] [--to]` | Show the git status overview of repositories in a directory (see below) |
 | `stats`             | –                      | Display collected request stats and metrics                           |
 | `skipped-readmes`   | –                      | Print the number of debounced (skipped) README fetches                |
 | `toggle-dev`        | –                      | Toggle developer mode (debug logging, internal info)                  |
 | `print-dev`         | –                      | Print whether developer mode is currently active                      |
+
+`status`'s `--out` selects the output backend (`popup` default, `buffer`,
+`split`, `vsplit`, `clipboard`, `path`), and `--to=<file>` sets the target
+file for `--out=path`. See [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua)
+and [COMMANDS.md](COMMANDS.md#reposcope-status-dir---out---to) for details.
 
 ---
 

@@ -28,7 +28,7 @@ end, { desc = "Open Reposcope" })
   - [:Reposcope filter {text}](#reposcope-filter-text)
   - [:Reposcope filter-prompt](#reposcope-filter-prompt)
   - [:Reposcope update [dir]](#reposcope-update-dir)
-  - [:Reposcope status [dir]](#reposcope-status-dir)
+  - [:Reposcope status [dir] [--out] [--to]](#reposcope-status-dir---out---to)
 
 ---
 
@@ -78,7 +78,7 @@ subcommand; remaining arguments are forwarded to it.
 | Command                     | Description                                                                       |
 | --------------------------- | --------------------------------------------------------------------------------- |
 | `:Reposcope update [dir]`   | Updates all cloned git repositories (`git fetch --all --prune` + `git pull --ff-only`) in `clone.std_dir` (or the given directory) |
-| `:Reposcope status [dir]`   | Shows a git status overview (branch, ahead/behind, dirty) for every repo in `clone.std_dir` (or the given directory / a single repo) |
+| `:Reposcope status [dir] [--out] [--to]` | Shows a git status overview (branch, ahead/behind, dirty) for every repo in `clone.std_dir` (or the given directory / a single repo) |
 
 **Debugging, Stats & Metrics**
 
@@ -168,22 +168,34 @@ Examples:
 
 ---
 
-#### `:Reposcope status [dir]`
+#### `:Reposcope status [dir] [--out] [--to]`
 
 Reads the git status of every cloned git repository found **directly inside** a
-directory and prints a compact, aligned overview. For each repository it runs
+directory and displays a compact, aligned overview. For each repository it runs
 `git status --porcelain=v2 --branch` asynchronously and distills the output into
 the current branch, ahead/behind counts relative to the upstream, and how many
 files are uncommitted (the *dirty* count) — summarized as one of the states
 `clean`, `dirty`, `ahead`, `behind` or `diverged`.
 
-If no argument is given, the configured clone directory (`clone.std_dir`) is used.
+If no directory is given, the configured clone directory (`clone.std_dir`) is used.
 If the given path is **itself** a git repository, only that single repo is
 reported; otherwise its immediate subdirectories are scanned. This is the
 read-only counterpart to `:Reposcope update` — *discover → clone → status → update*.
 
 > ℹ️ Only immediate subdirectories are scanned (non-recursive). The command never
 > modifies anything; it only reads.
+
+Unlike a plain `vim.notify`, the result is never truncated or unscrollable —
+`--out` picks where it's displayed:
+
+| `--out` value | Result |
+| ------------- | ------ |
+| `popup` (default) | Scrollable floating window (`q`/`<Esc>` to close) |
+| `buffer`      | Replaces the current window's buffer with the status buffer |
+| `split`       | Opens (or reuses) a horizontal split |
+| `vsplit`      | Opens (or reuses) a vertical split |
+| `clipboard`   | Copies the raw table to the system clipboard |
+| `path`        | Writes the raw table to a file (`--to=<path>`, default: `stdpath("cache")/reposcope/status.txt`) |
 
 Example output:
 
@@ -197,7 +209,10 @@ some-lib        main     +0/-4      behind
 Examples:
 
 ```vim
-:Reposcope status                 "status of all repos in clone.std_dir
-:Reposcope status ~/projects      "status of all repos inside ~/projects
-:Reposcope status ~/projects/foo  "status of the single repository foo
+:Reposcope status                            "popup with all repos in clone.std_dir
+:Reposcope status ~/projects                 "popup with all repos inside ~/projects
+:Reposcope status ~/projects/foo             "popup with the single repository foo
+:Reposcope status ~/projects --out=split     "same, in a reusable horizontal split
+:Reposcope status --out=clipboard            "copy the table to the system clipboard
+:Reposcope status --out=path --to=status.txt "write the table to status.txt
 ```

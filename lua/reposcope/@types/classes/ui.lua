@@ -18,6 +18,10 @@
 ---@field close_viewer fun(): nil Closes the README viewer window if open
 ---@field set_viewer_keymap fun(buf: integer): nil Sets keymaps for the viewer buffer (e.g., 'q' to close')
 
+---@class ActionStatusViewModule
+---@field render fun(records: RepoStatusRecord[]): string[] Renders status records into an aligned, column-formatted block
+---@field show fun(records: RepoStatusRecord[], opts?: { output?: StatusOutputMode, path?: string }): nil Renders and displays status records via the requested output backend
+
 ---@class BackgroundConfigModule
 ---@field row number The starting row position of the background window.
 ---@field col number The starting column position of the background window.
