@@ -13,7 +13,7 @@
 --- fields, directories, ...). Running `:Reposcope` with no subcommand prints the
 --- list of available subcommands.
 
-local nvim_create_user_command = vim.api.nvim_create_user_command
+local composer = require("lib.nvim.usercmd.composer")
 -- State and Cache
 local display_repositories = require("reposcope.controllers.list_controller").display_repositories
 local restore_relevance_sorting = require("reposcope.cache.repository_cache").restore_relevance_sorting
@@ -227,57 +227,55 @@ local subcommands = {
   },
 }
 
----Sorted list of subcommand names, used for completion and the usage message.
----@type string[]
-local subcommand_names = vim.tbl_keys(subcommands)
-table.sort(subcommand_names)
+-- Composer's own bare-`:Reposcope` usage listing (subcommand + .desc per
+-- line, derived from the same route tree below) replaces print_usage();
+-- its own "unknown subcommand" error replaces the manual notify() above.
 
----Prints the list of available subcommands with their descriptions.
----@return nil
-local function print_usage()
-  local lines = { "Usage: :Reposcope <subcommand> [args]", "" }
-  for _, name in ipairs(subcommand_names) do
-    lines[#lines + 1] = ("  %-16s %s"):format(name, subcommands[name].desc)
+---Build one composer route per subcommand, forwarding the leftover tokens
+--- into the unchanged entry.run(args). Where entry.complete exists, its
+--- candidates are looked up fresh on every <Tab> request via a small custom
+--- type per subcommand (not a static snapshot taken once at setup() time --
+--- directory listings and prompt fields can both change during a session).
+--- entry.complete itself is position-agnostic (offers the same candidates
+--- regardless of how many tokens precede arg_lead, e.g. "prompt"'s
+--- field-name list), so mapping it onto a single optional first-arg slot
+--- recovers real completion there without changing dispatch -- the same
+--- tradeoff already used elsewhere for this kind of completer (further
+--- tokens still reach entry.run via ctx.rest, just without their own <Tab>
+--- completion).
+---@return table[]
+local function build_routes()
+  local routes = {}
+  for name, entry in pairs(subcommands) do
+    local args
+    if entry.complete then
+      local type_name = "REPOSCOPE_" .. name:upper():gsub("%-", "_")
+      composer.register_type(type_name, {
+        validate = function(raw) return true, raw, nil end,
+        complete = function(arg_lead)
+          local ok, list = pcall(entry.complete, arg_lead)
+          return (ok and list) or {}
+        end,
+      })
+      args = { { name = "a1", type = type_name, optional = true } }
+    end
+    routes[#routes + 1] = {
+      path = { name },
+      args = args,
+      desc = entry.desc,
+      run = function(ctx)
+        local fargs = {}
+        if args and ctx.args.a1 ~= nil then fargs[1] = ctx.args.a1 end
+        for _, t in ipairs(ctx.rest) do fargs[#fargs + 1] = t end
+        entry.run(fargs)
+      end,
+    }
   end
-  notify(table.concat(lines, "\n"), 2)
+  return routes
 end
 
-
 ---Registers the single dispatching `:Reposcope` user command.
-nvim_create_user_command("Reposcope", function(opts)
-  local fargs = opts.fargs
-  local sub = fargs[1]
-
-  if not sub or sub == "" then
-    print_usage()
-    return
-  end
-
-  local entry = subcommands[sub]
-  if not entry then
-    notify(("[reposcope] Unknown subcommand '%s'. Run :Reposcope for the list of subcommands."):format(sub), 4)
-    return
-  end
-
-  entry.run({ unpack(fargs, 2) })
-end, {
+composer.verb("Reposcope", {
   desc = "Reposcope: <subcommand> [args] (start, close, status, update, filter, prompt, ...)",
-  nargs = "*",
-  complete = function(arglead, cmdline)
-    local args = vim.split(cmdline, "%s+", { trimempty = true })
-    -- Completing the subcommand itself: typing the 2nd token, or right after the command name.
-    local completing_sub = (arglead ~= "" and #args == 2) or (arglead == "" and #args == 1)
-
-    if completing_sub then
-      return vim.tbl_filter(function(name)
-        return name:find(arglead, 1, true) == 1
-      end, subcommand_names)
-    end
-
-    local entry = subcommands[args[2]]
-    if entry and entry.complete then
-      return entry.complete(arglead)
-    end
-    return {}
-  end,
+  routes = build_routes(),
 })

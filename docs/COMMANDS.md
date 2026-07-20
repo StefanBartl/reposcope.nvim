@@ -1,7 +1,8 @@
 # Commands
 
 All functionality is exposed through a single `:Reposcope <subcommand> [args]`
-command. Run `:Reposcope` without arguments to print the list of available
+command, built via [`lib.nvim.usercmd.composer`](https://github.com/StefanBartl/lib.nvim).
+Run `:Reposcope` without arguments to print the list of available
 subcommands; tab-completion offers the subcommand names first, then
 per-subcommand arguments (prompt fields, directories, ...).
 
