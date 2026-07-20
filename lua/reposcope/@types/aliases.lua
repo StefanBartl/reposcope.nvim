@@ -48,6 +48,14 @@
 ---| "curl"
 ---| "wget"
 
+---@alias StatusOutputMode # How `:Reposcope status` results are displayed
+---| "popup"
+---| "buffer"
+---| "split"
+---| "vsplit"
+---| "clipboard"
+---| "path"
+
 ---@alias PromptKeymapAction # A configurable prompt-buffer action (see `keymaps.lua`)
 ---| "confirm"
 ---| "nav_up"
