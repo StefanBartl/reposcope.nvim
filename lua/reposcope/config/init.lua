@@ -74,7 +74,7 @@ function M.get_option(key)
     local resolved = ""
 
     if dir and dir ~= "" then
-      local expanded = vim.fn.expand(dir)
+      local expanded = require("lib.nvim.cross.fs.expand_path")(dir)
       if vim.fn.isdirectory(expanded) == 1 then
         resolved = expanded
       end

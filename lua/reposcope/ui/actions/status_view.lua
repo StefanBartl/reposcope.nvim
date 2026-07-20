@@ -19,6 +19,7 @@ local kit = require("lib.nvim.ui.kit")
 local open_named_scratch = require("lib.nvim.window.open_named_scratch")
 local copy_to_clipboard = require("lib.nvim.cross.copy_to_clipboard")
 local write_to_file = require("lib.nvim.fs.write.to_file")
+local expand_path = require("lib.nvim.cross.fs.expand_path")
 local notify = require("reposcope.utils.debug").notify
 
 local SCRATCH_NAME = "reposcope://status"
@@ -112,7 +113,7 @@ end
 ---@param path string|nil
 ---@return nil
 local function show_path(lines, path)
-  local target = (path and path ~= "") and vim.fn.expand(path) or DEFAULT_PATH_OUT
+  local target = (path and path ~= "") and expand_path(path) or DEFAULT_PATH_OUT
   local ok, err = write_to_file(target, table.concat(lines, "\n"))
   if ok then
     notify("[reposcope] Status written to " .. target, 2)
