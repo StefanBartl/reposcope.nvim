@@ -360,7 +360,7 @@ function M.set_user_keymaps(map_cfg, opts)
         require("reposcope.init").open_ui()
       end)
       if not ok then
-        print("Error while opening Reposcope: " .. err)
+        notify("Error while opening Reposcope: " .. err, 4)
       end
     end, tbl_extend("force", { desc = "Open Reposcope" }, opts))
   end
@@ -371,7 +371,7 @@ function M.set_user_keymaps(map_cfg, opts)
         require("reposcope.init").close_ui()
       end)
       if not ok then
-        print("Error while closing Reposcope: " .. err)
+        notify("Error while closing Reposcope: " .. err, 4)
       end
     end, tbl_extend("force", { desc = "Close Reposcope" }, opts))
   end

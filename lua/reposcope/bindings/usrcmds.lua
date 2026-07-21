@@ -39,7 +39,7 @@ local function run_status(path, output, out_path)
       status_view.show(records, { output = output, path = out_path })
     end
     if #errors > 0 then
-      vim.notify(
+      notify(
         ("[reposcope] %d repositor%s could not be read:\n\n%s"):format(
           #errors, #errors == 1 and "y" or "ies", table.concat(errors, "\n")
         ),
@@ -53,17 +53,17 @@ end
 ---@param path string|nil Optional directory override (defaults to the clone directory)
 ---@return nil
 local function run_update(path)
-  vim.notify("[reposcope] Updating cloned repositories...", vim.log.levels.INFO)
+  notify("[reposcope] Updating cloned repositories...", vim.log.levels.INFO)
 
   require("reposcope.providers.github.clone.clone_updater").update_all(path, function(updated, errors)
     local plural = updated == 1 and "y" or "ies"
     if #errors > 0 then
-      vim.notify(
+      notify(
         ("[reposcope] Updated %d repositor%s, %d failed:\n\n%s"):format(updated, plural, #errors, table.concat(errors, "\n\n")),
         vim.log.levels.WARN
       )
     else
-      vim.notify(
+      notify(
         ("[reposcope] Updated %d repositor%s successfully"):format(updated, plural),
         vim.log.levels.INFO
       )
