@@ -19,7 +19,7 @@ local win_is_valid = api.nvim_win_is_valid
 local win_set_current = api.nvim_set_current_win
 local open_win = api.nvim_open_win
 local buf_del_keymap = api.nvim_buf_del_keymap
-local set_keymap = vim.keymap.set
+local window = require("lib.nvim.window")
 
 -- Metrics Management (Tracking Performance and Usage Statistics)
 local metrics = require("reposcope.utils.metrics")
@@ -84,9 +84,9 @@ function M.show_stats()
   })
 
   vim.bo[stats_state.buf].modifiable = false
+  vim.bo[stats_state.buf].bufhidden = "wipe"
 
-  set_keymap("n", "q", function() M.close_stats() end, { noremap = true, silent = true, buffer = stats_state.buf, desc = "Close stats popup" })
-  set_keymap("n", "<Esc>", function() M.close_stats() end, { noremap = true, silent = true, buffer = stats_state.buf, desc = "Close stats popup" })
+  window.nice_quit(stats_state.win, { force = true })
 end
 
 ---Closes the statistics popup window and removes associated keymaps.
