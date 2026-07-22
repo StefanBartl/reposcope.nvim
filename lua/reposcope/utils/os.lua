@@ -22,8 +22,7 @@ end
 function M.open_url(url)
   local ok = system_opener.open(url)
   if not ok then
-    ---@diagnostic disable-next-line vim.loop or vim.uv os_uname exists
-    local os_name = vim.loop.os_uname().sysname
+    local os_name = vim.uv.os_uname().sysname
     notify("[reposcope] Unsupported OS for opening URLs: " .. os_name, 4)
   end
 end
