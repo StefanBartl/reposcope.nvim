@@ -29,6 +29,7 @@ end, { desc = "Open Reposcope" })
   - [:Reposcope filter-prompt](#reposcope-filter-prompt)
   - [:Reposcope update [dir]](#reposcope-update-dir)
   - [:Reposcope status [dir] [--out] [--to]](#reposcope-status-dir---out---to)
+  - [:Reposcope providers](#reposcope-providers)
 
 ---
 
@@ -79,6 +80,12 @@ subcommand; remaining arguments are forwarded to it.
 | --------------------------- | --------------------------------------------------------------------------------- |
 | `:Reposcope update [dir]`   | Updates all cloned git repositories (`git fetch --all --prune` + `git pull --ff-only`) in `clone.std_dir` (or the given directory) |
 | `:Reposcope status [dir] [--out] [--to]` | Shows a git status overview (branch, ahead/behind, dirty) for every repo in `clone.std_dir` (or the given directory / a single repo) |
+
+**Providers**
+
+| Command                | Description                                                    |
+| ----------------------- | --------------------------------------------------------------- |
+| `:Reposcope providers`  | Lists available providers (`github`, `gitlab`, `codeberg`) and marks the active one |
 
 **Debugging, Stats & Metrics**
 
@@ -215,4 +222,19 @@ Examples:
 :Reposcope status ~/projects --out=split     "same, in a reusable horizontal split
 :Reposcope status --out=clipboard            "copy the table to the system clipboard
 :Reposcope status --out=path --to=status.txt "write the table to status.txt
+```
+
+---
+
+#### `:Reposcope providers`
+
+Lists every registered provider (`github`, `gitlab`, `codeberg`) and marks
+the currently active one (set via the `provider` config option) with `*`.
+
+Example output:
+
+```
+  codeberg
+  github
+* gitlab
 ```

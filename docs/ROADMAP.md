@@ -28,6 +28,7 @@ commands, keymaps, and autocommands. For everything already implemented, see
 - [x] Help docs via `:h reposcope`
 - [x] GitLab provider support
 - [x] Codeberg provider support
+- [x] `:Reposcope providers` – list available/active providers
 
 ---
 
@@ -39,7 +40,6 @@ commands, keymaps, and autocommands. For everything already implemented, see
 
 ## 3. Planned User Commands
 
-- [ ] `:Reposcope providers` – list available/active providers (GitHub, GitLab, Codeberg, ...)
 - [ ] `:Reposcope session save|restore|clear` – manage persisted sessions
 
 ---
