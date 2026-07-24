@@ -27,12 +27,12 @@ commands, keymaps, and autocommands. For everything already implemented, see
 - [x] Viewer/editor for README content
 - [x] Help docs via `:h reposcope`
 - [x] GitLab provider support
+- [x] Codeberg provider support
 
 ---
 
 ## 2. Planned Features
 
-- [ ] Codeberg provider support
 - [ ] Persistent session save/restore (last search, filters, sort)
 
 ---

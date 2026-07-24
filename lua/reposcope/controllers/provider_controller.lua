@@ -27,7 +27,7 @@ local clear_relevance_result = require("reposcope.cache.repository_cache").clear
 local providers = {
   github = require("reposcope.providers.github.entrypoint"),
   gitlab = require("reposcope.providers.gitlab.entrypoint"),
-  -- codeberg = require("reposcope.providers.codeberg.entrypoint"),
+  codeberg = require("reposcope.providers.codeberg.entrypoint"),
 }
 
 ---Sorted list of every registered provider identifier

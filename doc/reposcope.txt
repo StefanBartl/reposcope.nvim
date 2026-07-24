@@ -41,12 +41,13 @@ Advanced setup:
 
 >lua
   require("reposcope").setup({
-    provider = "github",           -- "github" or "gitlab" (Codeberg planned)
+    provider = "github",           -- "github", "gitlab", or "codeberg"
     request_tool = "curl",         -- "gh", "curl", or "wget" ("gh" only works with provider = "github")
     -- If higher API Limits neeeded set set the token here.
     -- If that doesn't works see reposcope-auth
     github_token = os.getenv("GITHUB_TOKEN"),
-    gitlab_token = os.getenv("GITLAB_TOKEN"),  -- used when provider = "gitlab"
+    gitlab_token = os.getenv("GITLAB_TOKEN"),     -- used when provider = "gitlab"
+    codeberg_token = os.getenv("CODEBERG_TOKEN"), -- used when provider = "codeberg"
     layout = "default",            -- UI layout
     prompt_fields = {
       "prefix", "owner", "keywords", "language", "topic", "stars"
@@ -62,10 +63,11 @@ Advanced setup:
     metrics = true                     -- enable request logging & metrics
   })
 
-Note: GitLab's search API only supports a plain substring match (no
-`owner:`/`language:`-style qualifiers like GitHub's search) — with
-`provider = "gitlab"`, every non-empty prompt field is joined into one plain
-search string instead of being applied as a scoped filter.
+Note: GitLab's and Codeberg's search APIs only support a plain substring
+match (no `owner:`/`language:`-style qualifiers like GitHub's search) — with
+`provider = "gitlab"` or `provider = "codeberg"`, every non-empty prompt
+field is joined into one plain search string instead of being applied as a
+scoped filter.
 
 ==============================================================================
 AUTHENTICATION                                                *reposcope-auth*

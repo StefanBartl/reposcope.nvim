@@ -1,6 +1,6 @@
 # Features
 
-- 🔍 Dynamic repository search by topic, owner, language, etc. — GitHub and GitLab supported (`provider` option)
+- 🔍 Dynamic repository search by topic, owner, language, etc. — GitHub, GitLab and Codeberg supported (`provider` option)
 - 📄 Live preview of `README.md` with inline Markdown rendering
 - 🧠 Persistent README caching (RAM + file system)
 - 🔧 Clone support: `git`, `gh`, `wget`, `curl`
