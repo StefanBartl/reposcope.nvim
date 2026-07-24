@@ -1,17 +1,13 @@
----@module 'reposcope.providers.github.clone.clone_manager'
----@brief Coordinates cloning operations for GitHub repositories.
+---@module 'reposcope.providers.gitlab.clone.clone_manager'
+---@brief Coordinates cloning operations for GitLab repositories.
 ---@description
 --- This module ensures that all clone operations are routed through a single
---- point of control. It manages the request lifecycle (UUID registration, activity checks),
---- validates input, and delegates execution to helper modules for building the
---- command, collecting repository info, and executing the shell command.
----
---- All clone operations should go through this manager to ensure that
---- the UUID-based `request_state` system works reliably and uniformly
---- across providers. This helps prevent duplicate or conflicting requests,
---- and enables metrics and logging integration.
+--- point of control. It manages the request lifecycle (UUID registration,
+--- activity checks), validates input, and delegates execution to the shared
+--- `controllers.clone_info`/`controllers.clone_executor` helpers plus this
+--- provider's own `clone_command` for building the argv.
 
----@class GithubCloneManager : CloneManagerModule
+---@class GitlabCloneManager : CloneManagerModule
 local M = {}
 
 
@@ -20,7 +16,7 @@ local request_state = require("reposcope.state.requests_state")
 local config = require("reposcope.config")
 -- Submodules
 local get_clone_informations = require("reposcope.controllers.clone_info").get_clone_informations
-local build_command = require("reposcope.providers.github.clone.clone_command").build_command
+local build_command = require("reposcope.providers.gitlab.clone.clone_command").build_command
 local execute_clone = require("reposcope.controllers.clone_executor").execute
 -- Utils
 local notify = require("reposcope.utils.debug").notify

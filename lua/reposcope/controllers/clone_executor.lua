@@ -1,10 +1,11 @@
----@module 'reposcope.providers.github.clone.clone_executor'
+---@module 'reposcope.controllers.clone_executor'
 ---@brief Executes shell clone commands and records metrics.
 ---@description
 --- Executes cloning using a shell command, measures execution time,
 --- and reports success/failure metrics. Also logs feedback to the user.
+--- Provider-agnostic: shared by every provider's clone manager.
 
----@class GithubCloneExecutor : GithubCloneExecutorModule
+---@class CloneExecutor : CloneExecutorModule
 local M = {}
 
 local hrtime = vim.uv.hrtime

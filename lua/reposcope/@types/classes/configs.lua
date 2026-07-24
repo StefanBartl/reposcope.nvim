@@ -13,6 +13,8 @@
 ---@field preferred_requesters string[] Fallback order of CLI tools to use for HTTP requests
 ---@field request_tool string Main tool to perform HTTP requests (used unless unavailable)
 ---@field github_token? string Optional GitHub token for authenticated API calls
+---@field gitlab_token? string Optional GitLab token for authenticated API calls
+---@field codeberg_token? string Optional Codeberg token for authenticated API calls
 ---@field results_limit number Maximum number of search results to show
 ---@field layout LayoutType Default layout for result view
 ---@field clone CloneOptions Options related to downloading/cloning repositories
@@ -35,6 +37,8 @@
 ---@field preferred_requesters? string[]
 ---@field request_tool? string
 ---@field github_token? string
+---@field gitlab_token? string
+---@field codeberg_token? string
 ---@field results_limit? number
 ---@field layout? LayoutType
 ---@field clone? CloneOptions

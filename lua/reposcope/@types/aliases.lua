@@ -16,6 +16,8 @@
 ---| "preferred_requesters"
 ---| "request_tool"
 ---| "github_token"
+---| "gitlab_token"
+---| "codeberg_token"
 ---| "results_limit"
 ---| "layout"
 ---| "clone"

@@ -6,7 +6,7 @@
 --- and storing the result in the internal repository cache.
 --- It does not interact with the user interface or trigger list updates.
 
----@class GithubRepositoryFetcher : GithubRepositoryFetcherModule
+---@class GithubRepositoryFetcher : RepositoryFetcherModule
 local M = {}
 
 -- API Request

@@ -3,9 +3,11 @@
 ---@description
 --- This module acts as a central access point for all GitHub-related provider functionality.
 
+---@type ProviderEntrypoint
 return {
   readme_manager = require("reposcope.providers.github.readme.readme_manager"),
   repo_fetcher = require("reposcope.providers.github.repositories.repository_manager"),
   cloner = require("reposcope.providers.github.clone.clone_manager"),
+  query_builder = require("reposcope.providers.github.query_builder"),
 }
 

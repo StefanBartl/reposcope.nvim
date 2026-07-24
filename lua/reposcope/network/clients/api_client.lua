@@ -11,6 +11,12 @@ local M = {}
 local http_client_request = require("reposcope.network.clients.http_client").request
 
 
+-- Per-provider default `Accept` header
+local DEFAULT_ACCEPT = {
+  github = "application/vnd.github+json",
+}
+
+
 ---Sends a generalized API request (GET, POST, etc.)
 ---@param method string
 ---@param url string
@@ -21,7 +27,9 @@ local http_client_request = require("reposcope.network.clients.http_client").req
 function M.request(method, url, callback, headers, context)
   context = context or "general"
 
-  headers = vim.tbl_extend("force", { ["Accept"] = "application/vnd.github+json" }, type(headers) == "table" and headers or {})
+  local provider = require("reposcope.config").get_option("provider")
+  local accept = DEFAULT_ACCEPT[provider] or "application/json"
+  headers = vim.tbl_extend("force", { ["Accept"] = accept }, type(headers) == "table" and headers or {})
 
   http_client_request(method, url, function(response, error)
 

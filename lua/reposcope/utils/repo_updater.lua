@@ -1,5 +1,5 @@
----@module 'reposcope.providers.github.clone.clone_updater'
----@brief Bulk-updates all cloned git repositories in a directory.
+---@module 'reposcope.utils.repo_updater'
+---@brief Bulk-updates all cloned git repositories in a directory. Provider-agnostic.
 ---@description
 --- Asynchronously runs `git fetch --all --prune` followed by `git pull --ff-only`
 --- for every git repository found directly inside a base directory. Repositories
@@ -17,7 +17,7 @@
 --- is dev-mode only, errors are always shown. The final, user-facing summary is
 --- delegated to the caller via the optional `on_complete` callback.
 
----@class GithubCloneUpdater : GithubCloneUpdaterModule
+---@class RepoUpdater : RepoUpdaterModule
 local M = {}
 
 -- Vim Utilities

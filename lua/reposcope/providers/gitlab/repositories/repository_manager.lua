@@ -1,23 +1,20 @@
----@module 'reposcope.providers.github.repositories.repository_manager'
+---@module 'reposcope.providers.gitlab.repositories.repository_manager'
 ---@brief Coordinates repository fetching and UI update after search.
 ---@description
----This module combines the logic of fetching repositories from GitHub
---- and updating the user interface once results are received.
---- It delegates API and UI responsibilities to their respective modules:
+---This module combines the logic of fetching repositories from GitLab
+--- and updating the user interface once results are received. It delegates
+--- API and UI responsibilities to their respective modules:
 --- - `repository_fetcher` handles network calls and cache updates
---- - `repository_ui_loader` initializes the UI display
+--- - the shared `controllers.repository_ui_loader` initializes the UI display
 ---
 ---All repository fetch calls must go through this manager to ensure
---- proper lifecycle tracking via UUIDs and `request_state`. This ensures
---- that requests are not duplicated and are tracked cleanly.
---- The manager performs UUID validation, request registration, and
---- fallback handling on failure.
+--- proper lifecycle tracking via UUIDs and `request_state`.
 
----@class GithubRepositoryManager : RepositoryManagerModule
+---@class GitlabRepositoryManager : RepositoryManagerModule
 local M = {}
 
 -- Submodules
-local fetcher = require("reposcope.providers.github.repositories.repository_fetcher")
+local fetcher = require("reposcope.providers.gitlab.repositories.repository_fetcher")
 local ui_loader = require("reposcope.controllers.repository_ui_loader")
 -- State & Utilities
 local request_state = require("reposcope.state.requests_state")
@@ -37,7 +34,7 @@ local function _handle_fetch_failure()
 end
 
 
----Fetches GitHub repositories without UI logic (for headless or cache-only usage)
+---Fetches GitLab repositories without UI logic (for headless or cache-only usage)
 ---@param query string
 ---@param uuid string
 ---@param on_success? fun(): nil

@@ -13,10 +13,11 @@ require("reposcope").setup({
   prompt_fields = {
     "prefix", "owner", "keywords", "language", "topic", "stars"
   },                                        -- Prompt fields shown to the user
-  provider = "github",                      -- Which backend to use: "github" (default), "gitlab" (planned)
-  request_tool = "curl",                    -- Tool for API requests: "gh", "curl", "wget"
+  provider = "github",                      -- Which backend to use: "github" (default), "gitlab", "codeberg" (planned)
+  request_tool = "curl",                    -- Tool for API requests: "gh", "curl", "wget" ("gh" only works with provider = "github")
   layout = "default",                       -- Currently only "default" supported
   github_token = os.getenv("GITHUB_TOKEN"), -- If higher API Limits neeeded set the token here. If that doesn't works: see docs/AUTHENTICATION.md
+  gitlab_token = os.getenv("GITLAB_TOKEN"), -- Same as github_token, for provider = "gitlab"
     keymaps = {
     open = "<leader>rs",                    -- Mapping to open the UI (set to false/"" to disable)
     close = "<leader>rc",                   -- Mapping to close the UI (set to false/"" to disable)
@@ -39,8 +40,9 @@ require("reposcope").setup({
 | Option          | Type       | Description                                                        |
 | --------------- | ---------- | ------------------------------------------------------------------ |
 | `prompt_fields` | `string[]` | Controls which input fields appear in the prompt UI                |
-| `provider`      | `string`   | Active backend (currently only `"github"` supported)               |
-| `request_tool`  | `string`   | CLI tool to fetch data: `"gh"`, `"curl"`, `"wget"`                 |
+| `provider`      | `string`   | Active backend: `"github"` or `"gitlab"` (`"codeberg"` planned)    |
+| `request_tool`  | `string`   | CLI tool to fetch data: `"gh"`, `"curl"`, `"wget"` (`"gh"` only supports `provider = "github"`, others fall back to `curl`) |
+| `gitlab_token`  | `string`   | GitLab personal access token, used when `provider = "gitlab"`      |
 | `layout`        | `string`   | UI layout style (currently only `"default"`)                       |
 | `keymaps.open`  | `string\|false`   | Keymap to open Reposcope UI (`false`/`""` disables it)       |
 | `keymaps.close` | `string\|false`   | Keymap to close the UI cleanly (`false`/`""` disables it)    |
@@ -50,3 +52,8 @@ require("reposcope").setup({
 | `metrics`       | `boolean`  | Enable internal request logging and performance tracking           |
 
 > ℹ️ You can dynamically reload prompt fields with `:Reposcope prompt prefix topic`.
+
+> ℹ️ GitLab's search API only supports a plain substring match (no
+> `owner:`/`language:`-style qualifiers like GitHub's search) — with
+> `provider = "gitlab"`, every non-empty prompt field is joined into one
+> plain search string instead of being applied as a scoped filter.
