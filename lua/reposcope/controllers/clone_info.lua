@@ -1,10 +1,12 @@
----@module 'reposcope.providers.github.clone.clone_info'
+---@module 'reposcope.controllers.clone_info'
 ---@brief Extracts repository name and URL for cloning.
 ---@description
 --- Returns basic information needed for cloning the currently selected repository:
 --- name and URL. Validates presence and structure before use.
+--- Provider-agnostic: reads from the shared repository cache, shared by every
+--- provider's clone manager.
 
----@class GithubCloneInfo : GithubCloneInfoModule
+---@class CloneInfoLookup : CloneInfoLookupModule
 local M = {}
 
 local notify = require("reposcope.utils.debug").notify

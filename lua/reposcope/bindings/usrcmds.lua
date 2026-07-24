@@ -55,7 +55,7 @@ end
 local function run_update(path)
   notify("[reposcope] Updating cloned repositories...", vim.log.levels.INFO)
 
-  require("reposcope.providers.github.clone.clone_updater").update_all(path, function(updated, errors)
+  require("reposcope.utils.repo_updater").update_all(path, function(updated, errors)
     local plural = updated == 1 and "y" or "ies"
     if #errors > 0 then
       notify(

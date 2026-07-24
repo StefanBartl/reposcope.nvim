@@ -41,11 +41,12 @@ Advanced setup:
 
 >lua
   require("reposcope").setup({
-    provider = "github",           -- backend provider (currently only GitHub)
-    request_tool = "curl",         -- "gh", "curl", or "wget"
-    -- If higher API Limits neeeded set set the token here. 
+    provider = "github",           -- "github" or "gitlab" (Codeberg planned)
+    request_tool = "curl",         -- "gh", "curl", or "wget" ("gh" only works with provider = "github")
+    -- If higher API Limits neeeded set set the token here.
     -- If that doesn't works see reposcope-auth
     github_token = os.getenv("GITHUB_TOKEN"),
+    gitlab_token = os.getenv("GITLAB_TOKEN"),  -- used when provider = "gitlab"
     layout = "default",            -- UI layout
     prompt_fields = {
       "prefix", "owner", "keywords", "language", "topic", "stars"
@@ -60,6 +61,11 @@ Advanced setup:
     },
     metrics = true                     -- enable request logging & metrics
   })
+
+Note: GitLab's search API only supports a plain substring match (no
+`owner:`/`language:`-style qualifiers like GitHub's search) — with
+`provider = "gitlab"`, every non-empty prompt field is joined into one plain
+search string instead of being applied as a scoped filter.
 
 ==============================================================================
 AUTHENTICATION                                                *reposcope-auth*

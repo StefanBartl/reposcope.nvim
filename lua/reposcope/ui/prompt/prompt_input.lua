@@ -8,11 +8,11 @@ local M = {}
 local get_fields = require("reposcope.ui.prompt.prompt_config").get_fields
 local get_field_text = require("reposcope.state.ui.prompt_state").get_field_text
 -- Providers
-local fetch_repositories_and_display = require("reposcope.controllers.provider_controller")
-.fetch_repositories_and_display
+local provider_controller = require("reposcope.controllers.provider_controller")
+local fetch_repositories_and_display = provider_controller.fetch_repositories_and_display
+local build_query = provider_controller.build_query
 -- Utilities
 local notify = require("reposcope.utils.debug").notify
-local query_builder = require("reposcope.providers.github.query_builder").build
 
 
 ---Collects input from each active prompt field
@@ -39,7 +39,7 @@ end
 ---@return nil
 function M.on_enter()
   local input = M.collect()
-  local query = query_builder(input)
+  local query = build_query(input)
 
   if query == "" then
     notify("[reposcope] No input to search", 2)

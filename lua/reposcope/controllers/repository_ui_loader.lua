@@ -1,11 +1,12 @@
----@module 'reposcope.providers.github.repositories.repository_ui_loader'
----@brief Handles the UI logic after a successful GitHub repository fetch.
+---@module 'reposcope.controllers.repository_ui_loader'
+---@brief Handles the UI logic after a successful repository fetch.
 ---@description
 --- This module populates the repository list UI and optionally triggers
 --- a README fetch for the first result. It operates purely on the UI level
 --- and does not perform API requests or decode JSON.
+--- Provider-agnostic: shared by every provider's repository manager.
 
----@class GithubRepositoryUILoader : GithubRepositoryUILoaderModule
+---@class RepositoryUILoader : RepositoryUILoaderModule
 local M = {}
 
 -- Vim API

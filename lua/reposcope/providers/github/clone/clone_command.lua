@@ -8,7 +8,7 @@
 --- with spaces or special characters are passed through unescaped and work
 --- identically on Windows (cmd.exe) and POSIX shells.
 
----@class GithubCloneCommandBuilder : GithubCloneCommandBuilderModule
+---@class GithubCloneCommandBuilder : CloneCommandBuilderModule
 local M = {}
 
 
