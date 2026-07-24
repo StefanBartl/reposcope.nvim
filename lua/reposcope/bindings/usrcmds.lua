@@ -173,6 +173,19 @@ local subcommands = {
     end,
   },
 
+  providers = {
+    desc = "List available providers and show which one is active",
+    run = function()
+      local pc = require("reposcope.controllers.provider_controller")
+      local active = pc.get_active_provider()
+      local lines = {}
+      for _, name in ipairs(pc.get_registered_providers()) do
+        lines[#lines + 1] = (name == active and "* " or "  ") .. name
+      end
+      print(table.concat(lines, "\n"))
+    end,
+  },
+
   ["skipped-readmes"] = {
     desc = "Print the number of debounced (skipped) README fetches",
     run = function()

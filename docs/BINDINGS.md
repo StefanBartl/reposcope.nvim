@@ -88,6 +88,7 @@ available for subcommand names and, where noted, their arguments.
 | `filter-clear`      | –                      | Clear the active filter and show the full list again                   |
 | `update`            | `[dir]`                | Update (fetch + ff-only pull) all cloned repositories in a directory   |
 | `status`            | `[dir] [--out] [--to]` | Show the git status overview of repositories in a directory (see below) |
+| `providers`         | –                      | List available providers and mark the active one                      |
 | `stats`             | –                      | Display collected request stats and metrics                           |
 | `skipped-readmes`   | –                      | Print the number of debounced (skipped) README fetches                |
 | `toggle-dev`        | –                      | Toggle developer mode (debug logging, internal info)                  |

@@ -140,6 +140,7 @@ The following subcommands are available:
 | `:Reposcope filter-clear`     | Resets the filter and restores full list     |
 | `:Reposcope update [dir]`     | Updates all cloned git repositories          |
 | `:Reposcope status [dir]`     | Shows git status overview of repositories    |
+| `:Reposcope providers`        | Lists providers and marks the active one     |
 | `:Reposcope skipped-readmes`  | Prints number of debounced README fetches    |
 | `:Reposcope stats`            | Displays request statistics (metrics)        |
 | `:Reposcope toggle-dev`       | Toggles developer mode (logging, mocking)    |
@@ -264,6 +265,19 @@ Notes:
     :Reposcope status ~/projects/foo
 <
 See also |reposcope-clone|.
+
+------------------------------------------------------------------------------
+                                                       *:Reposcope-providers*
+:Reposcope providers
+
+Lists every registered provider (`github`, `gitlab`, `codeberg`) and marks
+the currently active one (the `provider` config option) with `*`.
+
+- Example output: >
+    codeberg
+    github
+  * gitlab
+<
 
 ==============================================================================
 CACHE                                                        *reposcope-cache*
