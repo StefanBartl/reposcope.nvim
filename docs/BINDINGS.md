@@ -89,6 +89,7 @@ available for subcommand names and, where noted, their arguments.
 | `update`            | `[dir]`                | Update (fetch + ff-only pull) all cloned repositories in a directory   |
 | `status`            | `[dir] [--out] [--to]` | Show the git status overview of repositories in a directory (see below) |
 | `providers`         | –                      | List available providers and mark the active one                      |
+| `session`           | `save`\|`restore`\|`clear` | Save, restore, or clear the persisted search session (provider, prompt input, query, filter, sort) |
 | `stats`             | –                      | Display collected request stats and metrics                           |
 | `skipped-readmes`   | –                      | Print the number of debounced (skipped) README fetches                |
 | `toggle-dev`        | –                      | Toggle developer mode (debug logging, internal info)                  |

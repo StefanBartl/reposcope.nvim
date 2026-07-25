@@ -2,16 +2,13 @@
 ---@brief Opens a floating input for filtering repository list entries
 ---@description
 --- This module shows a `vim.ui.input()` prompt to allow users to filter the
---- currently displayed repository list by text. The input is matched against
---- the "owner/name: description" string and updates the list view accordingly.
---- An empty or missing query resets the original list as received from the API (sorted by relevance).
+--- currently displayed repository list by text. The actual filtering logic
+--- is delegated to `ui.actions.filter_repos.apply_filter` (same as
+--- `:Reposcope filter`) so both entry points share one implementation and
+--- one "current filter" tracking point.
 local M = {}
 
--- UI + Cache
-local repository_cache_get = require("reposcope.cache.repository_cache").get
-local repository_cache_set = require("reposcope.cache.repository_cache").set
-local display_repositories = require("reposcope.controllers.list_controller").display_repositories
-local fetch_readme_for_selected = require("reposcope.controllers.provider_controller").fetch_readme_for_selected
+local apply_filter = require("reposcope.ui.actions.filter_repos").apply_filter
 
 
 ---Opens a floating input window to enter a filter query.
@@ -44,19 +41,7 @@ function M.prompt_filter()
     vim.api.nvim_win_close(win, true)
     if not input or input == "" then return end
 
-    -- Apply filter logic
-    local query = input:lower()
-    local filtered = {}
-    for _, repo in ipairs(repository_cache_get().items or {}) do
-      local full = (repo.owner.login .. "/" .. repo.name .. ": " .. (repo.description or "")):lower()
-      if full:find(query, 1, true) then
-        table.insert(filtered, repo)
-      end
-    end
-
-    repository_cache_set({ total_count = #filtered, items = filtered }, false)
-    display_repositories()
-    fetch_readme_for_selected()
+    apply_filter(input)
   end)
 
   vim.cmd("startinsert")

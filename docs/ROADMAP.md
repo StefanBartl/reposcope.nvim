@@ -1,18 +1,8 @@
 # Roadmap
 
-Record of shipped features, plus the backlog of planned features, user
-commands, keymaps, and autocommands. For everything already implemented, see
-[BINDINGS.md](BINDINGS.md).
-
-## Table of Contents
-
-- [1. Shipped](#1-shipped)
-- [2. Planned Features](#2-planned-features)
-- [3. Planned User Commands](#3-planned-user-commands)
-- [4. Planned Keymaps](#4-planned-keymaps)
-- [5. Planned Autocommands](#5-planned-autocommands)
-
----
+Record of shipped features. For everything currently implemented, see
+[BINDINGS.md](BINDINGS.md). There is no open backlog at the moment — new
+planned items are added here as they come up.
 
 ## 1. Shipped
 
@@ -29,28 +19,5 @@ commands, keymaps, and autocommands. For everything already implemented, see
 - [x] GitLab provider support
 - [x] Codeberg provider support
 - [x] `:Reposcope providers` – list available/active providers
-
----
-
-## 2. Planned Features
-
-- [ ] Persistent session save/restore (last search, filters, sort)
-
----
-
-## 3. Planned User Commands
-
-- [ ] `:Reposcope session save|restore|clear` – manage persisted sessions
-
----
-
-## 4. Planned Keymaps
-
-- [ ] None currently planned — all keymaps are user-configurable and disableable,
-  see [`bindings/keymaps.lua`](../lua/reposcope/bindings/keymaps.lua) and [BINDINGS.md](BINDINGS.md)
-
----
-
-## 5. Planned Autocommands
-
-- [ ] None currently planned
+- [x] Persistent session save/restore (last search, filters, sort)
+- [x] `:Reposcope session save|restore|clear` – manage persisted sessions

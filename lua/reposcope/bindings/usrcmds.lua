@@ -186,6 +186,26 @@ local subcommands = {
     end,
   },
 
+  session = {
+    desc = "Manage the persisted search session (:Reposcope session save|restore|clear)",
+    run = function(args)
+      local action = args[1]
+      local session_state = require("reposcope.state.session_state")
+      if action == "save" then
+        session_state.save()
+      elseif action == "restore" then
+        session_state.restore()
+      elseif action == "clear" then
+        session_state.clear()
+      else
+        notify("[reposcope] Usage: :Reposcope session save|restore|clear", vim.log.levels.WARN)
+      end
+    end,
+    complete = function()
+      return { "save", "restore", "clear" }
+    end,
+  },
+
   ["skipped-readmes"] = {
     desc = "Print the number of debounced (skipped) README fetches",
     run = function()

@@ -30,6 +30,7 @@ end, { desc = "Open Reposcope" })
   - [:Reposcope update [dir]](#reposcope-update-dir)
   - [:Reposcope status [dir] [--out] [--to]](#reposcope-status-dir---out---to)
   - [:Reposcope providers](#reposcope-providers)
+  - [:Reposcope session save|restore|clear](#reposcope-session-saverestoreclear)
 
 ---
 
@@ -86,6 +87,14 @@ subcommand; remaining arguments are forwarded to it.
 | Command                | Description                                                    |
 | ----------------------- | --------------------------------------------------------------- |
 | `:Reposcope providers`  | Lists available providers (`github`, `gitlab`, `codeberg`) and marks the active one |
+
+**Session**
+
+| Command                                    | Description                                                    |
+| ------------------------------------------- | --------------------------------------------------------------- |
+| `:Reposcope session save`                  | Saves the current provider, prompt input, last query, filter, and sort mode |
+| `:Reposcope session restore`               | Restores the saved session and re-runs the last search          |
+| `:Reposcope session clear`                 | Deletes the saved session file, if any                          |
 
 **Debugging, Stats & Metrics**
 
@@ -237,4 +246,28 @@ Example output:
   codeberg
   github
 * gitlab
+```
+
+---
+
+#### `:Reposcope session save|restore|clear`
+
+Persists (or restores, or clears) the last search session: the active
+provider, the visible prompt fields and their typed-in text, the last built
+search query, the active filter text, and the current sort mode. The session
+is written as a single JSON file under the plugin's cache directory and
+survives Neovim restarts. Nothing is saved automatically — you decide when a
+session is worth keeping.
+
+- `save` — writes the current session, overwriting any previous one.
+- `restore` — restores the saved provider/prompt/input, then re-runs the last
+  search; once results arrive, the saved filter and sort mode are re-applied.
+- `clear` — deletes the saved session file, if one exists.
+
+Examples:
+
+```vim
+:Reposcope session save     "remember the current search, filter and sort
+:Reposcope session restore  "bring back the last saved search
+:Reposcope session clear    "delete the saved session
 ```
