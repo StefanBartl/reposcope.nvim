@@ -141,6 +141,7 @@ The following subcommands are available:
 | `:Reposcope update [dir]`     | Updates all cloned git repositories          |
 | `:Reposcope status [dir]`     | Shows git status overview of repositories    |
 | `:Reposcope providers`        | Lists providers and marks the active one     |
+| `:Reposcope session ...`      | Save, restore, or clear the search session   |
 | `:Reposcope skipped-readmes`  | Prints number of debounced README fetches    |
 | `:Reposcope stats`            | Displays request statistics (metrics)        |
 | `:Reposcope toggle-dev`       | Toggles developer mode (logging, mocking)    |
@@ -277,6 +278,27 @@ the currently active one (the `provider` config option) with `*`.
     codeberg
     github
   * gitlab
+<
+
+------------------------------------------------------------------------------
+                                                        *:Reposcope-session*
+:Reposcope session save|restore|clear
+
+Saves, restores, or clears the last search session: the active provider,
+the visible prompt fields and their typed-in text, the last built search
+query, the active filter text, and the current sort mode. Stored as a single
+JSON file under the plugin's cache directory; survives Neovim restarts.
+Nothing is saved automatically.
+
+- `save`    — writes the current session, overwriting any previous one.
+- `restore` — restores provider/prompt/input, re-runs the last search, then
+  re-applies the saved filter and sort mode once results arrive.
+- `clear`   — deletes the saved session file, if one exists.
+
+- Example: >
+    :Reposcope session save
+    :Reposcope session restore
+    :Reposcope session clear
 <
 
 ==============================================================================

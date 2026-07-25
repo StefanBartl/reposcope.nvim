@@ -11,10 +11,15 @@ local list_controller = require("reposcope.controllers.list_controller")
 local fetch_readme = require("reposcope.controllers.provider_controller").fetch_readme_for_selected
 local notify = require("reposcope.utils.debug").notify
 
+---Last sort mode applied via `apply_sort` ("relevance" if none/reset)
+---@type "name"|"owner"|"stars"|"relevance"
+local _current_sort = "relevance"
+
+
 ---@private
 ---@brief Sorts repository items based on the selected mode
 ---@param items Repository[]
----@param mode "name"|"owner"|"stars"
+---@param mode "name"|"owner"|"stars"|"relevance"
 ---@return Repository[]|nil
 local function sort_items(items, mode)
   if mode == "name" then
@@ -31,6 +36,40 @@ local function sort_items(items, mode)
   return items
 end
 
+
+---Applies a sort mode to the currently cached repositories and refreshes the UI.
+---@param mode "name"|"owner"|"stars"|"relevance"
+---@return nil
+function M.apply_sort(mode)
+  _current_sort = mode
+
+  if mode == "relevance" then
+    repository_cache.restore_relevance_sorting()
+  else
+    local items = repository_cache.get().items or {}
+    if #items == 0 then
+      notify("[reposcope] No repositories to sort.", vim.log.levels.WARN)
+      return
+    end
+
+    local sorted = sort_items(vim.tbl_deep_extend("force", {}, items), mode)
+    if sorted then
+      repository_cache.set({ total_count = #sorted, items = sorted }, false)
+    end
+  end
+
+  list_controller.display_repositories()
+  fetch_readme()
+end
+
+
+---Returns the last sort mode applied via `apply_sort` ("relevance" if none/reset)
+---@return "name"|"owner"|"stars"|"relevance"
+function M.get_current_sort()
+  return _current_sort
+end
+
+
 ---Displays a prompt to sort the currently cached repositories by mode.
 ---@return nil
 function M.prompt_sort()
@@ -38,24 +77,7 @@ function M.prompt_sort()
     prompt = "Sort repositories by:",
   }, function(choice)
     if not choice then return end
-
-    if choice == "relevance" then
-      repository_cache.restore_relevance_sorting()
-    else
-      local items = repository_cache.get().items or {}
-      if #items == 0 then
-        notify("[reposcope] No repositories to sort.", vim.log.levels.WARN)
-        return
-      end
-
-      local sorted = sort_items(vim.tbl_deep_extend("force", {}, items), choice)
-      if sorted then
-        repository_cache.set({ total_count = #sorted, items = sorted }, false)
-      end
-    end
-
-    list_controller.display_repositories()
-    fetch_readme()
+    M.apply_sort(choice)
   end)
 end
 

@@ -68,3 +68,16 @@
 ---@field is_registered fun(uuid: string): boolean Returns true if the UUID was registered
 ---@field is_request_active fun(uuid: string): boolean Returns true if UUID is active
 ---@field clear_all_requests fun(): nil Clears all tracked UUID requests
+
+---@class SessionStateModule
+---@field save fun(): boolean Gathers the current search context and writes it to the session file
+---@field restore fun(): boolean Reads the persisted session (if any) and re-applies it
+---@field clear fun(): boolean Removes the persisted session file, if any
+
+---@class SessionData
+---@field provider string
+---@field fields PromptField[]
+---@field input table<string, string>
+---@field query string
+---@field filter_text string
+---@field sort_mode "name"|"owner"|"stars"|"relevance"

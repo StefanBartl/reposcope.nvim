@@ -127,6 +127,7 @@
 ---@class UIPromptInputModule
 ---@field collect fun(): table<string, string>
 ---@field on_enter fun(): nil
+---@field get_last_query fun(): string Returns the last search query string built by `on_enter` ("" if none yet)
 
 ---@class UIPromptLayoutModule
 ---@field build_layout fun(): {name: string, buffer: integer, width: integer, col: integer}[] List of window layouts

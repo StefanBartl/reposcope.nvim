@@ -13,6 +13,7 @@
 - 📑 README viewer (`<C-v>`) or README editor buffer (`<C-b>`)
 - ⌨️ Keymaps for navigation, cloning, and UI control
 - 📁 Customizable prompt fields (e.g. `prefix`, `keywords`, `owner`, ...)
+- 💾 Persistent session save/restore — last search, filter and sort mode (`:Reposcope session save|restore|clear`)
 
 ---
 

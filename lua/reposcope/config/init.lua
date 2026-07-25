@@ -59,6 +59,12 @@ function M.get_readme_filecache_dir()
   return filecache_path .. "/readme"
 end
 
+---Returns the absolute path of the persisted session file
+---@return string
+function M.get_session_path()
+  return filecache_path .. "/session.json"
+end
+
 ---@param key ConfigOptionKey
 ---@return any
 function M.get_option(key)

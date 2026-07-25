@@ -14,6 +14,10 @@ local build_query = provider_controller.build_query
 -- Utilities
 local notify = require("reposcope.utils.debug").notify
 
+---Last search query string built by `on_enter` (empty if none yet)
+---@type string
+local _last_query = ""
+
 
 ---Collects input from each active prompt field
 ---@return table<string, string> result Keyed by prompt field, containing non-empty values
@@ -46,7 +50,15 @@ function M.on_enter()
     return
   end
 
+  _last_query = query
   fetch_repositories_and_display(query)
+end
+
+
+---Returns the last search query string built by `on_enter` ("" if none yet)
+---@return string
+function M.get_last_query()
+  return _last_query
 end
 
 return M

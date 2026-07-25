@@ -19,12 +19,17 @@ local fetch_readme_for_selected = require("reposcope.controllers.provider_contro
 -- Debugging
 local notify = require("reposcope.utils.debug").notify
 
+---Last filter text applied via `apply_filter` (empty string if none/cleared)
+---@type string
+local _current_filter = ""
+
 
 ---Applies a substring filter to the current repository list or resets it if query is empty.
 ---@param query string Case-insensitive substring to search for
 ---@return nil
 function M.apply_filter(query)
   query = (query or ""):lower()
+  _current_filter = query
 
   if query == "" then
     restore_relevance_sorting()
@@ -43,6 +48,13 @@ function M.apply_filter(query)
   repository_cache_set({ total_count = #filtered, items = filtered }, false)
   display_repositories()
   fetch_readme_for_selected()
+end
+
+
+---Returns the last filter text applied via `apply_filter` ("" if none/cleared)
+---@return string
+function M.get_current_filter()
+  return _current_filter
 end
 
 return M
