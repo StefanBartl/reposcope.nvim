@@ -6,3 +6,4 @@
 * Debug file paths and logs are stored in:
   * `~/.local/share/nvim/reposcope/data/readme/`
   * `~/.local/share/nvim/reposcope/logs/request_log.json`
+  * `~/.local/share/nvim/reposcope/data/session.json` — persisted `:Reposcope session save` state
