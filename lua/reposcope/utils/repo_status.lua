@@ -14,6 +14,10 @@
 --- through a non-blocking job and the aggregated records are handed back once all
 --- queries finish, preserving the discovery order.
 ---
+--- Live feedback while the repositories are being read goes through
+--- `utils.progress` (optional dependency): a single `git status` is fast, but a
+--- directory of several dozen clones adds up to a noticeable wait with no output.
+---
 --- Notifications follow the Reposcope convention (`utils.debug.notify`): progress
 --- is dev-mode only, errors are always shown. Rendering of the final overview is
 --- delegated to the caller via the `on_complete` callback.
@@ -41,6 +45,8 @@ local repos_util = require("reposcope.utils.repos")
 local resolve_base_dir = repos_util.resolve_base_dir
 local collect_repos = repos_util.collect_repos
 local is_git_repo = repos_util.is_git_repo
+-- Progress indicator (optional dependency, see utils/progress.lua)
+local progress = require("reposcope.utils.progress")
 
 
 ---Derives a single summary state from the parsed status fields.
@@ -165,10 +171,25 @@ function M.status_all(path, on_complete)
   local total = #repos
   local remaining = total
 
+  -- Countable by completions, not by index: these run in parallel, so "how many
+  -- have come back" is the only meaningful number — there is no single repository
+  -- that is currently being read.
+  local handle = progress.create(("reading status of %d repositories"):format(total), total)
+
   local function finish()
     remaining = remaining - 1
+    if handle then
+      handle:update({
+        text = ("%d of %d read"):format(total - remaining, total),
+        current = total - remaining,
+        total = total,
+      })
+    end
     if remaining > 0 then
       return
+    end
+    if handle then
+      handle:finish(("read %d of %d repositories"):format(total - #errors, total))
     end
     -- Compact into a dense, discovery-ordered list (errored repos leave gaps).
     ---@type RepoStatusRecord[]

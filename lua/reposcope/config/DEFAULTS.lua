@@ -42,6 +42,7 @@ local defaults = {
   -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
   metrics = false,
   log_max = 1000, -- Controls the size of the log file
+  progress_style = "auto", -- Indicator for `:Reposcope update`/`status` over many repositories; needs lib.nvim, no-op without it
 }
 
 return defaults

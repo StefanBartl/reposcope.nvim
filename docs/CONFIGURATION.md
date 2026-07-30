@@ -31,6 +31,7 @@ require("reposcope").setup({
     type = "git",                           -- Clone method: "git", "gh", "wget", "curl"
   },
   metrics = true,                           -- Enables request timing and logging (for debugging)
+  progress_style = "auto",                  -- Indicator for `:Reposcope update`/`status`; needs lib.nvim, no-op without it
 })
 ```
 
@@ -52,6 +53,7 @@ require("reposcope").setup({
 | `clone.std_dir` | `string`   | Base path for repository cloning                                   |
 | `clone.type`    | `string`   | Tool used to perform clone: `"git"`, `"gh"`, `"wget"`, or `"curl"` |
 | `metrics`       | `boolean`  | Enable internal request logging and performance tracking           |
+| `progress_style`| `string`   | Progress indicator for the bulk repository commands; see [below](#progress-indicator) |
 
 > ℹ️ You can dynamically reload prompt fields with `:Reposcope prompt prefix topic`.
 
@@ -60,3 +62,57 @@ require("reposcope").setup({
 > `provider = "gitlab"` or `provider = "codeberg"`, every non-empty prompt
 > field is joined into one plain search string instead of being applied as a
 > scoped filter.
+
+---
+
+## Progress Indicator
+
+`:Reposcope update` and `:Reposcope status` walk a whole directory of clones and
+run `git` once (or twice) per repository. Each individual call is quick, but over
+a few dozen repositories that adds up to a wait long enough to look like a hang —
+`update` in particular was silent between "Updating N repositories" and the final
+summary, because its per-repository notifications are dev-mode only.
+
+Both commands now report live progress through
+[`lib.nvim.progress`](https://github.com/StefanBartl/lib.nvim/blob/main/lua/lib/nvim/progress/README.md),
+which separates "an operation is running" from "how that is shown":
+
+```lua
+require("reposcope").setup({
+  progress_style = "auto", -- "auto" | "notify" | "statusline" | "fidget" | "float" | "kit"
+})
+```
+
+`lib.nvim` is an **optional** dependency. Without it installed the option is
+silently a no-op and both commands behave exactly as before — no error, nothing
+missing beyond the indicator itself.
+
+| Style          | Behaviour                                                                 |
+| -------------- | ------------------------------------------------------------------------- |
+| `"auto"`       | Default. Prefers `fidget.nvim` when installed, else `vim.notify`.         |
+| `"notify"`     | `vim.notify`; updated in place by backends that return an id (nvim-notify). |
+| `"statusline"` | Draws nothing — publishes the text for your own statusline to read.       |
+| `"fidget"`     | `fidget.nvim`'s LSP-style progress handles.                               |
+| `"float"`      | Small floating window; focus it and press `<Esc>` to abort.               |
+| `"kit"`        | Like `"float"`, themed via `lib.nvim.ui.kit`.                             |
+
+The indicator is **delay-guarded**: it only becomes visible after ~150ms, so
+`status` on two or three repositories never flashes any UI.
+
+Cancelling (`"float"`/`"kit"`) stops `update` after the repository currently
+being fetched, rather than killing `git` mid-write — the repositories already
+updated stay updated, and the final summary reports the real count.
+
+### With the `"statusline"` style
+
+This style is headless by design: read the shared registry from your own
+statusline component. It returns one entry per in-flight operation across *all*
+plugins using `lib.nvim.progress`, so this snippet is not reposcope-specific:
+
+```lua
+local function progress_component()
+  local ok, sl = pcall(require, "lib.nvim.progress.styles.statusline")
+  if not ok then return "" end
+  return table.concat(sl.active(), " | ") -- "" when nothing is running
+end
+```

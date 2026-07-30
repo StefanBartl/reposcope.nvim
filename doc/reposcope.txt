@@ -60,8 +60,34 @@ Advanced setup:
       std_dir = "~/projects",          -- directory to clone into
       type = "git",                    -- "git", "gh", "wget", or "curl"
     },
-    metrics = true                     -- enable request logging & metrics
+    metrics = true,                    -- enable request logging & metrics
+    progress_style = "auto"            -- indicator for `update`/`status`
   })
+
+                                             *reposcope-config-progress_style*
+progress_style ~
+    Type: `"auto"|"notify"|"statusline"|"fidget"|"float"|"kit"`
+    Default: `"auto"`
+    Progress indicator for the two bulk commands, |:Reposcope| `update` and
+    |:Reposcope| `status`. Both walk a whole directory of clones and run
+    `git` once or twice per repository — quick individually, but over a few
+    dozen repositories long enough to look like a hang.
+
+    Requires `lib.nvim`, which provides the indicator via its
+    `lib.nvim.progress` module. Without `lib.nvim` installed the option is
+    silently a no-op and both commands behave exactly as before.
+
+    `"auto"` prefers `fidget.nvim` when installed and falls back to
+    `vim.notify`. `"statusline"` draws nothing and instead publishes the
+    text for your own statusline to read via
+    `require("lib.nvim.progress.styles.statusline").active()`. `"float"`
+    and `"kit"` open a small window that can be focused and `<Esc>`-ed to
+    abort — `update` then stops after the repository currently being
+    fetched instead of killing `git` mid-write, so everything already
+    updated stays updated.
+
+    The indicator is delay-guarded: it only becomes visible after ~150ms,
+    so `status` over two or three repositories never flashes any UI.
 
 Note: GitLab's and Codeberg's search APIs only support a plain substring
 match (no `owner:`/`language:`-style qualifiers like GitHub's search) — with

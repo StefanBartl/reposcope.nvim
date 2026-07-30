@@ -16,6 +16,12 @@
 --- Notifications follow the Reposcope convention (`utils.debug.notify`): progress
 --- is dev-mode only, errors are always shown. The final, user-facing summary is
 --- delegated to the caller via the optional `on_complete` callback.
+---
+--- Because those per-repository notifications are dev-mode only, a normal user
+--- saw nothing at all between "Updating N repositories" and the final summary —
+--- which for a directory of several dozen clones is minutes of silence. Live
+--- feedback therefore goes through `utils.progress` (optional dependency), which
+--- has the repository count and the queue index available as exact current/total.
 
 ---@class RepoUpdater : RepoUpdaterModule
 local M = {}
@@ -30,6 +36,8 @@ local notify = require("reposcope.utils.debug").notify
 local repos_util = require("reposcope.utils.repos")
 local resolve_base_dir = repos_util.resolve_base_dir
 local collect_repos = repos_util.collect_repos
+-- Progress indicator (optional dependency, see utils/progress.lua)
+local progress = require("reposcope.utils.progress")
 
 
 ---Runs `git fetch --all --prune` then `git pull --ff-only` for a single repository.
@@ -91,15 +99,42 @@ function M.update_all(path, on_complete)
   local updated = 0
   local index = 1
 
+  local handle = progress.create(("updating %d repositories"):format(#repos), #repos)
+
+  -- Cancelling stops the queue rather than killing the in-flight `git` process:
+  -- a half-applied fetch is harmless and finishes in a moment anyway, whereas
+  -- interrupting a `pull` mid-write is the one thing worth avoiding here. The
+  -- repositories already updated stay updated, and `on_complete` still reports
+  -- the real count.
+  local cancelled = false
+  if handle then
+    handle:on_cancel(function()
+      cancelled = true
+    end)
+  end
+
   local function run_next()
     local repo = repos[index]
-    if not repo then
+    if not repo or cancelled then
+      if handle and not cancelled then
+        handle:finish(("updated %d of %d repositories"):format(updated, #repos))
+      end
       vim.schedule(function()
         if on_complete then
           on_complete(updated, errors)
         end
       end)
       return
+    end
+
+    -- Named before the call, not after: the indicator should show what is
+    -- currently being fetched, not what was last finished.
+    if handle then
+      handle:update({
+        text = fnamemodify(repo, ":t"),
+        current = index - 1,
+        total = #repos,
+      })
     end
 
     update_repo(repo, function(success, err)
