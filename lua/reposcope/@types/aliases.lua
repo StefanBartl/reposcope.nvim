@@ -28,6 +28,15 @@
 ---| "cache_dir"
 ---| "logfile_path"
 ---| "log_max"
+---| "progress_style"
+
+---@alias ProgressStyle # Renderer for the progress indicator (see lib.nvim.progress)
+---| "auto"        # fidget.nvim when installed, else vim.notify
+---| "notify"      # vim.notify, replaced in place by backends that support it
+---| "statusline"  # headless; read via lib.nvim.progress.styles.statusline.active()
+---| "fidget"      # fidget.nvim's LSP-style handles
+---| "float"       # small floating window, focus + <Esc> to abort
+---| "kit"         # like "float", themed via lib.nvim.ui.kit
 
 ---@alias PromptField # The field key (e.g. "keywords", "owner")
 ---| "prefix"

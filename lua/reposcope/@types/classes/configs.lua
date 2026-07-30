@@ -23,6 +23,7 @@
 ---@field prompt_keymaps table<PromptKeymapAction, string|string[]|false> Custom key mappings for prompt-buffer actions. Set an action to `false` or `""` to disable it.
 ---@field metrics boolean Enable or disable anonymous usage metrics
 ---@field log_max number Maximum log size (lines)
+---@field progress_style ProgressStyle Indicator for bulk repository operations (`update`/`status`); needs lib.nvim, no-op without it
 
 ---@class ReposcopeConfigModule
 ---@brief Structure exposed to the outside and used during `setup()`
@@ -47,4 +48,5 @@
 ---@field prompt_keymaps? table<PromptKeymapAction, string|string[]|false>
 ---@field metrics? boolean
 ---@field log_max? number
+---@field progress_style? ProgressStyle
 
