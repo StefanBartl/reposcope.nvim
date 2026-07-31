@@ -275,6 +275,50 @@ local function build_routes()
   return routes
 end
 
+---`dir`'s completion for `status`: real directory listings plus a couple of
+--- fixed, well-known path keywords (`$REPOS_DIR`, `~`) offered up front, so
+--- e.g. `:Reposcope status $REPOS_DIR<Tab>` and a bare `:Reposcope status
+--- <Tab>` both surface them without having to know/type them out fully.
+--- Validation is unchanged from the built-in `DIR` type (expand, then must
+--- be an existing directory) -- only completion candidates are extended.
+local is_dir = require("lib.nvim.fs.is_dir")
+local expand_path = require("lib.nvim.cross.fs.expand_path")
+
+---Fixed path keywords offered alongside real directories, filtered to those
+--- whose underlying env var/path is actually set/resolvable.
+---@return string[]
+local function fixed_dir_keywords()
+  local env = require("lib.nvim.system.env").get()
+  local keywords = {}
+  if env.repo_base and env.repo_base ~= "" then
+    keywords[#keywords + 1] = "$REPOS_DIR"
+  end
+  if env.home and env.home ~= "" then
+    keywords[#keywords + 1] = "~"
+  end
+  return keywords
+end
+
+composer.register_type("REPOSCOPE_STATUS_DIR", {
+  validate = function(raw)
+    local expanded = expand_path(raw)
+    if not is_dir(vim.fn.fnamemodify(expanded, ":p")) then
+      return false, nil, ("'%s' is not a directory"):format(raw)
+    end
+    return true, expanded, nil
+  end,
+  complete = function(arg_lead)
+    local candidates = {}
+    for _, kw in ipairs(fixed_dir_keywords()) do
+      if arg_lead == "" or kw:sub(1, #arg_lead) == arg_lead then
+        candidates[#candidates + 1] = kw
+      end
+    end
+    vim.list_extend(candidates, vim.fn.getcompletion(arg_lead, "dir"))
+    return candidates
+  end,
+})
+
 ---Dedicated route for `status`: it needs `--out`/`--to` flags, which the
 --- generic per-subcommand wrapper above (single optional positional) can't
 --- express, so it is built by hand instead of going through `subcommands`.
@@ -282,7 +326,7 @@ end
 local status_route = {
   path = { "status" },
   desc = "Show the git status overview of all repositories in a directory (or one repository)",
-  args = { { name = "dir", type = "DIR", optional = true } },
+  args = { { name = "dir", type = "REPOSCOPE_STATUS_DIR", optional = true } },
   flags = {
     { name = "out", type = "STRING", enum = { "popup", "buffer", "split", "vsplit", "clipboard", "path" } },
     { name = "to", type = "PATH" },

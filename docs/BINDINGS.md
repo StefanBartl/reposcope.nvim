@@ -97,7 +97,10 @@ available for subcommand names and, where noted, their arguments.
 
 `status`'s `--out` selects the output backend (`popup` default, `buffer`,
 `split`, `vsplit`, `clipboard`, `path`), and `--to=<file>` sets the target
-file for `--out=path`. See [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua)
+file for `--out=path`. `<Tab>` on `[dir]` offers `$REPOS_DIR` and `~` ahead of
+real directory completion (see `fixed_dir_keywords` in
+[`bindings/usrcmds.lua`](../lua/reposcope/bindings/usrcmds.lua)). See
+[`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua)
 and [COMMANDS.md](COMMANDS.md#reposcope-status-dir---out---to) for details.
 
 ---

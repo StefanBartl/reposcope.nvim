@@ -201,6 +201,11 @@ read-only counterpart to `:Reposcope update` — *discover → clone → status 
 > ℹ️ Only immediate subdirectories are scanned (non-recursive). The command never
 > modifies anything; it only reads.
 
+`<Tab>` on the `[dir]` slot offers real directory completion plus two fixed
+keywords up front when resolvable: `$REPOS_DIR` (from the `$REPOS_DIR` env
+var) and `~` (home) — both expand before the directory check, so
+`:Reposcope status $REPOS_DIR` scans every repo under that root in one call.
+
 Unlike a plain `vim.notify`, the result is never truncated or unscrollable —
 `--out` picks where it's displayed:
 
@@ -228,6 +233,7 @@ Examples:
 :Reposcope status                            "popup with all repos in clone.std_dir
 :Reposcope status ~/projects                 "popup with all repos inside ~/projects
 :Reposcope status ~/projects/foo             "popup with the single repository foo
+:Reposcope status $REPOS_DIR                 "popup with every repo under $REPOS_DIR
 :Reposcope status ~/projects --out=split     "same, in a reusable horizontal split
 :Reposcope status --out=clipboard            "copy the table to the system clipboard
 :Reposcope status --out=path --to=status.txt "write the table to status.txt
