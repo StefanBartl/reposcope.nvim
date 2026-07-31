@@ -27,11 +27,15 @@ function M.navigate_list_in_prompt(direction)
   -- Default to first line if not set
   list_window.highlighted_line = list_window.highlighted_line or 1
 
+  -- Move by vim.v.count1 rows per call (defaults to 1 when no count is
+  -- pending, which is always the case in insert mode), clamped to bounds.
+  local step = vim.v.count1
+
   -- Adjust current highlighted line
   if direction == "up" then
-    list_window.highlighted_line = math.max(list_window.highlighted_line - 1, 1)
+    list_window.highlighted_line = math.max(list_window.highlighted_line - step, 1)
   elseif direction == "down" then
-    list_window.highlighted_line = math.min(list_window.highlighted_line + 1, total_lines)
+    list_window.highlighted_line = math.min(list_window.highlighted_line + step, total_lines)
   end
 
   highlight_selected(list_window.highlighted_line)
