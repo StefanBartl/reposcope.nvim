@@ -62,6 +62,8 @@ function M.check()
   else
     health.warn("GITHUB_TOKEN not set – GitHub API may be rate-limited")
   end
+
+  require("lib.nvim.usercmd.composer").checkhealth("Reposcope")
 end
 
 return M
