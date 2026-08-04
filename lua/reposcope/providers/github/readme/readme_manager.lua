@@ -33,6 +33,7 @@ local clear_preview = require("reposcope.ui.preview.preview_manager").clear_prev
 local ui_state = require("reposcope.state.ui.ui_state")
 
 ---@private
+---@internal
 ---@param owner string
 ---@param repo_name string
 ---@param branch string
@@ -57,6 +58,7 @@ local function _fetch_from_api_fallback(owner, repo_name, branch, uuid)
 end
 
 ---@private
+---@internal
 ---@param repo Repository
 ---@param owner string
 ---@param repo_name string
@@ -76,6 +78,11 @@ local function _record_metrics(repo, owner, repo_name)
   end
 end
 
+---@private
+---@internal
+---Checks whether a string looks like an `http(s)://` URL.
+---@param url string
+---@return boolean
 local function is_valid_url(url)
   return type(url) == "string" and url:match("^https?://")
 end
@@ -84,6 +91,7 @@ end
 ---Fetches the README for the currently selected repository
 ---@param uuid string
 ---@return nil
+---@see reposcope.providers.codeberg.readme.readme_manager.M.fetch_for_selected, reposcope.providers.gitlab.readme.readme_manager.M.fetch_for_selected
 function M.fetch_for_selected(uuid)
   if not request_state.is_registered(uuid) then return end
   if request_state.is_request_active(uuid) then return end

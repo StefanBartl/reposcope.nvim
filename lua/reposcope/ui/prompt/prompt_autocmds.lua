@@ -27,6 +27,8 @@ local ui_state = require("reposcope.state.ui.ui_state")
 local prompt_set_field_text = require("reposcope.state.ui.prompt_state").set_field_text
 
 
+---@private
+---@internal
 ---Helper to determine which prompt field is currently active
 ---@return string|nil
 local function get_active_prompt_field()

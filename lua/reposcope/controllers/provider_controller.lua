@@ -48,6 +48,7 @@ end
 
 
 ---@private
+---@internal
 ---Resolves the currently selected provider string from config
 ---@return string The active provider identifier (e.g., "github")
 local function _get_provider()
@@ -56,6 +57,7 @@ end
 
 
 ---@private
+---@internal
 ---Resolves the active provider's entrypoint table, notifying once if the
 --- configured `provider` option doesn't match a registered provider.
 ---@return ProviderEntrypoint|nil

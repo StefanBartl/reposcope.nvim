@@ -1,4 +1,4 @@
----@module 'reposcope.cache.repository_cach'
+---@module 'reposcope.cache.repository_cache'
 ---@brief Caches the most recent GitHub repository results in memory
 ---@description
 --- This module temporarily caches the result of repository queries from the GitHub API.
@@ -29,6 +29,7 @@ M.relevance_result = nil
 
 
 ---@private
+---@internal
 ---@param repo table
 ---@param index integer
 ---@return table
@@ -63,6 +64,7 @@ end
 
 
 ---@private
+---@internal
 ---@param repo table
 ---@return string
 local function _build_repo_line(repo)
@@ -77,6 +79,7 @@ end
 
 
 ---@private
+---@internal
 ---@return nil
 local function _validate_repo_list()
   local list = M.repositories.list

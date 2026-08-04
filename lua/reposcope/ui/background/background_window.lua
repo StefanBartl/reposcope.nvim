@@ -29,6 +29,7 @@ local create_named_buffer = require("reposcope.utils.protection").create_named_b
 
 
 ---@private
+---@internal
 ---Applies the layout and styling to the background window.
 ---@return nil
 local function _apply_background_layout()

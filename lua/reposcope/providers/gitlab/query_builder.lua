@@ -13,6 +13,7 @@ local M = {}
 
 
 ---Builds a plain-text search string from prompt input
+---@see reposcope.providers.codeberg.query_builder.M.build, reposcope.providers.github.query_builder.M.build
 ---@param input table<string, string>
 ---@return Query
 function M.build(input)

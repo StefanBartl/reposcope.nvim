@@ -195,6 +195,7 @@ local prompt_keymap_actions = {
   },
 }
 
+---@internal
 ---Builds the flat list of `{ mode, lhs, rhs, desc }` mappings from `config.prompt_keymaps`.
 ---An action is skipped entirely if its configured key(s) are `false`, `""`, or `nil`.
 ---@return { mode: string|string[], lhs: string, rhs: function, desc: string }[]
@@ -308,6 +309,7 @@ function M.set_close_ui_keymaps()
 end
 
 ---@private
+---@internal
 ---Clear all registered keymaps with optional tag.
 ---If no tag is provided, only 'reposcope_'-prefixed tags are accepted.
 ---@param tag string|nil

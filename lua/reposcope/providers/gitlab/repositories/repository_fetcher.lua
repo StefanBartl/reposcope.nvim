@@ -37,6 +37,7 @@ end
 
 
 ---@private
+---@internal
 ---Normalizes a single GitLab project object into the shared `Repository` shape
 ---@param project table
 ---@return Repository

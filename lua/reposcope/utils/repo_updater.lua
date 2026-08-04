@@ -40,6 +40,8 @@ local collect_repos = repos_util.collect_repos
 local progress = require("reposcope.utils.progress")
 
 
+---@private
+---@internal
 ---Runs `git fetch --all --prune` then `git pull --ff-only` for a single repository.
 ---@param repo string Absolute path to the repository
 ---@param on_done fun(success: boolean, err: string|nil): nil

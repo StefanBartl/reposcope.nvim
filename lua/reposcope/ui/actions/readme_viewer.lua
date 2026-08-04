@@ -36,6 +36,7 @@ local create_named_buffer = require("reposcope.utils.protection").create_named_b
 
 
 ---@private
+---@internal
 --- Detects whether a README content string contains HTML-like content
 ---@param content string The content to test
 ---@return boolean True if content appears to be HTML
@@ -45,6 +46,7 @@ end
 
 
 ---@private
+---@internal
 --- Opens the repository's GitHub page in the system browser
 ---@param repo table The repository table (must contain `.owner.login` and `.name`)
 ---@return nil
@@ -56,6 +58,7 @@ end
 
 
 ---@private
+---@internal
 --- Prepares and fills the README buffer with the provided Markdown content
 ---@param content string The README text to display
 ---@return integer|nil The buffer handle, or nil if creation failed
@@ -92,6 +95,7 @@ end
 
 
 ---@private
+---@internal
 --- Opens a floating window to display the given README buffer
 ---@param buf integer The buffer handle to open in a window
 ---@return nil

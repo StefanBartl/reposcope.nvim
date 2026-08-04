@@ -51,6 +51,7 @@ local _fields = {}
 
 
 ---@private
+---@internal
 ---Checks whether a field name is valid based on the predefined VALID_FIELDS list.
 ---@param field string The field name to validate (e.g., "keywords", "owner")
 ---@return boolean # True if the field exists in VALID_FIELDS, false otherwise

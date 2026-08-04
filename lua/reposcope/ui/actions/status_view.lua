@@ -50,6 +50,8 @@ function M.render(records)
   return lines
 end
 
+---@private
+---@internal
 ---Opens the status overview in a scrollable floating window (default output).
 ---@param lines string[]
 ---@return nil
@@ -65,6 +67,8 @@ local function show_popup(lines)
   })
 end
 
+---@private
+---@internal
 ---Replaces the current window's buffer with the (reused) status buffer.
 ---@param lines string[]
 ---@return nil
@@ -85,6 +89,8 @@ local function show_buffer(lines)
   vim.api.nvim_win_set_buf(0, bufnr)
 end
 
+---@private
+---@internal
 ---Opens (or reuses) a split showing the status buffer.
 ---@param lines string[]
 ---@param vertical boolean
@@ -96,6 +102,8 @@ local function show_split(lines, vertical)
   })
 end
 
+---@private
+---@internal
 ---Copies the raw status table to the system clipboard.
 ---@param lines string[]
 ---@return nil
@@ -108,6 +116,8 @@ local function show_clipboard(lines)
   end
 end
 
+---@private
+---@internal
 ---Writes the raw status table to a file (custom path, or a default under stdpath("cache")).
 ---@param lines string[]
 ---@param path string|nil

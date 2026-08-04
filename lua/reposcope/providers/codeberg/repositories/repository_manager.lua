@@ -26,6 +26,7 @@ local repo_cache_clear = require("reposcope.cache.repository_cache").clear
 
 ---Handles clearing UI and state in case of API or fetch errors
 ---@private
+---@internal
 ---@return nil
 local function _handle_fetch_failure()
   repo_cache_clear()
@@ -40,6 +41,7 @@ end
 ---@param on_success? fun(): nil
 ---@param on_failure? fun(): nil
 ---@return nil
+---@see reposcope.providers.github.repositories.repository_manager.M.fetch, reposcope.providers.gitlab.repositories.repository_manager.M.fetch
 function M.fetch(query, uuid, on_success, on_failure)
   if not request_state.is_registered(uuid) then
     notify("[reposcope] Skipped fetch: UUID not registered", 3)

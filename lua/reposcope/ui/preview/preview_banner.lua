@@ -13,6 +13,7 @@ local center_text_lines = require("reposcope.utils.text").center_text_lines
 
 
 ---@private
+---@internal
 ---Applies vertical centering to the banner text, maintaining a 2/3 height ratio
 ---@param lines string[] The lines to be vertically centered
 ---@return string[] Vertically centered lines
