@@ -49,6 +49,8 @@ local is_git_repo = repos_util.is_git_repo
 local progress = require("reposcope.utils.progress")
 
 
+---@private
+---@internal
 ---Derives a single summary state from the parsed status fields.
 ---Precedence: dirty working tree first, then upstream divergence.
 ---@param dirty integer Number of changed entries
@@ -68,6 +70,8 @@ local function derive_state(dirty, ahead, behind)
   return "clean"
 end
 
+---@private
+---@internal
 ---Parses `git status --porcelain=v2 --branch` output into a status record.
 ---Header lines start with `# branch.*`; every other non-empty line is a changed
 ---entry, so the working tree is dirty when at least one such line is present.
@@ -111,6 +115,8 @@ local function parse_status(repo, out)
   }
 end
 
+---@private
+---@internal
 ---Queries the git status of a single repository.
 ---@param repo string Absolute path to the repository
 ---@param on_done fun(record: RepoStatusRecord|nil, err: string|nil): nil

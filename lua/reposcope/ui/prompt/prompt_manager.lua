@@ -32,6 +32,7 @@ local focus_first_input = require("reposcope.ui.prompt.prompt_focus").focus_firs
 
 
 ---@private
+---@internal
 ---Adds a centered virtual title to a prompt buffer
 ---@param buf integer Buffer handle
 ---@param field string Prompt field name (e.g. "keywords", "owner")
@@ -66,6 +67,7 @@ end
 
 
 ---@private
+---@internal
 ---Injects prompt_state values into associated buffers
 ---@return nil
 local function _load_state_into_prompt()

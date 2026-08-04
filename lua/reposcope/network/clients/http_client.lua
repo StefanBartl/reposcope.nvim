@@ -28,6 +28,7 @@ local TOKEN_OPTION = {
 
 
 ---@private
+---@internal
 ---Builds the Authorization header based on the active provider, tool and token
 ---@param token string API token from config (for the active provider)
 ---@param tool string The selected request tool ("gh", "curl", "wget")

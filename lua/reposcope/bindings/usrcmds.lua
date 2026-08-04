@@ -28,6 +28,7 @@ local status_view = require("reposcope.ui.actions.status_view")
 local notify = require("reposcope.utils.debug").notify
 
 
+---@internal
 ---Reads and displays the git status overview for a directory (or single repository).
 ---@param path string|nil Optional directory or single-repo override
 ---@param output StatusOutputMode|nil Output backend (default: "popup")
@@ -49,6 +50,7 @@ local function run_status(path, output, out_path)
   end)
 end
 
+---@internal
 ---Updates and displays the result for a directory of cloned repositories.
 ---@param path string|nil Optional directory override (defaults to the clone directory)
 ---@return nil
@@ -71,6 +73,7 @@ local function run_update(path)
   end)
 end
 
+---@internal
 ---Resets any active repository filter and restores the original relevance-sorted list.
 ---@return nil
 local function run_filter_clear()
@@ -81,6 +84,7 @@ local function run_filter_clear()
 end
 
 
+---@internal
 ---Directory completion helper for subcommands that take a path argument.
 ---@param arglead string The partial argument currently being typed
 ---@return string[]
@@ -244,6 +248,7 @@ local subcommands = {
 --- tradeoff already used elsewhere for this kind of completer (further
 --- tokens still reach entry.run via ctx.rest, just without their own <Tab>
 --- completion).
+---@internal
 ---@return table[]
 local function build_routes()
   local routes = {}
@@ -284,6 +289,7 @@ end
 local is_dir = require("lib.nvim.fs.is_dir")
 local expand_path = require("lib.nvim.cross.fs.expand_path")
 
+---@internal
 ---Fixed path keywords offered alongside real directories, filtered to those
 --- whose underlying env var/path is actually set/resolvable.
 ---@return string[]

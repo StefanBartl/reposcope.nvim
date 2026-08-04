@@ -33,6 +33,7 @@ end
 
 
 ---@private
+---@internal
 ---Normalizes a single Codeberg (Gitea) repo object into the shared `Repository` shape
 ---@param repo table
 ---@return Repository

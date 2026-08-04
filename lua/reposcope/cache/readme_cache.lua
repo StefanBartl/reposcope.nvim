@@ -21,6 +21,7 @@ local safe_mkdir = require("reposcope.utils.protection").safe_mkdir
 M.readme_cache = {}
 
 ---@private
+---@internal
 ---@param owner string
 ---@param repo_name string
 ---@return string
@@ -30,6 +31,7 @@ end
 
 
 ---@private
+---@internal
 ---@param owner string
 ---@param repo_name string
 ---@return string

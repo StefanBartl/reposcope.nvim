@@ -101,6 +101,8 @@ function M.get_total_requests()
   }
 end
 
+---@private
+---@internal
 ---Logs request details to request_log.json in JSON object format
 ---@param uuid UUID request identifier
 ---@param data table The request data to log

@@ -17,6 +17,7 @@ local _current_sort = "relevance"
 
 
 ---@private
+---@internal
 ---@brief Sorts repository items based on the selected mode
 ---@param items Repository[]
 ---@param mode "name"|"owner"|"stars"|"relevance"
