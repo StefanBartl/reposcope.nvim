@@ -16,7 +16,7 @@ local defaults = {
   results_limit = 25,                                            -- Default result limit for search queries
   layout = "default",                                            -- Default UI layout
   clone = {
-    std_dir = "~/temp",                                          -- Standard path for cloning repositories
+    std_dir = env_get("REPOS_DIR") or "~/temp",                  -- Standard path for cloning repositories (defaults to $REPOS_DIR, if set)
     type = "",                                                   -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
   },
   keymaps = {
