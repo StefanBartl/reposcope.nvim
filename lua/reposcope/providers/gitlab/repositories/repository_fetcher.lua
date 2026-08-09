@@ -49,6 +49,9 @@ local function _normalize(project)
     owner = { login = project.namespace and project.namespace.path or "" },
     default_branch = project.default_branch,
     stargazers_count = project.star_count,
+    -- GitLab projects have no `updated_at`; `last_activity_at` is the closest
+    -- equivalent (bumped by pushes, issues, MRs, ...) for README-staleness checks.
+    updated_at = project.last_activity_at,
   }
 end
 

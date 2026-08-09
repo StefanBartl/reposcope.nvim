@@ -66,7 +66,8 @@ Advanced setup:
       type = "git",                    -- "git", "gh", "wget", or "curl"
     },
     metrics = true,                    -- enable request logging & metrics
-    progress_style = "auto"            -- indicator for `update`/`status`
+    progress_style = "auto",           -- indicator for `update`/`status`
+    readme_precache_count = 5,         -- pre-cache top N search results' READMEs (0 disables)
   })
 
                                              *reposcope-config-progress_style*
@@ -411,6 +412,20 @@ README caching is handled on two levels:
 - File cache (~/.local/share/nvim/reposcope/data/readme/)
 
 Caches are automatically used and updated. File cache survives restarts.
+On `setup()`, every file-cached README is preloaded into the RAM cache, so a
+fresh session doesn't pay a disk read on the first visit to an
+already-cached repository.
+
+Each cached README also records the repository's `updated_at`
+(GitHub/Codeberg) or `last_activity_at` (GitLab) at cache time. If that
+value changes on a later visit, the cache is treated as a miss and the
+README is re-fetched — otherwise a repository that hasn't changed is never
+re-fetched, no matter how old the cache entry is.
+
+`readme_precache_count` (default 5, see |reposcope-config|) pre-caches the
+top N search results' READMEs in the background right after a search, so
+scrolling through them feels instant instead of triggering a fetch per row.
+Set to 0 to disable.
 
 ==============================================================================
 CLONING                                                      *reposcope-clone*

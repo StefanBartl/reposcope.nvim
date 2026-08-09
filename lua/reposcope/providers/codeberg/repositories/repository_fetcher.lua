@@ -43,6 +43,7 @@ local function _normalize(repo)
     owner = { login = repo.owner and repo.owner.login or "" },
     default_branch = repo.default_branch,
     stargazers_count = repo.stars_count,
+    updated_at = repo.updated_at,
   }
 end
 

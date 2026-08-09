@@ -99,6 +99,19 @@ function M.fetch_readme_for_selected()
   _schedule_readme_fetch_with_counter(uuid)
 end
 
+---Pre-caches `repo`'s README in the background via the active provider,
+--- without touching the current selection or preview. Unlike
+--- `fetch_readme_for_selected`, this is not debounced — it's meant to be
+--- called once per repository right after a search, not on every list
+--- navigation. Silent no-op if the provider can't be resolved or the repo
+--- is invalid.
+---@param repo Repository
+---@return nil
+function M.prefetch_readme(repo)
+  local provider = _resolve_provider()
+  if provider and provider.readme_manager.prefetch then provider.readme_manager.prefetch(repo) end
+end
+
 ---Builds a provider-specific search query string from prompt input, using
 --- the active provider's query builder.
 ---@param input table<string, string>

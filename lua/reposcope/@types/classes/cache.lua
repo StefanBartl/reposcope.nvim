@@ -15,7 +15,11 @@
 ---@field set_file fun(owner: string, repo_name: string, text: string): boolean Saves README to file cache
 ---@field get_file fun(owner: string, repo_name: string): string|nil Loads README from file cache
 ---@field clear fun(owner: string, repo_name: string, target?: "ram"|"file"|"both"): boolean Clears README cache (RAM/file)
----@field clear_all fun(): boolean Clears all README cache entries (RAM and file)
+---@field clear_all fun(): boolean Clears all README cache entries (RAM, file, and freshness metadata)
+---@field get_cached_updated_at fun(owner: string, repo_name: string): string|nil Returns the repository `updated_at` recorded when its README was last cached
+---@field set_updated_at fun(owner: string, repo_name: string, updated_at: string|nil): nil Records the repository `updated_at` a README was cached under
+---@field has_fresh fun(owner: string, repo_name: string, updated_at: string|nil): boolean, "ram"|"file"|nil Like `has`, but also treats the cache as a miss if `updated_at` differs from the value recorded at cache time
+---@field warm_ram_from_file_cache fun(): integer Preloads every file-cached README into the RAM cache; returns how many were loaded
 
 ---@class RepositoryOwner
 ---@field login string Owner login name
@@ -27,6 +31,7 @@
 ---@field owner RepositoryOwner Owner of the repository
 ---@field default_branch? string The default branch of the repository (optional)
 ---@field stargazers_count? number
+---@field updated_at? string ISO8601 timestamp of the repository's last update (GitHub: `updated_at`, GitLab: `last_activity_at`, Codeberg: `updated_at`); used to detect a stale cached README
 
 ---@class RepositoryResponse
 ---@field total_count number Total number of repositories found

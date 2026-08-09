@@ -54,6 +54,11 @@ function M.setup(opts)
 
   local keymaps_opt = config.get_option("keymaps")
   if keymaps_opt ~= false then keymaps.set_user_keymaps(keymaps_opt, config.get_option("keymap_opts")) end
+
+  -- Preload file-cached READMEs into RAM: the file cache survives restarts,
+  -- but without this a fresh session still pays a disk read on the first
+  -- navigation to each repository even though the content was already there.
+  require("reposcope.cache.readme_cache").warm_ram_from_file_cache()
 end
 
 ---Opens the Reposcope UI. Captures caller position, creates background, preview, list, and prompt windows, and sets keymaps.

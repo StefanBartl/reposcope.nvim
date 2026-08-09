@@ -25,6 +25,7 @@
 ---@field metrics boolean Enable or disable anonymous usage metrics
 ---@field log_max number Maximum log size (lines)
 ---@field progress_style ProgressStyle Indicator for bulk repository operations (`update`/`status`); needs lib.nvim, no-op without it
+---@field readme_precache_count number After a search, pre-cache READMEs for this many top results (0 disables)
 
 ---@class ReposcopeConfigModule
 ---@brief Structure exposed to the outside and used during `setup()`
@@ -34,6 +35,7 @@
 ---@field get_session_path fun(): string Absolute path of the persisted session file
 ---@field get_favorites_path fun(): string Absolute path of the persisted favorites file
 ---@field get_query_stats_path fun(): string Absolute path of the persisted query-frequency file
+---@field get_readme_meta_path fun(): string Absolute path of the README freshness-metadata file
 
 --- Type to be able to pass the opts table to the setup function
 ---@class PartialConfigOptions
@@ -54,3 +56,4 @@
 ---@field metrics? boolean
 ---@field log_max? number
 ---@field progress_style? ProgressStyle
+---@field readme_precache_count? number

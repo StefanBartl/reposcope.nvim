@@ -28,3 +28,4 @@ planned items are added here as they come up.
 - [x] Favorite repositories with persisted metadata + README snapshot (`<C-f>`, `:Reposcope favorites`)
 - [x] Query-frequency tracking (`:Reposcope queries`)
 - [x] Start view — show favorites immediately on open instead of an empty prompt
+- [x] README staleness detection (`updated_at`/`last_activity_at` comparison), RAM pre-warming from file cache, and background pre-caching of top search results (`readme_precache_count`)
