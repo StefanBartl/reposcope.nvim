@@ -24,6 +24,7 @@
 - 🔄 README staleness detection — a cached README is re-fetched only if the repository actually changed since (`updated_at`/`last_activity_at`), instead of trusting the cache forever
 - 🔥 RAM cache pre-warmed from the file cache on `setup()` — no disk-read penalty on the first visit to an already-cached repo in a fresh session
 - ⏩ Background pre-caching of the top N search results' READMEs (`readme_precache_count`) so scrolling feels instant
+- 🩹 Clone operations, cache hits, and request logging now correctly record the actual URL and cache source (RAM/file) instead of a URL mistakenly landing in the "source" field
 
 ---
 

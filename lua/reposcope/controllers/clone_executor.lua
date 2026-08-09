@@ -16,18 +16,21 @@ local safe_execute_shell = require("reposcope.utils.protection").safe_execute_sh
 ---@param cmd string[]
 ---@param uuid string
 ---@param repo_name string
+---@param repo_url? string The repository's clone/web URL, for metrics logging
 ---@return nil
-function M.execute(cmd, uuid, repo_name)
+function M.execute(cmd, uuid, repo_name, repo_url)
   local start = hrtime()
   local success, output = safe_execute_shell(cmd)
   local duration = (hrtime() - start) / 1e6
 
   if success then
-    if metrics.record_metrics() then metrics.increase_success(uuid, repo_name, "clone", "clone_repo", duration, 200) end
+    if metrics.record_metrics() then
+      metrics.increase_success(uuid, repo_name, "clone", "clone_repo", duration, 200, repo_url)
+    end
     notify("[reposcope] Repository cloned successfully", 2)
   else
     if metrics.record_metrics() then
-      metrics.increase_failed(uuid, repo_name, "clone", "clone_repo", duration, 500, output)
+      metrics.increase_failed(uuid, repo_name, "clone", "clone_repo", duration, 500, output, repo_url)
     end
     notify("[reposcope] Clone failed: " .. (output or "unknown error"), 4)
   end

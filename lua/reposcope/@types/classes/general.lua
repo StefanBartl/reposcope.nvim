@@ -31,7 +31,7 @@
 ---@field get_clone_informations fun(): CloneInfo|nil
 
 ---@class CloneExecutorModule Executes a clone argv[] and records metrics (provider-agnostic)
----@field execute fun(cmd: string[], uuid: string, repo_name: string): nil
+---@field execute fun(cmd: string[], uuid: string, repo_name: string, repo_url?: string): nil
 
 ---@class RepoUpdaterModule Bulk git fetch+pull for all repos in a directory (provider-agnostic)
 ---@field update_all fun(path: string|nil, on_complete?: fun(updated: integer, errors: string[]): nil): nil

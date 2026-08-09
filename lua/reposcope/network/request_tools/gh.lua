@@ -74,14 +74,16 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
     if not result.ok then
       if metrics.record_metrics() then
-        metrics.increase_failed(safe_uuid, url, "gh", safe_context, duration, result.code, "gh CLI error")
+        metrics.increase_failed(safe_uuid, url, "gh", safe_context, duration, result.code, "gh CLI error", url)
       end
       notify("[reposcope] gh exited with code " .. result.code, 4)
       notify("[reposcope] stderr: " .. result.stderr, 2)
       callback(nil, "gh request failed (code " .. result.code .. ")")
     else
       if debug and result.stderr ~= "" then notify("[reposcope] gh stderr: " .. result.stderr, 4) end
-      if metrics.record_metrics() then metrics.increase_success(safe_uuid, url, "gh", safe_context, duration, 200) end
+      if metrics.record_metrics() then
+        metrics.increase_success(safe_uuid, url, "gh", safe_context, duration, 200, url)
+      end
       callback(result.stdout)
     end
   end)

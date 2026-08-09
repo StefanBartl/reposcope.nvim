@@ -51,11 +51,13 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
     if not result.ok then
       if metrics.record_metrics() then
-        metrics.increase_failed(safe_uuid, url, "curl", safe_context, duration, result.code, "curl error")
+        metrics.increase_failed(safe_uuid, url, "curl", safe_context, duration, result.code, "curl error", url)
       end
       callback(nil, "curl request failed (code " .. result.code .. ")")
     else
-      if metrics.record_metrics() then metrics.increase_success(safe_uuid, url, "curl", safe_context, duration, 200) end
+      if metrics.record_metrics() then
+        metrics.increase_success(safe_uuid, url, "curl", safe_context, duration, 200, url)
+      end
       callback(result.stdout)
     end
   end)
