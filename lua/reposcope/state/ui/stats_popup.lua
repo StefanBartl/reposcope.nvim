@@ -1,4 +1,4 @@
----@module 'reposcope.state.popups.stats_popup'
+---@module 'reposcope.state.ui.stats_popup'
 ---@brief UI state management for the statistics popup window
 
 ---@class  PopupsStateManager : PopupsStateManagerModule

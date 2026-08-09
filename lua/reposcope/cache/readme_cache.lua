@@ -159,7 +159,7 @@ function M.clear_all()
 
   local dir = get_readme_filecache_dir()
   local ok, err = pcall(function()
-    for file in readdir(dir) do
+    for _, file in ipairs(readdir(dir)) do
       os.remove(dir .. "/" .. file)
     end
   end)

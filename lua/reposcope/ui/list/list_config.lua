@@ -8,15 +8,20 @@
 ---@class ListConfig : ListConfigModule
 local M = {}
 
+-- Project-Specific Configuration
+local ui_config = require("reposcope.ui.config")
+
 -- Default Layout (List is on the left side, taking 40% of the width)  NOTE: Layouts
 M.width = math.floor(vim.o.columns * 0.4)
 M.height = math.floor(vim.o.lines * 0.8)
 M.row = math.floor((vim.o.lines - M.height) / 2)
 M.col = 0
 
--- Default Colors (Dark Theme)
-M.highlight_color = "#44475a" -- Color for the selected line
-M.normal_color = "#0eea36" -- Default text color
+-- Default Colors, sourced from the active colortheme (so a theme/colorscheme
+-- switch via `ui.config.update_theme()` is reflected here too, instead of
+-- these staying pinned to the original dark-theme hex values)
+M.highlight_color = ui_config.colortheme.accent_1 -- Color for the selected line
+M.normal_color = ui_config.colortheme.text -- Default text color
 M.border = "none"
 
 ---Dynamically updates the layout of the list window

@@ -1,4 +1,4 @@
-*reposcope.txt* Plugin documentation for reposcope.nvim Last Change: June 2026
+*reposcope.txt* Plugin documentation for reposcope.nvim Last Change: August 2026
 
 ==============================================================================
 INTRODUCTION                                                       *:Reposcope
@@ -56,6 +56,11 @@ Advanced setup:
       open = "<leader>rs",
       close = "<leader>rc",
     },
+    prompt_keymaps = {
+      open_viewer = "<C-v>",            -- rebind or set to false/"" to disable
+      help = "?",                       -- keymap cheatsheet (normal mode only)
+    },
+    prompt_prefix_symbol = " " .. "\u{f002}" .. " ", -- needs a Nerd Font; e.g. "> " for plain terminals
     clone = {
       std_dir = "~/projects",          -- directory to clone into
       type = "git",                    -- "git", "gh", "wget", or "curl"
@@ -148,6 +153,14 @@ Inside the Reposcope UI:
 | `<Tab>`     | Next prompt field (in insert mode)          |
 | `<S-Tab>`   | Previous prompt field (in insert mode)      |
 | `<CR>`      | Trigger search                              |
+| `<C-u>`     | Scroll the README preview up (stays in the prompt)   |
+| `<C-d>`     | Scroll the README preview down (stays in the prompt) |
+| `?`         | Show the keymap cheatsheet (normal mode only)        |
+
+All prompt keymaps are configurable/disableable via `prompt_keymaps` in
+|reposcope-config|, and carry a `desc` so which-key picks them up
+automatically if installed. See `docs/BINDINGS.md` in the repository for
+the full, authoritative table.
 
 ==============================================================================
 COMMANDS                                                  *reposcope-commands*
@@ -165,7 +178,7 @@ The following subcommands are available:
 | `:Reposcope filter-prompt`    | Prompt input for interactive filtering       |
 | `:Reposcope filter-clear`     | Resets the filter and restores full list     |
 | `:Reposcope update [dir]`     | Updates all cloned git repositories          |
-| `:Reposcope status [dir]`     | Shows git status overview of repositories    |
+| `:Reposcope status [dir] [--out] [--to]` | Shows git status overview of repositories |
 | `:Reposcope providers`        | Lists providers and marks the active one     |
 | `:Reposcope session ...`      | Save, restore, or clear the search session   |
 | `:Reposcope skipped-readmes`  | Prints number of debounced README fetches    |
@@ -264,11 +277,11 @@ See also |reposcope-clone|.
 
 ------------------------------------------------------------------------------
                                                           *:Reposcope-status*
-:Reposcope status [dir]
+:Reposcope status [dir] [--out] [--to]
 
 Reads the git status of every cloned git repository found directly inside a
-directory and prints a compact, aligned overview. For each repository it runs,
-asynchronously: >
+directory and displays a compact, aligned overview. For each repository it
+runs, asynchronously: >
     git status --porcelain=v2 --branch
 <
 The machine-readable output is distilled into the current branch, ahead/behind
@@ -281,6 +294,21 @@ see |reposcope-config|) is used. If {dir} is itself a git repository, only that
 single repository is reported; otherwise its immediate subdirectories are
 scanned. This is the read-only counterpart to |:Reposcope-update|.
 
+`<Tab>` on {dir} offers `$REPOS_DIR` and `~` ahead of real directory
+completion, when resolvable.
+
+`--out` picks where the result is displayed (never truncated/unscrollable
+like a plain notification):
+
+| `--out` value      | Result                                                |
+|---------------------|-------------------------------------------------------|
+| `popup` (default)   | Scrollable floating window (`q`/`<Esc>` to close)     |
+| `buffer`            | Replaces the current window's buffer                  |
+| `split`             | Opens (or reuses) a horizontal split                  |
+| `vsplit`            | Opens (or reuses) a vertical split                    |
+| `clipboard`         | Copies the raw table to the system clipboard          |
+| `path`              | Writes the raw table to a file (`--to=<path>`)        |
+
 Notes:
 - Only immediate subdirectories are scanned (non-recursive).
 - The command never modifies anything; it only reads.
@@ -290,6 +318,10 @@ Notes:
     :Reposcope status
     :Reposcope status ~/projects
     :Reposcope status ~/projects/foo
+    :Reposcope status $REPOS_DIR
+    :Reposcope status ~/projects --out=split
+    :Reposcope status --out=clipboard
+    :Reposcope status --out=path --to=status.txt
 <
 See also |reposcope-clone|.
 

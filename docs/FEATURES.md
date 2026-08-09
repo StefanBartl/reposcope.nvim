@@ -14,6 +14,10 @@
 - ⌨️ Keymaps for navigation, cloning, and UI control
 - 📁 Customizable prompt fields (e.g. `prefix`, `keywords`, `owner`, ...)
 - 💾 Persistent session save/restore — last search, filter and sort mode (`:Reposcope session save|restore|clear`)
+- ❓ `?` keymap cheatsheet — floating overlay listing every active keymap, generated from the same table that drives the actual bindings (never drifts)
+- 📜 Scroll the README preview (`<C-u>`/`<C-d>`) without leaving the prompt
+- 🎨 List/preview highlight colors now derive from the active colortheme instead of separate hardcoded hex values, so `ui.config.update_theme()` actually reaches them
+- 🔤 Customizable `prefix` field symbol (`prompt_prefix_symbol`) for terminals without a Nerd Font
 
 ---
 

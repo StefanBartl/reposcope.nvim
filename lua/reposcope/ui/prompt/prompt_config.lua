@@ -59,11 +59,31 @@ local function _is_valid_field(field)
   return false
 end
 
+---@private
+---@internal
+---Refreshes `M.prefix`/`M.prefix_len`/`M.prefix_win_width` from
+--- `config.prompt_prefix_symbol`. A lazy `require("reposcope.config")` is
+--- required here (rather than a top-level one) because `config/init.lua`
+--- itself requires this module (for `set_fields`) before it finishes
+--- loading -- a top-level require would see an incomplete config module.
+---@return nil
+local function _refresh_prefix_symbol()
+  local ok, symbol = pcall(function() return require("reposcope.config").get_option("prompt_prefix_symbol") end)
+  if ok and type(symbol) == "string" and symbol ~= "" then
+    M.prefix = symbol
+    M.prefix_len = vim.fn.strdisplaywidth(M.prefix)
+    M.prefix_win_width = M.prefix_len + 2
+  end
+end
+
 ---Sets the active prompt fields with deduplication and prefix reordering.
----Invalid fields are ignored with a warning.
+---Invalid fields are ignored with a warning. Also refreshes the prefix
+--- symbol from `config.prompt_prefix_symbol` (called on every `config.setup()`).
 ---@param fields PromptField[] List of valid field names
 ---@return nil
 function M.set_fields(fields)
+  _refresh_prefix_symbol()
+
   if type(fields) ~= "table" then
     notify("[reposcope] Expected table for prompt fields, got: " .. type(fields), 3)
     return

@@ -24,7 +24,7 @@ local window = require("lib.nvim.window")
 -- Metrics Management (Tracking Performance and Usage Statistics)
 local metrics = require("reposcope.utils.metrics")
 -- State Management (Stats Popup)
-local stats_state = require("reposcope.state.popups.stats_popup").stats
+local stats_state = require("reposcope.state.ui.stats_popup").stats
 -- Configuration & Debugging
 local get_option = require("reposcope.config").get_option
 local safe_call = require("reposcope.utils.error").safe_call

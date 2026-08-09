@@ -21,6 +21,7 @@
 ---@field keymaps table<string, string> Custom key mappings for plugin actions
 ---@field keymap_opts table Options passed to all keymaps (e.g. `noremap`, `silent`)
 ---@field prompt_keymaps table<PromptKeymapAction, string|string[]|false> Custom key mappings for prompt-buffer actions. Set an action to `false` or `""` to disable it.
+---@field prompt_prefix_symbol string Symbol shown in the `prefix` prompt field (default needs a Nerd Font; set e.g. ">" for plain terminals)
 ---@field metrics boolean Enable or disable anonymous usage metrics
 ---@field log_max number Maximum log size (lines)
 ---@field progress_style ProgressStyle Indicator for bulk repository operations (`update`/`status`); needs lib.nvim, no-op without it
@@ -46,6 +47,7 @@
 ---@field keymaps? table<string, string>
 ---@field keymap_opts? table
 ---@field prompt_keymaps? table<PromptKeymapAction, string|string[]|false>
+---@field prompt_prefix_symbol? string
 ---@field metrics? boolean
 ---@field log_max? number
 ---@field progress_style? ProgressStyle

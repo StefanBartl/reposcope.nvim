@@ -21,3 +21,7 @@ planned items are added here as they come up.
 - [x] `:Reposcope providers` – list available/active providers
 - [x] Persistent session save/restore (last search, filters, sort)
 - [x] `:Reposcope session save|restore|clear` – manage persisted sessions
+- [x] `?` keymap cheatsheet, generated from the same table that drives the actual bindings
+- [x] Scroll the README preview (`<C-u>`/`<C-d>`) without leaving the prompt
+- [x] List/preview highlight colors sourced from the active colortheme
+- [x] Configurable `prefix` field symbol (`prompt_prefix_symbol`)

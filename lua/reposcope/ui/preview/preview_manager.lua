@@ -12,6 +12,8 @@ local M = {}
 -- Vim Utilities
 local nvim_buf_is_valid = vim.api.nvim_buf_is_valid
 local nvim_buf_set_lines = vim.api.nvim_buf_set_lines
+local nvim_win_is_valid = vim.api.nvim_win_is_valid
+local nvim_win_call = vim.api.nvim_win_call
 -- Application State
 local ui_state = require("reposcope.state.ui.ui_state")
 -- Cache
@@ -77,6 +79,18 @@ function M.inject_banner(buf)
 
   local lines = banner(preview_config.width)
   M.inject_content(buf, lines, "text")
+end
+
+---Scrolls the preview window by a half page, without moving focus away from
+--- the prompt (Telescope-style "peek" scrolling: `<C-d>`/`<C-u>` while typing).
+---@param direction 1|-1 `1` scrolls down (`<C-d>`), `-1` scrolls up (`<C-u>`)
+---@return nil
+function M.scroll(direction)
+  local win = ui_state.windows.preview
+  if not win or not nvim_win_is_valid(win) then return end
+
+  local keys = direction < 0 and "\21" or "\4" -- <C-u> / <C-d>
+  nvim_win_call(win, function() vim.cmd("normal! " .. keys) end)
 end
 
 ---Set preview window to a blank line

@@ -24,6 +24,7 @@
 ---| "keymaps"
 ---| "keymap_opts"
 ---| "prompt_keymaps"
+---| "prompt_prefix_symbol"
 ---| "metrics"
 ---| "cache_dir"
 ---| "logfile_path"
@@ -77,6 +78,9 @@
 ---| "open_editor"
 ---| "clone"
 ---| "backspace"
+---| "preview_scroll_up"
+---| "preview_scroll_down"
+---| "help"
 
 ---@alias LayoutType
 ---| "default"
