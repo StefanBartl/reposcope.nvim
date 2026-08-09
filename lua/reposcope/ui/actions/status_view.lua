@@ -11,11 +11,19 @@
 ---   - "vsplit"    opens (or reuses) a vertical split
 ---   - "clipboard" copies the raw table to the system clipboard
 ---   - "path"      writes the raw table to a file
+---
+--- On every interactive backend (popup/buffer/split/vsplit), the repository row
+--- under the cursor can be opened: `<CR>` or a double-click (`<2-LeftMouse>`)
+--- asks for confirmation via `lib.nvim.ui.kit`'s button-confirm dialog, then
+--- opens that repository's `README.md` (`:edit`). Rows with no readable
+--- `README.md` are a silent no-op past a notification — there is nothing to
+--- confirm opening.
 
 ---@class ActionStatusView : ActionStatusViewModule
 local M = {}
 
 local kit = require("lib.nvim.ui.kit")
+local map = require("lib.nvim.map")
 local open_named_scratch = require("lib.nvim.window.open_named_scratch")
 local copy_to_clipboard = require("lib.nvim.cross.copy_to_clipboard")
 local write_to_file = require("lib.nvim.fs.write.to_file")
@@ -50,11 +58,69 @@ end
 
 ---@private
 ---@internal
+---Resolves the status row under the cursor to its record. Line 1 is always
+---the header (see `M.render`), so the record index is `cursor_line - 1`.
+---@param records RepoStatusRecord[]
+---@return RepoStatusRecord|nil
+local function _record_at_cursor(records)
+  local line = vim.api.nvim_win_get_cursor(0)[1]
+  return records[line - 1]
+end
+
+---@private
+---@internal
+---Confirms with the user, then opens `record`'s README.md (`:edit`). A
+---missing README.md is reported and treated as a no-op — there is nothing
+---to confirm opening.
+---@param record RepoStatusRecord
+---@param before_open? fun(): nil Called right before the file is opened (e.g. to close a popup)
+---@return nil
+local function _open_readme(record, before_open)
+  local readme_path = record.path .. "/README.md"
+  if vim.fn.filereadable(readme_path) ~= 1 then
+    notify("[reposcope] No README.md found for " .. record.name, 3)
+    return
+  end
+
+  kit.confirm({
+    question = ('Open README.md of "%s"?'):format(record.name),
+    on_answer = function(yes)
+      if not yes then return end
+      if before_open then before_open() end
+      vim.cmd.edit(vim.fn.fnameescape(readme_path))
+    end,
+  })
+end
+
+---@private
+---@internal
+---Wires `<CR>` and double-click on a status buffer to open the README.md of
+---the repository under the cursor (after confirmation). Safe to call
+---repeatedly on a reused buffer — later calls just overwrite the mapping
+---with a closure over the current `records`.
+---@param bufnr integer
+---@param records RepoStatusRecord[]
+---@param before_open? fun(): nil Passed through to `_open_readme`
+---@return nil
+local function _attach_row_keymaps(bufnr, records, before_open)
+  local function activate()
+    local record = _record_at_cursor(records)
+    if record then _open_readme(record, before_open) end
+  end
+
+  local mo = { buffer = bufnr, nowait = true }
+  map("n", "<CR>", activate, mo, "Open README.md of repository under cursor")
+  map("n", "<2-LeftMouse>", activate, mo, "Open README.md of repository under cursor")
+end
+
+---@private
+---@internal
 ---Opens the status overview in a scrollable floating window (default output).
 ---@param lines string[]
+---@param records RepoStatusRecord[]
 ---@return nil
-local function show_popup(lines)
-  kit.surface.open({
+local function show_popup(lines, records)
+  local surf = kit.surface.open({
     lines = lines,
     title = "Reposcope Status",
     filetype = "reposcope-status",
@@ -63,14 +129,18 @@ local function show_popup(lines)
     focusable = true,
     wo = { wrap = false, cursorline = true },
   })
+  if surf then
+    _attach_row_keymaps(surf.bufnr, records, function() surf:close() end)
+  end
 end
 
 ---@private
 ---@internal
 ---Replaces the current window's buffer with the (reused) status buffer.
 ---@param lines string[]
+---@param records RepoStatusRecord[]
 ---@return nil
-local function show_buffer(lines)
+local function show_buffer(lines, records)
   local bufnr = vim.fn.bufnr(SCRATCH_NAME)
   if bufnr == -1 or not vim.api.nvim_buf_is_valid(bufnr) then
     bufnr = vim.api.nvim_create_buf(false, true)
@@ -85,6 +155,7 @@ local function show_buffer(lines)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   vim.bo[bufnr].modifiable = false
   vim.api.nvim_win_set_buf(0, bufnr)
+  _attach_row_keymaps(bufnr, records)
 end
 
 ---@private
@@ -92,12 +163,14 @@ end
 ---Opens (or reuses) a split showing the status buffer.
 ---@param lines string[]
 ---@param vertical boolean
+---@param records RepoStatusRecord[]
 ---@return nil
-local function show_split(lines, vertical)
-  open_named_scratch(SCRATCH_NAME, lines, {
+local function show_split(lines, vertical, records)
+  local bufnr = open_named_scratch(SCRATCH_NAME, lines, {
     filetype = "reposcope-status",
     split = vertical and "right" or "below",
   })
+  _attach_row_keymaps(bufnr, records)
 end
 
 ---@private
@@ -140,13 +213,13 @@ function M.show(records, opts)
   local lines = M.render(records)
 
   if mode == "popup" then
-    show_popup(lines)
+    show_popup(lines, records)
   elseif mode == "buffer" then
-    show_buffer(lines)
+    show_buffer(lines, records)
   elseif mode == "split" then
-    show_split(lines, false)
+    show_split(lines, false, records)
   elseif mode == "vsplit" then
-    show_split(lines, true)
+    show_split(lines, true, records)
   elseif mode == "clipboard" then
     show_clipboard(lines)
   elseif mode == "path" then

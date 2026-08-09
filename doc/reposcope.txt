@@ -313,6 +313,12 @@ like a plain notification):
 | `clipboard`         | Copies the raw table to the system clipboard          |
 | `path`              | Writes the raw table to a file (`--to=<path>`)        |
 
+On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
+`clipboard`/`path`), `<CR>` or a double-click (`<2-LeftMouse>`) on a
+repository's row asks for confirmation, then opens that repository's
+`README.md` (`:edit`). A repository with no readable `README.md` just prints
+a notification — nothing to confirm opening.
+
 Notes:
 - Only immediate subdirectories are scanned (non-recursive).
 - The command never modifies anything; it only reads.
