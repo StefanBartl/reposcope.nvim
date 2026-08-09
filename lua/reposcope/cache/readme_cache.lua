@@ -4,6 +4,13 @@
 --- This module handles in-memory and file-based caching for repository README content.
 --- It supports checking for cache hits, writing to disk, and clearing entries or the entire cache.
 --- Used internally to reduce redundant network requests and improve performance.
+---
+--- Freshness metadata (`has_fresh`/`set_updated_at`) is a lightweight sidecar
+--- JSON file (`config.get_readme_meta_path()`), keyed the same way as the RAM
+--- cache, mapping "owner/repo" to the repository's `updated_at` (or
+--- provider-equivalent) value *at the time its README was cached*. The
+--- actual `.md` files stay pure content — no wrapping metadata — so they
+--- remain directly readable/editable, matching the existing UX.
 
 ---@class ReadmeCache : ReadmeCacheModule
 local M = {}
@@ -12,10 +19,13 @@ local M = {}
 local filereadable = vim.fn.filereadable
 local readdir = vim.fn.readdir
 -- Config Module
-local get_readme_filecache_dir = require("reposcope.config").get_readme_filecache_dir
+local config = require("reposcope.config")
+local get_readme_filecache_dir = config.get_readme_filecache_dir
+local get_readme_meta_path = config.get_readme_meta_path
 -- Utility Modules
 local notify = require("reposcope.utils.debug").notify
 local safe_mkdir = require("reposcope.utils.protection").safe_mkdir
+local fnamemodify = vim.fn.fnamemodify
 
 M.readme_cache = {}
 
@@ -33,6 +43,73 @@ local function _get_key(owner, repo_name) return owner .. "/" .. repo_name end
 ---@return string
 local function _get_file_path(owner, repo_name)
   return get_readme_filecache_dir() .. "/" .. owner .. "__" .. repo_name .. ".md"
+end
+
+---@type table<string, string>|nil
+local _meta = nil
+
+---@private
+---@internal
+---Loads the freshness-metadata file from disk (cached after first call).
+---@return table<string, string>
+local function _load_meta()
+  if _meta then return _meta end
+
+  local path = get_readme_meta_path()
+  if filereadable(path) == 0 then
+    _meta = {}
+    return _meta
+  end
+
+  local read_ok, content = pcall(function()
+    local f = assert(io.open(path, "r"))
+    local text = f:read("*a")
+    f:close()
+    return text
+  end)
+
+  if not read_ok or not content or content == "" then
+    _meta = {}
+    return _meta
+  end
+
+  local decode_ok, decoded = pcall(vim.json.decode, content)
+  if not decode_ok or type(decoded) ~= "table" then
+    notify("[reposcope] README freshness metadata is corrupt or invalid JSON.", 3)
+    _meta = {}
+    return _meta
+  end
+
+  _meta = decoded
+  return _meta
+end
+
+---@private
+---@internal
+---Writes the current in-memory freshness metadata to disk.
+---@return boolean success
+local function _save_meta()
+  local path = get_readme_meta_path()
+  safe_mkdir(fnamemodify(path, ":h"))
+
+  local ok, encoded = pcall(vim.json.encode, _meta or {})
+  if not ok then
+    notify("[reposcope] Failed to encode README freshness metadata: " .. tostring(encoded), 3)
+    return false
+  end
+
+  local write_ok, err = pcall(function()
+    local f = assert(io.open(path, "w"))
+    f:write(encoded)
+    f:close()
+  end)
+
+  if not write_ok then
+    notify("[reposcope] Failed to write README freshness metadata: " .. tostring(err), 3)
+    return false
+  end
+
+  return true
 end
 
 ---Returns the README content for a given repository from cache (RAM or file)
@@ -83,8 +160,10 @@ function M.set_file(owner, repo_name, readme_text)
   local path = _get_file_path(owner, repo_name)
   safe_mkdir(get_readme_filecache_dir())
 
-  if filereadable(path) == 1 then return false end
-
+  -- Always overwrites: every caller only reaches this after a real fetch
+  -- succeeded, so an existing file here is a previous (possibly now stale,
+  -- see has_fresh/set_updated_at) cache entry that must be replaced, not
+  -- preserved.
   local ok, err = pcall(function()
     local f = assert(io.open(path, "w"))
     f:write(readme_text)
@@ -124,6 +203,72 @@ function M.get_file(owner, repo_name)
   return content
 end
 
+---Returns the repository `updated_at` value recorded when its README was
+--- last cached, or `nil` if never recorded (e.g. cached before this feature,
+--- or the provider doesn't supply the field).
+---@param owner string
+---@param repo_name string
+---@return string|nil
+function M.get_cached_updated_at(owner, repo_name) return _load_meta()[_get_key(owner, repo_name)] end
+
+---Records the repository `updated_at` value a README was cached under.
+--- No-op for a nil/empty `updated_at` (nothing to compare against later).
+---@param owner string
+---@param repo_name string
+---@param updated_at string|nil
+---@return nil
+function M.set_updated_at(owner, repo_name, updated_at)
+  if type(updated_at) ~= "string" or updated_at == "" then return end
+  local meta = _load_meta()
+  meta[_get_key(owner, repo_name)] = updated_at
+  _save_meta()
+end
+
+---Like `M.has`, but additionally treats the cache as a miss when `updated_at`
+--- is given and differs from the value recorded at cache time — i.e. the
+--- repository changed since its README was cached, so the cached content may
+--- be stale. When `updated_at` is nil/empty (provider doesn't supply it),
+--- this degrades to plain `M.has` — no information to compare, so the
+--- existing cache is trusted.
+---@param owner string
+---@param repo_name string
+---@param updated_at string|nil
+---@return boolean, "ram"|"file"|nil
+function M.has_fresh(owner, repo_name, updated_at)
+  local ok, source = M.has(owner, repo_name)
+  if not ok then return false, nil end
+
+  if type(updated_at) ~= "string" or updated_at == "" then return true, source end
+
+  local cached_updated_at = M.get_cached_updated_at(owner, repo_name)
+  if cached_updated_at ~= nil and cached_updated_at ~= updated_at then return false, nil end
+
+  return true, source
+end
+
+---Preloads every file-cached README into the RAM cache. Intended to run once
+--- during `setup()`: the file cache survives restarts, but a fresh Neovim
+--- session otherwise still pays a disk read on the first navigation to each
+--- repository even though the content was already on disk.
+---@return integer warmed Number of entries loaded into RAM
+function M.warm_ram_from_file_cache()
+  local dir = get_readme_filecache_dir()
+  local warmed = 0
+
+  local ok, files = pcall(readdir, dir)
+  if not ok or type(files) ~= "table" then return 0 end
+
+  for _, file in ipairs(files) do
+    local owner, repo_name = file:match("^(.+)__(.+)%.md$")
+    if owner and repo_name and not M.get_ram(owner, repo_name) then
+      local content = M.get_file(owner, repo_name) -- also populates RAM as a side effect
+      if content then warmed = warmed + 1 end
+    end
+  end
+
+  return warmed
+end
+
 ---Clears README cache for a repository (RAM, file or both)
 ---@param owner string
 ---@param repo_name string
@@ -149,13 +294,23 @@ function M.clear(owner, repo_name, target)
     end
   end
 
+  if cleared then
+    local meta = _load_meta()
+    if meta[key] then
+      meta[key] = nil
+      _save_meta()
+    end
+  end
+
   return cleared
 end
 
----Clears all README caches (RAM and file)
+---Clears all README caches (RAM, file, and freshness metadata)
 ---@return boolean
 function M.clear_all()
   M.readme_cache = {}
+  _meta = {}
+  _save_meta()
 
   local dir = get_readme_filecache_dir()
   local ok, err = pcall(function()

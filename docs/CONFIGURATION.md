@@ -34,6 +34,7 @@ require("reposcope").setup({
   },
   metrics = true,                           -- Enables request timing and logging (for debugging)
   progress_style = "auto",                  -- Indicator for `:Reposcope update`/`status`; needs lib.nvim, no-op without it
+  readme_precache_count = 5,                -- Pre-cache READMEs for this many top search results (0 disables)
 })
 ```
 
@@ -57,6 +58,7 @@ require("reposcope").setup({
 | `clone.type`    | `string`   | Tool used to perform clone: `"git"`, `"gh"`, `"wget"`, or `"curl"` |
 | `metrics`       | `boolean`  | Enable internal request logging and performance tracking           |
 | `progress_style`| `string`   | Progress indicator for the bulk repository commands; see [below](#progress-indicator) |
+| `readme_precache_count` | `number` | After a search, pre-cache READMEs for this many top results in the background (`0` disables); see [README Caching](#readme-caching) |
 
 > ℹ️ You can dynamically reload prompt fields with `:Reposcope prompt prefix topic`.
 
@@ -118,4 +120,32 @@ local function progress_component()
   if not ok then return "" end
   return table.concat(sl.active(), " | ") -- "" when nothing is running
 end
+```
+
+---
+
+## README Caching
+
+READMEs are cached in two levels (RAM and file, surviving restarts) and, as of
+this feature, also tracked for **freshness**:
+
+- **Staleness detection.** Each cached README records the repository's
+  `updated_at` (GitHub/Codeberg) or `last_activity_at` (GitLab, mapped to the
+  same field) at cache time. On the next visit, if the repository's current
+  value differs, the cache is treated as a miss and the README is re-fetched
+  — a repo that hasn't changed is never re-fetched, one that has always gets
+  fresh content. Repos/providers without the field fall back to the old
+  "trust the cache" behavior (nothing to compare against).
+- **RAM pre-warming.** On `setup()`, every already file-cached README is
+  loaded into the RAM cache, so a fresh Neovim session doesn't pay a disk
+  read on the first visit to a repository you'd already cached before.
+- **Result pre-caching.** `readme_precache_count` (default `5`) — after a
+  search, the top N results' READMEs are fetched in the background (RAM +
+  file only, no preview/UI interaction), so scrolling through them feels
+  instant instead of triggering a fetch per row. Set to `0` to disable.
+
+```lua
+require("reposcope").setup({
+  readme_precache_count = 5, -- 0 disables pre-caching
+})
 ```

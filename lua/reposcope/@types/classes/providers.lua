@@ -7,6 +7,7 @@
 
 ---@class ReadmeManagerModule
 ---@field fetch_for_selected fun(uuid: string): nil Fetches the README for the currently selected repository
+---@field prefetch fun(repo: Repository): nil Fetches and caches (RAM + file) `repo`'s README in the background, without touching the preview or request_state; no-op if already fresh. For pre-caching upcoming list entries.
 
 ---@class ReadmeUrlBuilderModule
 ---@field get_urls fun(owner: string, repo: string, branch?: string): ReadmeURLs

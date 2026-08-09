@@ -56,6 +56,10 @@ end
 ---@return string The current filecache directory
 function M.get_readme_filecache_dir() return filecache_path .. "/readme" end
 
+---Returns the absolute path of the README freshness-metadata file
+---@return string
+function M.get_readme_meta_path() return filecache_path .. "/readme_meta.json" end
+
 ---Returns the absolute path of the persisted session file
 ---@return string
 function M.get_session_path() return filecache_path .. "/session.json" end

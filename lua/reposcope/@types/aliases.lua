@@ -30,6 +30,7 @@
 ---| "logfile_path"
 ---| "log_max"
 ---| "progress_style"
+---| "readme_precache_count"
 
 ---@alias ProgressStyle # Renderer for the progress indicator (see lib.nvim.progress)
 ---| "auto"        # fidget.nvim when installed, else vim.notify

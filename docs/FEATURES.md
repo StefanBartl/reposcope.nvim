@@ -21,6 +21,9 @@
 - ⭐ Favorite repositories (`<C-f>` to toggle, `:Reposcope favorites`) — persists metadata *and* the README content (if cached), so viewing a favorite later needs no re-fetch
 - 📈 Query-frequency tracking (`:Reposcope queries`) — every real search is counted, top-10 most-frequent printed on demand
 - 🏁 Start view — opening Reposcope with favorites already saved shows them immediately (list + preview pre-warmed from the favorite's own README snapshot, no network call), instead of an empty prompt
+- 🔄 README staleness detection — a cached README is re-fetched only if the repository actually changed since (`updated_at`/`last_activity_at`), instead of trusting the cache forever
+- 🔥 RAM cache pre-warmed from the file cache on `setup()` — no disk-read penalty on the first visit to an already-cached repo in a fresh session
+- ⏩ Background pre-caching of the top N search results' READMEs (`readme_precache_count`) so scrolling feels instant
 
 ---
 
