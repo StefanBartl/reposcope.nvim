@@ -17,7 +17,6 @@ local get_readme_filecache_dir = require("reposcope.config").get_readme_filecach
 local notify = require("reposcope.utils.debug").notify
 local safe_mkdir = require("reposcope.utils.protection").safe_mkdir
 
-
 M.readme_cache = {}
 
 ---@private
@@ -25,10 +24,7 @@ M.readme_cache = {}
 ---@param owner string
 ---@param repo_name string
 ---@return string
-local function _get_key(owner, repo_name)
-  return owner .. "/" .. repo_name
-end
-
+local function _get_key(owner, repo_name) return owner .. "/" .. repo_name end
 
 ---@private
 ---@internal
@@ -38,7 +34,6 @@ end
 local function _get_file_path(owner, repo_name)
   return get_readme_filecache_dir() .. "/" .. owner .. "__" .. repo_name .. ".md"
 end
-
 
 ---Returns the README content for a given repository from cache (RAM or file)
 ---@param owner string
@@ -60,13 +55,9 @@ end
 ---@param repo_name string
 ---@return boolean, "ram"|"file"|nil
 function M.has(owner, repo_name)
-  if M.get_ram(owner, repo_name) then
-    return true, "ram"
-  end
+  if M.get_ram(owner, repo_name) then return true, "ram" end
 
-  if filereadable(_get_file_path(owner, repo_name)) == 1 then
-    return true, "file"
-  end
+  if filereadable(_get_file_path(owner, repo_name)) == 1 then return true, "file" end
 
   return false, nil
 end
@@ -75,18 +66,13 @@ end
 ---@param owner string
 ---@param repo_name string
 ---@return string|nil
-function M.get_ram(owner, repo_name)
-  return M.readme_cache[_get_key(owner, repo_name)]
-end
-
+function M.get_ram(owner, repo_name) return M.readme_cache[_get_key(owner, repo_name)] end
 
 ---Returns a README from RAM cache
 ---@param owner string
 ---@param repo_name string
 ---@param readme_text string
-function M.set_ram(owner, repo_name, readme_text)
-  M.readme_cache[_get_key(owner, repo_name)] = readme_text
-end
+function M.set_ram(owner, repo_name, readme_text) M.readme_cache[_get_key(owner, repo_name)] = readme_text end
 
 ---Writes README content to the file cache
 ---@param owner string
@@ -97,9 +83,7 @@ function M.set_file(owner, repo_name, readme_text)
   local path = _get_file_path(owner, repo_name)
   safe_mkdir(get_readme_filecache_dir())
 
-  if filereadable(path) == 1 then
-    return false
-  end
+  if filereadable(path) == 1 then return false end
 
   local ok, err = pcall(function()
     local f = assert(io.open(path, "w"))
@@ -135,9 +119,7 @@ function M.get_file(owner, repo_name)
     return nil
   end
 
-  if content then
-    M.readme_cache[_get_key(owner, repo_name)] = content
-  end
+  if content then M.readme_cache[_get_key(owner, repo_name)] = content end
 
   return content
 end
@@ -182,9 +164,7 @@ function M.clear_all()
     end
   end)
 
-  if not ok then
-    notify("[reposcope] " .. err, 3)
-  end
+  if not ok then notify("[reposcope] " .. err, 3) end
 
   collectgarbage("collect")
   return ok or false

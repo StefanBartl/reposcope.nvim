@@ -28,7 +28,6 @@ local center_text = require("reposcope.utils.text").center_text
 local preview_width = require("reposcope.ui.preview.preview_config").width
 local empty_tbl_msg = center_text("No results. Try a different keyword or remove filters.", preview_width)
 
-
 ---Sets the list entries and displays them in the list window
 ---@param entries string[] The list of entries to display
 ---@return nil
@@ -87,9 +86,11 @@ function M.update_list(lines)
     -- Update preview if possible   REF:  these imports maybe at filescope ?
     local selected_repo = require("reposcope.cache.repository_cache").get_selected()
     if selected_repo and selected_repo.name and selected_repo.owner and selected_repo.owner.login then
-      vim.schedule(function()
-        require("reposcope.ui.preview.preview_manager").update_preview(selected_repo.owner.login, selected_repo.name)
-      end)
+      vim.schedule(
+        function()
+          require("reposcope.ui.preview.preview_manager").update_preview(selected_repo.owner.login, selected_repo.name)
+        end
+      )
     else
       notify("[reposcope] No selected repository for preview.", 3)
     end

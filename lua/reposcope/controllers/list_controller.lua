@@ -19,7 +19,6 @@ local repository_cache_get = require("reposcope.cache.repository_cache").get
 local cut_text_for_line = require("reposcope.utils.text").cut_text_for_line
 local notify = require("reposcope.utils.debug").notify
 
-
 ---Displays the list of repositories from the state.
 ---@return nil
 function M.display_repositories()
@@ -41,9 +40,9 @@ function M.display_repositories()
   -- Prepare local aliases for hot-loop efficiency
   ---@type Repository[]
   local items = json_data.items or {} -- Safely fallback to empty table
-  local linebuf = {}                  -- Preallocated line buffer (avoids table.insert overhead)
-  local fmt = string.format           -- Localize string.format to reduce global lookups
-  local cut = cut_text_for_line       -- Local alias for line trimming function
+  local linebuf = {} -- Preallocated line buffer (avoids table.insert overhead)
+  local fmt = string.format -- Localize string.format to reduce global lookups
+  local cut = cut_text_for_line -- Local alias for line trimming function
 
   for i = 1, #items do
     local repo = items[i]

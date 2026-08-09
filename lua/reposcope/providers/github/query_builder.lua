@@ -17,7 +17,6 @@ local FILTER_KEYS = {
   org = "org",
 }
 
-
 ---Builds a search query string from prompt input
 ---@see reposcope.providers.codeberg.query_builder.M.build, reposcope.providers.gitlab.query_builder.M.build
 ---@param input table<string, string>
@@ -26,16 +25,13 @@ function M.build(input)
   if type(input) ~= "table" then return "" end
 
   local query_parts = {}
-  local debug_parts = {}
 
   for field, value in pairs(input) do
     if type(value) == "string" and value ~= "" then
       if FILTER_KEYS[field] then
         table.insert(query_parts, field .. ":" .. value)
-        debug_parts[#debug_parts + 1] = "filter " .. field .. "=" .. value
       elseif field ~= "prefix" then
         table.insert(query_parts, value)
-        debug_parts[#debug_parts + 1] = "keyword = " .. value
       end
     end
   end

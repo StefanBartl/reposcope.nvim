@@ -17,14 +17,13 @@ local nvim_win_get_cursor = vim.api.nvim_win_get_cursor
 -- Utility Modules (Debugging)
 local notify = require("reposcope.utils.debug").notify
 
-
 ---@type UIStateInvocation
 M.invocation = {
   win = nil,
   cursor = {
     col = nil,
     row = nil,
-  }
+  },
 }
 
 ---Capture the current window and cursor position for later restoration.
@@ -33,7 +32,6 @@ function M.capture_invocation_state()
   M.invocation.win = nvim_get_current_win()
   M.invocation.cursor.row, M.invocation.cursor.col = unpack(nvim_win_get_cursor(M.invocation.win))
 end
-
 
 ---Reset part or all of the UI state
 ---@param tbl? "buffers"|"windows"|"invocation" optional table to reset; if nil, all will be reset
@@ -65,20 +63,13 @@ function M.reset(tbl)
   end
 end
 
-
 ---Return the window of the invocation state
 ---@return number|nil The window ID of the invocation state
-function M.get_invocation_win()
-  return M.invocation.win
-end
-
+function M.get_invocation_win() return M.invocation.win end
 
 ---Returns the cursor of the invocation state
 ---@return table|nil The cursor position (row, col)
-function M.get_invocation_cursor()
-  return M.invocation.cursor
-end
-
+function M.get_invocation_cursor() return M.invocation.cursor end
 
 ---@type UIStateBuffers
 M.buffers = {
@@ -106,14 +97,11 @@ M.windows = {
 function M.get_valid_buffer(buf_name)
   local buf = M.buffers[buf_name]
 
-  if buf and nvim_buf_is_valid(buf) then
-    return buf
-  end
+  if buf and nvim_buf_is_valid(buf) then return buf end
 
   notify("[reposcope] Buffer '" .. buf_name .. "' is not valid or does not exist.", 3)
   return nil
 end
-
 
 ---Returns all buffer handles in the state table which are not nil
 ---@return number[]|nil List of active buffer handles
@@ -123,20 +111,15 @@ function M.get_buffers()
   for _, entry in pairs(M.buffers) do
     if type(entry) == "number" then
       table.insert(bufs, entry)
-
     elseif type(entry) == "table" then
       for _, sub in pairs(entry) do
-        if type(sub) == "number" then
-          table.insert(bufs, sub)
-        end
+        if type(sub) == "number" then table.insert(bufs, sub) end
       end
     end
   end
 
   return #bufs > 0 and bufs or nil
 end
-
-
 
 ---Returns all window handles in the state table which are not nil
 ---@return number[]|nil List of active window handles
@@ -146,12 +129,9 @@ function M.get_windows()
   for _, entry in pairs(M.windows) do
     if type(entry) == "number" then
       table.insert(wins, entry)
-
     elseif type(entry) == "table" then
       for _, sub in pairs(entry) do
-        if type(sub) == "number" then
-          table.insert(wins, sub)
-        end
+        if type(sub) == "number" then table.insert(wins, sub) end
       end
     end
   end
@@ -159,12 +139,10 @@ function M.get_windows()
   return #wins > 0 and wins or nil
 end
 
-
-
 ---@type UIStateList
 M.list = {
   ---@type integer|nil The last selected line in the list
-  last_selected_line = nil
+  last_selected_line = nil,
 }
 
 -- State variable tracking if the repository list has ever been populated
@@ -172,13 +150,9 @@ M.list = {
 ---@private
 local list_populated = nil
 
-
 ---Returns true if the repository list was populated at least once
 ---@return boolean
-function M.is_list_populated()
-  return list_populated == true
-end
-
+function M.is_list_populated() return list_populated == true end
 
 ---Sets the internal list population state
 ---@param val boolean True if list has been populated

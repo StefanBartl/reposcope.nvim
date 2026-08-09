@@ -30,7 +30,6 @@ local get_option = require("reposcope.config").get_option
 local safe_call = require("reposcope.utils.error").safe_call
 local notify = require("reposcope.utils.debug").notify
 
-
 ---Displays the request statistics in a floating window.
 ---Creates a new window if none exists, or focuses the existing one.
 ---@return nil
@@ -134,15 +133,11 @@ function M.calculate_extended_stats()
 
   for _, log in pairs(logs) do
     if log.type == "api_success" then
-      if log.duration_ms then
-        total_duration = total_duration + log.duration_ms
-      end
+      if log.duration_ms then total_duration = total_duration + log.duration_ms end
       success_count = success_count + 1
     end
 
-    if log.query then
-      query_count[log.query] = (query_count[log.query] or 0) + 1
-    end
+    if log.query then query_count[log.query] = (query_count[log.query] or 0) + 1 end
   end
 
   local average_duration = success_count > 0 and (total_duration / success_count) or 0

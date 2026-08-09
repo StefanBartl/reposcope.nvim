@@ -41,9 +41,7 @@ function M.check()
     end
   end
 
-  if not has_any then
-    health.error("No usable request tool found (gh, curl, or wget)")
-  end
+  if not has_any then health.error("No usable request tool found (gh, curl, or wget)") end
   ---------------------------------------------------------------------------
   -- Configured request tool
   ---------------------------------------------------------------------------

@@ -27,7 +27,6 @@ local status_view = require("reposcope.ui.actions.status_view")
 -- Debugging
 local notify = require("reposcope.utils.debug").notify
 
-
 ---@internal
 ---Reads and displays the git status overview for a directory (or single repository).
 ---@param path string|nil Optional directory or single-repo override
@@ -36,13 +35,13 @@ local notify = require("reposcope.utils.debug").notify
 ---@return nil
 local function run_status(path, output, out_path)
   require("reposcope.utils.repo_status").status_all(path, function(records, errors)
-    if #records > 0 then
-      status_view.show(records, { output = output, path = out_path })
-    end
+    if #records > 0 then status_view.show(records, { output = output, path = out_path }) end
     if #errors > 0 then
       notify(
         ("[reposcope] %d repositor%s could not be read:\n\n%s"):format(
-          #errors, #errors == 1 and "y" or "ies", table.concat(errors, "\n")
+          #errors,
+          #errors == 1 and "y" or "ies",
+          table.concat(errors, "\n")
         ),
         vim.log.levels.WARN
       )
@@ -61,14 +60,16 @@ local function run_update(path)
     local plural = updated == 1 and "y" or "ies"
     if #errors > 0 then
       notify(
-        ("[reposcope] Updated %d repositor%s, %d failed:\n\n%s"):format(updated, plural, #errors, table.concat(errors, "\n\n")),
+        ("[reposcope] Updated %d repositor%s, %d failed:\n\n%s"):format(
+          updated,
+          plural,
+          #errors,
+          table.concat(errors, "\n\n")
+        ),
         vim.log.levels.WARN
       )
     else
-      notify(
-        ("[reposcope] Updated %d repositor%s successfully"):format(updated, plural),
-        vim.log.levels.INFO
-      )
+      notify(("[reposcope] Updated %d repositor%s successfully"):format(updated, plural), vim.log.levels.INFO)
     end
   end)
 end
@@ -83,14 +84,11 @@ local function run_filter_clear()
   notify("[reposcope] Filter reset – showing all repositories", 2)
 end
 
-
 ---@internal
 ---Directory completion helper for subcommands that take a path argument.
 ---@param arglead string The partial argument currently being typed
 ---@return string[]
-local function complete_dir(arglead)
-  return vim.fn.getcompletion(arglead, "dir")
-end
+local function complete_dir(arglead) return vim.fn.getcompletion(arglead, "dir") end
 
 ---@class ReposcopeSubcommand
 ---@field desc string Short description shown in the usage listing
@@ -103,32 +101,22 @@ local subcommands = {
   start = {
     desc = "Open the Reposcope UI",
     run = function()
-      local ok, err = pcall(function()
-        require("reposcope.init").open_ui()
-      end)
-      if not ok then
-        notify("Error while opening reposcope: " .. err, 4)
-      end
+      local ok, err = pcall(function() require("reposcope.init").open_ui() end)
+      if not ok then notify("Error while opening reposcope: " .. err, 4) end
     end,
   },
 
   close = {
     desc = "Close all Reposcope windows and buffers",
     run = function()
-      local ok, err = pcall(function()
-        require("reposcope.init").close_ui()
-      end)
-      if not ok then
-        notify("Error while closing reposcope: " .. err, 4)
-      end
+      local ok, err = pcall(function() require("reposcope.init").close_ui() end)
+      if not ok then notify("Error while closing reposcope: " .. err, 4) end
     end,
   },
 
   prompt = {
     desc = "Reload visible prompt fields (e.g. :Reposcope prompt prefix keywords)",
-    run = function(args)
-      reload_prompt(args)
-    end,
+    run = function(args) reload_prompt(args) end,
     complete = function()
       local fields = get_available_fields()
       table.insert(fields, "default: keywords owner language")
@@ -138,23 +126,17 @@ local subcommands = {
 
   sort = {
     desc = "Open an interactive menu to sort the repository list",
-    run = function()
-      require("reposcope.ui.actions.sort_prompt").prompt_sort()
-    end,
+    run = function() require("reposcope.ui.actions.sort_prompt").prompt_sort() end,
   },
 
   filter = {
     desc = "Filter the repository list by substring (no args resets the list)",
-    run = function(args)
-      apply_filter(table.concat(args, " "))
-    end,
+    run = function(args) apply_filter(table.concat(args, " ")) end,
   },
 
   ["filter-prompt"] = {
     desc = "Open a floating prompt to filter repositories interactively",
-    run = function()
-      prompt_filter()
-    end,
+    run = function() prompt_filter() end,
   },
 
   ["filter-clear"] = {
@@ -164,17 +146,13 @@ local subcommands = {
 
   update = {
     desc = "Update (fetch + ff-only pull) all cloned repositories in a directory",
-    run = function(args)
-      run_update(args[1])
-    end,
+    run = function(args) run_update(args[1]) end,
     complete = complete_dir,
   },
 
   stats = {
     desc = "Display collected request stats and metrics",
-    run = function()
-      require("reposcope.utils.stats").show_stats()
-    end,
+    run = function() require("reposcope.utils.stats").show_stats() end,
   },
 
   providers = {
@@ -205,9 +183,7 @@ local subcommands = {
         notify("[reposcope] Usage: :Reposcope session save|restore|clear", vim.log.levels.WARN)
       end
     end,
-    complete = function()
-      return { "save", "restore", "clear" }
-    end,
+    complete = function() return { "save", "restore", "clear" } end,
   },
 
   ["skipped-readmes"] = {
@@ -219,16 +195,12 @@ local subcommands = {
 
   ["toggle-dev"] = {
     desc = "Toggle developer mode (debug logging, internal info)",
-    run = function()
-      require("reposcope.utils.debug").toggle_dev_mode()
-    end,
+    run = function() require("reposcope.utils.debug").toggle_dev_mode() end,
   },
 
   ["print-dev"] = {
     desc = "Print whether developer mode is currently active",
-    run = function()
-      print("dev_mode:", require("reposcope.utils.debug").options.dev_mode)
-    end,
+    run = function() print("dev_mode:", require("reposcope.utils.debug").options.dev_mode) end,
   },
 }
 
@@ -272,7 +244,9 @@ local function build_routes()
       run = function(ctx)
         local fargs = {}
         if args and ctx.args.a1 ~= nil then fargs[1] = ctx.args.a1 end
-        for _, t in ipairs(ctx.rest) do fargs[#fargs + 1] = t end
+        for _, t in ipairs(ctx.rest) do
+          fargs[#fargs + 1] = t
+        end
         entry.run(fargs)
       end,
     }
@@ -296,12 +270,8 @@ local expand_path = require("lib.nvim.cross.fs.expand_path")
 local function fixed_dir_keywords()
   local env = require("lib.nvim.system.env").get()
   local keywords = {}
-  if env.repo_base and env.repo_base ~= "" then
-    keywords[#keywords + 1] = "$REPOS_DIR"
-  end
-  if env.home and env.home ~= "" then
-    keywords[#keywords + 1] = "~"
-  end
+  if env.repo_base and env.repo_base ~= "" then keywords[#keywords + 1] = "$REPOS_DIR" end
+  if env.home and env.home ~= "" then keywords[#keywords + 1] = "~" end
   return keywords
 end
 
@@ -316,9 +286,7 @@ composer.register_type("REPOSCOPE_STATUS_DIR", {
   complete = function(arg_lead)
     local candidates = {}
     for _, kw in ipairs(fixed_dir_keywords()) do
-      if arg_lead == "" or kw:sub(1, #arg_lead) == arg_lead then
-        candidates[#candidates + 1] = kw
-      end
+      if arg_lead == "" or kw:sub(1, #arg_lead) == arg_lead then candidates[#candidates + 1] = kw end
     end
     vim.list_extend(candidates, vim.fn.getcompletion(arg_lead, "dir"))
     return candidates
@@ -337,9 +305,7 @@ local status_route = {
     { name = "out", type = "STRING", enum = { "popup", "buffer", "split", "vsplit", "clipboard", "path" } },
     { name = "to", type = "PATH" },
   },
-  run = function(ctx)
-    run_status(ctx.args.dir, ctx.flags.out, ctx.flags.to)
-  end,
+  run = function(ctx) run_status(ctx.args.dir, ctx.flags.out, ctx.flags.to) end,
 }
 
 ---Registers the single dispatching `:Reposcope` user command.

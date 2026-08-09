@@ -17,7 +17,6 @@ local ui_state = require("reposcope.state.ui.ui_state")
 -- Debugging
 local notify = require("reposcope.utils.debug").notify
 
-
 ---Builds a list of window slots for the currently configured prompt fields
 ---@return {name: string, buffer: integer, width: integer, col: integer}[] List of window layouts
 function M.build_layout()

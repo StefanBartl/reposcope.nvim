@@ -17,7 +17,6 @@ local spawn_capture = require("lib.nvim.cross.uv.spawn_capture")
 local notify = require("reposcope.utils.debug").notify
 local metrics = require("reposcope.utils.metrics")
 
-
 ---Issues a CURL request asynchronously and returns the response via callback
 ---@param method string HTTP method to use (e.g. "GET", "POST")
 ---@param url string Target URL for the request
@@ -41,14 +40,14 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   notify("[reposcope] CURL Request: curl " .. table.concat(args, " "), 1)
 
   local argv = { "curl" }
-  for _, a in ipairs(args) do argv[#argv + 1] = a end
+  for _, a in ipairs(args) do
+    argv[#argv + 1] = a
+  end
 
   spawn_capture(argv, {}, function(result)
     local duration = (hrtime() - start_time) / 1e6 -- ms
 
-    if debug and result.stderr ~= "" then
-      notify("[reposcope] curl stderr: " .. result.stderr, 4)
-    end
+    if debug and result.stderr ~= "" then notify("[reposcope] curl stderr: " .. result.stderr, 4) end
 
     if not result.ok then
       if metrics.record_metrics() then
@@ -56,9 +55,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
       end
       callback(nil, "curl request failed (code " .. result.code .. ")")
     else
-      if metrics.record_metrics() then
-        metrics.increase_success(safe_uuid, url, "curl", safe_context, duration, 200)
-      end
+      if metrics.record_metrics() then metrics.increase_success(safe_uuid, url, "curl", safe_context, duration, 200) end
       callback(result.stdout)
     end
   end)

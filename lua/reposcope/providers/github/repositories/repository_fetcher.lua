@@ -21,7 +21,6 @@ local urlencode = require("reposcope.utils.encoding").urlencode
 -- Constants
 local GITHUB_API_SEARCH_URL = "https://api.github.com/search/repositories?q=%s"
 
-
 ---Builds the full GitHub API URL from a query
 ---@param query string
 ---@return string

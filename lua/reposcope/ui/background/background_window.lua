@@ -12,7 +12,6 @@
 ---@class BackgroundWindow : BackgroundWindowModule
 local M = {}
 
-
 -- Vim Utilities
 local api = vim.api
 local nvim_buf_is_valid = api.nvim_buf_is_valid
@@ -26,7 +25,6 @@ local ui_state = require("reposcope.state.ui.ui_state")
 -- Utility Modules (Debugging, Protection)
 local notify = require("reposcope.utils.debug").notify
 local create_named_buffer = require("reposcope.utils.protection").create_named_buffer
-
 
 ---@private
 ---@internal
@@ -50,42 +48,42 @@ end
 ---Opens the background window.
 ---@return nil
 function M.open_window()
-  -- Check buffer and window
+  -- Reuse buffer and window if still valid
   local buf = ui_state.buffers.backg
-  if buf and not nvim_buf_is_valid(ui_state.buffers.backg) then
-    buf = nil
-  end
+  if buf and not nvim_buf_is_valid(buf) then buf = nil end
   local win = ui_state.windows.backg
-  if win and not nvim_win_is_valid(win) then
-    win = nil
-  end
+  if win and not nvim_win_is_valid(win) then win = nil end
 
-  -- Create new buffer and assign to state table
-  buf = create_named_buffer("reposcope://background")
   if not buf or not nvim_buf_is_valid(buf) then
-    notify("[reposcope] Error creating background buffer.", 4)
-    return
+    buf = create_named_buffer("reposcope://background")
+    if not buf or not nvim_buf_is_valid(buf) then
+      notify("[reposcope] Error creating background buffer.", 4)
+      return
+    end
+
+    vim.bo[buf].buftype = "nofile"
+    vim.bo[buf].modifiable = false
+    vim.bo[buf].bufhidden = "wipe"
+    ui_state.buffers.backg = buf
   end
 
-  vim.bo[buf].buftype = "nofile"
-  vim.bo[buf].modifiable = false
-  vim.bo[buf].bufhidden = "wipe"
-  ui_state.buffers.backg = buf
+  if not win or not nvim_win_is_valid(win) then
+    win = nvim_open_win(buf, false, {
+      relative = "editor",
+      row = config.row,
+      col = config.col,
+      width = math.floor(config.width),
+      height = math.floor(config.height),
+      style = "minimal",
+      border = config.border or "none",
+      zindex = 10,
+      focusable = false,
+      noautocmd = true,
+    })
 
-  win = nvim_open_win(buf, false, {
-    relative = "editor",
-    row = config.row,
-    col = config.col,
-    width = math.floor(config.width),
-    height = math.floor(config.height),
-    style = "minimal",
-    border = config.border or "none",
-    zindex = 10,
-    focusable = false,
-    noautocmd = true,
-  })
+    ui_state.windows.backg = win
+  end
 
-  ui_state.windows.backg = win
   _apply_background_layout()
 end
 

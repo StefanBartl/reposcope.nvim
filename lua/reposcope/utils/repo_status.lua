@@ -48,7 +48,6 @@ local is_git_repo = repos_util.is_git_repo
 -- Progress indicator (optional dependency, see utils/progress.lua)
 local progress = require("reposcope.utils.progress")
 
-
 ---@private
 ---@internal
 ---Derives a single summary state from the parsed status fields.
@@ -122,17 +121,13 @@ end
 ---@param on_done fun(record: RepoStatusRecord|nil, err: string|nil): nil
 ---@return nil
 local function status_repo(repo, on_done)
-  vim.system(
-    { "git", "status", "--porcelain=v2", "--branch" },
-    { cwd = repo, text = true },
-    function(res)
-      if res.code ~= 0 then
-        on_done(nil, (res.stderr ~= "" and res.stderr) or "git status failed")
-        return
-      end
-      on_done(parse_status(repo, res.stdout or ""), nil)
+  vim.system({ "git", "status", "--porcelain=v2", "--branch" }, { cwd = repo, text = true }, function(res)
+    if res.code ~= 0 then
+      on_done(nil, (res.stderr ~= "" and res.stderr) or "git status failed")
+      return
     end
-  )
+    on_done(parse_status(repo, res.stdout or ""), nil)
+  end)
 end
 
 ---Collects the git status of every repository in the resolved base directory.
@@ -191,24 +186,16 @@ function M.status_all(path, on_complete)
         total = total,
       })
     end
-    if remaining > 0 then
-      return
-    end
-    if handle then
-      handle:finish(("read %d of %d repositories"):format(total - #errors, total))
-    end
+    if remaining > 0 then return end
+    if handle then handle:finish(("read %d of %d repositories"):format(total - #errors, total)) end
     -- Compact into a dense, discovery-ordered list (errored repos leave gaps).
     ---@type RepoStatusRecord[]
     local records = {}
     for i = 1, total do
-      if indexed[i] then
-        records[#records + 1] = indexed[i]
-      end
+      if indexed[i] then records[#records + 1] = indexed[i] end
     end
     vim.schedule(function()
-      if on_complete then
-        on_complete(records, errors)
-      end
+      if on_complete then on_complete(records, errors) end
     end)
   end
 

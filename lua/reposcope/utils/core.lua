@@ -11,7 +11,6 @@ local M = {}
 -- System Access
 local uv = vim.loop
 
-
 ---Returns the index of a value in a list-style table
 ---@param tbl any[] The table to search in
 ---@param value any The value to search for
@@ -31,9 +30,7 @@ function M.tbl_islist(t)
 
   local max = 0
   for k in pairs(t) do
-    if type(k) ~= "number" or k < 1 or k ~= math.floor(k) then
-      return false
-    end
+    if type(k) ~= "number" or k < 1 or k ~= math.floor(k) then return false end
     if k > max then max = k end
   end
 
@@ -93,9 +90,7 @@ function M.put_to_front_if_present(list, value)
     end
   end
 
-  if found then
-    table.insert(result, 1, value)
-  end
+  if found then table.insert(result, 1, value) end
 
   return result
 end

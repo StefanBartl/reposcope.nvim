@@ -10,7 +10,6 @@
 ---@class GitlabCloneCommandBuilder : CloneCommandBuilderModule
 local M = {}
 
-
 ---Creates the appropriate argv command for cloning
 ---@param clone_type string
 ---@param repo_url string The repository's clone URL (e.g. `https://gitlab.com/owner/repo.git`)
@@ -23,8 +22,16 @@ function M.build_command(clone_type, repo_url, output_dir)
   local branch = "main"
 
   if clone_type == "curl" or clone_type == "wget" then
-    local zip_url = "https://gitlab.com/" .. (owner and (owner .. "/") or "") .. repo
-        .. "/-/archive/" .. branch .. "/" .. repo .. "-" .. branch .. ".zip"
+    local zip_url = "https://gitlab.com/"
+      .. (owner and (owner .. "/") or "")
+      .. repo
+      .. "/-/archive/"
+      .. branch
+      .. "/"
+      .. repo
+      .. "-"
+      .. branch
+      .. ".zip"
 
     if clone_type == "curl" then
       return { "curl", "-L", "-o", output_dir .. ".zip", zip_url }

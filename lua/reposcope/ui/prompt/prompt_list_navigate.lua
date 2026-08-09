@@ -16,7 +16,6 @@ local ui_state = require("reposcope.state.ui.ui_state")
 -- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
 
-
 ---Allows navigation within the list directly from the prompt
 ---@param direction "up"|"down" The direction to navigate ("up" or "down")
 ---@return nil
@@ -40,7 +39,6 @@ function M.navigate_list_in_prompt(direction)
 
   highlight_selected(list_window.highlighted_line)
 end
-
 
 ---Sets the list's current line to given line number
 ---@param line string

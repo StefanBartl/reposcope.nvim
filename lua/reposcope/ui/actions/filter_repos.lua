@@ -23,7 +23,6 @@ local notify = require("reposcope.utils.debug").notify
 ---@type string
 local _current_filter = ""
 
-
 ---Applies a substring filter to the current repository list or resets it if query is empty.
 ---@param query string Case-insensitive substring to search for
 ---@return nil
@@ -40,9 +39,7 @@ function M.apply_filter(query)
   local filtered = {}
   for _, repo in ipairs(repository_cache_get().items or {}) do
     local full = (repo.owner.login .. "/" .. repo.name .. ": " .. (repo.description or "")):lower()
-    if full:find(query, 1, true) then
-      table.insert(filtered, repo)
-    end
+    if full:find(query, 1, true) then table.insert(filtered, repo) end
   end
 
   repository_cache_set({ total_count = #filtered, items = filtered }, false)
@@ -50,11 +47,8 @@ function M.apply_filter(query)
   fetch_readme_for_selected()
 end
 
-
 ---Returns the last filter text applied via `apply_filter` ("" if none/cleared)
 ---@return string
-function M.get_current_filter()
-  return _current_filter
-end
+function M.get_current_filter() return _current_filter end
 
 return M

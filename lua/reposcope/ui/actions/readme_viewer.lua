@@ -34,7 +34,6 @@ local setup_autocmds = require("reposcope.ui.prompt.prompt_autocmds").setup_auto
 local cleanup_autocmds = require("reposcope.ui.prompt.prompt_autocmds").cleanup_autocmds
 local create_named_buffer = require("reposcope.utils.protection").create_named_buffer
 
-
 ---@private
 ---@internal
 --- Detects whether a README content string contains HTML-like content
@@ -43,7 +42,6 @@ local create_named_buffer = require("reposcope.utils.protection").create_named_b
 local function _is_html_content(content)
   return content:match("<html>") or content:match("<head>") or content:match("<body>") or content:match("<div>")
 end
-
 
 ---@private
 ---@internal
@@ -55,7 +53,6 @@ local function _open_in_browser(repo)
   os_open_url(url)
   notify("[reposcope] Opened in browser: " .. url, 2)
 end
-
 
 ---@private
 ---@internal
@@ -86,13 +83,10 @@ local function _prepare_readme_buffer(content)
   nvim_buf_set_name(buf, "reposcope://README.md")
   vim.bo[buf].filetype = "markdown"
 
-  if pcall(require, "nvim-treesitter") then
-    vim.cmd("TSBufEnable highlight")
-  end
+  if pcall(require, "nvim-treesitter") then vim.cmd("TSBufEnable highlight") end
 
   return buf
 end
-
 
 ---@private
 ---@internal
@@ -132,7 +126,6 @@ local function _open_readme_window(buf)
   vim.cmd("normal! gg")
 end
 
-
 --- Opens the viewer for the selected repository's README
 --- Displays HTML in a browser or Markdown in a temporary Neovim buffer
 ---@return nil
@@ -161,9 +154,7 @@ end
 ---@return nil
 function M.close_viewer()
   local buf = ui_state.buffers.readme_viewer
-  if buf and nvim_buf_is_valid(buf) then
-    nvim_buf_delete(buf, { force = true })
-  end
+  if buf and nvim_buf_is_valid(buf) then nvim_buf_delete(buf, { force = true }) end
 
   ui_state.buffers.readme_viewer = nil
   setup_autocmds()

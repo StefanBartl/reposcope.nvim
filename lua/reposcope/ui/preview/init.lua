@@ -23,7 +23,6 @@ local repo_cache_get_selected = require("reposcope.cache.repository_cache").get_
 -- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
 
-
 ---Initialize the preview window and injects either the default banner or the last selected README.
 ---@return nil
 function M.initialize()
@@ -41,9 +40,7 @@ function M.initialize()
   if ui_state.is_list_populated() then
     vim.defer_fn(function()
       local selected_repo = repo_cache_get_selected()
-      if selected_repo and selected_repo.name then
-          update_preview(selected_repo.owner.login, selected_repo.name)
-      end
+      if selected_repo and selected_repo.name then update_preview(selected_repo.owner.login, selected_repo.name) end
     end, 100)
   else
     inject_banner(buf)

@@ -18,7 +18,6 @@ local notify = require("reposcope.utils.debug").notify
 ---@type string
 local _last_query = ""
 
-
 ---Collects input from each active prompt field
 ---@return table<string, string> result Keyed by prompt field, containing non-empty values
 function M.collect()
@@ -31,9 +30,7 @@ function M.collect()
   for i = 1, #fields do
     local field = fields[i]
     local text = get(field)
-    if type(text) == "string" and text ~= "" then
-      result[field] = text
-    end
+    if type(text) == "string" and text ~= "" then result[field] = text end
   end
 
   return result
@@ -54,11 +51,8 @@ function M.on_enter()
   fetch_repositories_and_display(query)
 end
 
-
 ---Returns the last search query string built by `on_enter` ("" if none yet)
 ---@return string
-function M.get_last_query()
-  return _last_query
-end
+function M.get_last_query() return _last_query end
 
 return M

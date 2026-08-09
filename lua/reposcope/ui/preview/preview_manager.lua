@@ -22,7 +22,6 @@ local banner = require("reposcope.ui.preview.preview_banner").get_banner
 -- Utilities and Debugging
 local notify = require("reposcope.utils.debug").notify
 
-
 --- Updates the preview buffer with the README of the given repository.
 --- Attempts to load the README from cache and inject it into the buffer.
 ---@param owner string
@@ -49,7 +48,6 @@ function M.update_preview(owner, repo_name)
   M.inject_content(buf, vim.split(content, "\n", { plain = true }), "markdown")
 end
 
-
 --- Injects arbitrary content into the specified buffer and applies the given filetype.
 ---@param buf integer The buffer handle to inject content into
 ---@param lines string[] The lines to insert
@@ -68,7 +66,6 @@ function M.inject_content(buf, lines, filetype)
   vim.bo[buf].modifiable = false
 end
 
-
 ---Injects the default banner into the preview buffer.
 ---@param buf integer The preview buffer handle
 ---@return nil
@@ -82,7 +79,6 @@ function M.inject_banner(buf)
   M.inject_content(buf, lines, "text")
 end
 
-
 ---Set preview window to a blank line
 ---@return nil
 function M.clear_preview()
@@ -92,7 +88,7 @@ function M.clear_preview()
     return
   end
 
-  M.inject_content(buf, {""}, "text")
+  M.inject_content(buf, { "" }, "text")
 end
 
 return M

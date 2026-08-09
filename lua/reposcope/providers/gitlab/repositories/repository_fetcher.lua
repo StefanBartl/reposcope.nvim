@@ -26,7 +26,6 @@ local urlencode = require("reposcope.utils.encoding").urlencode
 -- Constants
 local GITLAB_API_SEARCH_URL = "https://gitlab.com/api/v4/projects?search=%s&order_by=star_count&sort=desc"
 
-
 ---Builds the full GitLab API URL from a query
 ---@param query string
 ---@return string
@@ -34,7 +33,6 @@ function M.build_url(query)
   local encoded_query = urlencode(query or "")
   return string.format(GITLAB_API_SEARCH_URL, encoded_query)
 end
-
 
 ---@private
 ---@internal
@@ -53,7 +51,6 @@ local function _normalize(project)
     stargazers_count = project.star_count,
   }
 end
-
 
 --- Fetches repositories from the GitLab API and updates the repository cache
 ---@param query string The search query for GitLab projects

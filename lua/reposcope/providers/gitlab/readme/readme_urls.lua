@@ -11,7 +11,6 @@ local M = {}
 
 local urlencode = require("reposcope.utils.encoding").urlencode
 
-
 ---Returns both the raw content and API URLs for a given repository README.
 ---@param owner string GitLab namespace (owner/group)
 ---@param repo string Repository (project) name
@@ -23,8 +22,10 @@ function M.get_urls(owner, repo, branch)
   branch = branch or "main"
 
   local raw_url = "https://gitlab.com/" .. owner .. "/" .. repo .. "/-/raw/" .. branch .. "/README.md"
-  local api_url = "https://gitlab.com/api/v4/projects/" .. urlencode(owner .. "/" .. repo)
-      .. "/repository/files/README.md?ref=" .. urlencode(branch)
+  local api_url = "https://gitlab.com/api/v4/projects/"
+    .. urlencode(owner .. "/" .. repo)
+    .. "/repository/files/README.md?ref="
+    .. urlencode(branch)
 
   return {
     raw = raw_url,

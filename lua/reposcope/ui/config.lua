@@ -25,7 +25,6 @@ M.colortheme = {
   accent_2 = "#98C379",
 }
 
-
 --- Dynamically updates the layout of the UI (width, height, position)
 ---@param width? number Optional new width for the UI
 ---@param height? number Optional new height for the UI

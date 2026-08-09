@@ -18,7 +18,6 @@ local reset_selected_line = require("reposcope.ui.list.list_manager").reset_sele
 local display_repositories = require("reposcope.controllers.list_controller").display_repositories
 local notify = require("reposcope.utils.debug").notify
 
-
 ---Initializes the list UI and optionally triggers README loading
 ---@return nil
 function M.load_ui_after_fetch()

@@ -18,7 +18,6 @@ local notify = require("reposcope.utils.debug").notify
 local metrics = require("reposcope.utils.metrics")
 local config = require("reposcope.config")
 
-
 ---Issues a GitHub CLI API request and returns the response to callback
 ---@param method string HTTP method (e.g. "GET", "POST")
 ---@param url string Full GitHub API URL (e.g. "https://api.github.com/repos/user/repo/readme")
@@ -44,9 +43,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   end
 
   -- Debug CLI output
-  if debug then
-    table.insert(args, "--verbose")
-  end
+  if debug then table.insert(args, "--verbose") end
 
   -- Optional: write CLI command to file
   pcall(function()
@@ -63,14 +60,14 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   -- of "KEY=VALUE" strings, not a dict — spawn_capture passes opts.env
   -- straight through without converting it.
   local env = {}
-  if token and token ~= "" then
-    table.insert(env, "GITHUB_TOKEN=" .. token)
-  end
+  if token and token ~= "" then table.insert(env, "GITHUB_TOKEN=" .. token) end
 
   notify("[reposcope] GH Request: gh " .. table.concat(args, " "), 2)
 
   local argv = { "gh" }
-  for _, a in ipairs(args) do argv[#argv + 1] = a end
+  for _, a in ipairs(args) do
+    argv[#argv + 1] = a
+  end
 
   spawn_capture(argv, { env = env }, function(result)
     local duration = (hrtime() - start_time) / 1e6 -- ms
@@ -83,12 +80,8 @@ function M.request(method, url, callback, headers, debug, context, uuid)
       notify("[reposcope] stderr: " .. result.stderr, 2)
       callback(nil, "gh request failed (code " .. result.code .. ")")
     else
-      if debug and result.stderr ~= "" then
-        notify("[reposcope] gh stderr: " .. result.stderr, 4)
-      end
-      if metrics.record_metrics() then
-        metrics.increase_success(safe_uuid, url, "gh", safe_context, duration, 200)
-      end
+      if debug and result.stderr ~= "" then notify("[reposcope] gh stderr: " .. result.stderr, 4) end
+      if metrics.record_metrics() then metrics.increase_success(safe_uuid, url, "gh", safe_context, duration, 200) end
       callback(result.stdout)
     end
   end)

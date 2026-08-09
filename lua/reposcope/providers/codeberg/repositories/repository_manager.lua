@@ -23,7 +23,6 @@ local clear_list = require("reposcope.ui.list.list_manager").clear_list
 local clear_preview = require("reposcope.ui.preview.preview_manager").clear_preview
 local repo_cache_clear = require("reposcope.cache.repository_cache").clear
 
-
 ---Handles clearing UI and state in case of API or fetch errors
 ---@private
 ---@internal
@@ -33,7 +32,6 @@ local function _handle_fetch_failure()
   clear_list()
   clear_preview()
 end
-
 
 ---Fetches Codeberg repositories without UI logic (for headless or cache-only usage)
 ---@param query string
@@ -64,7 +62,6 @@ function M.fetch(query, uuid, on_success, on_failure)
     end
   end)
 end
-
 
 ---@param query string
 ---@param uuid string

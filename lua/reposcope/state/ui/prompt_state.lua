@@ -8,27 +8,21 @@
 ---@class PromptStateManager : PromptStateManagerModule
 local M = {}
 
-
 --- Stores current text input for each prompt field
 ---@type PromptInputMap
 M.input = {}
-
 
 --- Sets the current input text for a given prompt field
 ---@param field PromptField
 ---@param text PromptInput
 ---@return nil
 function M.set_field_text(field, text)
-  if type(field) == "string" and type(text) == "string" then
-    M.input[field] = text
-  end
+  if type(field) == "string" and type(text) == "string" then M.input[field] = text end
 end
 
 --- Retrieves the input text for a given prompt field
 ---@param field PromptField
 ---@return PromptInput|""
-function M.get_field_text(field)
-  return M.input[field] or ""
-end
+function M.get_field_text(field) return M.input[field] or "" end
 
 return M

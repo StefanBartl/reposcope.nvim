@@ -11,7 +11,6 @@ local M = {}
 -- Text Utilities
 local center_text_lines = require("reposcope.utils.text").center_text_lines
 
-
 ---@private
 ---@internal
 ---Applies vertical centering to the banner text, maintaining a 2/3 height ratio
@@ -36,7 +35,6 @@ local function _apply_vertical_centering(lines)
   return lines
 end
 
-
 ---Generates a dynamically centered preview banner
 ---@param preview_width number The width of the preview area
 ---@return string[] List of centered text lines for the preview
@@ -51,14 +49,12 @@ function M.get_banner(preview_width)
     "Found a bug or have suggestions?",
     "Check the README.md for contribution guidelines.",
     "",
-    "Thank you for using Reposcope!"
+    "Thank you for using Reposcope!",
   }
 
   local centered_lines = center_text_lines(text_lines, preview_width)
 
   return _apply_vertical_centering(centered_lines)
 end
-
-
 
 return M

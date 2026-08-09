@@ -5,10 +5,10 @@
 --- It is triggered by a keymap and is useful for later reviewing or scripting (e.g., extract, export).
 
 ---@class ActionCreateReadmeEditor : ActionCreateReadmeEditorModule
-local M  = {}
+local M = {}
 
 -- Vim Utilities
-local nvim_create_buf  = vim.api.nvim_create_buf
+local nvim_create_buf = vim.api.nvim_create_buf
 local nvim_buf_set_lines = vim.api.nvim_buf_set_lines
 local nvim_buf_set_name = vim.api.nvim_buf_set_name
 -- Debugging Utility
@@ -19,7 +19,6 @@ local cache_get_ram = require("reposcope.cache.readme_cache").get_ram
 local cache_get_selected_repo = require("reposcope.cache.repository_cache").get_selected
 -- OS Utilities
 local os = require("reposcope.utils.os")
-
 
 ---Creates a hidden buffer with the README content of the selected repository.
 ---@return nil

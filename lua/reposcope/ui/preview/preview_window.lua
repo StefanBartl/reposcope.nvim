@@ -25,16 +25,13 @@ local ui_state = require("reposcope.state.ui.ui_state")
 local create_named_buffer = require("reposcope.utils.protection").create_named_buffer
 local notify = require("reposcope.utils.debug").notify
 
-
 ---Opens the preview window and injects the initial banner
 ---@return boolean
 function M.open_window()
   local buf = ui_state.buffers.preview
 
   -- Reset buffer if invalid
-  if buf and not nvim_buf_is_valid(buf) then
-    buf = nil
-  end
+  if buf and not nvim_buf_is_valid(buf) then buf = nil end
 
   if not buf or not nvim_buf_is_valid(buf) then
     buf = create_named_buffer("reposcope://preview")
@@ -73,13 +70,11 @@ end
 ---Closes the preview window
 ---@return nil
 function M.close_window()
-  local win = ui_state.windows.preview
-
-  if win and nvim_win_is_valid(win) then
-    nvim_win_close(win, true)
+  if ui_state.windows.preview and nvim_win_is_valid(ui_state.windows.preview) then
+    nvim_win_close(ui_state.windows.preview, true)
   end
 
-  win = nil
+  ui_state.windows.preview = nil
   ui_state.buffers.preview = nil
 end
 

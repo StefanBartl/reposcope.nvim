@@ -29,7 +29,6 @@ local ui_state = require("reposcope.state.ui.ui_state")
 local notify = require("reposcope.utils.debug").notify
 local create_named_buffer = require("reposcope.utils.protection").create_named_buffer
 
-
 local HIGHLIGHT_NS = vim.api.nvim_create_namespace("reposcope.list")
 M.highlighted_line = 1
 
@@ -52,20 +51,15 @@ M.Layouts = {
     col = 0,
     width = math.floor(vim.o.columns),
     height = math.floor(vim.o.lines),
-  }
+  },
 }
-
 
 ---Opens list window, ensures the list window and buffer are created and initialized
 ---@return boolean True if the list window is ready, false otherwise
 function M.open_window()
   -- Reset buffer and/or if invalid
-  if ui_state.buffers.list and not nvim_buf_is_valid(ui_state.buffers.list) then
-    ui_state.buffers.list = nil
-  end
-  if ui_state.windows.list and not nvim_win_is_valid(ui_state.windows.list) then
-    ui_state.windows.list = nil
-  end
+  if ui_state.buffers.list and not nvim_buf_is_valid(ui_state.buffers.list) then ui_state.buffers.list = nil end
+  if ui_state.windows.list and not nvim_win_is_valid(ui_state.windows.list) then ui_state.windows.list = nil end
 
   if not ui_state.buffers.list then
     local buf = create_named_buffer("reposcope://list")
@@ -147,7 +141,6 @@ function M.apply_layout()
     vim.wo[win].scrolloff = 3
   end
 
-
   nvim_set_hl(ns, "Normal", {
     bg = ui_config.colortheme.background,
     fg = ui_config.colortheme.text,
@@ -188,7 +181,7 @@ function M.highlight_selected(index)
   nvim_buf_set_extmark(buf, HIGHLIGHT_NS, index - 1, 0, {
     end_row = index - 1,
     end_col = #line,
-    hl_group = "ReposcopeListSelected"
+    hl_group = "ReposcopeListSelected",
   })
 
   M.highlighted_line = index
@@ -214,7 +207,7 @@ function M.set_highlighted_line(line)
   nvim_buf_set_extmark(buf, HIGHLIGHT_NS, line - 1, 0, {
     end_row = line - 1,
     end_col = -1,
-    hl_group = "ReposcopeListSelected"
+    hl_group = "ReposcopeListSelected",
   })
 
   M.highlighted_line = line
@@ -229,9 +222,7 @@ function M.get_highlighted_entry()
   end
 
   local lines = nvim_buf_get_lines(ui_state.buffers.list, 0, -1, false)
-  if #lines == 0 then
-    return nil
-  end
+  if #lines == 0 then return nil end
 
   return lines[M.highlighted_line] or nil
 end

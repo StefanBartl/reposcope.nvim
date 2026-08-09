@@ -39,7 +39,6 @@ local collect_repos = repos_util.collect_repos
 -- Progress indicator (optional dependency, see utils/progress.lua)
 local progress = require("reposcope.utils.progress")
 
-
 ---@private
 ---@internal
 ---Runs `git fetch --all --prune` then `git pull --ff-only` for a single repository.
@@ -109,22 +108,14 @@ function M.update_all(path, on_complete)
   -- repositories already updated stay updated, and `on_complete` still reports
   -- the real count.
   local cancelled = false
-  if handle then
-    handle:on_cancel(function()
-      cancelled = true
-    end)
-  end
+  if handle then handle:on_cancel(function() cancelled = true end) end
 
   local function run_next()
     local repo = repos[index]
     if not repo or cancelled then
-      if handle and not cancelled then
-        handle:finish(("updated %d of %d repositories"):format(updated, #repos))
-      end
+      if handle and not cancelled then handle:finish(("updated %d of %d repositories"):format(updated, #repos)) end
       vim.schedule(function()
-        if on_complete then
-          on_complete(updated, errors)
-        end
+        if on_complete then on_complete(updated, errors) end
       end)
       return
     end
