@@ -40,6 +40,7 @@ local defaults = {
     preview_scroll_down = "<C-d>", -- Scroll the README preview down (stays focused in the prompt)
     preview_scroll_up = "<C-u>", -- Scroll the README preview up (stays focused in the prompt)
     help = "?", -- Show the keymap cheatsheet (normal mode only, so "?" still types in insert mode)
+    toggle_favorite = "<C-f>", -- Toggle favorite for the currently selected repository
   }, -- Set an action to `false` or `""` to disable it
   prompt_prefix_symbol = " " .. "\u{f002}" .. " ", -- Symbol shown in the `prefix` field; needs a Nerd Font. Set e.g. "> " for plain terminals
 

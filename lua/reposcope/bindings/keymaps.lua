@@ -198,6 +198,28 @@ local prompt_keymap_actions = {
     desc = "Show the keymap cheatsheet",
     rhs = function() require("reposcope.ui.actions.help_view").show() end,
   },
+  toggle_favorite = {
+    mode = { "n", "i" },
+    desc = "Toggle favorite for selected repository",
+    rhs = function()
+      local repo = require("reposcope.cache.repository_cache").get_selected()
+      if not repo then
+        notify("[reposcope] No repository selected", 3)
+        return
+      end
+
+      local is_fav = require("reposcope.state.favorites_state").toggle(repo)
+      notify(
+        ("[reposcope] %s %s/%s %s favorites"):format(
+          is_fav and "Added" or "Removed",
+          repo.owner.login,
+          repo.name,
+          is_fav and "to" or "from"
+        ),
+        2
+      )
+    end,
+  },
 }
 
 ---Display order for `M.list_active_prompt_keymaps()` — cosmetic only (actual
@@ -216,6 +238,7 @@ local ACTION_ORDER = {
   "preview_scroll_up",
   "preview_scroll_down",
   "help",
+  "toggle_favorite",
 }
 
 ---@internal

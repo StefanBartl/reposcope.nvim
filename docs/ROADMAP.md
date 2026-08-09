@@ -25,3 +25,5 @@ planned items are added here as they come up.
 - [x] Scroll the README preview (`<C-u>`/`<C-d>`) without leaving the prompt
 - [x] List/preview highlight colors sourced from the active colortheme
 - [x] Configurable `prefix` field symbol (`prompt_prefix_symbol`)
+- [x] Favorite repositories with persisted metadata + README snapshot (`<C-f>`, `:Reposcope favorites`)
+- [x] Query-frequency tracking (`:Reposcope queries`)

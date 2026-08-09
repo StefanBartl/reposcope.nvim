@@ -31,6 +31,9 @@
 ---@field options ConfigOptions Full configuration options
 ---@field setup fun(opts: table): nil Setup function to initialize the plugin
 ---@field get_option fun(key: ConfigOptionKey): any Retrieve a value from config.options
+---@field get_session_path fun(): string Absolute path of the persisted session file
+---@field get_favorites_path fun(): string Absolute path of the persisted favorites file
+---@field get_query_stats_path fun(): string Absolute path of the persisted query-frequency file
 
 --- Type to be able to pass the opts table to the setup function
 ---@class PartialConfigOptions

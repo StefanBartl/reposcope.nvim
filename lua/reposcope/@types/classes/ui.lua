@@ -26,6 +26,9 @@
 ---@field show fun(): nil Shows the `?` keymap cheatsheet, or closes it if already open (toggle)
 ---@field close fun(): nil Closes the cheatsheet if open
 
+---@class ActionFavoritesViewModule
+---@field show fun(): nil Shows the favorites overview
+
 ---@class BackgroundConfigModule
 ---@field row number The starting row position of the background window.
 ---@field col number The starting column position of the background window.

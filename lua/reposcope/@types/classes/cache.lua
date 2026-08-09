@@ -33,6 +33,15 @@
 ---@field items Repository[] List of repositories
 ---@field list string[] List of all repositories with most important informations
 
+---@class FavoriteRepo A persisted snapshot of a favorited repository (metadata + README, if cached at toggle time)
+---@field owner string
+---@field name string
+---@field description string
+---@field html_url string
+---@field default_branch? string
+---@field stargazers_count? number
+---@field readme? string README content cached at the time the repository was favorited, if any
+
 ---@class RepositoryCacheModule
 ---@field set fun(json: RepositoryResponse, is_original?: boolean): nil Caches the repository response
 ---@field get fun(): RepositoryResponse Returns the currently cached repositories
