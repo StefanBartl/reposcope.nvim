@@ -22,6 +22,7 @@
 ---@field set_clone_keymaps fun(): nil Applies all clone-related keymaps
 ---@field unset_clone_keymaps fun(): nil Removes all clone-related keymaps
 ---@field set_user_keymaps fun(map_cfg?: table, opts?: table): nil Sets user keymaps for opening/closing Reposcope
+---@field list_active_prompt_keymaps fun(): { action: PromptKeymapAction, lhs: string[], desc: string }[] Lists currently active prompt keymaps, grouped by action, in a stable display order
 
 ---@class ReposcopeHealthModule
 ---@field check fun(): nil Performs a health check for reposcope.nvim environment

@@ -37,7 +37,11 @@ local defaults = {
     open_editor = "<C-b>", -- Open README editor
     clone = "<C-c>", -- Clone selected repository
     backspace = "<BS>", -- Backspace (disabled at column 0, line 2)
+    preview_scroll_down = "<C-d>", -- Scroll the README preview down (stays focused in the prompt)
+    preview_scroll_up = "<C-u>", -- Scroll the README preview up (stays focused in the prompt)
+    help = "?", -- Show the keymap cheatsheet (normal mode only, so "?" still types in insert mode)
   }, -- Set an action to `false` or `""` to disable it
+  prompt_prefix_symbol = " " .. "\u{f002}" .. " ", -- Symbol shown in the `prefix` field; needs a Nerd Font. Set e.g. "> " for plain terminals
 
   -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
   metrics = false,

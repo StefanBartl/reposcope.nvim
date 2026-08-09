@@ -9,6 +9,7 @@ Reposcope.
   - [1.1 Global (user-configurable)](#11-global-user-configurable)
   - [1.2 Prompt buffers](#12-prompt-buffers)
   - [1.3 Close-UI (all Reposcope buffers)](#13-close-ui-all-reposcope-buffers)
+  - [1.4 Component-local](#14-component-local)
 - [2. User Commands](#2-user-commands)
 - [3. Autocommands](#3-autocommands)
 
@@ -39,21 +40,26 @@ buffer-local to all prompt field buffers (`ui_state.buffers.prompt`). Each
 action can be rebound to a different key (or a list of keys), or disabled by
 setting it to `false`/`""` in `setup({ prompt_keymaps = {...} })`.
 
-| Action        | Default key(s)                | Mode   | Description                                          |
-| ------------- | ------------------------------ | ------ | ------------------------------------------------------ |
-| `confirm`     | `<CR>`                         | i      | Confirm prompt input (`prompt_input.on_enter`)          |
-| `nav_up`      | `<Up>`                         | n, i   | Navigate list up + fetch README for selected entry      |
-| `nav_down`    | `<Down>`                       | n, i   | Navigate list down + fetch README for selected entry    |
-| `focus_next`  | `<C-w>`, `<C-l>`, `<Tab>`      | n, i   | Focus next prompt field                                 |
-| `focus_prev`  | `<C-h>`, `<S-Tab>`             | n, i   | Focus previous prompt field                             |
-| `open_viewer` | `<C-v>`                        | n, i   | Open README viewer                                      |
-| `open_editor` | `<C-b>`                        | n, i   | Open README editor                                      |
-| `clone`       | `<C-c>`                        | n, i   | Clone selected repository (prompt for target dir)       |
-| `backspace`   | `<BS>`                         | n, i   | Backspace (disabled at column 0, line 2 of prompt)       |
+| Action                 | Default key(s)                | Mode   | Description                                          |
+| ---------------------- | ------------------------------ | ------ | ------------------------------------------------------ |
+| `confirm`              | `<CR>`                         | i      | Confirm prompt input (`prompt_input.on_enter`)          |
+| `nav_up`               | `<Up>`                         | n, i   | Navigate list up + fetch README for selected entry      |
+| `nav_down`             | `<Down>`                       | n, i   | Navigate list down + fetch README for selected entry    |
+| `focus_next`           | `<C-w>`, `<C-l>`, `<Tab>`      | n, i   | Focus next prompt field                                 |
+| `focus_prev`           | `<C-h>`, `<S-Tab>`             | n, i   | Focus previous prompt field                             |
+| `open_viewer`          | `<C-v>`                        | n, i   | Open README viewer                                      |
+| `open_editor`          | `<C-b>`                        | n, i   | Open README editor                                      |
+| `clone`                | `<C-c>`                        | n, i   | Clone selected repository (prompt for target dir)       |
+| `backspace`            | `<BS>`                         | n, i   | Backspace (disabled at column 0, line 2 of prompt)       |
+| `preview_scroll_up`    | `<C-u>`                        | n, i   | Scroll the README preview up, without leaving the prompt |
+| `preview_scroll_down`  | `<C-d>`                        | n, i   | Scroll the README preview down, without leaving the prompt |
+| `help`                 | `?`                            | n      | Show the `?` keymap cheatsheet (normal mode only, so `?` still types in insert mode) |
 
 All prompt keymaps carry a `desc` so they are picked up automatically by
 [which-key](https://github.com/folke/which-key.nvim) if it's installed — no
-extra registration needed.
+extra registration needed. `reposcope.bindings.keymaps.list_active_prompt_keymaps()`
+is the single source of truth both the `?` cheatsheet (`ui/actions/help_view.lua`)
+and this table are derived from.
 
 ### 1.3 Close-UI (all Reposcope buffers)
 
@@ -67,6 +73,17 @@ prompt buffers.
 | `<Esc>`  | i, t, v      | Switch to normal mode         |
 | `<C-w>`  | n            | Close Reposcope UI            |
 | `<C-w>`  | i, t, v      | No-op (`<Nop>`, disabled)     |
+
+### 1.4 Component-local
+
+Not part of `set_ui_keymaps()` — each is set/unset by its own component
+whenever it opens/closes.
+
+| Key           | Mode | Where                                       | Action                                                    |
+| ------------- | ---- | -------------------------------------------- | ---------------------------------------------------------- |
+| `q`           | n    | [`ui/actions/readme_viewer.lua`](../lua/reposcope/ui/actions/readme_viewer.lua) (`nvim_buf_set_keymap`) | Closes the README viewer, restores prompt autocmds + prompt keymaps |
+| `q`, `<Esc>`  | n    | [`utils/stats.lua`](../lua/reposcope/utils/stats.lua) | Closes the stats popup buffer/window                        |
+| `q`, `<Esc>`  | n    | [`ui/actions/help_view.lua`](../lua/reposcope/ui/actions/help_view.lua) (via `lib.nvim.ui.kit`'s `nice_quit`) | Closes the `?` keymap cheatsheet |
 
 ---
 

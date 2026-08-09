@@ -183,6 +183,39 @@ local prompt_keymap_actions = {
       end
     end,
   },
+  preview_scroll_down = {
+    mode = { "n", "i" },
+    desc = "Scroll README preview down",
+    rhs = function() require("reposcope.ui.preview.preview_manager").scroll(1) end,
+  },
+  preview_scroll_up = {
+    mode = { "n", "i" },
+    desc = "Scroll README preview up",
+    rhs = function() require("reposcope.ui.preview.preview_manager").scroll(-1) end,
+  },
+  help = {
+    mode = "n",
+    desc = "Show the keymap cheatsheet",
+    rhs = function() require("reposcope.ui.actions.help_view").show() end,
+  },
+}
+
+---Display order for `M.list_active_prompt_keymaps()` — cosmetic only (actual
+--- keymap registration in `build_prompt_mappings` doesn't depend on order).
+---@type PromptKeymapAction[]
+local ACTION_ORDER = {
+  "confirm",
+  "nav_up",
+  "nav_down",
+  "focus_next",
+  "focus_prev",
+  "open_viewer",
+  "open_editor",
+  "clone",
+  "backspace",
+  "preview_scroll_up",
+  "preview_scroll_down",
+  "help",
 }
 
 ---@internal
@@ -209,6 +242,29 @@ local function build_prompt_mappings()
   end
 
   return mappings
+end
+
+---Lists currently active prompt keymaps, grouped by action, in a stable
+--- display order (`ACTION_ORDER`) — used by the `?` cheatsheet
+--- (`reposcope.ui.actions.help_view`) so it never drifts from what
+--- `set_prompt_keymaps()` actually registers. An action disabled via
+--- `config.prompt_keymaps` (`false`/`""`) is omitted, matching
+--- `build_prompt_mappings()`.
+---@return { action: PromptKeymapAction, lhs: string[], desc: string }[]
+function M.list_active_prompt_keymaps()
+  local configured = cfg_get_option("prompt_keymaps") or {}
+  local rows = {}
+
+  for _, action in ipairs(ACTION_ORDER) do
+    local handler = prompt_keymap_actions[action]
+    local lhs_cfg = configured[action]
+    if handler and lhs_cfg and lhs_cfg ~= "" then
+      local keys = type(lhs_cfg) == "table" and lhs_cfg or { lhs_cfg }
+      rows[#rows + 1] = { action = action, lhs = keys, desc = handler.desc }
+    end
+  end
+
+  return rows
 end
 
 ---Set prompt-specific keymaps (confirm, navigation, viewer/editor, clone, backspace).

@@ -25,7 +25,9 @@ require("reposcope").setup({
   },
   prompt_keymaps = {
     open_viewer = "<C-v>",                  -- Rebind or set to false/"" to disable; see docs/BINDINGS.md
+    help = "?",                             -- Keymap cheatsheet (normal mode only)
   },
+  prompt_prefix_symbol = " " .. "\u{f002}" .. " ", -- Symbol in the `prefix` field; needs a Nerd Font. Set e.g. "> " for plain terminals
   clone = {
     std_dir = "~/projects",                 -- Default directory to clone into
     type = "git",                           -- Clone method: "git", "gh", "wget", "curl"
@@ -50,6 +52,7 @@ require("reposcope").setup({
 | `keymaps.open`  | `string\|false`   | Keymap to open Reposcope UI (`false`/`""` disables it)       |
 | `keymaps.close` | `string\|false`   | Keymap to close the UI cleanly (`false`/`""` disables it)    |
 | `prompt_keymaps`| `table`    | Per-action keymaps for the prompt buffers; see [BINDINGS.md](BINDINGS.md) |
+| `prompt_prefix_symbol` | `string` | Symbol shown in the `prefix` field (default needs a Nerd Font; e.g. `"> "` for plain terminals) |
 | `clone.std_dir` | `string`   | Base path for repository cloning                                   |
 | `clone.type`    | `string`   | Tool used to perform clone: `"git"`, `"gh"`, `"wget"`, or `"curl"` |
 | `metrics`       | `boolean`  | Enable internal request logging and performance tracking           |

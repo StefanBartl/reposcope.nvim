@@ -32,9 +32,9 @@ M.layout = {
   },
 }
 
--- Color and border defaults
+-- Color and border defaults, sourced from the active colortheme
 M.highlight_color = M.layout.Normal.background
-M.normal_color = "#FFFFFF"
+M.normal_color = ui_config.colortheme.text
 M.border = "none"
 
 --- Dynamically update the preview layout

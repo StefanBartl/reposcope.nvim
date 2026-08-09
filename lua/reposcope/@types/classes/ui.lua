@@ -22,6 +22,10 @@
 ---@field render fun(records: RepoStatusRecord[]): string[] Renders status records into an aligned, column-formatted block
 ---@field show fun(records: RepoStatusRecord[], opts?: { output?: StatusOutputMode, path?: string }): nil Renders and displays status records via the requested output backend
 
+---@class ActionHelpViewModule
+---@field show fun(): nil Shows the `?` keymap cheatsheet, or closes it if already open (toggle)
+---@field close fun(): nil Closes the cheatsheet if open
+
 ---@class BackgroundConfigModule
 ---@field row number The starting row position of the background window.
 ---@field col number The starting column position of the background window.
@@ -92,6 +96,7 @@
 ---@field clear_preview fun(): nil Set preview window to a blank line
 ---@field inject_content fun(buf: integer, lines: string[], filetype: string): nil Injects arbitrary content into the given buffer with the specified filetype
 ---@field inject_banner fun(buf: integer): nil Injects the default banner into the buffer (vertically and horizontally centered)
+---@field scroll fun(direction: 1|-1): nil Scrolls the preview window by a half page without moving focus away from it
 
 ---@class PreviewWindowModule
 ---@field open_window fun(): boolean Opens the preview window with layout and banner and returns true or false
