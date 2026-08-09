@@ -20,6 +20,7 @@
 - 🔤 Customizable `prefix` field symbol (`prompt_prefix_symbol`) for terminals without a Nerd Font
 - ⭐ Favorite repositories (`<C-f>` to toggle, `:Reposcope favorites`) — persists metadata *and* the README content (if cached), so viewing a favorite later needs no re-fetch
 - 📈 Query-frequency tracking (`:Reposcope queries`) — every real search is counted, top-10 most-frequent printed on demand
+- 🏁 Start view — opening Reposcope with favorites already saved shows them immediately (list + preview pre-warmed from the favorite's own README snapshot, no network call), instead of an empty prompt
 
 ---
 

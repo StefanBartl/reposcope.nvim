@@ -378,6 +378,10 @@ survives Neovim restarts.
 - `favorites` / `favorites list` — opens the popup (`q`/`<Esc>` to close).
 - `favorites clear`              — removes all favorites.
 
+If you have any favorites saved, `:Reposcope start` shows them immediately
+(list populated, first entry's preview pre-warmed from its README
+snapshot) instead of starting from an empty prompt.
+
 - Example: >
     :Reposcope favorites
     :Reposcope favorites clear

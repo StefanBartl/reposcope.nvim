@@ -4,6 +4,9 @@
 ---@class ListControllerModule
 ---@field display_repositories fun(): nil Displays the list of repositories from state.
 
+---@class StartViewControllerModule
+---@field show_favorites_if_any fun(): boolean Populates the list with favorited repositories, if any; returns whether it did
+
 ---@class ProviderControllerModule
 ---@field fetch_readme_for_selected fun(): nil Triggers a README fetch using the active provider
 ---@field fetch_repositories_and_display fun(query: string): nil Triggers a repository search query using the active provider

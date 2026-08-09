@@ -81,6 +81,10 @@ function M.open_ui()
   -- Open Prompt
   prompt.initialize()
 
+  notify("[reposcope] START VIEW SEQUENCE")
+  -- Show favorites (if any) instead of starting from an empty list
+  require("reposcope.controllers.start_view_controller").show_favorites_if_any()
+
   notify("[reposcope] KEYMAPS SEQUENCE")
   -- Set Keymaps
   keymaps.set_ui_keymaps()
