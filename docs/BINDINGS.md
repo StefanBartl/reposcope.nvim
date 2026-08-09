@@ -85,6 +85,7 @@ whenever it opens/closes.
 | `q`           | n    | [`ui/actions/readme_viewer.lua`](../lua/reposcope/ui/actions/readme_viewer.lua) (`nvim_buf_set_keymap`) | Closes the README viewer, restores prompt autocmds + prompt keymaps |
 | `q`, `<Esc>`  | n    | [`utils/stats.lua`](../lua/reposcope/utils/stats.lua) | Closes the stats popup buffer/window                        |
 | `q`, `<Esc>`  | n    | [`ui/actions/help_view.lua`](../lua/reposcope/ui/actions/help_view.lua) (via `lib.nvim.ui.kit`'s `nice_quit`) | Closes the `?` keymap cheatsheet |
+| `<CR>`, `<2-LeftMouse>` | n | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, on every interactive `--out` backend of `:Reposcope status`) | Prompts to confirm (`lib.nvim.ui.kit`'s button-confirm dialog), then opens the `README.md` of the repository under the cursor (`:edit`). A repository with no readable `README.md` just gets a notification — nothing to confirm |
 
 ---
 

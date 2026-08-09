@@ -241,6 +241,13 @@ my-fork         feature  +2/-1      dirty (3)
 some-lib        main     +0/-4      behind
 ```
 
+On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
+`clipboard`/`path`), pressing `<CR>` or double-clicking (`<2-LeftMouse>`) on a
+repository's row asks for confirmation, then opens that repository's
+`README.md`. A repository with no readable `README.md` just prints a
+notification — there is nothing to confirm opening. See
+[BINDINGS.md](BINDINGS.md#14-component-local) for the full keymap entry.
+
 Examples:
 
 ```vim

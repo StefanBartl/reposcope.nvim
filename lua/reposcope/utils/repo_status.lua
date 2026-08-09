@@ -24,6 +24,7 @@
 
 ---@class RepoStatusRecord
 ---@field name string Repository directory name (tail of the path)
+---@field path string Absolute path to the repository
 ---@field branch string Current branch, or "(detached)" when HEAD is detached
 ---@field ahead integer Commits ahead of the upstream (0 when no upstream)
 ---@field behind integer Commits behind the upstream (0 when no upstream)
@@ -105,6 +106,7 @@ local function parse_status(repo, out)
 
   return {
     name = fnamemodify(repo, ":t"),
+    path = repo,
     branch = branch,
     ahead = ahead,
     behind = behind,
