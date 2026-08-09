@@ -26,6 +26,7 @@
 ---@field log_max number Maximum log size (lines)
 ---@field progress_style ProgressStyle Indicator for bulk repository operations (`update`/`status`); needs lib.nvim, no-op without it
 ---@field readme_precache_count number After a search, pre-cache READMEs for this many top results (0 disables)
+---@field sidebar_enabled boolean Narrow left sidebar showing the active filter, sort mode, and result count
 
 ---@class ReposcopeConfigModule
 ---@brief Structure exposed to the outside and used during `setup()`
@@ -57,3 +58,4 @@
 ---@field log_max? number
 ---@field progress_style? ProgressStyle
 ---@field readme_precache_count? number
+---@field sidebar_enabled? boolean

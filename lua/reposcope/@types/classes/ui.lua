@@ -29,6 +29,19 @@
 ---@class ActionFavoritesViewModule
 ---@field show fun(): nil Shows the favorites overview
 
+---@class SidebarConfigModule
+---@field width number
+---@field row number
+---@field col number
+---@field height number
+---@field border string
+---@field update_layout fun(width?: number, row?: number, col?: number, height?: number): nil
+
+---@class SidebarWindowModule
+---@field open_window fun(): boolean Opens the sidebar window (idempotent)
+---@field refresh fun(): nil Refreshes the sidebar's content; safe to call even if not open
+---@field close_window fun(): nil Closes the sidebar window and buffer
+
 ---@class BackgroundConfigModule
 ---@field row number The starting row position of the background window.
 ---@field col number The starting column position of the background window.
