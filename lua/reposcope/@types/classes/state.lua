@@ -81,3 +81,16 @@
 ---@field query string
 ---@field filter_text string
 ---@field sort_mode "name"|"owner"|"stars"|"relevance"
+
+---@class FavoritesStateModule
+---@field load fun(): FavoriteRepo[] Loads favorites from disk (cached after first call)
+---@field is_favorite fun(owner: string, name: string): boolean Checks whether a repository is favorited
+---@field toggle fun(repo: Repository): boolean Toggles a repository's favorite status; returns the new state
+---@field list fun(): FavoriteRepo[] Returns a deep copy of the persisted favorites list
+---@field clear_all fun(): nil Removes all favorites
+
+---@class QueryStatsModule
+---@field load fun(): table<string, integer> Loads query run-counts from disk (cached after first call)
+---@field record fun(query: string): nil Increments the persisted run-count for `query`
+---@field top fun(n: integer): { query: string, count: integer }[] Returns the top `n` queries by run count, most-frequent first
+---@field clear_all fun(): nil Removes all recorded query stats

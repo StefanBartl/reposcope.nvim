@@ -81,6 +81,7 @@
 ---| "preview_scroll_up"
 ---| "preview_scroll_down"
 ---| "help"
+---| "toggle_favorite"
 
 ---@alias LayoutType
 ---| "default"

@@ -155,6 +155,7 @@ Inside the Reposcope UI:
 | `<CR>`      | Trigger search                              |
 | `<C-u>`     | Scroll the README preview up (stays in the prompt)   |
 | `<C-d>`     | Scroll the README preview down (stays in the prompt) |
+| `<C-f>`     | Toggle favorite for the selected repository          |
 | `?`         | Show the keymap cheatsheet (normal mode only)        |
 
 All prompt keymaps are configurable/disableable via `prompt_keymaps` in
@@ -181,6 +182,8 @@ The following subcommands are available:
 | `:Reposcope status [dir] [--out] [--to]` | Shows git status overview of repositories |
 | `:Reposcope providers`        | Lists providers and marks the active one     |
 | `:Reposcope session ...`      | Save, restore, or clear the search session   |
+| `:Reposcope favorites ...`    | Lists favorited repositories, or clears them |
+| `:Reposcope queries ...`      | Prints top-10 frequent queries, or clears stats |
 | `:Reposcope skipped-readmes`  | Prints number of debounced README fetches    |
 | `:Reposcope stats`            | Displays request statistics (metrics)        |
 | `:Reposcope toggle-dev`       | Toggles developer mode (logging, mocking)    |
@@ -357,6 +360,42 @@ Nothing is saved automatically.
     :Reposcope session save
     :Reposcope session restore
     :Reposcope session clear
+<
+
+------------------------------------------------------------------------------
+                                                       *:Reposcope-favorites*
+:Reposcope favorites list|clear
+
+Lists favorited repositories in a scrollable popup, or clears all of them.
+A favorite is toggled while browsing with the `toggle_favorite` prompt
+keymap (default `<C-f>`, see |reposcope-keymaps|) — there is no separate
+"add favorite" command. Toggling snapshots the repository's metadata
+(owner, name, description, URL, stars) *and* its README content if already
+cached, so the favorite is self-contained: viewing it later needs no live
+re-fetch. Stored as a single JSON file under the plugin's cache directory;
+survives Neovim restarts.
+
+- `favorites` / `favorites list` — opens the popup (`q`/`<Esc>` to close).
+- `favorites clear`              — removes all favorites.
+
+- Example: >
+    :Reposcope favorites
+    :Reposcope favorites clear
+<
+
+------------------------------------------------------------------------------
+                                                         *:Reposcope-queries*
+:Reposcope queries list|clear
+
+Every real search (pressing `<CR>` in the prompt) increments a persisted
+run-count for the exact query that was built. `queries list` prints the
+top 10, most-frequent first; `queries clear` resets the counts. Recorded
+automatically — no opt-in needed, since it never leaves the plugin's cache
+directory.
+
+- Example: >
+    :Reposcope queries
+    :Reposcope queries clear
 <
 
 ==============================================================================

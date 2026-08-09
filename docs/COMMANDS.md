@@ -31,6 +31,8 @@ end, { desc = "Open Reposcope" })
   - [:Reposcope status [dir] [--out] [--to]](#reposcope-status-dir---out---to)
   - [:Reposcope providers](#reposcope-providers)
   - [:Reposcope session save|restore|clear](#reposcope-session-saverestoreclear)
+  - [:Reposcope favorites list|clear](#reposcope-favorites-listclear)
+  - [:Reposcope queries list|clear](#reposcope-queries-listclear)
 
 ---
 
@@ -45,6 +47,9 @@ end, { desc = "Open Reposcope" })
 | `<C-c>`       | n/i  | Clone selected repository             |
 | `<Tab>`       | i    | Cycle to next prompt field            |
 | `<S-Tab>`     | i    | Cycle to previous prompt field        |
+| `<C-u>`/`<C-d>` | n/i | Scroll the README preview, staying in the prompt |
+| `<C-f>`       | n/i  | Toggle favorite for the selected repository |
+| `?`           | n    | Show the keymap cheatsheet            |
 
 All prompt keymaps above are configurable and disableable via `prompt_keymaps`,
 and are picked up automatically by [which-key](https://github.com/folke/which-key.nvim)
@@ -95,6 +100,15 @@ subcommand; remaining arguments are forwarded to it.
 | `:Reposcope session save`                  | Saves the current provider, prompt input, last query, filter, and sort mode |
 | `:Reposcope session restore`               | Restores the saved session and re-runs the last search          |
 | `:Reposcope session clear`                 | Deletes the saved session file, if any                          |
+
+**Favorites & Query History**
+
+| Command                          | Description                                                    |
+| ---------------------------------- | --------------------------------------------------------------- |
+| `:Reposcope favorites` / `favorites list` | Lists favorited repositories in a popup                 |
+| `:Reposcope favorites clear`       | Removes all favorites                                            |
+| `:Reposcope queries` / `queries list`     | Prints your top-10 most-frequent search queries          |
+| `:Reposcope queries clear`         | Clears the recorded query stats                                  |
 
 **Debugging, Stats & Metrics**
 
@@ -276,4 +290,43 @@ Examples:
 :Reposcope session save     "remember the current search, filter and sort
 :Reposcope session restore  "bring back the last saved search
 :Reposcope session clear    "delete the saved session
+```
+
+---
+
+#### `:Reposcope favorites list|clear`
+
+Lists favorited repositories in a scrollable popup, or clears all of them.
+A favorite is toggled while browsing with the `toggle_favorite` prompt
+keymap (default `<C-f>`) — there's no separate "add favorite" command.
+Toggling snapshots the repository's metadata (owner, name, description,
+URL, stars) *and* its README content if already cached, so the favorite is
+self-contained: viewing it later needs no live re-fetch. Persisted as a
+single JSON file under the plugin's cache directory; survives restarts.
+
+- `favorites` / `favorites list` — opens the popup (`q`/`<Esc>` to close).
+- `favorites clear` — removes all favorites.
+
+Examples:
+
+```vim
+:Reposcope favorites        "same as 'favorites list'
+:Reposcope favorites clear  "remove all favorites
+```
+
+---
+
+#### `:Reposcope queries list|clear`
+
+Every real search (pressing `<CR>` in the prompt) increments a persisted
+run-count for the exact query that was built. `queries list` prints the
+top 10, most-frequent first; `queries clear` resets the counts. Recorded
+automatically — no opt-in needed, since it's local-only and never leaves
+the plugin's cache directory.
+
+Examples:
+
+```vim
+:Reposcope queries        "same as 'queries list'
+:Reposcope queries clear  "reset the recorded query stats
 ```

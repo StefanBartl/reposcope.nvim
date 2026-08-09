@@ -18,6 +18,8 @@
 - 📜 Scroll the README preview (`<C-u>`/`<C-d>`) without leaving the prompt
 - 🎨 List/preview highlight colors now derive from the active colortheme instead of separate hardcoded hex values, so `ui.config.update_theme()` actually reaches them
 - 🔤 Customizable `prefix` field symbol (`prompt_prefix_symbol`) for terminals without a Nerd Font
+- ⭐ Favorite repositories (`<C-f>` to toggle, `:Reposcope favorites`) — persists metadata *and* the README content (if cached), so viewing a favorite later needs no re-fetch
+- 📈 Query-frequency tracking (`:Reposcope queries`) — every real search is counted, top-10 most-frequent printed on demand
 
 ---
 

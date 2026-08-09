@@ -186,6 +186,49 @@ local subcommands = {
     complete = function() return { "save", "restore", "clear" } end,
   },
 
+  favorites = {
+    desc = "List or clear favorited repositories (:Reposcope favorites list|clear)",
+    run = function(args)
+      local action = args[1] or "list"
+      if action == "list" then
+        require("reposcope.ui.actions.favorites_view").show()
+      elseif action == "clear" then
+        require("reposcope.state.favorites_state").clear_all()
+        notify("[reposcope] Favorites cleared.", 2)
+      else
+        notify("[reposcope] Usage: :Reposcope favorites list|clear", vim.log.levels.WARN)
+      end
+    end,
+    complete = function() return { "list", "clear" } end,
+  },
+
+  queries = {
+    desc = "Show your most-frequent search queries (:Reposcope queries list|clear)",
+    run = function(args)
+      local action = args[1] or "list"
+      local query_stats = require("reposcope.state.query_stats")
+
+      if action == "list" then
+        local top = query_stats.top(10)
+        if #top == 0 then
+          notify("[reposcope] No recorded queries yet.", 2)
+          return
+        end
+        local lines = {}
+        for i, entry in ipairs(top) do
+          lines[#lines + 1] = ("%2d. (%dx) %s"):format(i, entry.count, entry.query)
+        end
+        print(table.concat(lines, "\n"))
+      elseif action == "clear" then
+        query_stats.clear_all()
+        notify("[reposcope] Query stats cleared.", 2)
+      else
+        notify("[reposcope] Usage: :Reposcope queries list|clear", vim.log.levels.WARN)
+      end
+    end,
+    complete = function() return { "list", "clear" } end,
+  },
+
   ["skipped-readmes"] = {
     desc = "Print the number of debounced (skipped) README fetches",
     run = function()

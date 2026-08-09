@@ -11,6 +11,8 @@ local get_field_text = require("reposcope.state.ui.prompt_state").get_field_text
 local provider_controller = require("reposcope.controllers.provider_controller")
 local fetch_repositories_and_display = provider_controller.fetch_repositories_and_display
 local build_query = provider_controller.build_query
+-- Query frequency tracking (":Reposcope queries")
+local record_query = require("reposcope.state.query_stats").record
 -- Utilities
 local notify = require("reposcope.utils.debug").notify
 
@@ -48,6 +50,7 @@ function M.on_enter()
   end
 
   _last_query = query
+  record_query(query)
   fetch_repositories_and_display(query)
 end
 

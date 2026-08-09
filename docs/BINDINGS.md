@@ -54,6 +54,7 @@ setting it to `false`/`""` in `setup({ prompt_keymaps = {...} })`.
 | `preview_scroll_up`    | `<C-u>`                        | n, i   | Scroll the README preview up, without leaving the prompt |
 | `preview_scroll_down`  | `<C-d>`                        | n, i   | Scroll the README preview down, without leaving the prompt |
 | `help`                 | `?`                            | n      | Show the `?` keymap cheatsheet (normal mode only, so `?` still types in insert mode) |
+| `toggle_favorite`      | `<C-f>`                        | n, i   | Toggle favorite for the currently selected repository (see `:Reposcope favorites`) |
 
 All prompt keymaps carry a `desc` so they are picked up automatically by
 [which-key](https://github.com/folke/which-key.nvim) if it's installed — no
@@ -107,6 +108,8 @@ available for subcommand names and, where noted, their arguments.
 | `status`            | `[dir] [--out] [--to]` | Show the git status overview of repositories in a directory (see below) |
 | `providers`         | –                      | List available providers and mark the active one                      |
 | `session`           | `save`\|`restore`\|`clear` | Save, restore, or clear the persisted search session (provider, prompt input, query, filter, sort) |
+| `favorites`         | `list`\|`clear`        | List favorited repositories in a popup, or clear all favorites        |
+| `queries`           | `list`\|`clear`        | Print your top-10 most-frequent search queries, or clear the stats    |
 | `stats`             | –                      | Display collected request stats and metrics                           |
 | `skipped-readmes`   | –                      | Print the number of debounced (skipped) README fetches                |
 | `toggle-dev`        | –                      | Toggle developer mode (debug logging, internal info)                  |
@@ -119,6 +122,16 @@ real directory completion (see `fixed_dir_keywords` in
 [`bindings/usrcmds.lua`](../lua/reposcope/bindings/usrcmds.lua)). See
 [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua)
 and [COMMANDS.md](COMMANDS.md#reposcope-status-dir---out---to) for details.
+
+`favorites`/`queries` are backed by
+[`state/favorites_state.lua`](../lua/reposcope/state/favorites_state.lua) and
+[`state/query_stats.lua`](../lua/reposcope/state/query_stats.lua) — both
+single-JSON-file persistence under the plugin's cache directory, following
+the same conventions as `state/session_state.lua`. A favorite snapshots the
+repository's metadata plus its README content (if already cached) at the
+moment it's toggled, so viewing it later needs no live re-fetch. Query stats
+are recorded automatically on every real search (`prompt_input.on_enter`) —
+no opt-in needed, since it's local-only and never leaves the cache directory.
 
 ---
 

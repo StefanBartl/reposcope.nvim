@@ -60,6 +60,14 @@ function M.get_readme_filecache_dir() return filecache_path .. "/readme" end
 ---@return string
 function M.get_session_path() return filecache_path .. "/session.json" end
 
+---Returns the absolute path of the persisted favorites file
+---@return string
+function M.get_favorites_path() return filecache_path .. "/favorites.json" end
+
+---Returns the absolute path of the persisted query-frequency file
+---@return string
+function M.get_query_stats_path() return filecache_path .. "/query_stats.json" end
+
 ---@param key ConfigOptionKey
 ---@return any
 function M.get_option(key)
