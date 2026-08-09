@@ -304,6 +304,10 @@ URL, stars) *and* its README content if already cached, so the favorite is
 self-contained: viewing it later needs no live re-fetch. Persisted as a
 single JSON file under the plugin's cache directory; survives restarts.
 
+> 🏁 If you have any favorites saved, `:Reposcope start` shows them
+> immediately (list populated, first entry's preview pre-warmed from its
+> README snapshot) instead of starting from an empty prompt.
+
 - `favorites` / `favorites list` — opens the popup (`q`/`<Esc>` to close).
 - `favorites clear` — removes all favorites.
 
