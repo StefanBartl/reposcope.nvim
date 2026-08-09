@@ -71,9 +71,9 @@ local function _record_metrics(repo, owner, repo_name)
   if not ok or not metrics.record_metrics() then return end
 
   if source == "ram" then
-    metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "readme_manager")
+    metrics.increase_cache_hit(uuid, repo_name, source, "readme_manager", repo.html_url)
   elseif source == "file" then
-    metrics.increase_fcache_hit(uuid, repo_name, repo.html_url, "readme_manager")
+    metrics.increase_fcache_hit(uuid, repo_name, source, "readme_manager", repo.html_url)
   end
 end
 

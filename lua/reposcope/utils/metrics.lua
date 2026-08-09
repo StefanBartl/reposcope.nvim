@@ -165,8 +165,9 @@ end
 ---@param context string
 ---@param duration_ms number
 ---@param status_code number
+---@param url? string The actual request URL, if available (logged verbatim, not derived from `query`/`source`)
 ---@return nil
-function M.increase_success(uuid, query, source, context, duration_ms, status_code)
+function M.increase_success(uuid, query, source, context, duration_ms, status_code, url)
   M.req_count.successful = M.req_count.successful + 1
   log_request(uuid, {
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -176,6 +177,7 @@ function M.increase_success(uuid, query, source, context, duration_ms, status_co
     context = context,
     duration_ms = duration_ms,
     status_code = status_code,
+    url = url,
   })
 end
 
@@ -186,8 +188,10 @@ end
 ---@param context string
 ---@param duration_ms number
 ---@param status_code number
+---@param error string
+---@param url? string The actual request URL, if available (logged verbatim, not derived from `query`/`source`)
 ---@return nil
-function M.increase_failed(uuid, query, source, context, duration_ms, status_code, error)
+function M.increase_failed(uuid, query, source, context, duration_ms, status_code, error, url)
   M.req_count.failed = M.req_count.failed + 1
   log_request(uuid, {
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -198,6 +202,7 @@ function M.increase_failed(uuid, query, source, context, duration_ms, status_cod
     duration_ms = duration_ms,
     status_code = status_code,
     error_message = error,
+    url = url,
   })
 end
 
@@ -206,8 +211,9 @@ end
 ---@param query Query
 ---@param source string
 ---@param context string
+---@param url? string The repository URL, if available
 ---@return nil
-function M.increase_cache_hit(uuid, query, source, context)
+function M.increase_cache_hit(uuid, query, source, context, url)
   M.req_count.cache_hitted = M.req_count.cache_hitted + 1
   log_request(uuid, {
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -215,6 +221,7 @@ function M.increase_cache_hit(uuid, query, source, context)
     query = query,
     source = source,
     context = context,
+    url = url,
   })
 end
 
@@ -223,8 +230,9 @@ end
 ---@param query Query
 ---@param source string
 ---@param context string
+---@param url? string The repository URL, if available
 ---@return nil
-function M.increase_fcache_hit(uuid, query, source, context)
+function M.increase_fcache_hit(uuid, query, source, context, url)
   M.req_count.fcache_hitted = M.req_count.fcache_hitted + 1
   log_request(uuid, {
     timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
@@ -232,6 +240,7 @@ function M.increase_fcache_hit(uuid, query, source, context)
     query = query,
     source = source,
     context = context,
+    url = url,
   })
 end
 
@@ -294,14 +303,14 @@ function M.check_rate_limit()
   end
 
   -- Fallback: Fetch new rate limit data
-  local http = require("reposcope.network.http")
+  local api_request = require("reposcope.network.clients.api_client").request
   local token = config.options.github_token
-  local headers = { "Accept: application/vnd.github+json" }
+  local headers = {}
 
-  if token then table.insert(headers, "Authorization: Bearer " .. token) end
+  if token and token ~= "" then headers["Authorization"] = "Bearer " .. token end
 
-  http.get("https://api.github.com/rate_limit", function(response)
-    if not response then
+  api_request("GET", "https://api.github.com/rate_limit", function(response, err)
+    if err or not response then
       vim.schedule(function() notify("[Reposcope] Failed to fetch GitHub rate limit.", 4) end)
       return
     end

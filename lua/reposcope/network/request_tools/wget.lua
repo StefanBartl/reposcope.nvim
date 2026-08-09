@@ -57,11 +57,13 @@ function M.request(method, url, callback, _headers, debug, context, uuid)
 
     if not result.ok then
       if metrics.record_metrics() then
-        metrics.increase_failed(safe_uuid, url, "wget", safe_context, duration, result.code, "wget error")
+        metrics.increase_failed(safe_uuid, url, "wget", safe_context, duration, result.code, "wget error", url)
       end
       callback(nil, "wget request failed (code " .. result.code .. ")")
     else
-      if metrics.record_metrics() then metrics.increase_success(safe_uuid, url, "wget", safe_context, duration, 200) end
+      if metrics.record_metrics() then
+        metrics.increase_success(safe_uuid, url, "wget", safe_context, duration, 200, url)
+      end
       callback(result.stdout)
     end
   end)

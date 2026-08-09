@@ -447,7 +447,10 @@ TROUBLESHOOTING                                    *reposcope-troubleshooting*
 
 - If nothing shows in preview: check for missing README or invalid API token
 - If `gh` requests silently fail: ensure `GITHUB_TOKEN` is set
-- For logs/metrics: enable `metrics = true` and inspect `reposcope.log`
+- For logs/metrics: enable `metrics = true` and inspect
+  `stdpath("cache")/reposcope/logs/request_log.json` — one entry per
+  `uuid:type`, each carrying `query`, `source`, `context`, and (where
+  available) the actual request/repository `url`
 
 ==============================================================================
 HEALTHCHECK                                                *reposcope-health*
