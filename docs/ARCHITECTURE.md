@@ -6,7 +6,7 @@ reposcope/
 ├── init.lua                 → Setup and UI lifecycle
 ├── config/                  → User options (init.lua) and defaults (DEFAULTS.lua)
 ├── bindings/                → Keymaps, user commands, top-level autocmds
-├── ui/                      → Modular UI: prompt, list, preview, background, sidebar
+├── ui/                      → Modular UI: prompt, list, preview, background
 ├── providers/               → GitHub, GitLab, Codeberg
 ├── cache/                   → In-memory and file-based caching
 ├── controllers/             → Unified dispatch: readme, repositories, clone

@@ -31,7 +31,6 @@
 ---| "log_max"
 ---| "progress_style"
 ---| "readme_precache_count"
----| "sidebar_enabled"
 
 ---@alias ProgressStyle # Renderer for the progress indicator (see lib.nvim.progress)
 ---| "auto"        # fidget.nvim when installed, else vim.notify

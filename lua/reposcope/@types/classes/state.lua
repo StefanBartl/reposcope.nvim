@@ -49,7 +49,6 @@
 ---@field prompt_prefix Buffer
 ---@field list Buffer
 ---@field readme_viewer Buffer
----@field sidebar Buffer
 
 ---@class UIStateWindows
 ---@field backg Window
@@ -58,7 +57,6 @@
 ---@field prompt_prefix Window
 ---@field list Window
 ---@field readme_viewer Window
----@field sidebar Window
 
 ---@class UIStateList
 ---@field last_selected_line integer|nil The last selected line number in the list

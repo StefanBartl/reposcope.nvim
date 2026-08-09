@@ -61,11 +61,6 @@ function M.display_repositories()
   end
 
   set_and_display_list(linebuf)
-
-  -- Keep the sidebar's filter/sort/result-count overview in sync. Safe to
-  -- call unconditionally: a no-op if the sidebar isn't open (disabled via
-  -- config, or not yet created).
-  require("reposcope.ui.sidebar.sidebar_window").refresh()
 end
 
 return M
