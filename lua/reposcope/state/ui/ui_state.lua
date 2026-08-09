@@ -79,7 +79,6 @@ M.buffers = {
   prompt_prefix = nil,
   list = nil,
   readme_viewer = nil,
-  sidebar = nil,
 }
 
 ---@type UIStateWindows
@@ -90,7 +89,6 @@ M.windows = {
   prompt_prefix = nil,
   list = nil,
   readme_viewer = nil,
-  sidebar = nil,
 }
 
 ---Returns the buffer number for the given buffer name, if it is valid

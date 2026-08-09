@@ -73,21 +73,11 @@ function M.open_window()
     vim.bo[ui_state.buffers.list].modifiable = false
     vim.bo[ui_state.buffers.list].bufhidden = "wipe"
 
-    -- Reserve room for the narrow left sidebar (if enabled) by shifting the
-    -- list right and shrinking it by the same amount. Resolved here (at
-    -- open time), not at module-load time, so a `sidebar_enabled` passed to
-    -- setup() is honored even though this module is required before
-    -- setup() ever runs.
-    local sidebar_reserved = 0
-    if require("reposcope.config").get_option("sidebar_enabled") then
-      sidebar_reserved = require("reposcope.ui.sidebar.sidebar_config").width + 1
-    end
-
     ui_state.windows.list = nvim_open_win(buf, false, { -- NOTE: LAYOUTS!
       relative = "editor",
       row = M.Layouts.Normal.row,
-      col = M.Layouts.Normal.col + sidebar_reserved,
-      width = M.Layouts.Normal.width - sidebar_reserved,
+      col = M.Layouts.Normal.col,
+      width = M.Layouts.Normal.width,
       height = M.Layouts.Normal.height,
       style = "minimal",
       border = config.border or "none",

@@ -30,4 +30,3 @@ planned items are added here as they come up.
 - [x] Start view — show favorites immediately on open instead of an empty prompt
 - [x] README staleness detection (`updated_at`/`last_activity_at` comparison), RAM pre-warming from file cache, and background pre-caching of top search results (`readme_precache_count`)
 - [x] Metrics/logging correctness: clone operations logged, request/cache-hit log entries carry a real `url` field, fixed a bug where a repo's URL was mistakenly logged in the cache-hit "source" field instead of "ram"/"file", and fixed `check_rate_limit()`'s dead reference to a nonexistent module
-- [x] Narrow left sidebar (`sidebar_enabled`) showing the active filter, sort mode, and result count

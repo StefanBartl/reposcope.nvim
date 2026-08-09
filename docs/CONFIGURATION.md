@@ -35,7 +35,6 @@ require("reposcope").setup({
   metrics = true,                           -- Enables request timing and logging (for debugging)
   progress_style = "auto",                  -- Indicator for `:Reposcope update`/`status`; needs lib.nvim, no-op without it
   readme_precache_count = 5,                -- Pre-cache READMEs for this many top search results (0 disables)
-  sidebar_enabled = true,                   -- Narrow left sidebar: active filter, sort mode, result count
 })
 ```
 
@@ -60,7 +59,6 @@ require("reposcope").setup({
 | `metrics`       | `boolean`  | Enable internal request logging and performance tracking           |
 | `progress_style`| `string`   | Progress indicator for the bulk repository commands; see [below](#progress-indicator) |
 | `readme_precache_count` | `number` | After a search, pre-cache READMEs for this many top results in the background (`0` disables); see [README Caching](#readme-caching) |
-| `sidebar_enabled` | `boolean` | Narrow left sidebar showing the active filter, sort mode, and result count (`false` reclaims the space for the list) |
 
 > ℹ️ You can dynamically reload prompt fields with `:Reposcope prompt prefix topic`.
 

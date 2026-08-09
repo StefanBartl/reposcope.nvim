@@ -49,7 +49,6 @@ local defaults = {
   log_max = 1000, -- Controls the size of the log file
   progress_style = "auto", -- Indicator for `:Reposcope update`/`status` over many repositories; needs lib.nvim, no-op without it
   readme_precache_count = 5, -- After a search, pre-cache READMEs for this many top results (0 disables) so scrolling feels instant
-  sidebar_enabled = true, -- Narrow left sidebar showing the active filter, sort mode, and result count
 }
 
 return defaults

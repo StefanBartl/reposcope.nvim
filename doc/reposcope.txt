@@ -68,7 +68,6 @@ Advanced setup:
     metrics = true,                    -- enable request logging & metrics
     progress_style = "auto",           -- indicator for `update`/`status`
     readme_precache_count = 5,         -- pre-cache top N search results' READMEs (0 disables)
-    sidebar_enabled = true,            -- narrow left sidebar: filter/sort/result count
   })
 
                                              *reposcope-config-progress_style*
@@ -427,17 +426,6 @@ re-fetched, no matter how old the cache entry is.
 top N search results' READMEs in the background right after a search, so
 scrolling through them feels instant instead of triggering a fetch per row.
 Set to 0 to disable.
-
-==============================================================================
-SIDEBAR                                                    *reposcope-sidebar*
-
-A narrow, read-only left sidebar shows the active filter text, the current
-sort mode, and the result count — updated automatically on every search,
-filter, or sort change. Purely informational: it is not focusable and has
-no keymaps of its own.
-
-Controlled by `sidebar_enabled` (default `true`, see |reposcope-config|).
-Setting it to `false` reclaims the space for the repository list.
 
 ==============================================================================
 CLONING                                                      *reposcope-clone*

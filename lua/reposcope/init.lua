@@ -78,10 +78,6 @@ function M.open_ui()
   -- Open List
   list.initialize()
 
-  notify("[reposcope] SIDEBAR SEQUENCE")
-  -- Open the narrow left sidebar (active filter/sort/result count), if enabled
-  if config.get_option("sidebar_enabled") then require("reposcope.ui.sidebar.sidebar_window").open_window() end
-
   notify("[reposcope] PREVIEW SEQUENCE")
   -- Open Preview
   preview.initialize()
