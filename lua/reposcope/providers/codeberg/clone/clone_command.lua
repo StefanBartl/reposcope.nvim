@@ -9,7 +9,6 @@
 ---@class CodebergCloneCommandBuilder : CloneCommandBuilderModule
 local M = {}
 
-
 ---Creates the appropriate argv command for cloning
 ---@param clone_type string
 ---@param repo_url string The repository's clone URL (e.g. `https://codeberg.org/owner/repo.git`)

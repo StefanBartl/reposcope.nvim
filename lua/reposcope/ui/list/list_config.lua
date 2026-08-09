@@ -16,9 +16,8 @@ M.col = 0
 
 -- Default Colors (Dark Theme)
 M.highlight_color = "#44475a" -- Color for the selected line
-M.normal_color = "#0eea36"    -- Default text color
+M.normal_color = "#0eea36" -- Default text color
 M.border = "none"
-
 
 ---Dynamically updates the layout of the list window
 ---@param width? number Optional new width for the list window
@@ -45,8 +44,6 @@ end
 ---Dynamically updates the border layout
 ---@param border_layout "none"|"single"|"double" Border layout
 ---@return nil
-function M.update_border(border_layout)
-  M.border = border_layout or M.border
-end
+function M.update_border(border_layout) M.border = border_layout or M.border end
 
 return M

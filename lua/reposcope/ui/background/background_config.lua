@@ -11,14 +11,12 @@ local M = {}
 -- Project-Specific Configuration (Global UI Config)
 local ui_config = require("reposcope.ui.config")
 
-
 M.row = ui_config.row
 M.col = ui_config.col
 M.width = math.floor(ui_config.width)
 M.height = math.floor(ui_config.height)
 M.color_bg = ui_config.colortheme.background
 M.border = "none"
-
 
 ---Dynamically updates the background layout settings
 ---@param row? number Optional new row position
@@ -36,8 +34,6 @@ end
 ---Dynamically updates the background colors
 ---@param bg? string Optional new background color
 ---@return nil
-function M.update_colors(bg)
-  M.color_bg = bg or M.color_bg
-end
+function M.update_colors(bg) M.color_bg = bg or M.color_bg end
 
 return M

@@ -22,7 +22,6 @@ local urlencode = require("reposcope.utils.encoding").urlencode
 -- Constants
 local CODEBERG_API_SEARCH_URL = "https://codeberg.org/api/v1/repos/search?q=%s"
 
-
 ---Builds the full Codeberg API URL from a query
 ---@param query string
 ---@return string
@@ -30,7 +29,6 @@ function M.build_url(query)
   local encoded_query = urlencode(query or "")
   return string.format(CODEBERG_API_SEARCH_URL, encoded_query)
 end
-
 
 ---@private
 ---@internal
@@ -47,7 +45,6 @@ local function _normalize(repo)
     stargazers_count = repo.stars_count,
   }
 end
-
 
 --- Fetches repositories from the Codeberg API and updates the repository cache
 ---@param query string The search query for Codeberg repositories

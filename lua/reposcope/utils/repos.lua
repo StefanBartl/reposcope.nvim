@@ -22,7 +22,6 @@ local expand = require("lib.nvim.cross.fs.expand_path")
 -- Configuration
 local config = require("reposcope.config")
 
-
 ---Checks whether a directory is a git repository.
 ---Accepts both a `.git` directory (normal clone) and a `.git` file (worktree/submodule).
 ---@param path string Absolute path to the candidate directory
@@ -39,13 +38,9 @@ end
 function M.resolve_base_dir(override)
   local dir = override
 
-  if not dir or dir == "" then
-    dir = config.options.clone and config.options.clone.std_dir or nil
-  end
+  if not dir or dir == "" then dir = config.options.clone and config.options.clone.std_dir or nil end
 
-  if not dir or dir == "" then
-    return nil
-  end
+  if not dir or dir == "" then return nil end
 
   return fnamemodify(expand(dir), ":p"):gsub("[\\/]+$", "")
 end
@@ -58,21 +53,15 @@ function M.collect_repos(base_dir)
   local repos = {}
 
   local handle = uv.fs_scandir(base_dir)
-  if not handle then
-    return repos
-  end
+  if not handle then return repos end
 
   while true do
     local name, typ = uv.fs_scandir_next(handle)
-    if not name then
-      break
-    end
+    if not name then break end
 
     if typ == "directory" then
       local path = base_dir .. "/" .. name
-      if M.is_git_repo(path) then
-        repos[#repos + 1] = path
-      end
+      if M.is_git_repo(path) then repos[#repos + 1] = path end
     end
   end
 

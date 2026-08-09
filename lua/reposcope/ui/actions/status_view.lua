@@ -41,9 +41,7 @@ function M.render(records)
   for _, r in ipairs(records) do
     local ab = r.has_upstream and ("+%d/-%d"):format(r.ahead, r.behind) or "no upstream"
     local state = r.state
-    if r.state == "dirty" then
-      state = ("dirty (%d)"):format(r.dirty)
-    end
+    if r.state == "dirty" then state = ("dirty (%d)"):format(r.dirty) end
     lines[#lines + 1] = fmt:format(r.name, r.branch, ab, state)
   end
 

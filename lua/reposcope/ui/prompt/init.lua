@@ -15,11 +15,10 @@ local prompt_manager_open_windows = require("reposcope.ui.prompt.prompt_manager"
 -- Utilities
 local notify = require("reposcope.utils.debug").notify
 
-
 ---Opens the prompt UI
 ---@return nil
 function M.initialize()
-  if config.options.layout ~= "default" then  -- REF: If layouts are implemented, change
+  if config.options.layout ~= "default" then -- REF: If layouts are implemented, change
     notify("[reposcope] Unsupported prompt layout: " .. config.options.layout, 3)
     config.options.layout = "default"
   end
@@ -27,9 +26,7 @@ function M.initialize()
   prompt_manager_open_windows()
   prompt_setup_autocmds()
 
-  vim.schedule(function()
-    vim.cmd("startinsert")
-  end)
+  vim.schedule(function() vim.cmd("startinsert") end)
 end
 
 return M

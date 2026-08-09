@@ -29,9 +29,7 @@ function M.reload_prompt(fields)
 
   -- Restart the UI
   pcall(require("reposcope.init").close_ui)
-  vim.defer_fn(function()
-    pcall(require("reposcope.init").open_ui)
-  end, 80)
+  vim.defer_fn(function() pcall(require("reposcope.init").open_ui) end, 80)
 end
 
 return M

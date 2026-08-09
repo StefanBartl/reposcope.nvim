@@ -49,4 +49,3 @@
 ---@field metrics? boolean
 ---@field log_max? number
 ---@field progress_style? ProgressStyle
-

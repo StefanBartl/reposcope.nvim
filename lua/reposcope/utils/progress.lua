@@ -26,15 +26,11 @@ local ok_progress, progress_mod = pcall(require, "lib.nvim.progress")
 ---@param total integer|nil Total unit count, when the operation is countable
 ---@return Lib.Progress.Handle|nil
 function M.create(text, total)
-  if not ok_progress then
-    return nil
-  end
+  if not ok_progress then return nil end
 
   local style = "auto"
   local ok_cfg, config = pcall(require, "reposcope.config")
-  if ok_cfg then
-    style = config.options and config.options.progress_style or style
-  end
+  if ok_cfg then style = config.options and config.options.progress_style or style end
 
   local handle = progress_mod.create({ title = "[reposcope]", style = style })
   handle:update({ text = text, current = 0, total = total })

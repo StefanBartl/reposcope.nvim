@@ -20,7 +20,6 @@ local ui_state = require("reposcope.state.ui.ui_state")
 local notify = require("reposcope.utils.debug").notify
 local create_named_buf = require("reposcope.utils.protection").create_named_buffer
 
-
 local FIELDS = get_available_fields()
 
 ---Creates and registers all supported prompt buffers into ui_state

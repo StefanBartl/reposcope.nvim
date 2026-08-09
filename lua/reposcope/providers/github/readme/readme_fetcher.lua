@@ -16,7 +16,6 @@ local request = require("reposcope.network.clients.api_client").request
 local decode_base64 = require("reposcope.utils.encoding").decode_base64
 local get_urls = require("reposcope.providers.github.readme.readme_urls").get_urls
 
-
 ---Fetches the README using the raw GitHub URL
 ---@param owner string Repository owner
 ---@param repo string Repository name
@@ -38,7 +37,6 @@ function M.fetch_raw(owner, repo, branch, cb)
     cb(true, response)
   end, nil, "readme_fetch_raw")
 end
-
 
 ---Fetches the README from the GitHub API (base64-encoded)
 ---@param owner string Repository owner

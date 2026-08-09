@@ -14,7 +14,6 @@
 ---@class GithubCloneManager : CloneManagerModule
 local M = {}
 
-
 -- Request Tracking and Config
 local request_state = require("reposcope.state.requests_state")
 local config = require("reposcope.config")
@@ -26,7 +25,6 @@ local execute_clone = require("reposcope.controllers.clone_executor").execute
 local notify = require("reposcope.utils.debug").notify
 local safe_mkdir = require("reposcope.utils.protection").safe_mkdir
 local isdirectory = vim.fn.isdirectory
-
 
 ---Starts a clone operation using the given path and UUID
 ---@param path string The target directory for cloning
@@ -64,9 +62,7 @@ function M.clone(path, uuid)
   path = path:gsub("/+$", "") .. "/"
   local output_dir = path .. repo_name
 
-  if not isdirectory(output_dir) then
-    safe_mkdir(output_dir)
-  end
+  if not isdirectory(output_dir) then safe_mkdir(output_dir) end
 
   local cmd = build_command(clone_type, repo_url, output_dir)
   execute_clone(cmd, uuid, repo_name)

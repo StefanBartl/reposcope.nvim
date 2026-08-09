@@ -39,22 +39,15 @@ local function _registered_providers()
 end
 M.get_registered_providers = _registered_providers
 
-
 ---Returns the currently active provider identifier (e.g., "github")
 ---@return string
-function M.get_active_provider()
-  return require("reposcope.config").get_option("provider")
-end
-
+function M.get_active_provider() return require("reposcope.config").get_option("provider") end
 
 ---@private
 ---@internal
 ---Resolves the currently selected provider string from config
 ---@return string The active provider identifier (e.g., "github")
-local function _get_provider()
-  return M.get_active_provider()
-end
-
+local function _get_provider() return M.get_active_provider() end
 
 ---@private
 ---@internal
@@ -66,8 +59,10 @@ local function _resolve_provider()
   local entry = providers[name]
   if not entry then
     notify(
-      "[reposcope] Unknown provider '" .. tostring(name) .. "'. Available: " ..
-      table.concat(_registered_providers(), ", "),
+      "[reposcope] Unknown provider '"
+        .. tostring(name)
+        .. "'. Available: "
+        .. table.concat(_registered_providers(), ", "),
       4
     )
     return nil
@@ -93,7 +88,6 @@ local _schedule_readme_fetch_with_counter, get_skipped = debounce_with_counter(f
 end, 100)
 M.get_skipped_fetches = get_skipped
 
-
 ---Dispatches a README fetch request to the active provider.
 ---A UUID is generated and marked active via request_state.
 ---@return nil
@@ -102,9 +96,8 @@ function M.fetch_readme_for_selected()
   register_request(uuid)
 
   ---@diagnostic disable-next-line: redundant-parameter
-   _schedule_readme_fetch_with_counter(uuid)
+  _schedule_readme_fetch_with_counter(uuid)
 end
-
 
 ---Builds a provider-specific search query string from prompt input, using
 --- the active provider's query builder.
@@ -115,7 +108,6 @@ function M.build_query(input)
   if not provider then return "" end
   return provider.query_builder.build(input)
 end
-
 
 ---Dispatches a repository fetch (search) query to the active provider.
 ---UUID is registered for later activation and deduplication.
@@ -132,7 +124,6 @@ function M.fetch_repositories_and_display(query, on_success)
   provider.repo_fetcher.fetch_and_display(query, uuid, on_success)
 end
 
-
 ---Prompts the user for a directory and dispatches a clone request
 ---to the active provider with the given target path.
 ---@return nil
@@ -148,7 +139,7 @@ function M.prompt_and_clone()
     if input then
       local uuid = generate_uuid()
       register_request(uuid)
-      vim.schedule(function ()
+      vim.schedule(function()
         local provider = _resolve_provider()
         if provider then provider.cloner.clone(input, uuid) end
       end)

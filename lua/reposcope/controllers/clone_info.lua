@@ -11,7 +11,6 @@ local M = {}
 
 local notify = require("reposcope.utils.debug").notify
 
-
 ---Gets the name and URL of the selected repository
 ---@return CloneInfo|nil
 function M.get_clone_informations()

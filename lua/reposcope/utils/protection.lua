@@ -26,9 +26,7 @@ local lib_debounce = require("lib.nvim.debounce")
 ---@param fn fun()
 ---@param delay_ms integer
 ---@return fun()
-function M.debounce(fn, delay_ms)
-  return lib_debounce.new(fn, delay_ms).call
-end
+function M.debounce(fn, delay_ms) return lib_debounce.new(fn, delay_ms).call end
 
 ---Debounced call that also counts how many calls arrived while a previous
 ---timer was still pending (i.e. got superseded before firing).
@@ -77,9 +75,7 @@ function M.create_named_buffer(name)
 
   if existing_buf and nvim_buf_is_valid(existing_buf) then
     local ok_del, err = pcall(nvim_buf_delete, existing_buf, { force = true })
-    if not ok_del then
-      notify("[reposcope] Failed to delete buffer '" .. name .. "': " .. tostring(err), 4)
-    end
+    if not ok_del then notify("[reposcope] Failed to delete buffer '" .. name .. "': " .. tostring(err), 4) end
     ui_state.buffers[buf_key] = nil
   end
 
@@ -90,13 +86,9 @@ function M.create_named_buffer(name)
   end
 
   local ok_setname, err = pcall(nvim_buf_set_name, buf, name)
-  if not ok_setname then
-    notify("[reposcope] Failed to name buffer '" .. name .. "': " .. tostring(err), 4)
-  end
+  if not ok_setname then notify("[reposcope] Failed to name buffer '" .. name .. "': " .. tostring(err), 4) end
 
-  if buf_key then
-    ui_state.buffers[buf_key] = buf
-  end
+  if buf_key then ui_state.buffers[buf_key] = buf end
 
   return buf
 end
@@ -110,23 +102,15 @@ end
 --- @param filename string|nil The filename to validate
 --- @return boolean, string Returns true if the filename is valid, false otherwise.
 function M.is_valid_filename(filename)
-  if filename == nil then
-    return false, "Filename is nil."
-  end
+  if filename == nil then return false, "Filename is nil." end
 
   local invalid_chars = '[\\/:*?"<>|%z]'
 
-  if filename == "" then
-    return false, "Filename is missing."
-  end
+  if filename == "" then return false, "Filename is missing." end
 
-  if filename:match("^%s*$") then
-    return false, "Filename is only whitespace."
-  end
+  if filename:match("^%s*$") then return false, "Filename is only whitespace." end
 
-  if filename:match(invalid_chars) then
-    return false, "Filename contains invalid characters."
-  end
+  if filename:match(invalid_chars) then return false, "Filename contains invalid characters." end
 
   return true, ""
 end
@@ -155,9 +139,7 @@ function M.is_valid_path(path, nec_filename)
     return false
   end
 
-  if dir_ok and nec_filename == false then
-    return true
-  end
+  if dir_ok and nec_filename == false then return true end
 
   -- Check if the filename is not empty
   local ok, err = M.is_valid_filename(filename)
@@ -173,9 +155,7 @@ end
 ---@param path string The directory path to create
 ---@return boolean
 function M.safe_mkdir(path)
-  if isdirectory(path) == 1 then
-    return true
-  end
+  if isdirectory(path) == 1 then return true end
 
   -- Delegates the actual mkdir -p to lib.nvim.fs.mkdirp (libuv-only, safe to
   -- call from a fast event context, unlike vim.fn.mkdir); this function's
@@ -222,13 +202,9 @@ end
 ---@return boolean success True if the command succeeded (exit code 0)
 ---@return string output The standard output (or error output) of the command
 function M.safe_execute_shell(command)
-  if type(command) == "table" then
-    return require("lib.nvim.cross.run_argv").run_blocking_captured(command)
-  end
+  if type(command) == "table" then return require("lib.nvim.cross.run_argv").run_blocking_captured(command) end
   local result = system(command)
-  if vim.v.shell_error ~= 0 then
-    return false, result
-  end
+  if vim.v.shell_error ~= 0 then return false, result end
   return true, result
 end
 

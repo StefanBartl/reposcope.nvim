@@ -37,4 +37,3 @@
 
 ---@class RepositoryUILoaderModule Populates the list UI and triggers a README load after a search (provider-agnostic)
 ---@field load_ui_after_fetch fun(): nil
-

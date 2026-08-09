@@ -64,9 +64,7 @@ local function _record_metrics(repo, owner, repo_name)
   local uuid = generate_uuid()
   local ok, source = has(owner, repo_name)
 
-  if not ok or not metrics.record_metrics() then
-    return
-  end
+  if not ok or not metrics.record_metrics() then return end
 
   if source == "ram" then
     metrics.increase_cache_hit(uuid, repo_name, repo.html_url, "readme_manager")
@@ -80,10 +78,7 @@ end
 ---Checks whether a string looks like an `http(s)://` URL.
 ---@param url string
 ---@return boolean
-local function is_valid_url(url)
-  return type(url) == "string" and url:match("^https?://")
-end
-
+local function is_valid_url(url) return type(url) == "string" and url:match("^https?://") end
 
 ---Fetches the README for the currently selected repository
 ---@param uuid string
@@ -97,9 +92,7 @@ function M.fetch_for_selected(uuid)
   local repo = get_selected_repo()
   if not repo or not repo.name or not repo.owner or not repo.owner.login then
     request_state.end_request(uuid)
-    vim.schedule(function()
-      require("reposcope.ui.preview.preview_manager").clear_preview()
-    end)
+    vim.schedule(function() require("reposcope.ui.preview.preview_manager").clear_preview() end)
     return
   end
 
@@ -111,17 +104,13 @@ function M.fetch_for_selected(uuid)
 
   if not is_valid_url(urls.raw) then
     request_state.end_request(uuid)
-    vim.schedule(function()
-      require("reposcope.ui.preview.preview_manager").clear_preview()
-    end)
+    vim.schedule(function() require("reposcope.ui.preview.preview_manager").clear_preview() end)
     return
   end
 
   if has(owner, repo_name) then
     _record_metrics(repo, owner, repo_name)
-    vim.schedule(function()
-      update_preview(owner, repo_name)
-    end)
+    vim.schedule(function() update_preview(owner, repo_name) end)
     return
   end
 

@@ -98,4 +98,3 @@
 ---@alias PromptInput string # The user-entered value
 
 ---@alias RepositoryApiResult { total_count: number, items: Repository[] }
-

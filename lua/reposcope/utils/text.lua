@@ -7,7 +7,6 @@ local M = {}
 -- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
 
-
 ---Centers given text input and returns it, splitting lines without breaking words
 ---@param text string The text to be centered
 ---@param width number The maximum width for centering
@@ -28,7 +27,7 @@ function M.center_text(text, width)
           segment = text:sub(start, start + last_space - 1)
           start = start + last_space -- Move past the last space
         else
-          start = start + width      -- Move to the next segment
+          start = start + width -- Move to the next segment
         end
       else
         start = start + #segment
@@ -73,9 +72,7 @@ end
 ---@return string
 function M.cut_text_for_line(offset, width, input)
   local max_length = width - offset - 3
-  if #input <= max_length then
-    return input
-  end
+  if #input <= max_length then return input end
   return string.sub(input, 1, max_length) .. "..."
 end
 

@@ -12,9 +12,7 @@ local M = {}
 ---@return string|nil value The variable value if set, otherwise nil
 function M.get(name)
   local val = vim.env[name]
-  if type(val) == "string" and val ~= "" then
-    return val
-  end
+  if type(val) == "string" and val ~= "" then return val end
 
   val = os.getenv(name)
   if type(val) == "string" and val ~= "" then
@@ -28,8 +26,6 @@ end
 ---Checks if an environment variable is set and non-empty.
 ---@param name string The name of the environment variable
 ---@return boolean is_set True if the variable exists and is not empty
-function M.has(name)
-  return M.get(name) ~= nil
-end
+function M.has(name) return M.get(name) ~= nil end
 
 return M

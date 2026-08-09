@@ -33,7 +33,6 @@ local filter_repos = require("reposcope.ui.actions.filter_repos")
 local sort_prompt = require("reposcope.ui.actions.sort_prompt")
 local provider_controller = require("reposcope.controllers.provider_controller")
 
-
 ---Gathers the current search context and writes it to the session file,
 --- overwriting any previous session.
 ---@return boolean success
@@ -72,7 +71,6 @@ function M.save()
   return true
 end
 
-
 ---Reads the persisted session (if any) and re-applies it: restores the
 --- prompt fields/input and active provider, re-runs the last search, then
 --- reapplies the saved filter/sort once the search completes.
@@ -102,13 +100,9 @@ function M.restore()
     return false
   end
 
-  if type(data.provider) == "string" and data.provider ~= "" then
-    config.options.provider = data.provider
-  end
+  if type(data.provider) == "string" and data.provider ~= "" then config.options.provider = data.provider end
 
-  if type(data.fields) == "table" then
-    prompt_config.set_fields(data.fields)
-  end
+  if type(data.fields) == "table" then prompt_config.set_fields(data.fields) end
 
   if type(data.input) == "table" then
     for field, text in pairs(data.input) do
@@ -134,7 +128,6 @@ function M.restore()
   notify("[reposcope] Session restored.", vim.log.levels.INFO)
   return true
 end
-
 
 ---Removes the persisted session file, if any.
 ---@return boolean removed

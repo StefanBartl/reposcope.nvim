@@ -24,6 +24,13 @@ Modular, minimal, Telescope-inspired interface.
 
 ---
 
+## Table of Contents
+
+- [Quickstart](#quickstart)
+- [Documentation](#documentation)
+
+---
+
 ## Quickstart
 
 Install with [Lazy.nvim](https://github.com/folke/lazy.nvim):

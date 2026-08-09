@@ -27,7 +27,6 @@ M.repositories = { total_count = 0, items = {}, list = {} }
 ---@type RepositoryApiResult
 M.relevance_result = nil
 
-
 ---@private
 ---@internal
 ---@param repo table
@@ -50,9 +49,7 @@ local function _sanitize_repo(repo, index)
 
   ---@type string
   local desc = ensure_string(repo.description)
-  if desc == "" then
-    desc = "No description"
-  end
+  if desc == "" then desc = "No description" end
 
   repo.name = name
   repo.owner = repo.owner or {}
@@ -61,7 +58,6 @@ local function _sanitize_repo(repo, index)
 
   return repo
 end
-
 
 ---@private
 ---@internal
@@ -76,7 +72,6 @@ local function _build_repo_line(repo)
   parts[#parts + 1] = repo.description
   return table.concat(parts)
 end
-
 
 ---@private
 ---@internal
@@ -95,15 +90,12 @@ local function _validate_repo_list()
   end
 end
 
-
 ---Sets the repository cache and optionally stores the original relevance result.
 ---@param json RepositoryApiResult
 ---@param is_original? boolean Whether this is the original API response (default: false)
 ---@return nil
 function M.set(json, is_original)
-  if is_original == true then
-    M.relevance_result = vim.deepcopy(json)
-  end
+  if is_original == true then M.relevance_result = vim.deepcopy(json) end
   local sanitize = _sanitize_repo
   local build = _build_repo_line
   local items = json.items or {}
@@ -124,9 +116,7 @@ end
 
 ---Returns the cached JSON response
 ---@return RepositoryResponse
-function M.get()
-  return M.repositories
-end
+function M.get() return M.repositories end
 
 ---Returns a repository by its name
 ---@param repo_name string Repository name to search for
@@ -137,9 +127,7 @@ function M.get_by_name(repo_name)
 
   for i = 1, #items do
     local repo = items[i]
-    if repo.name == repo_name then
-      return repo
-    end
+    if repo.name == repo_name then return repo end
   end
 
   notify("[reposcope] Repository not found: " .. repo_name, 3)
@@ -151,9 +139,7 @@ end
 function M.get_list()
   local list = M.repositories.list
 
-  if #list == 0 then
-    list = { "" }
-  end
+  if #list == 0 then list = { "" } end
 
   return list
 end
@@ -181,7 +167,6 @@ function M.get_selected()
   if selected > nvim_buf_line_count(list_buf) then
     local line_count = nvim_buf_line_count(list_buf)
     notify("[reposcope] Selected line " .. selected .. " exceeds buffer line count " .. line_count, 3)
-    selected = 1
     return nil
   end
 
@@ -201,9 +186,7 @@ function M.get_selected()
 
   for i = 1, #items do
     local repo = items[i]
-    if repo.name == repo_name and repo.owner and repo.owner.login == owner then
-      return repo
-    end
+    if repo.name == repo_name and repo.owner and repo.owner.login == owner then return repo end
   end
 
   notify("[reposcope] Repository not found: " .. owner .. "/" .. repo_name, 3)
@@ -213,12 +196,15 @@ end
 --- Clears the repository cache
 ---@return nil
 function M.clear()
-  for k in pairs(M.repositories.items) do M.repositories.items[k] = nil end
-  for k in pairs(M.repositories.list) do M.repositories.list[k] = nil end
+  for k in pairs(M.repositories.items) do
+    M.repositories.items[k] = nil
+  end
+  for k in pairs(M.repositories.list) do
+    M.repositories.list[k] = nil
+  end
   M.repositories.total_count = 0
   notify("[reposcope] Repository state cleared.", 2)
 end
-
 
 ---Restores the cached API result in original relevance order and updates the UI
 ---@description
@@ -235,15 +221,12 @@ function M.restore_relevance_sorting()
   require("reposcope.controllers.provider_controller").fetch_readme_for_selected()
 end
 
-
 ---Clears the stored API response for relevance sorting
 ---@description
 --- Removes the stored `relevance_result` object. This is typically done
 --- before a new repository search is initiated, to ensure outdated results
 --- are not reused when `relevance` sorting is triggered via `:Reposcope sort`.
 ---@return nil
-function M.clear_relevance_result()
-  M.relevance_result = nil
-end
+function M.clear_relevance_result() M.relevance_result = nil end
 
 return M

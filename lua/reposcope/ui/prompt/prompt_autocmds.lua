@@ -26,7 +26,6 @@ local nvim_buf_line_count = api.nvim_buf_line_count
 local ui_state = require("reposcope.state.ui.ui_state")
 local prompt_set_field_text = require("reposcope.state.ui.prompt_state").set_field_text
 
-
 ---@private
 ---@internal
 ---Helper to determine which prompt field is currently active
@@ -34,13 +33,10 @@ local prompt_set_field_text = require("reposcope.state.ui.prompt_state").set_fie
 local function get_active_prompt_field()
   local current_buf = nvim_get_current_buf()
   for field, buf in pairs(ui_state.buffers.prompt or {}) do
-    if buf == current_buf then
-      return field
-    end
+    if buf == current_buf then return field end
   end
   return nil
 end
-
 
 ---Autocommands for prompt behavior
 ---@return nil
@@ -71,15 +67,11 @@ function M.setup_autocmds()
       local win = nvim_get_current_win()
       local buf = nvim_win_get_buf(win)
 
-      if not nvim_win_is_valid(win) or not nvim_buf_is_valid(buf) then
-        return
-      end
+      if not nvim_win_is_valid(win) or not nvim_buf_is_valid(buf) then return end
 
       -- Check that buffer has at least 2 lines
       local line_count = nvim_buf_line_count(buf)
-      if line_count < 2 then
-        return
-      end
+      if line_count < 2 then return end
 
       local cursor = nvim_win_get_cursor(win)
       if cursor[1] ~= 2 then
@@ -94,8 +86,6 @@ end
 
 ---Cleans the prompt autocommands
 ---@return nil
-function M.cleanup_autocmds()
-  pcall(nvim_del_augroup_by_name, "reposcope_prompt_autocmds")
-end
+function M.cleanup_autocmds() pcall(nvim_del_augroup_by_name, "reposcope_prompt_autocmds") end
 
 return M

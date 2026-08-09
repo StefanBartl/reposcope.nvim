@@ -30,7 +30,6 @@ local setup_buffers = require("reposcope.ui.prompt.prompt_buffers").setup_buffer
 local prompt_build_layout = require("reposcope.ui.prompt.prompt_layout").build_layout
 local focus_first_input = require("reposcope.ui.prompt.prompt_focus").focus_first_input
 
-
 ---@private
 ---@internal
 ---Adds a centered virtual title to a prompt buffer
@@ -42,9 +41,7 @@ local function _add_title_to_prompt_buffer(buf, field, width)
 
   -- Make sure line 0 exists
   local line0 = nvim_buf_get_lines(buf, 0, 1, false)[1]
-  if not line0 then
-    nvim_buf_set_lines(buf, 0, 1, false, { " " })
-  end
+  if not line0 then nvim_buf_set_lines(buf, 0, 1, false, { " " }) end
 
   local fields = get_fields()
   local title = fields[field] or string.upper(" " .. field .. " ")
@@ -65,7 +62,6 @@ local function _add_title_to_prompt_buffer(buf, field, width)
   })
 end
 
-
 ---@private
 ---@internal
 ---Injects prompt_state values into associated buffers
@@ -81,13 +77,10 @@ local function _load_state_into_prompt()
 
     if type(buf) == "number" and nvim_buf_is_valid(buf) then
       local text = get(field)
-      if type(text) == "string" and text ~= "" then
-        nvim_buf_set_lines(buf, 1, 2, false, { text })
-      end
+      if type(text) == "string" and text ~= "" then nvim_buf_set_lines(buf, 1, 2, false, { text }) end
     end
   end
 end
-
 
 ---Opens the prompt UI based on active fields and layout configuration
 ---@return nil
@@ -142,9 +135,7 @@ function M.open_windows()
 
     if focusable then
       local ok_title, err = pcall(_add_title_to_prompt_buffer, buf, field, width)
-      if not ok_title then
-        notify("[reposcope] Failed to add title to " .. field .. ": " .. tostring(err), 2)
-      end
+      if not ok_title then notify("[reposcope] Failed to add title to " .. field .. ": " .. tostring(err), 2) end
     end
 
     ::continue::
@@ -160,9 +151,7 @@ function M.close_windows()
   if not ui_state.windows.prompt then return end
 
   for field, win in pairs(ui_state.windows.prompt) do
-    if win and nvim_win_is_valid(win) then
-      pcall(nvim_win_close, win, true)
-    end
+    if win and nvim_win_is_valid(win) then pcall(nvim_win_close, win, true) end
     ui_state.windows.prompt[field] = nil
   end
 end

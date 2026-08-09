@@ -46,14 +46,14 @@ function M.request(method, url, callback, _headers, debug, context, uuid)
   notify("[reposcope] WGET Request: wget " .. table.concat(args, " "), vim.log.levels.TRACE)
 
   local argv = { "wget" }
-  for _, a in ipairs(args) do argv[#argv + 1] = a end
+  for _, a in ipairs(args) do
+    argv[#argv + 1] = a
+  end
 
   spawn_capture(argv, {}, function(result)
     local duration = (uv.hrtime() - start_time) / 1e6
 
-    if debug and result.stderr ~= "" then
-      notify("[reposcope] wget stderr: " .. result.stderr, vim.log.levels.TRACE)
-    end
+    if debug and result.stderr ~= "" then notify("[reposcope] wget stderr: " .. result.stderr, vim.log.levels.TRACE) end
 
     if not result.ok then
       if metrics.record_metrics() then
@@ -61,9 +61,7 @@ function M.request(method, url, callback, _headers, debug, context, uuid)
       end
       callback(nil, "wget request failed (code " .. result.code .. ")")
     else
-      if metrics.record_metrics() then
-        metrics.increase_success(safe_uuid, url, "wget", safe_context, duration, 200)
-      end
+      if metrics.record_metrics() then metrics.increase_success(safe_uuid, url, "wget", safe_context, duration, 200) end
       callback(result.stdout)
     end
   end)

@@ -24,18 +24,14 @@ local close_autocmd_id
 ---@param on_close fun(): nil Callback that closes the Reposcope UI
 ---@return nil
 function M.setup_ui_close(on_close)
-  if close_autocmd_id then
-    nvim_del_autocmd(close_autocmd_id)
-  end
+  if close_autocmd_id then nvim_del_autocmd(close_autocmd_id) end
 
   close_autocmd_id = nvim_create_autocmd("QuitPre", {
     callback = function()
       local win = nvim_get_current_win()
       local buf = nvim_win_get_buf(win)
       local buf_name = nvim_buf_get_name(buf)
-      if buf_name:find("^reposcope://") then
-        on_close()
-      end
+      if buf_name:find("^reposcope://") then on_close() end
     end,
   })
 end

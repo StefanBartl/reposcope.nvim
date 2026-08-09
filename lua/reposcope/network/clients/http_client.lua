@@ -18,14 +18,12 @@ local get_option = require("reposcope.config").get_option
 local new_error = require("reposcope.utils.error").new_error
 local safe_call = require("reposcope.utils.error").safe_call
 
-
 -- Per-provider config key holding that provider's API token
 local TOKEN_OPTION = {
   github = "github_token",
   gitlab = "gitlab_token",
   codeberg = "codeberg_token",
 }
-
 
 ---@private
 ---@internal
@@ -45,11 +43,10 @@ local function _build_auth_header(token, tool, provider)
     return { ["Authorization"] = "token " .. token }
   else
     return {
-      ["Authorization"] = "Bearer " .. token
+      ["Authorization"] = "Bearer " .. token,
     }
   end
 end
-
 
 ---Makes an HTTP request using the configured tool
 ---@param method string HTTP method
@@ -73,7 +70,9 @@ function M.request(method, url, callback, headers, debug, metrics_context)
   -- `gh` is the GitHub CLI and cannot talk to non-GitHub hosts; fall back to curl
   if default_tool == "gh" and provider ~= "github" then
     require("reposcope.utils.debug").notify(
-      "[reposcope] 'gh' request tool only supports GitHub; falling back to 'curl' for provider '" .. tostring(provider) .. "'",
+      "[reposcope] 'gh' request tool only supports GitHub; falling back to 'curl' for provider '"
+        .. tostring(provider)
+        .. "'",
       3
     )
     default_tool = "curl"
@@ -99,8 +98,7 @@ function M.request(method, url, callback, headers, debug, metrics_context)
   headers = tbl_extend("force", headers or {}, auth_headers)
 
   -- Make the request
-  local result = safe_call(request_module.request, method, url, callback, headers, debug, metrics_context,
-    uuid)
+  local result = safe_call(request_module.request, method, url, callback, headers, debug, metrics_context, uuid)
 
   if not result.ok then
     local err = new_error("NetworkError", "Request failed: " .. tostring(result.err))

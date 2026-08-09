@@ -16,7 +16,6 @@ local dedupe_list = require("reposcope.utils.core").dedupe_list
 local put_to_front_if_present = require("reposcope.utils.core").put_to_front_if_present
 local notify = require("reposcope.utils.debug").notify
 
-
 -- Static layout values
 M.row = ui_config.row
 M.col = ui_config.col
@@ -44,11 +43,9 @@ local VALID_FIELDS = {
   "stars",
 }
 
-
 -- Internal storage for prompt fields (controlled by set_fields)
 ---@type PromptField[]
 local _fields = {}
-
 
 ---@private
 ---@internal
@@ -57,13 +54,10 @@ local _fields = {}
 ---@return boolean # True if the field exists in VALID_FIELDS, false otherwise
 local function _is_valid_field(field)
   for i = 1, #VALID_FIELDS do
-    if VALID_FIELDS[i] == field then
-      return true
-    end
+    if VALID_FIELDS[i] == field then return true end
   end
   return false
 end
-
 
 ---Sets the active prompt fields with deduplication and prefix reordering.
 ---Invalid fields are ignored with a warning.
@@ -93,13 +87,9 @@ function M.set_fields(fields)
   _fields = put_to_front_if_present(deduped, "prefix")
 end
 
-
 --- Returns the normalized prompt field list
 ---@return PromptField[]
-function M.get_fields()
-  return _fields
-end
-
+function M.get_fields() return _fields end
 
 ---Returns all valid prompt field names (whitelist)
 ---@return PromptField[] # Sorted list of valid prompt field names

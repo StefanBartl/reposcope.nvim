@@ -18,8 +18,6 @@ end
 ---(pure Lua, no shell-out, works identically on every platform).
 ---@param encoded string The Base64-encoded string to decode
 ---@return string The decoded string
-function M.decode_base64(encoded)
-  return require("lib.lua.strings.encoding").base64_decode(encoded)
-end
+function M.decode_base64(encoded) return require("lib.lua.strings.encoding").base64_decode(encoded) end
 
 return M

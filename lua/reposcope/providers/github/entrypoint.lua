@@ -10,4 +10,3 @@ return {
   cloner = require("reposcope.providers.github.clone.clone_manager"),
   query_builder = require("reposcope.providers.github.query_builder"),
 }
-

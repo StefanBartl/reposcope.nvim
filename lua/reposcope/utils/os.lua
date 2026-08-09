@@ -12,9 +12,7 @@ local system_opener = require("lib.nvim.fs.open.url.system_opener")
 ---Returns true when running on Windows. Central check to avoid ad-hoc
 ---`sysname:match("Windows")` calls scattered across the codebase.
 ---@return boolean
-function M.is_windows()
-  return require("lib.nvim.cross.platform.is_windows")()
-end
+function M.is_windows() return require("lib.nvim.cross.platform.is_windows")() end
 
 --- Opens the given URL in the system's default web browser, cross-platform.
 ---@param url string The URL to open

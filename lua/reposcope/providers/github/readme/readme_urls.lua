@@ -40,4 +40,3 @@ function M.get_urls(owner, repo, branch)
 end
 
 return M
-

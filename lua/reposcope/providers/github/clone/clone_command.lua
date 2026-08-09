@@ -11,16 +11,13 @@
 ---@class GithubCloneCommandBuilder : CloneCommandBuilderModule
 local M = {}
 
-
 ---Creates the appropriate argv command for cloning
 ---@param clone_type string
 ---@param repo_url string
 ---@param output_dir string
 ---@return string[]
 function M.build_command(clone_type, repo_url, output_dir)
-  if clone_type == "gh" then
-    return { "gh", "repo", "clone", repo_url, output_dir }
-  end
+  if clone_type == "gh" then return { "gh", "repo", "clone", repo_url, output_dir } end
 
   local zip_url = repo_url:gsub("%.git$", "/archive/refs/heads/main.zip")
 

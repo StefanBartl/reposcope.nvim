@@ -19,17 +19,13 @@ local get_fields = require("reposcope.ui.prompt.prompt_config").get_fields
 -- Utilities
 local notify = require("reposcope.utils.debug").notify
 
-
 -- Internal tracking
 local current_index = 1
-
 
 ---Sets the current prompt navigation index
 ---@param index integer
 ---@return nil
-function M.set_current_index(index)
-  current_index = index
-end
+function M.set_current_index(index) current_index = index end
 
 ---Focuses the first focusable prompt input window (skips prefix).
 ---@return nil
@@ -90,9 +86,7 @@ function M.focus_field(field)
       local win = wins[field]
       if type(win) == "number" and nvim_win_is_valid(win) then
         local cfg = nvim_win_get_config(win)
-        if cfg.focusable then
-          M.focus_field_index(i)
-        end
+        if cfg.focusable then M.focus_field_index(i) end
       end
       break -- no need to keep searching after match
     end

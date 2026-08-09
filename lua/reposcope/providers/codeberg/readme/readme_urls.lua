@@ -8,7 +8,6 @@
 ---@class CodebergReadmeUrlBuilder : ReadmeUrlBuilderModule
 local M = {}
 
-
 ---Returns both the raw content and API URLs for a given repository README.
 ---@param owner string Codeberg owner (user or org)
 ---@param repo? string Repository name

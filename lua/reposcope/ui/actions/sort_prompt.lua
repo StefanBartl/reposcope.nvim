@@ -15,7 +15,6 @@ local notify = require("reposcope.utils.debug").notify
 ---@type "name"|"owner"|"stars"|"relevance"
 local _current_sort = "relevance"
 
-
 ---@private
 ---@internal
 ---@brief Sorts repository items based on the selected mode
@@ -28,15 +27,12 @@ local function sort_items(items, mode)
   elseif mode == "owner" then
     table.sort(items, function(a, b) return a.owner.login < b.owner.login end)
   elseif mode == "stars" then
-    table.sort(items, function(a, b)
-      return (a.stargazers_count or 0) > (b.stargazers_count or 0)
-    end)
+    table.sort(items, function(a, b) return (a.stargazers_count or 0) > (b.stargazers_count or 0) end)
   else
     return nil
   end
   return items
 end
-
 
 ---Applies a sort mode to the currently cached repositories and refreshes the UI.
 ---@param mode "name"|"owner"|"stars"|"relevance"
@@ -54,22 +50,16 @@ function M.apply_sort(mode)
     end
 
     local sorted = sort_items(vim.tbl_deep_extend("force", {}, items), mode)
-    if sorted then
-      repository_cache.set({ total_count = #sorted, items = sorted }, false)
-    end
+    if sorted then repository_cache.set({ total_count = #sorted, items = sorted }, false) end
   end
 
   list_controller.display_repositories()
   fetch_readme()
 end
 
-
 ---Returns the last sort mode applied via `apply_sort` ("relevance" if none/reset)
 ---@return "name"|"owner"|"stars"|"relevance"
-function M.get_current_sort()
-  return _current_sort
-end
-
+function M.get_current_sort() return _current_sort end
 
 ---Displays a prompt to sort the currently cached repositories by mode.
 ---@return nil
@@ -83,4 +73,3 @@ function M.prompt_sort()
 end
 
 return M
-

@@ -45,7 +45,6 @@ local ui_autocmds = require("reposcope.bindings.autocmds")
 -- Ensure user commands are registered
 require("reposcope.bindings.usrcmds")
 
-
 ---Initializes the Reposcope UI by applying user options and performing tool checks.
 --- This function should be called once during plugin setup.
 ---@param opts PartialConfigOptions Optional configuration options to override defaults
@@ -54,11 +53,8 @@ function M.setup(opts)
   checks.resolve_request_tool()
 
   local keymaps_opt = config.get_option("keymaps")
-  if keymaps_opt ~= false then
-    keymaps.set_user_keymaps(keymaps_opt, config.get_option("keymap_opts"))
-  end
+  if keymaps_opt ~= false then keymaps.set_user_keymaps(keymaps_opt, config.get_option("keymap_opts")) end
 end
-
 
 ---Opens the Reposcope UI. Captures caller position, creates background, preview, list, and prompt windows, and sets keymaps.
 ---@return nil
@@ -69,36 +65,29 @@ function M.open_ui()
   -- Capture users window and cursor for placing him back after closing Reposcope UI
   ui_state.capture_invocation_state()
 
-
   notify("[reposcope] BACKGROUND SEQUENCE")
   -- Open Background
   background.open_window()
-
 
   notify("[reposcope] LIST SEQUENCE")
   -- Open List
   list.initialize()
 
-
   notify("[reposcope] PREVIEW SEQUENCE")
   -- Open Preview
   preview.initialize()
-
 
   notify("[reposcope] PROMPT SEQUENCE")
   -- Open Prompt
   prompt.initialize()
 
-
   notify("[reposcope] KEYMAPS SEQUENCE")
   -- Set Keymaps
   keymaps.set_ui_keymaps()
 
-
   notify("[reposcope] SETUP UI CLOSE SEQUENCE")
   -- Setup UI Close Handler
   M.setup_ui_close()
-
 
   notify("[reposcope] REPOSCOPE START SEQUENCE FINISHED")
 end
@@ -122,9 +111,7 @@ function M.close_ui()
   local bufs = ui_state.get_buffers()
   if bufs then
     for i = 1, #bufs do
-      if nvim_buf_is_valid(bufs[i]) then
-          vim.api.nvim_buf_delete(bufs[i], { force = true })
-      end
+      if nvim_buf_is_valid(bufs[i]) then vim.api.nvim_buf_delete(bufs[i], { force = true }) end
     end
   else
     notify("[reposcope] No bufs available to close", 4)
@@ -144,16 +131,12 @@ end
 --- If one of these windows is closed (via :q, :q!, or :wq), all related UI windows are closed.
 --- Delegates to `reposcope.bindings.autocmds`.
 ---@return nil
-function M.setup_ui_close()
-  ui_autocmds.setup_ui_close(M.close_ui)
-end
+function M.setup_ui_close() ui_autocmds.setup_ui_close(M.close_ui) end
 
 ---Removes the AutoCmd for automatically closing all related UI windows (Reposcope UI).
 --- This prevents the UI from being closed automatically when :q or :q! is used.
 --- Delegates to `reposcope.bindings.autocmds`.
 ---@return nil
-function M.remove_ui_autocmd()
-  ui_autocmds.remove_ui_autocmd()
-end
+function M.remove_ui_autocmd() ui_autocmds.remove_ui_autocmd() end
 
 return M

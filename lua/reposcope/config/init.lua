@@ -36,7 +36,6 @@ local filecache_path = base_cache .. "/data"
 ---Absolute path to the request log file
 local logfile_path = base_cache .. "/logs/request_log.json"
 
-
 ---Setup function for configuration
 ---@param opts PartialConfigOptions|nil User configuration options
 ---@return nil
@@ -55,15 +54,11 @@ end
 
 ---Returns the current filecache directory
 ---@return string The current filecache directory
-function M.get_readme_filecache_dir()
-  return filecache_path .. "/readme"
-end
+function M.get_readme_filecache_dir() return filecache_path .. "/readme" end
 
 ---Returns the absolute path of the persisted session file
 ---@return string
-function M.get_session_path()
-  return filecache_path .. "/session.json"
-end
+function M.get_session_path() return filecache_path .. "/session.json" end
 
 ---@param key ConfigOptionKey
 ---@return any
@@ -81,9 +76,7 @@ function M.get_option(key)
 
     if dir and dir ~= "" then
       local expanded = require("lib.nvim.cross.fs.expand_path")(dir)
-      if vim.fn.isdirectory(expanded) == 1 then
-        resolved = expanded
-      end
+      if vim.fn.isdirectory(expanded) == 1 then resolved = expanded end
     end
 
     if resolved == "" then
@@ -99,13 +92,9 @@ function M.get_option(key)
     return clone_result
   end
 
-  if key == "logfile_path" then
-    return logfile_path
-  end
+  if key == "logfile_path" then return logfile_path end
 
-  if key == "cache_dir" then
-    return filecache_path
-  end
+  if key == "cache_dir" then return filecache_path end
 
   return value
 end
