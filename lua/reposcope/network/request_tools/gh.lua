@@ -56,11 +56,12 @@ function M.request(method, url, callback, headers, debug, context, uuid)
     end
   end)
 
-  -- Environment variable (token). NOTE: libuv's spawn env option is an array
-  -- of "KEY=VALUE" strings, not a dict — spawn_capture passes opts.env
-  -- straight through without converting it.
-  local env = {}
-  if token and token ~= "" then table.insert(env, "GITHUB_TOKEN=" .. token) end
+  -- Completed env (PATH + session/keyring vars) as the "KEY=VALUE" array
+  -- spawn_capture's libuv-backed spawn expects; see reposcope.utils.spawn_env.
+  -- GITHUB_TOKEN is layered on top so an explicit config token always wins.
+  local vars = nil
+  if token and token ~= "" then vars = { GITHUB_TOKEN = token } end
+  local env = require("reposcope.utils.spawn_env").array(vars)
 
   notify("[reposcope] GH Request: gh " .. table.concat(args, " "), 2)
 

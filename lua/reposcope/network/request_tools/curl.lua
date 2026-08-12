@@ -44,7 +44,11 @@ function M.request(method, url, callback, headers, debug, context, uuid)
     argv[#argv + 1] = a
   end
 
-  spawn_capture(argv, {}, function(result)
+  -- Completed env (PATH + session/keyring vars) — curl's stored credentials
+  -- (.netrc, cookie jars) depend on HOME/session vars just as much as gh does.
+  local env = require("reposcope.utils.spawn_env").array()
+
+  spawn_capture(argv, { env = env }, function(result)
     local duration = (hrtime() - start_time) / 1e6 -- ms
 
     if debug and result.stderr ~= "" then notify("[reposcope] curl stderr: " .. result.stderr, 4) end

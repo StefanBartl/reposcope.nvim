@@ -50,7 +50,11 @@ function M.request(method, url, callback, _headers, debug, context, uuid)
     argv[#argv + 1] = a
   end
 
-  spawn_capture(argv, {}, function(result)
+  -- Completed env (PATH + session/keyring vars) — mainly PATH here, wget is
+  -- rarely installed system-wide on Windows.
+  local env = require("reposcope.utils.spawn_env").array()
+
+  spawn_capture(argv, { env = env }, function(result)
     local duration = (uv.hrtime() - start_time) / 1e6
 
     if debug and result.stderr ~= "" then notify("[reposcope] wget stderr: " .. result.stderr, vim.log.levels.TRACE) end
