@@ -245,7 +245,13 @@ On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
 `clipboard`/`path`), pressing `<CR>` or double-clicking (`<2-LeftMouse>`) on a
 repository's row asks for confirmation, then opens that repository's
 `README.md`. A repository with no readable `README.md` just prints a
-notification — there is nothing to confirm opening. See
+notification — there is nothing to confirm opening.
+
+The same row also drives git itself — `p` pushes, `P` pulls (`--ff-only`) and
+`f` fetches the repository under the cursor. Each action re-reads just that
+repository's status afterwards and redraws the row in place (ahead/behind and
+dirty state update without re-scanning the whole directory), and a one-line
+legend of these keys is shown in the window's `winbar`. See
 [BINDINGS.md](BINDINGS.md#14-component-local) for the full keymap entry.
 
 Examples:

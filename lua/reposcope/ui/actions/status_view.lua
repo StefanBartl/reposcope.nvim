@@ -18,6 +18,14 @@
 --- opens that repository's `README.md` (`:edit`). Rows with no readable
 --- `README.md` are a silent no-op past a notification — there is nothing to
 --- confirm opening.
+---
+--- The same row also drives git itself: `p`/`P`/`f` push, pull (`--ff-only`)
+--- or fetch the repository under the cursor via `utils.repo_actions`. Each
+--- action reports success/failure via notification and then re-reads just
+--- that repository's status (`utils.repo_status.status_one`) and redraws the
+--- table in place, so ahead/behind counts and dirty state stay current
+--- without re-scanning the whole directory. A one-line legend of these keys
+--- is shown in the window's `winbar`.
 
 ---@class ActionStatusView : ActionStatusViewModule
 local M = {}
@@ -28,10 +36,13 @@ local open_named_scratch = require("lib.nvim.window.open_named_scratch")
 local copy_to_clipboard = require("lib.nvim.cross.copy_to_clipboard")
 local write_to_file = require("lib.nvim.fs.write.to_file")
 local expand_path = require("lib.nvim.cross.fs.expand_path")
+local repo_actions = require("reposcope.utils.repo_actions")
+local status_one = require("reposcope.utils.repo_status").status_one
 local notify = require("reposcope.utils.debug").notify
 
 local SCRATCH_NAME = "reposcope://status"
 local DEFAULT_PATH_OUT = vim.fn.stdpath("cache") .. "/reposcope/status.txt"
+local LEGEND = "  <CR> Open README    p Push    P Pull    f Fetch"
 
 ---Renders a list of repository status records into an aligned, human-readable block.
 ---@param records RepoStatusRecord[] Status records in discovery order
@@ -94,10 +105,77 @@ end
 
 ---@private
 ---@internal
----Wires `<CR>` and double-click on a status buffer to open the README.md of
----the repository under the cursor (after confirmation). Safe to call
----repeatedly on a reused buffer — later calls just overwrite the mapping
----with a closure over the current `records`.
+---Replaces `bufnr`'s content with `lines`, toggling `modifiable` only for the
+---duration of the write so read-only status buffers stay locked afterwards.
+---@param bufnr integer
+---@param lines string[]
+---@return nil
+local function _set_buffer_lines(bufnr, lines)
+  if not vim.api.nvim_buf_is_valid(bufnr) then return end
+  local was_modifiable = vim.bo[bufnr].modifiable
+  vim.bo[bufnr].modifiable = true
+  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+  vim.bo[bufnr].modifiable = was_modifiable
+end
+
+---@private
+---@internal
+---Re-reads `records[idx]`'s git status and redraws `bufnr`, preserving the
+---cursor position. Called after a push/pull/fetch settles so ahead/behind and
+---dirty state reflect the outcome without re-scanning every repository.
+---@param bufnr integer
+---@param records RepoStatusRecord[]
+---@param idx integer
+---@return nil
+local function _refresh_row(bufnr, records, idx)
+  local record = records[idx]
+  if not record then return end
+
+  status_one(record.path, function(new_record)
+    vim.schedule(function()
+      if new_record then records[idx] = new_record end
+      local win = vim.fn.bufwinid(bufnr)
+      local cursor = (win ~= -1) and vim.api.nvim_win_get_cursor(win) or nil
+      _set_buffer_lines(bufnr, M.render(records))
+      if cursor then pcall(vim.api.nvim_win_set_cursor, win, cursor) end
+    end)
+  end)
+end
+
+---@private
+---@internal
+---Runs a single-repository git action against the row under the cursor,
+---notifies the outcome, then refreshes that row.
+---@param bufnr integer
+---@param records RepoStatusRecord[]
+---@param verb string Human-readable action name, used in notifications
+---@param action_fn fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil One of `repo_actions.push/pull/fetch`
+---@return nil
+local function _run_row_action(bufnr, records, verb, action_fn)
+  local line = vim.api.nvim_win_get_cursor(0)[1]
+  local idx = line - 1
+  local record = records[idx]
+  if not record then return end
+
+  notify(("[reposcope] %s %s ..."):format(verb, record.name), 2)
+  action_fn(record.path, function(ok, err)
+    vim.schedule(function()
+      if ok then
+        notify(("[reposcope] %s: %s done"):format(record.name, verb), 2)
+      else
+        notify(("[reposcope] %s: %s failed - %s"):format(record.name, verb, err or "unknown error"), 4)
+      end
+      _refresh_row(bufnr, records, idx)
+    end)
+  end)
+end
+
+---@private
+---@internal
+---Wires `<CR>`/double-click (open README) and `p`/`P`/`f` (push/pull/fetch)
+---on a status buffer, all acting on the repository row under the cursor.
+---Safe to call repeatedly on a reused buffer — later calls just overwrite
+---the mappings with closures over the current `records`.
 ---@param bufnr integer
 ---@param records RepoStatusRecord[]
 ---@param before_open? fun(): nil Passed through to `_open_readme`
@@ -111,6 +189,13 @@ local function _attach_row_keymaps(bufnr, records, before_open)
   local mo = { buffer = bufnr, nowait = true }
   map("n", "<CR>", activate, mo, "Open README.md of repository under cursor")
   map("n", "<2-LeftMouse>", activate, mo, "Open README.md of repository under cursor")
+
+  map("n", "p", function() _run_row_action(bufnr, records, "push", repo_actions.push) end, mo,
+    "Push repository under cursor")
+  map("n", "P", function() _run_row_action(bufnr, records, "pull", repo_actions.pull) end, mo,
+    "Pull repository under cursor")
+  map("n", "f", function() _run_row_action(bufnr, records, "fetch", repo_actions.fetch) end, mo,
+    "Fetch repository under cursor")
 end
 
 ---@private
@@ -127,7 +212,11 @@ local function show_popup(lines, records)
     nice_quit = true,
     enter = true,
     focusable = true,
-    wo = { wrap = false, cursorline = true },
+    -- +1 accounts for the winbar legend, which otherwise eats one row of
+    -- content out of a height sized exactly to the number of status lines
+    -- (make_scratch still clamps this to the editor's available height).
+    height = #lines + 1,
+    wo = { wrap = false, cursorline = true, winbar = LEGEND },
   })
   if surf then
     _attach_row_keymaps(surf.bufnr, records, function() surf:close() end)
@@ -155,6 +244,7 @@ local function show_buffer(lines, records)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   vim.bo[bufnr].modifiable = false
   vim.api.nvim_win_set_buf(0, bufnr)
+  vim.api.nvim_set_option_value("winbar", LEGEND, { win = 0 })
   _attach_row_keymaps(bufnr, records)
 end
 
@@ -166,10 +256,11 @@ end
 ---@param records RepoStatusRecord[]
 ---@return nil
 local function show_split(lines, vertical, records)
-  local bufnr = open_named_scratch(SCRATCH_NAME, lines, {
+  local bufnr, winid = open_named_scratch(SCRATCH_NAME, lines, {
     filetype = "reposcope-status",
     split = vertical and "right" or "below",
   })
+  vim.api.nvim_set_option_value("winbar", LEGEND, { win = winid })
   _attach_row_keymaps(bufnr, records)
 end
 

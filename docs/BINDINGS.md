@@ -86,6 +86,9 @@ whenever it opens/closes.
 | `q`, `<Esc>`  | n    | [`utils/stats.lua`](../lua/reposcope/utils/stats.lua) | Closes the stats popup buffer/window                        |
 | `q`, `<Esc>`  | n    | [`ui/actions/help_view.lua`](../lua/reposcope/ui/actions/help_view.lua) (via `lib.nvim.ui.kit`'s `nice_quit`) | Closes the `?` keymap cheatsheet |
 | `<CR>`, `<2-LeftMouse>` | n | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, on every interactive `--out` backend of `:Reposcope status`) | Prompts to confirm (`lib.nvim.ui.kit`'s button-confirm dialog), then opens the `README.md` of the repository under the cursor (`:edit`). A repository with no readable `README.md` just gets a notification — nothing to confirm |
+| `p`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Pushes the repository under the cursor (`utils/repo_actions.lua`), then re-reads and redraws that row |
+| `P`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Pulls the repository under the cursor (`git pull --ff-only`), then re-reads and redraws that row |
+| `f`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Fetches the repository under the cursor (`git fetch --prune`), then re-reads and redraws that row |
 
 ---
 
