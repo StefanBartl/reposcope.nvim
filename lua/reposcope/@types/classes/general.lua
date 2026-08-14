@@ -36,5 +36,10 @@
 ---@class RepoUpdaterModule Bulk git fetch+pull for all repos in a directory (provider-agnostic)
 ---@field update_all fun(path: string|nil, on_complete?: fun(updated: integer, errors: string[]): nil): nil
 
+---@class RepoActionsModule Single-repository git push/pull/fetch, triggered interactively
+---@field push fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil
+---@field pull fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil
+---@field fetch fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil
+
 ---@class RepositoryUILoaderModule Populates the list UI and triggers a README load after a search (provider-agnostic)
 ---@field load_ui_after_fetch fun(): nil

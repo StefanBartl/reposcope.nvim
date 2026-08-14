@@ -132,6 +132,14 @@ local function status_repo(repo, on_done)
   end)
 end
 
+---Queries the git status of a single repository (no discovery, no progress
+---indicator). Used to refresh one row after an interactive push/pull/fetch
+---rather than re-reading every repository in the directory.
+---@param repo string Absolute path to the repository
+---@param on_done fun(record: RepoStatusRecord|nil, err: string|nil): nil
+---@return nil
+function M.status_one(repo, on_done) status_repo(repo, on_done) end
+
 ---Collects the git status of every repository in the resolved base directory.
 ---If the resolved path is itself a repository, only that one is reported.
 ---Validation failures (missing git, inaccessible directory, no repositories) are

@@ -5,7 +5,7 @@
 - 🧠 Persistent README caching (RAM + file system)
 - 🔧 Clone support: `git`, `gh`, `wget`, `curl`
 - 🔄 Bulk-update all cloned repositories (`git fetch` + ff-only `pull`) in one command
-- 📋 Git status overview across a whole folder of repos (branch, ahead/behind, dirty) — `<CR>`/double-click a row to open that repository's README.md (with a confirm prompt)
+- 📋 Git status overview across a whole folder of repos (branch, ahead/behind, dirty) — `<CR>`/double-click a row to open that repository's README.md (with a confirm prompt), or `p`/`P`/`f` to push/pull/fetch it in place, with a `winbar` legend and auto-refreshing row
 - 🔁 Debounced README fetches to avoid redundant API calls
 - 📦 Clean, fully modular architecture (UI, state, providers, controllers)
 - 🧪 Strongly annotated with EmmyLua for LuaLS support
