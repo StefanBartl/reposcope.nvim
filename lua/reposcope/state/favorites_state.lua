@@ -18,11 +18,10 @@
 local M = {}
 
 local get_favorites_path = require("reposcope.config").get_favorites_path
-local safe_mkdir = require("reposcope.utils.protection").safe_mkdir
 local notify = require("reposcope.utils.debug").notify
 local readme_cache_get = require("reposcope.cache.readme_cache").get
-local filereadable = vim.fn.filereadable
-local fnamemodify = vim.fn.fnamemodify
+local is_readable_file = require("lib.nvim.fs.is_readable_file")
+local fs_json = require("lib.nvim.fs.json")
 
 ---@type FavoriteRepo[]|nil
 local _cache = nil
@@ -33,26 +32,14 @@ function M.load()
   if _cache then return _cache end
 
   local path = get_favorites_path()
-  if filereadable(path) == 0 then
+  if not is_readable_file(path) then
     _cache = {}
     return _cache
   end
 
-  local read_ok, content = pcall(function()
-    local f = assert(io.open(path, "r"))
-    local text = f:read("*a")
-    f:close()
-    return text
-  end)
-
-  if not read_ok or not content or content == "" then
-    _cache = {}
-    return _cache
-  end
-
-  local decode_ok, decoded = pcall(vim.json.decode, content)
-  if not decode_ok or type(decoded) ~= "table" then
-    notify("[reposcope] Favorites file is corrupt or invalid JSON.", 4)
+  local decoded, err = fs_json.read(path)
+  if not decoded or type(decoded) ~= "table" then
+    notify("[reposcope] Favorites file is corrupt or invalid JSON: " .. tostring(err), 4)
     _cache = {}
     return _cache
   end
@@ -67,21 +54,8 @@ end
 ---@return boolean success
 local function _save()
   local path = get_favorites_path()
-  safe_mkdir(fnamemodify(path, ":h"))
-
-  local ok, encoded = pcall(vim.json.encode, _cache or {})
+  local ok, err = fs_json.write(path, _cache or {})
   if not ok then
-    notify("[reposcope] Failed to encode favorites: " .. tostring(encoded), 4)
-    return false
-  end
-
-  local write_ok, err = pcall(function()
-    local f = assert(io.open(path, "w"))
-    f:write(encoded)
-    f:close()
-  end)
-
-  if not write_ok then
     notify("[reposcope] Failed to write favorites file: " .. tostring(err), 4)
     return false
   end

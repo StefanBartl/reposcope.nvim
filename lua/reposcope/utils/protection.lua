@@ -183,13 +183,12 @@ end
 ---@return boolean
 function M.is_dir_writeable(dir)
   local testfile = fnameescape(dir .. "/.rs_write_test")
-  local file, err = io.open(testfile, "w")
-  if file then
-    file:close()
+  local ok, err = require("lib.nvim.fs.write.to_file")(testfile, "")
+  if ok then
     os.remove(testfile)
     return true
   else
-    notify("[reposcope] Error: Directory " .. dir .. " is not writable. Reason: " .. err, 4)
+    notify("[reposcope] Error: Directory " .. dir .. " is not writable. Reason: " .. tostring(err), 4)
     return false
   end
 end

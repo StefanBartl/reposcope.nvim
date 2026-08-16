@@ -10,6 +10,7 @@ local repository_cache = require("reposcope.cache.repository_cache")
 local list_controller = require("reposcope.controllers.list_controller")
 local fetch_readme = require("reposcope.controllers.provider_controller").fetch_readme_for_selected
 local notify = require("reposcope.utils.debug").notify
+local kit = require("lib.nvim.ui.kit")
 
 ---Last sort mode applied via `apply_sort` ("relevance" if none/reset)
 ---@type "name"|"owner"|"stars"|"relevance"
@@ -64,12 +65,11 @@ function M.get_current_sort() return _current_sort end
 ---Displays a prompt to sort the currently cached repositories by mode.
 ---@return nil
 function M.prompt_sort()
-  vim.ui.select({ "name", "owner", "stars", "relevance" }, {
-    prompt = "Sort repositories by:",
-  }, function(choice)
-    if not choice then return end
-    M.apply_sort(choice)
-  end)
+  kit.select({
+    selection = { "name", "owner", "stars", "relevance" },
+    title = "Sort repositories by:",
+    on_select = function(choice) M.apply_sort(choice) end,
+  })
 end
 
 return M

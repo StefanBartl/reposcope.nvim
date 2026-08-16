@@ -16,7 +16,6 @@
 local M = {}
 
 -- Vim Utilities
-local filereadable = vim.fn.filereadable
 local readdir = vim.fn.readdir
 -- Config Module
 local config = require("reposcope.config")
@@ -24,8 +23,11 @@ local get_readme_filecache_dir = config.get_readme_filecache_dir
 local get_readme_meta_path = config.get_readme_meta_path
 -- Utility Modules
 local notify = require("reposcope.utils.debug").notify
-local safe_mkdir = require("reposcope.utils.protection").safe_mkdir
-local fnamemodify = vim.fn.fnamemodify
+-- lib.nvim
+local is_readable_file = require("lib.nvim.fs.is_readable_file")
+local fs_read = require("lib.nvim.fs.read")
+local fs_write = require("lib.nvim.fs.write.to_file")
+local fs_json = require("lib.nvim.fs.json")
 
 M.readme_cache = {}
 
@@ -56,26 +58,14 @@ local function _load_meta()
   if _meta then return _meta end
 
   local path = get_readme_meta_path()
-  if filereadable(path) == 0 then
+  if not is_readable_file(path) then
     _meta = {}
     return _meta
   end
 
-  local read_ok, content = pcall(function()
-    local f = assert(io.open(path, "r"))
-    local text = f:read("*a")
-    f:close()
-    return text
-  end)
-
-  if not read_ok or not content or content == "" then
-    _meta = {}
-    return _meta
-  end
-
-  local decode_ok, decoded = pcall(vim.json.decode, content)
-  if not decode_ok or type(decoded) ~= "table" then
-    notify("[reposcope] README freshness metadata is corrupt or invalid JSON.", 3)
+  local decoded, err = fs_json.read(path)
+  if not decoded or type(decoded) ~= "table" then
+    notify("[reposcope] README freshness metadata is corrupt or invalid JSON: " .. tostring(err), 3)
     _meta = {}
     return _meta
   end
@@ -90,21 +80,8 @@ end
 ---@return boolean success
 local function _save_meta()
   local path = get_readme_meta_path()
-  safe_mkdir(fnamemodify(path, ":h"))
-
-  local ok, encoded = pcall(vim.json.encode, _meta or {})
+  local ok, err = fs_json.write(path, _meta or {})
   if not ok then
-    notify("[reposcope] Failed to encode README freshness metadata: " .. tostring(encoded), 3)
-    return false
-  end
-
-  local write_ok, err = pcall(function()
-    local f = assert(io.open(path, "w"))
-    f:write(encoded)
-    f:close()
-  end)
-
-  if not write_ok then
     notify("[reposcope] Failed to write README freshness metadata: " .. tostring(err), 3)
     return false
   end
@@ -134,7 +111,7 @@ end
 function M.has(owner, repo_name)
   if M.get_ram(owner, repo_name) then return true, "ram" end
 
-  if filereadable(_get_file_path(owner, repo_name)) == 1 then return true, "file" end
+  if is_readable_file(_get_file_path(owner, repo_name)) then return true, "file" end
 
   return false, nil
 end
@@ -158,20 +135,15 @@ function M.set_ram(owner, repo_name, readme_text) M.readme_cache[_get_key(owner,
 ---@return boolean
 function M.set_file(owner, repo_name, readme_text)
   local path = _get_file_path(owner, repo_name)
-  safe_mkdir(get_readme_filecache_dir())
 
   -- Always overwrites: every caller only reaches this after a real fetch
   -- succeeded, so an existing file here is a previous (possibly now stale,
   -- see has_fresh/set_updated_at) cache entry that must be replaced, not
   -- preserved.
-  local ok, err = pcall(function()
-    local f = assert(io.open(path, "w"))
-    f:write(readme_text)
-    f:close()
-  end)
+  local ok, err = fs_write(path, readme_text)
 
   if not ok then
-    notify("[reposcope] Error writing README cache: " .. err, vim.log.levels.ERROR)
+    notify("[reposcope] Error writing README cache: " .. tostring(err), vim.log.levels.ERROR)
     return false
   end
 
@@ -184,21 +156,16 @@ end
 ---@return string|nil
 function M.get_file(owner, repo_name)
   local path = _get_file_path(owner, repo_name)
-  if filereadable(path) == 0 then return nil end
+  if not is_readable_file(path) then return nil end
 
-  local ok, content = pcall(function()
-    local f = assert(io.open(path, "r"))
-    local t = f:read("*a")
-    f:close()
-    return t
-  end)
+  local content, err = fs_read(path)
 
-  if not ok then
-    notify("[reposcope] Error reading README cache: " .. content, vim.log.levels.ERROR)
+  if not content then
+    notify("[reposcope] Error reading README cache: " .. tostring(err), vim.log.levels.ERROR)
     return nil
   end
 
-  if content then M.readme_cache[_get_key(owner, repo_name)] = content end
+  M.readme_cache[_get_key(owner, repo_name)] = content
 
   return content
 end
@@ -288,7 +255,7 @@ function M.clear(owner, repo_name, target)
   end
 
   if target == "file" or target == "both" then
-    if filereadable(path) == 1 then
+    if is_readable_file(path) then
       os.remove(path)
       cleared = true
     end

@@ -7,11 +7,11 @@
 local M = {}
 
 -- Vim Utilities
-local filereadable = vim.fn.filereadable
-local readfile = vim.fn.readfile
-local writefile = vim.fn.writefile
 local fs_stat = vim.uv.fs_stat
 local decode = vim.json.decode
+-- lib.nvim
+local is_readable_file = require("lib.nvim.fs.is_readable_file")
+local fs_json = require("lib.nvim.fs.json")
 -- Project Imports
 local notify = require("reposcope.utils.debug").notify
 local config = require("reposcope.config")
@@ -58,21 +58,18 @@ function M.get_total_requests()
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
-  if not filereadable(log_path) then return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 } end
+  if not is_readable_file(log_path) then return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 } end
 
   local file_stats = fs_stat(log_path)
   if file_stats and file_stats.size == 0 then
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
 
-  local ok, raw = pcall(readfile, log_path)
-  if not ok then
-    notify("[reposcope] Error reading stats file: " .. raw, 4)
+  local json_data, err = fs_json.read(log_path)
+  if not json_data then
+    notify("[reposcope] Error reading stats file: " .. tostring(err), 4)
     return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 }
   end
-  if #raw == 0 then return { successful = 0, failed = 0, cache_hitted = 0, fcache_hitted = 0 } end
-
-  local json_data = decode(table.concat(raw, "\n")) or {}
 
   local successful, failed, cache_hitted, fcache_hitted = 0, 0, 0, 0
 
@@ -121,17 +118,12 @@ local function log_request(uuid, data)
     local logs = {}
 
     -- Read existing log file if available
-    if filereadable(log_path) == 1 then
-      local raw = readfile(log_path)
-      if raw and not vim.tbl_isempty(raw) then
-        local raw_json = table.concat(raw, "\n")
-        local success, decoded_logs = pcall(function() return vim.json.decode(raw_json) end)
-
-        if success and type(decoded_logs) == "table" then
-          logs = decoded_logs
-        else
-          notify("[reposcope] Invalid JSON format in log file. Starting fresh log.", vim.log.levels.WARN)
-        end
+    if is_readable_file(log_path) then
+      local decoded_logs = fs_json.read(log_path)
+      if type(decoded_logs) == "table" then
+        logs = decoded_logs
+      else
+        notify("[reposcope] Invalid JSON format in log file. Starting fresh log.", vim.log.levels.WARN)
       end
     end
 
@@ -149,12 +141,11 @@ local function log_request(uuid, data)
     end
 
     -- Encode and save logs to file with formatted JSON
-    local ok, json_or_err = pcall(vim.json.encode, logs)
+    local ok, err = fs_json.write(log_path, logs)
     if not ok then
-      notify("[reposcope] Failed to encode logs to JSON: " .. tostring(json_or_err), 5)
+      notify("[reposcope] Failed to write logs to JSON: " .. tostring(err), 5)
       return
     end
-    writefile(vim.split(json_or_err, "\n"), log_path)
   end)
 end
 

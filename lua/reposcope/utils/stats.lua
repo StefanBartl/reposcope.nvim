@@ -8,10 +8,7 @@
 local M = {}
 
 -- Vim Utilities
-local fn = vim.fn
 local api = vim.api
-local filereadable = fn.filereadable
-local readfile = fn.readfile
 local buf_is_valid = api.nvim_buf_is_valid
 local buf_delete = api.nvim_buf_delete
 local buf_set_lines = api.nvim_buf_set_lines
@@ -20,6 +17,8 @@ local win_set_current = api.nvim_set_current_win
 local open_win = api.nvim_open_win
 local buf_del_keymap = api.nvim_buf_del_keymap
 local window = require("lib.nvim.window")
+local is_readable_file = require("lib.nvim.fs.is_readable_file")
+local fs_json = require("lib.nvim.fs.json")
 
 -- Metrics Management (Tracking Performance and Usage Statistics)
 local metrics = require("reposcope.utils.metrics")
@@ -27,7 +26,6 @@ local metrics = require("reposcope.utils.metrics")
 local stats_state = require("reposcope.state.ui.stats_popup").stats
 -- Configuration & Debugging
 local get_option = require("reposcope.config").get_option
-local safe_call = require("reposcope.utils.error").safe_call
 local notify = require("reposcope.utils.debug").notify
 
 ---Displays the request statistics in a floating window.
@@ -110,23 +108,16 @@ end
 function M.calculate_extended_stats()
   local file_path = get_option("logfile_path")
 
-  if not file_path or not filereadable(file_path) then
-    notify("[reposcope] File not readable or does not exist: " .. file_path, 4)
+  if not file_path or not is_readable_file(file_path) then
+    notify("[reposcope] File not readable or does not exist: " .. tostring(file_path), 4)
     return 0, "N/A"
   end
 
-  local ok, result, err = safe_call(readfile, file_path)
-  if not ok then
-    notify("[reposcope] Error reading file " .. file_path .. " - " .. err, 4)
+  local logs, err = fs_json.read(file_path)
+  if not logs then
+    notify("[reposcope] Error reading file " .. file_path .. " - " .. tostring(err), 4)
     return 0, "N/A"
   end
-
-  if not result or #result == 0 then
-    notify("[reposcope] File is empty: " .. file_path, 4)
-    return 0, "N/A"
-  end
-
-  local logs = vim.json.decode(table.concat(result, "\n")) or {}
   local total_duration = 0
   local query_count = {}
   local success_count = 0

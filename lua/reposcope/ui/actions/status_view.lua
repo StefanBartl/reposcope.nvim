@@ -88,7 +88,7 @@ end
 ---@return nil
 local function _open_readme(record, before_open)
   local readme_path = record.path .. "/README.md"
-  if vim.fn.filereadable(readme_path) ~= 1 then
+  if not require("lib.nvim.fs.is_readable_file")(readme_path) then
     notify("[reposcope] No README.md found for " .. record.name, 3)
     return
   end
@@ -190,12 +190,27 @@ local function _attach_row_keymaps(bufnr, records, before_open)
   map("n", "<CR>", activate, mo, "Open README.md of repository under cursor")
   map("n", "<2-LeftMouse>", activate, mo, "Open README.md of repository under cursor")
 
-  map("n", "p", function() _run_row_action(bufnr, records, "push", repo_actions.push) end, mo,
-    "Push repository under cursor")
-  map("n", "P", function() _run_row_action(bufnr, records, "pull", repo_actions.pull) end, mo,
-    "Pull repository under cursor")
-  map("n", "f", function() _run_row_action(bufnr, records, "fetch", repo_actions.fetch) end, mo,
-    "Fetch repository under cursor")
+  map(
+    "n",
+    "p",
+    function() _run_row_action(bufnr, records, "push", repo_actions.push) end,
+    mo,
+    "Push repository under cursor"
+  )
+  map(
+    "n",
+    "P",
+    function() _run_row_action(bufnr, records, "pull", repo_actions.pull) end,
+    mo,
+    "Pull repository under cursor"
+  )
+  map(
+    "n",
+    "f",
+    function() _run_row_action(bufnr, records, "fetch", repo_actions.fetch) end,
+    mo,
+    "Fetch repository under cursor"
+  )
 end
 
 ---@private
@@ -218,9 +233,7 @@ local function show_popup(lines, records)
     height = #lines + 1,
     wo = { wrap = false, cursorline = true, winbar = LEGEND },
   })
-  if surf then
-    _attach_row_keymaps(surf.bufnr, records, function() surf:close() end)
-  end
+  if surf then _attach_row_keymaps(surf.bufnr, records, function() surf:close() end) end
 end
 
 ---@private

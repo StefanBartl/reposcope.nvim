@@ -12,8 +12,9 @@ local M = {}
 local nvim_get_current_win = vim.api.nvim_get_current_win
 local nvim_win_get_buf = vim.api.nvim_win_get_buf
 local nvim_buf_get_name = vim.api.nvim_buf_get_name
-local nvim_create_autocmd = vim.api.nvim_create_autocmd
 local nvim_del_autocmd = vim.api.nvim_del_autocmd
+
+local autocmd = require("lib.nvim.autocmd")
 
 ---@type integer|nil
 local close_autocmd_id
@@ -26,14 +27,12 @@ local close_autocmd_id
 function M.setup_ui_close(on_close)
   if close_autocmd_id then nvim_del_autocmd(close_autocmd_id) end
 
-  close_autocmd_id = nvim_create_autocmd("QuitPre", {
-    callback = function()
-      local win = nvim_get_current_win()
-      local buf = nvim_win_get_buf(win)
-      local buf_name = nvim_buf_get_name(buf)
-      if buf_name:find("^reposcope://") then on_close() end
-    end,
-  })
+  close_autocmd_id = autocmd.create("QuitPre", function()
+    local win = nvim_get_current_win()
+    local buf = nvim_win_get_buf(win)
+    local buf_name = nvim_buf_get_name(buf)
+    if buf_name:find("^reposcope://") then on_close() end
+  end, {})
 end
 
 ---Removes the AutoCmd for automatically closing all related UI windows (Reposcope UI).
