@@ -46,15 +46,8 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   if debug then table.insert(args, "--verbose") end
 
   -- Optional: write CLI command to file
-  pcall(function()
-    local debug_path = vim.fn.stdpath("cache") .. "/reposcope/logs/gh-debug.txt"
-    vim.fn.mkdir(vim.fn.fnamemodify(debug_path, ":h"), "p")
-    local file = io.open(debug_path, "a")
-    if file then
-      file:write("GH Request: gh " .. table.concat(args, " ") .. "\n")
-      file:close()
-    end
-  end)
+  local debug_path = vim.fn.stdpath("cache") .. "/reposcope/logs/gh-debug.txt"
+  require("lib.nvim.fs.write.append")(debug_path, "GH Request: gh " .. table.concat(args, " "))
 
   -- Completed env (PATH + session/keyring vars) as the "KEY=VALUE" array
   -- spawn_capture's libuv-backed spawn expects; see reposcope.utils.spawn_env.

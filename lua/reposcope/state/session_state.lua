@@ -19,10 +19,9 @@ local M = {}
 
 -- Config & Utilities
 local get_session_path = require("reposcope.config").get_session_path
-local safe_mkdir = require("reposcope.utils.protection").safe_mkdir
 local notify = require("reposcope.utils.debug").notify
-local filereadable = vim.fn.filereadable
-local fnamemodify = vim.fn.fnamemodify
+local is_readable_file = require("lib.nvim.fs.is_readable_file")
+local fs_json = require("lib.nvim.fs.json")
 
 -- State this module reads from / writes back into
 local config = require("reposcope.config")
@@ -47,22 +46,9 @@ function M.save()
     sort_mode = sort_prompt.get_current_sort(),
   }
 
-  local ok, encoded = pcall(vim.json.encode, data)
-  if not ok then
-    notify("[reposcope] Failed to encode session: " .. tostring(encoded), vim.log.levels.ERROR)
-    return false
-  end
-
   local path = get_session_path()
-  safe_mkdir(fnamemodify(path, ":h"))
-
-  local write_ok, err = pcall(function()
-    local f = assert(io.open(path, "w"))
-    f:write(encoded)
-    f:close()
-  end)
-
-  if not write_ok then
+  local ok, err = fs_json.write(path, data)
+  if not ok then
     notify("[reposcope] Failed to write session file: " .. tostring(err), vim.log.levels.ERROR)
     return false
   end
@@ -77,26 +63,14 @@ end
 ---@return boolean success
 function M.restore()
   local path = get_session_path()
-  if filereadable(path) == 0 then
+  if not is_readable_file(path) then
     notify("[reposcope] No saved session found.", vim.log.levels.WARN)
     return false
   end
 
-  local read_ok, content = pcall(function()
-    local f = assert(io.open(path, "r"))
-    local text = f:read("*a")
-    f:close()
-    return text
-  end)
-
-  if not read_ok then
-    notify("[reposcope] Failed to read session file: " .. tostring(content), vim.log.levels.ERROR)
-    return false
-  end
-
-  local decode_ok, data = pcall(vim.json.decode, content)
-  if not decode_ok or type(data) ~= "table" then
-    notify("[reposcope] Session file is corrupt or invalid JSON.", vim.log.levels.ERROR)
+  local data, err = fs_json.read(path)
+  if not data or type(data) ~= "table" then
+    notify("[reposcope] Session file is corrupt or invalid JSON: " .. tostring(err), vim.log.levels.ERROR)
     return false
   end
 
@@ -133,7 +107,7 @@ end
 ---@return boolean removed
 function M.clear()
   local path = get_session_path()
-  if filereadable(path) == 0 then
+  if not is_readable_file(path) then
     notify("[reposcope] No saved session to clear.", vim.log.levels.INFO)
     return false
   end
