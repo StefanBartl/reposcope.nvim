@@ -19,15 +19,35 @@
             |_|                             |_|
 ```
 
-Search, preview and clone GitHub repositories – directly from inside Neovim.
-Modular, minimal, Telescope-inspired interface.
+Search, preview and clone repositories from GitHub, GitLab or Codeberg –
+directly from inside Neovim. It doesn't stop at discovery: Reposcope also
+manages what you've already cloned, with a bulk git status overview and
+fetch+pull update across a whole folder of repos, plus filtering, sorting,
+favorites and session persistence for your searches. Modular, minimal,
+Telescope-inspired interface.
 
 ---
 
 ## Table of Contents
 
+- [Capabilities](#capabilities)
 - [Quickstart](#quickstart)
 - [Documentation](#documentation)
+
+---
+
+## Capabilities
+
+| Capability | What it does | Details |
+| --- | --- | --- |
+| `:Reposcope start` | Search/preview/clone repositories across GitHub, GitLab and Codeberg, with README caching and precaching | [Commands](docs/COMMANDS.md) |
+| `:Reposcope status [dir]` | Git status overview (branch, ahead/behind, dirty) across a folder of cloned repos, with inline push/pull/fetch per row | [Commands](docs/COMMANDS.md) |
+| `:Reposcope update [dir]` | Bulk `git fetch` + fast-forward-only `pull` across a folder of cloned repos | [Commands](docs/COMMANDS.md) |
+| `:Reposcope filter` / `filter-prompt` / `sort` | Filter and sort the current search results | [Commands](docs/COMMANDS.md) |
+| `:Reposcope favorites` | Save favorite repositories, including a README snapshot for offline viewing | [Commands](docs/COMMANDS.md) |
+| `:Reposcope session` | Persist/restore the last search, filter and sort mode across restarts | [Commands](docs/COMMANDS.md) |
+| `:Reposcope queries` | Track and list your most-frequent searches | [Commands](docs/COMMANDS.md) |
+| `:Reposcope providers` / `stats` / `toggle-dev` | List providers, request metrics, and developer/debug tooling | [Commands](docs/COMMANDS.md) |
 
 ---
 
