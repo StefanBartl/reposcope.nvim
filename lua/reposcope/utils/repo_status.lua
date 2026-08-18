@@ -31,6 +31,7 @@
 ---@field has_upstream boolean Whether the current branch tracks an upstream
 ---@field dirty integer Number of changed/untracked entries in the working tree
 ---@field state "clean"|"dirty"|"ahead"|"behind"|"diverged" Derived summary state
+---@field last_commit integer|nil Unix timestamp of HEAD's commit date (nil on an empty repo)
 
 ---@class ReposcopeRepoStatus
 local M = {}
@@ -118,17 +119,58 @@ end
 
 ---@private
 ---@internal
----Queries the git status of a single repository.
+---Reads the commit timestamp of HEAD. Separate from `git status`, which does
+---not carry it; an empty repository has no HEAD and yields nil rather than an
+---error, since "no commits yet" is a legitimate state for a fresh clone target.
+---@param repo string Absolute path to the repository
+---@param on_done fun(ts: integer|nil): nil
+---@return nil
+local function last_commit_ts(repo, on_done)
+  vim.system({ "git", "log", "-1", "--format=%ct" }, { cwd = repo, text = true }, function(res)
+    if res.code ~= 0 then
+      on_done(nil)
+      return
+    end
+    on_done(tonumber(vim.trim(res.stdout or "")))
+  end)
+end
+
+---@private
+---@internal
+---Queries the git status of a single repository, plus HEAD's commit date.
+---The two git calls are independent, so they run concurrently and the record is
+---handed back once both have returned.
 ---@param repo string Absolute path to the repository
 ---@param on_done fun(record: RepoStatusRecord|nil, err: string|nil): nil
 ---@return nil
 local function status_repo(repo, on_done)
+  ---@type RepoStatusRecord|nil
+  local record
+  ---@type string|nil
+  local err
+  local ts
+  local got_status, got_ts = false, false
+
+  local function settle()
+    if not (got_status and got_ts) then return end
+    if record then record.last_commit = ts end
+    on_done(record, err)
+  end
+
   vim.system({ "git", "status", "--porcelain=v2", "--branch" }, { cwd = repo, text = true }, function(res)
     if res.code ~= 0 then
-      on_done(nil, (res.stderr ~= "" and res.stderr) or "git status failed")
-      return
+      err = (res.stderr ~= "" and res.stderr) or "git status failed"
+    else
+      record = parse_status(repo, res.stdout or "")
     end
-    on_done(parse_status(repo, res.stdout or ""), nil)
+    got_status = true
+    settle()
+  end)
+
+  last_commit_ts(repo, function(value)
+    ts = value
+    got_ts = true
+    settle()
   end)
 end
 
