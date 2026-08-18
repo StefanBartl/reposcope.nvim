@@ -38,11 +38,19 @@ local write_to_file = require("lib.nvim.fs.write.to_file")
 local expand_path = require("lib.nvim.cross.fs.expand_path")
 local repo_actions = require("reposcope.utils.repo_actions")
 local status_one = require("reposcope.utils.repo_status").status_one
+local progress = require("reposcope.utils.progress")
 local notify = require("reposcope.utils.debug").notify
+
+---In-flight row actions, keyed by record index -> verb ("push", "pull", ...).
+---Rendered in place of the row's state so a slow push isn't several seconds of
+---no visible change at all.
+---@type table<integer, string>
+local _pending = {}
 
 local SCRATCH_NAME = "reposcope://status"
 local DEFAULT_PATH_OUT = vim.fn.stdpath("cache") .. "/reposcope/status.txt"
 local LEGEND = "  <CR> Open README    p Push    P Pull    f Fetch"
+local SPINNER = "⟳"
 
 ---Renders a list of repository status records into an aligned, human-readable block.
 ---@param records RepoStatusRecord[] Status records in discovery order
@@ -57,10 +65,11 @@ function M.render(records)
   local fmt = "%-" .. name_w .. "s  %-" .. branch_w .. "s  %-9s  %s"
   local lines = { fmt:format("REPOSITORY", "BRANCH", "AHEAD/BEH", "STATE") }
 
-  for _, r in ipairs(records) do
+  for i, r in ipairs(records) do
     local ab = r.has_upstream and ("+%d/-%d"):format(r.ahead, r.behind) or "no upstream"
     local state = r.state
     if r.state == "dirty" then state = ("dirty (%d)"):format(r.dirty) end
+    if _pending[i] then state = ("%s %s..."):format(SPINNER, _pending[i]) end
     lines[#lines + 1] = fmt:format(r.name, r.branch, ab, state)
   end
 
@@ -120,6 +129,19 @@ end
 
 ---@private
 ---@internal
+---Redraws the whole table into `bufnr`, preserving the cursor position.
+---@param bufnr integer
+---@param records RepoStatusRecord[]
+---@return nil
+local function _redraw(bufnr, records)
+  local win = vim.fn.bufwinid(bufnr)
+  local cursor = (win ~= -1) and vim.api.nvim_win_get_cursor(win) or nil
+  _set_buffer_lines(bufnr, M.render(records))
+  if cursor then pcall(vim.api.nvim_win_set_cursor, win, cursor) end
+end
+
+---@private
+---@internal
 ---Re-reads `records[idx]`'s git status and redraws `bufnr`, preserving the
 ---cursor position. Called after a push/pull/fetch settles so ahead/behind and
 ---dirty state reflect the outcome without re-scanning every repository.
@@ -134,10 +156,7 @@ local function _refresh_row(bufnr, records, idx)
   status_one(record.path, function(new_record)
     vim.schedule(function()
       if new_record then records[idx] = new_record end
-      local win = vim.fn.bufwinid(bufnr)
-      local cursor = (win ~= -1) and vim.api.nvim_win_get_cursor(win) or nil
-      _set_buffer_lines(bufnr, M.render(records))
-      if cursor then pcall(vim.api.nvim_win_set_cursor, win, cursor) end
+      _redraw(bufnr, records)
     end)
   end)
 end
@@ -156,14 +175,29 @@ local function _run_row_action(bufnr, records, verb, action_fn)
   local idx = line - 1
   local record = records[idx]
   if not record then return end
+  if _pending[idx] then
+    notify(("[reposcope] %s: %s already running"):format(record.name, _pending[idx]), 3)
+    return
+  end
 
-  notify(("[reposcope] %s %s ..."):format(verb, record.name), 2)
+  -- Level 3: `utils.debug.notify` drops anything below WARN unless dev mode is
+  -- on, so an INFO-level "push ..." would be invisible in normal use -- which
+  -- is exactly the silence this feedback is meant to fill.
+  notify(("[reposcope] %s %s ..."):format(verb, record.name), 3)
+  local handle = progress.create(("%s %s"):format(verb, record.name))
+
+  _pending[idx] = verb
+  _redraw(bufnr, records)
+
   action_fn(record.path, function(ok, err)
     vim.schedule(function()
+      _pending[idx] = nil
       if ok then
-        notify(("[reposcope] %s: %s done"):format(record.name, verb), 2)
+        notify(("[reposcope] %s: %s done"):format(record.name, verb), 3)
+        if handle then handle:finish(("%s %s done"):format(verb, record.name)) end
       else
         notify(("[reposcope] %s: %s failed - %s"):format(record.name, verb, err or "unknown error"), 4)
+        if handle then handle:finish(("%s %s failed"):format(verb, record.name)) end
       end
       _refresh_row(bufnr, records, idx)
     end)
