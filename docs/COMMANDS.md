@@ -85,7 +85,7 @@ subcommand; remaining arguments are forwarded to it.
 | Command                     | Description                                                                       |
 | --------------------------- | --------------------------------------------------------------------------------- |
 | `:Reposcope update [dir]`   | Updates all cloned git repositories (`git fetch --all --prune` + `git pull --ff-only`) in `clone.std_dir` (or the given directory) |
-| `:Reposcope status [dir] [--out] [--to]` | Shows a git status overview (branch, ahead/behind, dirty) for every repo in `clone.std_dir` (or the given directory / a single repo) |
+| `:Reposcope status [dir] [--out] [--to]` | Shows an interactive git status overview (branch, sync, state, last commit) for every repo in `clone.std_dir` (or the given directory / a single repo) |
 
 **Providers**
 
@@ -235,24 +235,42 @@ Unlike a plain `vim.notify`, the result is never truncated or unscrollable —
 Example output:
 
 ```
-REPOSITORY      BRANCH   AHEAD/BEH  STATE
-reposcope.nvim  main     +0/-0      clean
-my-fork         feature  +2/-1      dirty (3)
-some-lib        main     +0/-4      behind
+REPOSITORY      BRANCH   SYNC      STATE       LAST COMMIT
+reposcope.nvim  main               clean       15h
+my-fork         feature  ↑2 ↓1     dirty (3)   4d
+some-lib        main     ↓4        behind      10mo
 ```
 
-On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
-`clipboard`/`path`), pressing `<CR>` or double-clicking (`<2-LeftMouse>`) on a
-repository's row asks for confirmation, then opens that repository's
-`README.md`. A repository with no readable `README.md` just prints a
-notification — there is nothing to confirm opening.
+The `SYNC` column only reports branches that have actually diverged from
+their upstream, and disappears entirely when no repository has anything to
+report there. `LAST COMMIT` is the age of `HEAD`. Repository, branch, state
+and age are highlighted via `ReposcopeStatus*` groups, which link to the
+colorscheme's diagnostic colors and can be overridden. The popup title
+summarizes the scan, e.g. `Reposcope Status — 54 repos · 3 dirty · 1 out of sync`.
 
-The same row also drives git itself — `p` pushes, `P` pulls (`--ff-only`) and
-`f` fetches the repository under the cursor. Each action re-reads just that
-repository's status afterwards and redraws the row in place (ahead/behind and
-dirty state update without re-scanning the whole directory), and a one-line
-legend of these keys is shown in the window's `winbar`. See
-[BINDINGS.md](BINDINGS.md#14-component-local) for the full keymap entry.
+On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
+`clipboard`/`path`), the row under the cursor is interactive:
+
+| Key | Action |
+| --- | ------ |
+| `<CR>`, `<2-LeftMouse>` | Confirm, then open that repository's `README.md`. Press `q` in the README to close it and return to the overview |
+| `p` / `P` / `f` | Push / pull (`--ff-only`) / fetch the repository |
+| `S` | Full `git status --short` plus the last five commits, in a nested popup |
+| `s` | Cycle sort order: discovery → name → state → age → discovery |
+| `r` / `R` | Re-read the row under the cursor / re-scan the whole directory |
+| `y` | Yank the repository's path |
+| `?` | List every one of these keys |
+
+A push/pull/fetch marks its row with a spinner while it runs, reports
+success or failure via notification, and then re-reads just that repository
+so the row updates without re-scanning the directory. The operation is also
+published through `lib.nvim.progress`, so a statusline component using its
+`statusline` style can show it. Sorting by `state` ranks worst-first
+(diverged, dirty, behind, ahead, clean) rather than alphabetically.
+
+A shortened legend of these keys is shown in the window's `winbar`; `r`, `R`
+and `y` are omitted there to keep it on one line and are listed under `?`.
+See [BINDINGS.md](BINDINGS.md#14-component-local) for the full keymap entry.
 
 Examples:
 

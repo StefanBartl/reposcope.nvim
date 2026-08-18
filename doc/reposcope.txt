@@ -291,7 +291,20 @@ runs, asynchronously: >
 The machine-readable output is distilled into the current branch, ahead/behind
 counts relative to the upstream, and the number of uncommitted files (the
 *dirty* count), summarized as one of the states `clean`, `dirty`, `ahead`,
-`behind` or `diverged`.
+`behind` or `diverged`. A second, concurrent `git log -1` supplies the age of
+`HEAD` for the LAST COMMIT column.
+
+The SYNC column reports only branches that have actually diverged from their
+upstream (`↑2 ↓1`), and is dropped entirely when no repository has anything
+to report there. Repository, branch, state and age are highlighted through
+`ReposcopeStatus*` groups, which link to the colorscheme's diagnostic colors
+with `default = true` and can therefore be overridden freely. Example: >
+
+    REPOSITORY      BRANCH   SYNC      STATE       LAST COMMIT
+    reposcope.nvim  main               clean       15h
+    my-fork         feature  ↑2 ↓1     dirty (3)   4d
+    some-lib        main     ↓4        behind      10mo
+<
 
 If no {dir} argument is given, the configured clone directory (`clone.std_dir`,
 see |reposcope-config|) is used. If {dir} is itself a git repository, only that
@@ -314,10 +327,30 @@ like a plain notification):
 | `path`              | Writes the raw table to a file (`--to=<path>`)        |
 
 On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
-`clipboard`/`path`), `<CR>` or a double-click (`<2-LeftMouse>`) on a
-repository's row asks for confirmation, then opens that repository's
-`README.md` (`:edit`). A repository with no readable `README.md` just prints
-a notification — nothing to confirm opening.
+`clipboard`/`path`), the row under the cursor is interactive:
+
+| Key                     | Action                                          |
+|-------------------------|-------------------------------------------------|
+| `<CR>`, `<2-LeftMouse>` | Confirm, then open that repo's `README.md`      |
+| `p` / `P` / `f`         | Push / pull (`--ff-only`) / fetch the repo      |
+| `S`                     | Full `git status` + last 5 commits, in a popup  |
+| `s`                     | Cycle sort: discovery / name / state / age      |
+| `r` / `R`               | Re-read the row / re-scan the whole directory   |
+| `y`                     | Yank the repository's path                      |
+| `?`                     | List every one of these keys                    |
+
+A repository with no readable `README.md` just prints a notification —
+nothing to confirm opening. Inside a README opened this way, `q` closes it
+and restores the overview on the same row.
+
+A push/pull/fetch marks its row with a spinner while it runs, notifies the
+outcome, and re-reads just that repository afterwards. The operation is also
+published via `lib.nvim.progress`, so a statusline component using its
+`statusline` style can display it. Sorting by state ranks worst-first
+(diverged, dirty, behind, ahead, clean).
+
+A shortened legend is shown in the window's `winbar`; `r`, `R` and `y` are
+left out of it to keep it on one line and are listed under `?`.
 
 Notes:
 - Only immediate subdirectories are scanned (non-recursive).
