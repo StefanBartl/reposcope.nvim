@@ -89,6 +89,19 @@ whenever it opens/closes.
 | `p`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Pushes the repository under the cursor (`utils/repo_actions.lua`), then re-reads and redraws that row |
 | `P`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Pulls the repository under the cursor (`git pull --ff-only`), then re-reads and redraws that row |
 | `f`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Fetches the repository under the cursor (`git fetch --prune`), then re-reads and redraws that row |
+| `S`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Opens a nested popup with the repository's `git status --short` and its last five commits |
+| `s`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Cycles the sort order: discovery → name → state (worst first) → last-commit age → discovery |
+| `r`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Re-reads the repository under the cursor and redraws that row |
+| `R`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Re-scans every repository in the directory the overview was built from |
+| `y`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Yanks the path of the repository under the cursor into `+` and `"` |
+| `?`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, same backends as above) | Lists every status-overview key, generated from the same table that installs them |
+| `q`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.map`, buffer-local on a README opened from a status row) | Wipes the README buffer and restores the status overview on the same row |
+
+The status-overview keys above are declared in one table in
+[`status_view.lua`](../lua/reposcope/ui/actions/status_view.lua), which also
+generates the `winbar` legend and the `?` cheatsheet, so the three can't drift
+apart. `r`, `R` and `y` are intentionally left out of the legend to keep it on
+one line; `?` lists them.
 
 ---
 
