@@ -27,6 +27,14 @@
 --- without re-scanning the whole directory. A one-line legend of these keys
 --- is shown in the window's `winbar`.
 
+---One highlight span produced by `M.render`. Rows and columns are 0-indexed
+---byte offsets; `end_col = -1` means "to the end of the line".
+---@class StatusHighlight
+---@field row integer
+---@field col integer
+---@field end_col integer
+---@field hl string
+
 ---@class ActionStatusView : ActionStatusViewModule
 local M = {}
 
@@ -49,31 +57,202 @@ local _pending = {}
 
 local SCRATCH_NAME = "reposcope://status"
 local DEFAULT_PATH_OUT = vim.fn.stdpath("cache") .. "/reposcope/status.txt"
-local LEGEND = "  <CR> Open README    p Push    P Pull    f Fetch"
 local SPINNER = "⟳"
+local NS = vim.api.nvim_create_namespace("reposcope_status")
+
+---Highlight groups for the status table. Linked with `default = true` so a
+---colorscheme (or the user) can override any of them without being clobbered
+---on the next redraw. The links target semantic diagnostic groups rather than
+---the small `ui.config.colortheme` palette, which has no notion of
+---"ok/warning/error" and would otherwise force fixed hex values here.
+local HL = {
+  header = "ReposcopeStatusHeader",
+  repo = "ReposcopeStatusRepo",
+  branch = "ReposcopeStatusBranch",
+  clean = "ReposcopeStatusClean",
+  dirty = "ReposcopeStatusDirty",
+  ahead = "ReposcopeStatusAhead",
+  behind = "ReposcopeStatusBehind",
+  diverged = "ReposcopeStatusDiverged",
+  muted = "ReposcopeStatusMuted",
+  pending = "ReposcopeStatusPending",
+}
+
+do
+  local links = {
+    [HL.header] = "Title",
+    [HL.repo] = "Directory",
+    [HL.branch] = "Identifier",
+    [HL.clean] = "DiagnosticOk",
+    [HL.dirty] = "DiagnosticWarn",
+    [HL.ahead] = "DiagnosticInfo",
+    [HL.behind] = "DiagnosticInfo",
+    [HL.diverged] = "DiagnosticError",
+    [HL.muted] = "Comment",
+    [HL.pending] = "Special",
+  }
+  for group, target in pairs(links) do
+    vim.api.nvim_set_hl(0, group, { link = target, default = true })
+  end
+end
+
+---@private
+---@internal
+---Formats a commit timestamp as a compact age ("3h", "2d", "5mo"). Compact
+---rather than "3 hours ago" because this sits in a table column, where the
+---unit letter carries the same information in a third of the width.
+---@param ts integer|nil Unix timestamp, or nil when the repository has no commits
+---@return string
+local function _relative_age(ts)
+  if not ts then return "-" end
+  local diff = os.time() - ts
+  if diff < 0 then diff = 0 end
+
+  -- math.floor, not `//`: Neovim runs LuaJIT (5.1), which has no integer-division operator.
+  if diff < 60 then return "now" end
+  if diff < 3600 then return ("%dm"):format(math.floor(diff / 60)) end
+  if diff < 86400 then return ("%dh"):format(math.floor(diff / 3600)) end
+  if diff < 604800 then return ("%dd"):format(math.floor(diff / 86400)) end
+  if diff < 2592000 then return ("%dw"):format(math.floor(diff / 604800)) end
+  if diff < 31536000 then return ("%dmo"):format(math.floor(diff / 2592000)) end
+  return ("%dy"):format(math.floor(diff / 31536000))
+end
+
+---Widest a single column may get before its content is elided. Without a cap,
+---one repository on a long topic branch (e.g. "claude/lsp-nvim-plugin-concept-0bfd66")
+---stretches the column for every other row, leaving a corridor of blanks across
+---the whole table.
+local MAX_NAME_W = 28
+local MAX_BRANCH_W = 22
+
+---@private
+---@internal
+---Truncates `s` to `width` display cells, marking elision with an ellipsis.
+---@param s string
+---@param width integer
+---@return string
+local function _elide(s, width)
+  if vim.fn.strdisplaywidth(s) <= width then return s end
+  return vim.fn.strcharpart(s, 0, width - 1) .. "…"
+end
+
+---@private
+---@internal
+---Renders a record's upstream divergence. Empty when the branch tracks an
+---upstream and is exactly in sync — that is the common case, and printing
+---"+0/-0" on every row was column-wide noise that buried the rows that differ.
+---@param r RepoStatusRecord
+---@return string
+local function _sync_cell(r)
+  if not r.has_upstream then return "no upstream" end
+  local parts = {}
+  if r.ahead > 0 then parts[#parts + 1] = ("↑%d"):format(r.ahead) end
+  if r.behind > 0 then parts[#parts + 1] = ("↓%d"):format(r.behind) end
+  return table.concat(parts, " ")
+end
 
 ---Renders a list of repository status records into an aligned, human-readable block.
+---
+---The SYNC column is omitted entirely when no repository has anything to report
+---there, so a directory of perfectly in-sync clones doesn't carry a column of
+---blanks. Highlight spans are returned alongside the text (rather than matched
+---by a syntax file) because the column offsets are only known here, where the
+---widths are computed — keyword matching would also colour a repository
+---literally named "clean".
 ---@param records RepoStatusRecord[] Status records in discovery order
 ---@return string[] lines Column-aligned overview, one entry per line
+---@return StatusHighlight[] highlights Highlight spans, 0-indexed rows and byte columns
 function M.render(records)
-  local name_w, branch_w = #"REPOSITORY", #"BRANCH"
-  for _, r in ipairs(records) do
-    name_w = math.max(name_w, #r.name)
-    branch_w = math.max(branch_w, #r.branch)
+  local name_w, branch_w, sync_w = #"REPOSITORY", #"BRANCH", 0
+  local sync_cells, name_cells, branch_cells = {}, {}, {}
+  for i, r in ipairs(records) do
+    name_cells[i] = _elide(r.name, MAX_NAME_W)
+    branch_cells[i] = _elide(r.branch, MAX_BRANCH_W)
+    name_w = math.max(name_w, vim.fn.strdisplaywidth(name_cells[i]))
+    branch_w = math.max(branch_w, vim.fn.strdisplaywidth(branch_cells[i]))
+    sync_cells[i] = _sync_cell(r)
+    sync_w = math.max(sync_w, vim.fn.strdisplaywidth(sync_cells[i]))
   end
 
-  local fmt = "%-" .. name_w .. "s  %-" .. branch_w .. "s  %-9s  %s"
-  local lines = { fmt:format("REPOSITORY", "BRANCH", "AHEAD/BEH", "STATE") }
+  local show_sync = sync_w > 0
+  if show_sync then sync_w = math.max(sync_w, #"SYNC") end
+
+  ---@type StatusHighlight[]
+  local hls = {}
+  local lines = {}
+
+  ---Appends one row, tracking byte offsets so each cell can be highlighted.
+  ---@param name string
+  ---@param branch string
+  ---@param sync string
+  ---@param state string
+  ---@param age string
+  ---@return integer name_end, integer branch_start, integer branch_end, integer state_start, integer state_end, integer age_start
+  local function push(name, branch, sync, state, age)
+    local parts = { name .. (" "):rep(name_w - vim.fn.strdisplaywidth(name)) }
+    local name_end = #parts[1]
+
+    parts[#parts + 1] = "  " .. branch .. (" "):rep(branch_w - vim.fn.strdisplaywidth(branch))
+    local branch_start = name_end + 2
+    local branch_end = name_end + #parts[#parts]
+
+    if show_sync then
+      parts[#parts + 1] = "  " .. sync .. (" "):rep(sync_w - vim.fn.strdisplaywidth(sync))
+    end
+
+    local prefix = table.concat(parts)
+    local state_start = #prefix + 2
+    parts[#parts + 1] = "  " .. state
+    local state_end = state_start + #state
+
+    local padded_state = state .. (" "):rep(math.max(0, 12 - vim.fn.strdisplaywidth(state)))
+    parts[#parts] = "  " .. padded_state
+    local age_start = #table.concat(parts) + 2
+    parts[#parts + 1] = "  " .. age
+
+    lines[#lines + 1] = (table.concat(parts):gsub("%s+$", ""))
+    return name_end, branch_start, branch_end, state_start, state_end, age_start
+  end
+
+  push("REPOSITORY", "BRANCH", "SYNC", "STATE", "LAST COMMIT")
+  hls[#hls + 1] = { row = 0, col = 0, end_col = -1, hl = HL.header }
 
   for i, r in ipairs(records) do
-    local ab = r.has_upstream and ("+%d/-%d"):format(r.ahead, r.behind) or "no upstream"
     local state = r.state
     if r.state == "dirty" then state = ("dirty (%d)"):format(r.dirty) end
-    if _pending[i] then state = ("%s %s..."):format(SPINNER, _pending[i]) end
-    lines[#lines + 1] = fmt:format(r.name, r.branch, ab, state)
+
+    local pending = _pending[i]
+    if pending then state = ("%s %s..."):format(SPINNER, pending) end
+
+    local name_end, branch_start, branch_end, state_start, state_end, age_start =
+        push(name_cells[i], branch_cells[i], sync_cells[i], state, _relative_age(r.last_commit))
+
+    local row = #lines - 1
+    hls[#hls + 1] = { row = row, col = 0, end_col = name_end, hl = HL.repo }
+    hls[#hls + 1] = { row = row, col = branch_start, end_col = branch_end, hl = HL.branch }
+
+    local state_hl = pending and HL.pending or HL[r.state] or HL.muted
+    hls[#hls + 1] = { row = row, col = state_start, end_col = state_end, hl = state_hl }
+    hls[#hls + 1] = { row = row, col = age_start, end_col = -1, hl = HL.muted }
   end
 
-  return lines
+  return lines, hls
+end
+
+---Builds the one-line summary used as the popup title.
+---@param records RepoStatusRecord[]
+---@return string
+function M.summary(records)
+  local dirty, out_of_sync = 0, 0
+  for _, r in ipairs(records) do
+    if r.dirty > 0 then dirty = dirty + 1 end
+    if r.ahead > 0 or r.behind > 0 then out_of_sync = out_of_sync + 1 end
+  end
+
+  local parts = { ("%d repo%s"):format(#records, #records == 1 and "" or "s") }
+  if dirty > 0 then parts[#parts + 1] = ("%d dirty"):format(dirty) end
+  if out_of_sync > 0 then parts[#parts + 1] = ("%d out of sync"):format(out_of_sync) end
+  return "Reposcope Status — " .. table.concat(parts, " · ")
 end
 
 ---@private
@@ -114,17 +293,28 @@ end
 
 ---@private
 ---@internal
----Replaces `bufnr`'s content with `lines`, toggling `modifiable` only for the
----duration of the write so read-only status buffers stay locked afterwards.
+---Replaces `bufnr`'s content with `lines` and applies `highlights`, toggling
+---`modifiable` only for the duration of the write so read-only status buffers
+---stay locked afterwards.
 ---@param bufnr integer
 ---@param lines string[]
+---@param highlights? StatusHighlight[]
 ---@return nil
-local function _set_buffer_lines(bufnr, lines)
+local function _set_buffer_lines(bufnr, lines, highlights)
   if not vim.api.nvim_buf_is_valid(bufnr) then return end
   local was_modifiable = vim.bo[bufnr].modifiable
   vim.bo[bufnr].modifiable = true
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   vim.bo[bufnr].modifiable = was_modifiable
+
+  vim.api.nvim_buf_clear_namespace(bufnr, NS, 0, -1)
+  for _, h in ipairs(highlights or {}) do
+    pcall(vim.api.nvim_buf_set_extmark, bufnr, NS, h.row, h.col, {
+      end_col = h.end_col >= 0 and h.end_col or nil,
+      end_row = h.end_col < 0 and (h.row + 1) or nil,
+      hl_group = h.hl,
+    })
+  end
 end
 
 ---@private
@@ -136,7 +326,8 @@ end
 local function _redraw(bufnr, records)
   local win = vim.fn.bufwinid(bufnr)
   local cursor = (win ~= -1) and vim.api.nvim_win_get_cursor(win) or nil
-  _set_buffer_lines(bufnr, M.render(records))
+  local lines, hls = M.render(records)
+  _set_buffer_lines(bufnr, lines, hls)
   if cursor then pcall(vim.api.nvim_win_set_cursor, win, cursor) end
 end
 
@@ -204,59 +395,101 @@ local function _run_row_action(bufnr, records, verb, action_fn)
   end)
 end
 
+---Context handed to every row keymap handler.
+---@class StatusRowContext
+---@field bufnr integer
+---@field records RepoStatusRecord[]
+---@field before_open? fun(): nil
+
+---One interactive binding on a status row.
+---@class StatusRowKeymap
+---@field keys string[] Every lhs that triggers this action
+---@field label string Short "key desc" text for the winbar legend (nil = hidden)
+---@field desc string Full description, used as the keymap's `desc`
+---@field run fun(ctx: StatusRowContext): nil
+
+---Row bindings, and the single source of truth for the winbar legend below —
+---adding a key here makes it live *and* documents it, instead of the legend
+---being a hand-maintained string that silently drifts out of date.
+---@type StatusRowKeymap[]
+local ROW_KEYMAPS = {
+  {
+    keys = { "<CR>", "<2-LeftMouse>" },
+    label = "<CR> README",
+    desc = "Open README.md of repository under cursor",
+    run = function(ctx)
+      local record = _record_at_cursor(ctx.records)
+      if record then _open_readme(record, ctx.before_open) end
+    end,
+  },
+  {
+    keys = { "p" },
+    label = "p Push",
+    desc = "Push repository under cursor",
+    run = function(ctx) _run_row_action(ctx.bufnr, ctx.records, "push", repo_actions.push) end,
+  },
+  {
+    keys = { "P" },
+    label = "P Pull",
+    desc = "Pull repository under cursor",
+    run = function(ctx) _run_row_action(ctx.bufnr, ctx.records, "pull", repo_actions.pull) end,
+  },
+  {
+    keys = { "f" },
+    label = "f Fetch",
+    desc = "Fetch repository under cursor",
+    run = function(ctx) _run_row_action(ctx.bufnr, ctx.records, "fetch", repo_actions.fetch) end,
+  },
+}
+
 ---@private
 ---@internal
----Wires `<CR>`/double-click (open README) and `p`/`P`/`f` (push/pull/fetch)
----on a status buffer, all acting on the repository row under the cursor.
----Safe to call repeatedly on a reused buffer — later calls just overwrite
----the mappings with closures over the current `records`.
+---Builds the winbar legend from `ROW_KEYMAPS`, so it can never list a key that
+---isn't actually bound. Keys are highlighted separately from their labels via
+---`%#Group#` items, which the winbar understands natively.
+---@return string
+local function _legend()
+  local parts = {}
+  for _, entry in ipairs(ROW_KEYMAPS) do
+    if entry.label then
+      local key, text = entry.label:match("^(%S+)%s+(.*)$")
+      parts[#parts + 1] = ("%%#%s#%s %%#%s#%s"):format(HL.pending, key, HL.muted, text)
+    end
+  end
+  return "  " .. table.concat(parts, ("  %%#%s#│  "):format(HL.muted))
+end
+
+---@private
+---@internal
+---Wires every binding in `ROW_KEYMAPS` onto a status buffer, all acting on the
+---repository row under the cursor. Safe to call repeatedly on a reused buffer —
+---later calls just overwrite the mappings with closures over the current `records`.
 ---@param bufnr integer
 ---@param records RepoStatusRecord[]
 ---@param before_open? fun(): nil Passed through to `_open_readme`
 ---@return nil
 local function _attach_row_keymaps(bufnr, records, before_open)
-  local function activate()
-    local record = _record_at_cursor(records)
-    if record then _open_readme(record, before_open) end
-  end
-
+  local ctx = { bufnr = bufnr, records = records, before_open = before_open }
   local mo = { buffer = bufnr, nowait = true }
-  map("n", "<CR>", activate, mo, "Open README.md of repository under cursor")
-  map("n", "<2-LeftMouse>", activate, mo, "Open README.md of repository under cursor")
 
-  map(
-    "n",
-    "p",
-    function() _run_row_action(bufnr, records, "push", repo_actions.push) end,
-    mo,
-    "Push repository under cursor"
-  )
-  map(
-    "n",
-    "P",
-    function() _run_row_action(bufnr, records, "pull", repo_actions.pull) end,
-    mo,
-    "Pull repository under cursor"
-  )
-  map(
-    "n",
-    "f",
-    function() _run_row_action(bufnr, records, "fetch", repo_actions.fetch) end,
-    mo,
-    "Fetch repository under cursor"
-  )
+  for _, entry in ipairs(ROW_KEYMAPS) do
+    for _, lhs in ipairs(entry.keys) do
+      map("n", lhs, function() entry.run(ctx) end, mo, entry.desc)
+    end
+  end
 end
 
 ---@private
 ---@internal
 ---Opens the status overview in a scrollable floating window (default output).
 ---@param lines string[]
+---@param hls StatusHighlight[]
 ---@param records RepoStatusRecord[]
 ---@return nil
-local function show_popup(lines, records)
+local function show_popup(lines, hls, records)
   local surf = kit.surface.open({
     lines = lines,
-    title = "Reposcope Status",
+    title = M.summary(records),
     filetype = "reposcope-status",
     nice_quit = true,
     enter = true,
@@ -265,18 +498,21 @@ local function show_popup(lines, records)
     -- content out of a height sized exactly to the number of status lines
     -- (make_scratch still clamps this to the editor's available height).
     height = #lines + 1,
-    wo = { wrap = false, cursorline = true, winbar = LEGEND },
+    wo = { wrap = false, cursorline = true, winbar = _legend() },
   })
-  if surf then _attach_row_keymaps(surf.bufnr, records, function() surf:close() end) end
+  if not surf then return end
+  _set_buffer_lines(surf.bufnr, lines, hls)
+  _attach_row_keymaps(surf.bufnr, records, function() surf:close() end)
 end
 
 ---@private
 ---@internal
 ---Replaces the current window's buffer with the (reused) status buffer.
 ---@param lines string[]
+---@param hls StatusHighlight[]
 ---@param records RepoStatusRecord[]
 ---@return nil
-local function show_buffer(lines, records)
+local function show_buffer(lines, hls, records)
   local bufnr = vim.fn.bufnr(SCRATCH_NAME)
   if bufnr == -1 or not vim.api.nvim_buf_is_valid(bufnr) then
     bufnr = vim.api.nvim_create_buf(false, true)
@@ -287,11 +523,10 @@ local function show_buffer(lines, records)
     vim.bo[bufnr].filetype = "reposcope-status"
   end
 
-  vim.bo[bufnr].modifiable = true
-  vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+  _set_buffer_lines(bufnr, lines, hls)
   vim.bo[bufnr].modifiable = false
   vim.api.nvim_win_set_buf(0, bufnr)
-  vim.api.nvim_set_option_value("winbar", LEGEND, { win = 0 })
+  vim.api.nvim_set_option_value("winbar", _legend(), { win = 0 })
   _attach_row_keymaps(bufnr, records)
 end
 
@@ -299,15 +534,17 @@ end
 ---@internal
 ---Opens (or reuses) a split showing the status buffer.
 ---@param lines string[]
+---@param hls StatusHighlight[]
 ---@param vertical boolean
 ---@param records RepoStatusRecord[]
 ---@return nil
-local function show_split(lines, vertical, records)
+local function show_split(lines, hls, vertical, records)
   local bufnr, winid = open_named_scratch(SCRATCH_NAME, lines, {
     filetype = "reposcope-status",
     split = vertical and "right" or "below",
   })
-  vim.api.nvim_set_option_value("winbar", LEGEND, { win = winid })
+  _set_buffer_lines(bufnr, lines, hls)
+  vim.api.nvim_set_option_value("winbar", _legend(), { win = winid })
   _attach_row_keymaps(bufnr, records)
 end
 
@@ -348,16 +585,16 @@ end
 function M.show(records, opts)
   opts = opts or {}
   local mode = opts.output or "popup"
-  local lines = M.render(records)
+  local lines, hls = M.render(records)
 
   if mode == "popup" then
-    show_popup(lines, records)
+    show_popup(lines, hls, records)
   elseif mode == "buffer" then
-    show_buffer(lines, records)
+    show_buffer(lines, hls, records)
   elseif mode == "split" then
-    show_split(lines, false, records)
+    show_split(lines, hls, false, records)
   elseif mode == "vsplit" then
-    show_split(lines, true, records)
+    show_split(lines, hls, true, records)
   elseif mode == "clipboard" then
     show_clipboard(lines)
   elseif mode == "path" then
