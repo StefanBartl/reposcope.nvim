@@ -55,6 +55,12 @@ local notify = require("reposcope.utils.debug").notify
 ---@type table<integer, string>
 local _pending = {}
 
+---The most recent overview, kept so the popup can be restored after it is torn
+---down to open a README. Without this the records only lived in the popup's
+---own closure, so closing it meant re-scanning the whole directory to get back.
+---@type { records: RepoStatusRecord[], opts: table, line: integer }|nil
+local _last_view
+
 local SCRATCH_NAME = "reposcope://status"
 local DEFAULT_PATH_OUT = vim.fn.stdpath("cache") .. "/reposcope/status.txt"
 local SPINNER = "⟳"
@@ -281,12 +287,29 @@ local function _open_readme(record, before_open)
     return
   end
 
+  -- Remember where we were before the popup is torn down, so `q` can put the
+  -- overview back on the same row.
+  if _last_view then
+    _last_view.line = vim.api.nvim_win_get_cursor(0)[1]
+  end
+
   kit.confirm({
     question = ('Open README.md of "%s"?'):format(record.name),
     on_answer = function(yes)
       if not yes then return end
       if before_open then before_open() end
       vim.cmd.edit(vim.fn.fnameescape(readme_path))
+
+      -- Bound explicitly rather than via a BufWinLeave autocmd: navigating away
+      -- with `:edit other` would also fire that, and silently resurrecting the
+      -- dashboard on an unrelated buffer switch is worse than not restoring it.
+      if not _last_view then return end
+      local buf = vim.api.nvim_get_current_buf()
+      map("n", "q", function()
+        vim.cmd("bwipeout")
+        M.reopen()
+      end, { buffer = buf, nowait = true }, "Close README and return to the Reposcope status overview")
+      notify("[reposcope] q returns to the status overview", 3)
     end,
   })
 end
@@ -587,6 +610,8 @@ function M.show(records, opts)
   local mode = opts.output or "popup"
   local lines, hls = M.render(records)
 
+  _last_view = { records = records, opts = opts, line = (_last_view or {}).line or 2 }
+
   if mode == "popup" then
     show_popup(lines, hls, records)
   elseif mode == "buffer" then
@@ -602,6 +627,24 @@ function M.show(records, opts)
   else
     notify("[reposcope] Unknown status output mode: " .. tostring(mode), 4)
   end
+
+  -- Restore the row the user was on before the overview was last torn down.
+  local win = vim.api.nvim_get_current_win()
+  local count = vim.api.nvim_buf_line_count(vim.api.nvim_win_get_buf(win))
+  pcall(vim.api.nvim_win_set_cursor, win, { math.min(_last_view.line, count), 0 })
+end
+
+---Re-displays the most recent overview, using the cached records rather than
+---re-scanning the directory. Used to bring the dashboard back after it was
+---closed to open a repository's README.
+---@return boolean shown False when nothing has been displayed yet this session
+function M.reopen()
+  if not _last_view then
+    notify("[reposcope] No status overview to return to", 3)
+    return false
+  end
+  M.show(_last_view.records, _last_view.opts)
+  return true
 end
 
 return M
