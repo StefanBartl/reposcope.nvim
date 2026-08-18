@@ -61,6 +61,14 @@ local _pending = {}
 ---@type { records: RepoStatusRecord[], opts: table, line: integer }|nil
 local _last_view
 
+---Discovery-order snapshot, so the `s` sort cycle can return to the order the
+---directory scan produced without re-running it.
+---@type RepoStatusRecord[]
+local _discovery_order = {}
+
+---Index into `SORT_MODES`; 1 is discovery order.
+local _sort_index = 1
+
 local SCRATCH_NAME = "reposcope://status"
 local DEFAULT_PATH_OUT = vim.fn.stdpath("cache") .. "/reposcope/status.txt"
 local SPINNER = "⟳"
@@ -427,9 +435,97 @@ end
 ---One interactive binding on a status row.
 ---@class StatusRowKeymap
 ---@field keys string[] Every lhs that triggers this action
----@field label string Short "key desc" text for the winbar legend (nil = hidden)
+---@field label? string Short "key desc" text for the winbar legend; omitted = listed only under `?`
 ---@field desc string Full description, used as the keymap's `desc`
 ---@field run fun(ctx: StatusRowContext): nil
+
+---Sort modes cycled by `s`, in cycle order. "discovery" restores the original
+---directory order, so the cycle is always reversible without a rescan.
+---@type string[]
+local SORT_MODES = { "discovery", "name", "state", "age" }
+
+---Ranks states worst-first, so `s` -> "state" surfaces what needs attention
+---instead of sorting alphabetically (where "clean" would come first).
+local STATE_RANK = { diverged = 1, dirty = 2, behind = 3, ahead = 4, clean = 5 }
+
+---@private
+---@internal
+---Reorders `records` in place according to `mode`.
+---@param records RepoStatusRecord[]
+---@param mode string
+---@param original RepoStatusRecord[] Discovery-order snapshot
+---@return nil
+local function _sort_records(records, mode, original)
+  if mode == "discovery" then
+    for i = 1, #original do records[i] = original[i] end
+    return
+  end
+
+  table.sort(records, function(a, b)
+    if mode == "name" then
+      return a.name:lower() < b.name:lower()
+    elseif mode == "state" then
+      local ra, rb = STATE_RANK[a.state] or 9, STATE_RANK[b.state] or 9
+      if ra ~= rb then return ra < rb end
+      return a.name:lower() < b.name:lower()
+    end
+    -- "age": most recently touched first; repos with no commits sort last.
+    local ta, tb = a.last_commit or -1, b.last_commit or -1
+    if ta ~= tb then return ta > tb end
+    return a.name:lower() < b.name:lower()
+  end)
+end
+
+---@private
+---@internal
+---Shows a repository's full git status and recent commits in a nested popup.
+---@param record RepoStatusRecord
+---@return nil
+local function _show_detail(record)
+  require("reposcope.utils.repo_status").status_detail(record.path, function(body)
+    vim.schedule(function()
+      local lines = { "", (" %s  (%s)"):format(record.name, record.branch), "" }
+      vim.list_extend(lines, body)
+      lines[#lines + 1] = ""
+      lines[#lines + 1] = " q / <Esc>  close"
+
+      local width = 40
+      for _, l in ipairs(lines) do width = math.max(width, vim.fn.strdisplaywidth(l)) end
+      kit.viewer({
+        lines = lines,
+        title = "git status — " .. record.name,
+        filetype = "reposcope-status-detail",
+        width = math.min(width + 2, math.floor(vim.o.columns * 0.9)),
+        height = math.min(#lines, math.floor(vim.o.lines * 0.8)),
+      })
+    end)
+  end)
+end
+
+---@private
+---@internal
+---Re-scans the whole directory the overview was built from and redraws it.
+---@param ctx StatusRowContext
+---@return nil
+local function _rescan_all(ctx)
+  local dir = (_last_view and _last_view.opts and _last_view.opts.dir) or nil
+  notify("[reposcope] Re-scanning repositories ...", 3)
+  require("reposcope.utils.repo_status").status_all(dir, function(records)
+    vim.schedule(function()
+      _pending = {}
+      _sort_index = 1
+      _discovery_order = vim.deepcopy(records)
+      for i = 1, math.max(#records, #ctx.records) do ctx.records[i] = records[i] end
+      _redraw(ctx.bufnr, ctx.records)
+      notify(("[reposcope] Re-scanned %d repositories"):format(#records), 3)
+    end)
+  end)
+end
+
+---Forward declaration: the `?` handler is defined below `ROW_KEYMAPS` because it
+---renders that very table, but is referenced from inside it.
+---@type fun(): nil
+local _show_keymap_help
 
 ---Row bindings, and the single source of truth for the winbar legend below —
 ---adding a key here makes it live *and* documents it, instead of the legend
@@ -463,7 +559,90 @@ local ROW_KEYMAPS = {
     desc = "Fetch repository under cursor",
     run = function(ctx) _run_row_action(ctx.bufnr, ctx.records, "fetch", repo_actions.fetch) end,
   },
+  {
+    keys = { "S" },
+    label = "S Status",
+    desc = "Show full git status of repository under cursor",
+    run = function(ctx)
+      local record = _record_at_cursor(ctx.records)
+      if record then _show_detail(record) end
+    end,
+  },
+  {
+    keys = { "s" },
+    label = "s Sort",
+    desc = "Cycle sort order (discovery / name / state / age)",
+    run = function(ctx)
+      _sort_index = (_sort_index % #SORT_MODES) + 1
+      local mode = SORT_MODES[_sort_index]
+      _sort_records(ctx.records, mode, _discovery_order)
+      _pending = {}
+      _redraw(ctx.bufnr, ctx.records)
+      notify("[reposcope] Sorted by " .. mode, 3)
+    end,
+  },
+  {
+    keys = { "r" },
+    desc = "Re-read the repository under cursor",
+    run = function(ctx)
+      local idx = vim.api.nvim_win_get_cursor(0)[1] - 1
+      if ctx.records[idx] then _refresh_row(ctx.bufnr, ctx.records, idx) end
+    end,
+  },
+  {
+    keys = { "R" },
+    desc = "Re-scan every repository in the directory",
+    run = function(ctx) _rescan_all(ctx) end,
+  },
+  {
+    keys = { "y" },
+    desc = "Yank the path of the repository under cursor",
+    run = function(ctx)
+      local record = _record_at_cursor(ctx.records)
+      if not record then return end
+      vim.fn.setreg("+", record.path)
+      vim.fn.setreg('"', record.path)
+      notify("[reposcope] Yanked " .. record.path, 3)
+    end,
+  },
+  {
+    keys = { "?" },
+    label = "? Keys",
+    desc = "Show every key available in the status overview",
+    run = function() _show_keymap_help() end,
+  },
 }
+
+---@private
+---@internal
+---Lists every row binding, including the ones kept out of the winbar legend to
+---stop it overflowing. Generated from `ROW_KEYMAPS`, so it cannot drift.
+---@return nil
+_show_keymap_help = function()
+  local rows, widest = {}, 0
+  for _, entry in ipairs(ROW_KEYMAPS) do
+    local lhs = table.concat(entry.keys, ", ")
+    rows[#rows + 1] = { lhs = lhs, desc = entry.desc }
+    widest = math.max(widest, #lhs)
+  end
+
+  local lines = { "", " Status overview keys", "" }
+  for _, row in ipairs(rows) do
+    lines[#lines + 1] = ("  %-" .. widest .. "s   %s"):format(row.lhs, row.desc)
+  end
+  lines[#lines + 1] = ""
+  lines[#lines + 1] = " q / <Esc>  close"
+
+  local width = 40
+  for _, l in ipairs(lines) do width = math.max(width, vim.fn.strdisplaywidth(l)) end
+  kit.viewer({
+    lines = lines,
+    title = "Reposcope Status Keys",
+    filetype = "reposcope-help",
+    width = math.min(width + 2, math.floor(vim.o.columns * 0.9)),
+    height = math.min(#lines, math.floor(vim.o.lines * 0.8)),
+  })
+end
 
 ---@private
 ---@internal
@@ -603,13 +782,19 @@ end
 
 ---Renders `records` and displays them via the requested output backend.
 ---@param records RepoStatusRecord[]
----@param opts? { output?: StatusOutputMode, path?: string }
+---@param opts? { output?: StatusOutputMode, path?: string, dir?: string }
 ---@return nil
 function M.show(records, opts)
   opts = opts or {}
   local mode = opts.output or "popup"
   local lines, hls = M.render(records)
 
+  -- Only reset the sort cycle for a genuinely new scan, so `reopen()` (which
+  -- replays the cached records) doesn't silently undo the user's chosen order.
+  if records ~= (_last_view or {}).records then
+    _discovery_order = vim.deepcopy(records)
+    _sort_index = 1
+  end
   _last_view = { records = records, opts = opts, line = (_last_view or {}).line or 2 }
 
   if mode == "popup" then

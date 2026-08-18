@@ -35,7 +35,9 @@ local notify = require("reposcope.utils.debug").notify
 ---@return nil
 local function run_status(path, output, out_path)
   require("reposcope.utils.repo_status").status_all(path, function(records, errors)
-    if #records > 0 then status_view.show(records, { output = output, path = out_path }) end
+    -- `dir` is carried through so the overview's own rescan key re-reads the
+    -- directory that was actually asked for, not the configured default.
+    if #records > 0 then status_view.show(records, { output = output, path = out_path, dir = path }) end
     if #errors > 0 then
       notify(
         ("[reposcope] %d repositor%s could not be read:\n\n%s"):format(
