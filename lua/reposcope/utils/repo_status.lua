@@ -182,6 +182,55 @@ end
 ---@return nil
 function M.status_one(repo, on_done) status_repo(repo, on_done) end
 
+---Collects a human-readable detail view of one repository: the porcelain
+---short status plus the last few commits. Unlike `status_one` this is not
+---parsed into a record — it is meant to be shown verbatim, the way `git
+---status` would print it.
+---@param repo string Absolute path to the repository
+---@param on_done fun(lines: string[]): nil Always called, with an error line on failure
+---@return nil
+function M.status_detail(repo, on_done)
+  local short, log
+  local function settle()
+    if short == nil or log == nil then return end
+
+    -- `--branch` always emits a leading "## <branch>" line, so emptiness of the
+    -- raw output is not a usable "is it clean" test: the entry lines are the
+    -- ones that don't start with "##".
+    local lines, entries = {}, 0
+    for line in (short .. "\n"):gmatch("(.-)\n") do
+      if line ~= "" then
+        lines[#lines + 1] = "  " .. line
+        if line:sub(1, 2) ~= "##" then entries = entries + 1 end
+      end
+    end
+    if entries == 0 then lines[#lines + 1] = "  working tree clean" end
+
+    lines[#lines + 1] = ""
+    lines[#lines + 1] = " Recent commits"
+    if log ~= "" then
+      for line in (log .. "\n"):gmatch("(.-)\n") do
+        if line ~= "" then lines[#lines + 1] = "  " .. line end
+      end
+    else
+      lines[#lines + 1] = "  (no commits yet)"
+    end
+
+    on_done(lines)
+  end
+
+  vim.system({ "git", "status", "--short", "--branch" }, { cwd = repo, text = true }, function(res)
+    short = (res.code == 0) and vim.trim(res.stdout or "") or ("error: " .. vim.trim(res.stderr or ""))
+    settle()
+  end)
+
+  vim.system({ "git", "log", "-5", "--format=%h  %<(18,trunc)%an  %s" },
+    { cwd = repo, text = true }, function(res)
+      log = (res.code == 0) and vim.trim(res.stdout or "") or ""
+      settle()
+    end)
+end
+
 ---Collects the git status of every repository in the resolved base directory.
 ---If the resolved path is itself a repository, only that one is reported.
 ---Validation failures (missing git, inaccessible directory, no repositories) are
