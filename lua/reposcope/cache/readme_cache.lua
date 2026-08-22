@@ -222,6 +222,17 @@ function M.warm_ram_from_file_cache()
   local dir = get_readme_filecache_dir()
   local warmed = 0
 
+  -- The cache directory is created lazily, by the first `set_file` write
+  -- (fs.write.to_file does the mkdir -p). Until someone has actually cached a
+  -- README, it does not exist -- and this runs on every setup().
+  --
+  -- The `pcall` below does NOT cover that: `vim.fn.readdir` on a missing
+  -- directory raises no Lua error, it *echoes* "E484: Can't open file <dir>"
+  -- and returns an empty list. pcall reports ok=true, so the message reached
+  -- the user on every single startup. Check for the directory instead.
+  local stat = (vim.uv or vim.loop).fs_stat(dir)
+  if not stat or stat.type ~= "directory" then return 0 end
+
   local ok, files = pcall(readdir, dir)
   if not ok or type(files) ~= "table" then return 0 end
 
@@ -280,11 +291,18 @@ function M.clear_all()
   _save_meta()
 
   local dir = get_readme_filecache_dir()
-  local ok, err = pcall(function()
-    for _, file in ipairs(readdir(dir)) do
-      os.remove(dir .. "/" .. file)
-    end
-  end)
+  local stat = (vim.uv or vim.loop).fs_stat(dir)
+
+  -- Nothing on disk to clear, and readdir would echo E484 (see
+  -- warm_ram_from_file_cache for why pcall does not suppress that).
+  local ok, err = true, nil
+  if stat and stat.type == "directory" then
+    ok, err = pcall(function()
+      for _, file in ipairs(readdir(dir)) do
+        os.remove(dir .. "/" .. file)
+      end
+    end)
+  end
 
   if not ok then notify("[reposcope] " .. err, 3) end
 
