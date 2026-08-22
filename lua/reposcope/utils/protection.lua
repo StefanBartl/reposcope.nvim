@@ -207,4 +207,23 @@ function M.safe_execute_shell(command)
   return true, result
 end
 
+---Asynchronous counterpart to `safe_execute_shell` for argv tables.
+---
+---`safe_execute_shell` blocks the UI thread until the process exits. That is
+---tolerable for a quick probe, but the one real consumer is `git clone` --
+---a network operation that runs for seconds and, on a large repository or a
+---slow link, minutes. Neovim was frozen for all of it.
+---
+---Only the argv form is supported: it is the form the clone path uses, and it
+---needs no shell interpretation (no quoting pitfalls for paths with spaces).
+---`on_done` is invoked on the main loop.
+---@param command string[] argv to execute
+---@param on_done fun(success: boolean, output: string)
+---@return { stop: fun() } handle  cancels the running process
+function M.safe_execute_shell_async(command, on_done)
+  return require("lib.nvim.cross.run_argv").run_async_captured(command, function(ok, output)
+    on_done(ok, output)
+  end)
+end
+
 return M

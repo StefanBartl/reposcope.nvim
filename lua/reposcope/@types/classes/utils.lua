@@ -86,6 +86,7 @@
 ---@field safe_mkdir fun(path: string): boolean Safely creates a directory (including parent directories)
 ---@field is_dir_writeable fun(path: string): boolean Checks if a directory is writable by attempting a test write
 ---@field safe_execute_shell fun(command: string|string[]): boolean, string Executes a shell command (string) or argv (table) safely and returns the success status and output
+---@field safe_execute_shell_async fun(command: string[], on_done: fun(success: boolean, output: string)): { stop: fun() } Asynchronous argv execution; on_done runs on the main loop. Use this for anything that can run longer than a moment (e.g. git clone).
 
 ---@class StatsModule
 ---@field show_stats fun(): nil Opens a floating stats window with session and total statistics
