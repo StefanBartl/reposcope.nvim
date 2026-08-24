@@ -147,7 +147,10 @@ function M.prompt_and_clone()
   ui_input({
     prompt = "Set clone path: ",
     default = clone_dir,
-    completion = "file",
+    -- `dir`, not `file`: a clone target can only ever be a directory, and
+    -- `file` completion offers regular files alongside them — candidates that
+    -- cannot be the answer.
+    completion = "dir",
   }, function(input)
     if input then
       local uuid = generate_uuid()

@@ -134,6 +134,37 @@ local subcommands = {
   filter = {
     desc = "Filter the repository list by substring (no args resets the list)",
     run = function(args) apply_filter(table.concat(args, " ")) end,
+    -- Completes against the list actually on screen. The filter is a
+    -- substring over `owner/name: description`, so the owners and names in
+    -- the current result set are the only candidates that can match anything
+    -- -- guessing at one and getting an empty list back was the whole
+    -- friction here.
+    --
+    -- Owners are offered alongside names because filtering to one owner is
+    -- the common case and the owner is not the leading token of every entry.
+    complete = function(arg_lead)
+      local ok, cache = pcall(require, "reposcope.cache.repository_cache")
+      if not ok then return {} end
+      local items = (cache.get() or {}).items or {}
+
+      local lead = (arg_lead or ""):lower()
+      local seen, out = {}, {}
+      local function add(value)
+        if type(value) == "string" and value ~= "" and not seen[value] then
+          if lead == "" or value:lower():find(lead, 1, true) == 1 then
+            seen[value] = true
+            out[#out + 1] = value
+          end
+        end
+      end
+
+      for _, repo in ipairs(items) do
+        add(repo.name)
+        add(repo.owner and repo.owner.login)
+      end
+      table.sort(out)
+      return out
+    end,
   },
 
   ["filter-prompt"] = {

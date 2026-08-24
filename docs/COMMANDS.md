@@ -149,6 +149,14 @@ The input is matched against the format: `owner/name: description`.
 
 > If called without arguments, it resets the list to the original API result.
 
+**`<Tab>` completes against the list actually on screen** (2026-08-24): the
+repository names and owners in the current result set, prefix-matched. Those
+are the only candidates that can match anything, since the filter is a
+substring over `owner/name: description` — guessing at one and getting an
+empty list back was the whole friction. Owners are offered alongside names
+because filtering to one owner is the common case and the owner is not the
+leading token of every entry.
+
 Examples:
 
 ```vim

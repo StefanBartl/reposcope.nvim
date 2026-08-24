@@ -43,13 +43,19 @@ setting it to `false`/`""` in `setup({ prompt_keymaps = {...} })`.
 | Action                 | Default key(s)                | Mode   | Description                                          |
 | ---------------------- | ------------------------------ | ------ | ------------------------------------------------------ |
 | `confirm`              | `<CR>`                         | i      | Confirm prompt input (`prompt_input.on_enter`)          |
-| `nav_up`               | `<Up>`                         | n, i   | Navigate list up + fetch README for selected entry      |
-| `nav_down`             | `<Down>`                       | n, i   | Navigate list down + fetch README for selected entry    |
+| `nav_up`               | `<Up>`                         | n, i   | Navigate list up + fetch README for selected entry. A count moves that many entries (normal mode) |
+| `nav_down`             | `<Down>`                       | n, i   | Navigate list down + fetch README for selected entry. A count moves that many entries (normal mode) |
+
+**A count on `nav_up`/`nav_down`** moves that many entries at once, clamped
+to the list bounds. Handled inside `navigate_list_in_prompt` itself — one
+call moves `v:count1` rows — so the README is fetched once, after the move,
+rather than once per intermediate entry. `v:count` is 0 in insert mode, where
+these keys are also bound, so the behaviour there is unchanged.
 | `focus_next`           | `<C-w>`, `<C-l>`, `<Tab>`      | n, i   | Focus next prompt field                                 |
 | `focus_prev`           | `<C-h>`, `<S-Tab>`             | n, i   | Focus previous prompt field                             |
 | `open_viewer`          | `<C-v>`                        | n, i   | Open README viewer                                      |
 | `open_editor`          | `<C-b>`                        | n, i   | Open README editor                                      |
-| `clone`                | `<C-c>`                        | n, i   | Clone selected repository (prompt for target dir)       |
+| `clone`                | `<C-c>`                        | n, i   | Clone selected repository (prompt for target dir, with directory completion) |
 | `backspace`            | `<BS>`                         | n, i   | Backspace (disabled at column 0, line 2 of prompt)       |
 | `preview_scroll_up`    | `<C-u>`                        | n, i   | Scroll the README preview up, without leaving the prompt |
 | `preview_scroll_down`  | `<C-d>`                        | n, i   | Scroll the README preview down, without leaving the prompt |
@@ -118,7 +124,7 @@ available for subcommand names and, where noted, their arguments.
 | `close`             | –                      | Close all Reposcope windows and buffers                                |
 | `prompt`            | `[field ...]`          | Reload visible prompt fields (default: `keywords owner language`)      |
 | `sort`              | –                      | Open an interactive menu to sort the repository list                   |
-| `filter`            | `[text]`               | Filter the repository list by substring (no args resets the list)      |
+| `filter`            | `[text]`               | Filter the repository list by substring (no args resets the list). Completes against the names and owners actually on screen |
 | `filter-prompt`     | –                      | Open a floating prompt to filter repositories interactively            |
 | `filter-clear`      | –                      | Clear the active filter and show the full list again                   |
 | `update`            | `[dir]`                | Update (fetch + ff-only pull) all cloned repositories in a directory   |
