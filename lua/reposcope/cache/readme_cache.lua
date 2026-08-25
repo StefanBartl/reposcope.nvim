@@ -40,11 +40,30 @@ local function _get_key(owner, repo_name) return owner .. "/" .. repo_name end
 
 ---@private
 ---@internal
+---One path segment's worth of a name that came off the network.
+---
+---`owner` and `repo_name` are fields of an API response, and they are
+---concatenated into a filesystem path below. No real GitHub name can contain a
+---separator, but "the server would never send that" is the assumption a cache
+---directory should not be resting on: a hostile or compromised host answering
+---with `..` or `a/../../b` would otherwise write outside the cache. Anything
+---that is not a plain name character becomes an underscore, and a segment that
+---is only dots is refused outright.
+---@param part string
+---@return string
+local function _safe_segment(part)
+  local cleaned = tostring(part or ""):gsub("[^%w%._%-]", "_")
+  if cleaned == "" or cleaned:match("^%.+$") then return "_" end
+  return cleaned
+end
+
+---@private
+---@internal
 ---@param owner string
 ---@param repo_name string
 ---@return string
 local function _get_file_path(owner, repo_name)
-  return get_readme_filecache_dir() .. "/" .. owner .. "__" .. repo_name .. ".md"
+  return get_readme_filecache_dir() .. "/" .. _safe_segment(owner) .. "__" .. _safe_segment(repo_name) .. ".md"
 end
 
 ---@type table<string, string>|nil
