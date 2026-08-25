@@ -210,9 +210,7 @@ function M.render(records)
     local branch_start = name_end + 2
     local branch_end = name_end + #parts[#parts]
 
-    if show_sync then
-      parts[#parts + 1] = "  " .. sync .. (" "):rep(sync_w - vim.fn.strdisplaywidth(sync))
-    end
+    if show_sync then parts[#parts + 1] = "  " .. sync .. (" "):rep(sync_w - vim.fn.strdisplaywidth(sync)) end
 
     local prefix = table.concat(parts)
     local state_start = #prefix + 2
@@ -239,7 +237,7 @@ function M.render(records)
     if pending then state = ("%s %s..."):format(SPINNER, pending) end
 
     local name_end, branch_start, branch_end, state_start, state_end, age_start =
-        push(name_cells[i], branch_cells[i], sync_cells[i], state, _relative_age(r.last_commit))
+      push(name_cells[i], branch_cells[i], sync_cells[i], state, _relative_age(r.last_commit))
 
     local row = #lines - 1
     hls[#hls + 1] = { row = row, col = 0, end_col = name_end, hl = HL.repo }
@@ -297,9 +295,7 @@ local function _open_readme(record, before_open)
 
   -- Remember where we were before the popup is torn down, so `q` can put the
   -- overview back on the same row.
-  if _last_view then
-    _last_view.line = vim.api.nvim_win_get_cursor(0)[1]
-  end
+  if _last_view then _last_view.line = vim.api.nvim_win_get_cursor(0)[1] end
 
   kit.confirm({
     question = ('Open README.md of "%s"?'):format(record.name),
@@ -457,7 +453,9 @@ local STATE_RANK = { diverged = 1, dirty = 2, behind = 3, ahead = 4, clean = 5 }
 ---@return nil
 local function _sort_records(records, mode, original)
   if mode == "discovery" then
-    for i = 1, #original do records[i] = original[i] end
+    for i = 1, #original do
+      records[i] = original[i]
+    end
     return
   end
 
@@ -490,7 +488,9 @@ local function _show_detail(record)
       lines[#lines + 1] = " q / <Esc>  close"
 
       local width = 40
-      for _, l in ipairs(lines) do width = math.max(width, vim.fn.strdisplaywidth(l)) end
+      for _, l in ipairs(lines) do
+        width = math.max(width, vim.fn.strdisplaywidth(l))
+      end
       kit.viewer({
         lines = lines,
         title = "git status — " .. record.name,
@@ -515,7 +515,9 @@ local function _rescan_all(ctx)
       _pending = {}
       _sort_index = 1
       _discovery_order = vim.deepcopy(records)
-      for i = 1, math.max(#records, #ctx.records) do ctx.records[i] = records[i] end
+      for i = 1, math.max(#records, #ctx.records) do
+        ctx.records[i] = records[i]
+      end
       _redraw(ctx.bufnr, ctx.records)
       notify(("[reposcope] Re-scanned %d repositories"):format(#records), 3)
     end)
@@ -634,7 +636,9 @@ _show_keymap_help = function()
   lines[#lines + 1] = " q / <Esc>  close"
 
   local width = 40
-  for _, l in ipairs(lines) do width = math.max(width, vim.fn.strdisplaywidth(l)) end
+  for _, l in ipairs(lines) do
+    width = math.max(width, vim.fn.strdisplaywidth(l))
+  end
   kit.viewer({
     lines = lines,
     title = "Reposcope Status Keys",

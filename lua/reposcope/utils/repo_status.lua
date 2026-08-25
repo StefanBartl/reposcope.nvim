@@ -224,11 +224,10 @@ function M.status_detail(repo, on_done)
     settle()
   end)
 
-  vim.system({ "git", "log", "-5", "--format=%h  %<(18,trunc)%an  %s" },
-    { cwd = repo, text = true }, function(res)
-      log = (res.code == 0) and vim.trim(res.stdout or "") or ""
-      settle()
-    end)
+  vim.system({ "git", "log", "-5", "--format=%h  %<(18,trunc)%an  %s" }, { cwd = repo, text = true }, function(res)
+    log = (res.code == 0) and vim.trim(res.stdout or "") or ""
+    settle()
+  end)
 end
 
 ---Collects the git status of every repository in the resolved base directory.

@@ -47,7 +47,9 @@ function M.show()
   local max_w = math.floor(vim.o.columns * 0.9)
   local max_h = math.floor(vim.o.lines * 0.8)
   local content_w = 20
-  for _, l in ipairs(lines) do content_w = math.max(content_w, vim.fn.strdisplaywidth(l)) end
+  for _, l in ipairs(lines) do
+    content_w = math.max(content_w, vim.fn.strdisplaywidth(l))
+  end
 
   kit.viewer({
     lines = lines,

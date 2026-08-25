@@ -16,7 +16,9 @@ local kit = require("lib.nvim.ui.kit")
 local _surf
 
 ---@return nil
-local function close() if _surf then _surf:close() end end
+local function close()
+  if _surf then _surf:close() end
+end
 
 ---Builds the display lines: global open/close, active prompt keymaps
 --- (grouped by action, multiple lhs joined with ", "), and the close-UI keys.
@@ -69,7 +71,9 @@ function M.show()
   local max_w = math.floor(vim.o.columns * 0.9)
   local max_h = math.floor(vim.o.lines * 0.8)
   local content_w = 20
-  for _, l in ipairs(lines) do content_w = math.max(content_w, vim.fn.strdisplaywidth(l)) end
+  for _, l in ipairs(lines) do
+    content_w = math.max(content_w, vim.fn.strdisplaywidth(l))
+  end
 
   _surf = kit.viewer({
     lines = lines,

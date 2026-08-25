@@ -221,9 +221,7 @@ end
 ---@param on_done fun(success: boolean, output: string)
 ---@return { stop: fun() } handle  cancels the running process
 function M.safe_execute_shell_async(command, on_done)
-  return require("lib.nvim.cross.run_argv").run_async_captured(command, function(ok, output)
-    on_done(ok, output)
-  end)
+  return require("lib.nvim.cross.run_argv").run_async_captured(command, function(ok, output) on_done(ok, output) end)
 end
 
 return M

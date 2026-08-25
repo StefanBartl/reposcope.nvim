@@ -316,7 +316,7 @@ function M.check_rate_limit()
       M.rate_limits.search.remaining = data.resources.search.remaining
       M.rate_limits.search.reset = data.resources.search.reset
     end
-  end)
+  end, headers)
 end
 
 ---Returns the current record metrics state
