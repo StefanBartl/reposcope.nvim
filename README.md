@@ -61,9 +61,7 @@ Install with [Lazy.nvim](https://github.com/folke/lazy.nvim):
   name = "reposcope",
   dependencies = { "StefanBartl/lib.nvim" },
   event = "VeryLazy",
-  config = function()
-    require("reposcope.init").setup({})
-  end,
+  opts = {},
 }
 ```
 
