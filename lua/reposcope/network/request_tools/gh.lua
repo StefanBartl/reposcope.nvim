@@ -36,18 +36,32 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   local parsed = url:gsub("^https://api%.github%.com", "")
   local args = { "api", parsed, "--method", method }
 
-  -- Add headers
+  -- Add headers. `redacted` mirrors `args` with credential values replaced,
+  -- and it is what the log and the notify below are built from: gh normally
+  -- authenticates through GITHUB_TOKEN in the environment, but `headers` is
+  -- caller-supplied and an Authorization header there would otherwise be
+  -- written to disk verbatim.
+  local curl_secrets = require("lib.nvim.net.curl")
+  local redacted = { "api", parsed, "--method", method }
   for k, v in pairs(headers or {}) do
     args[#args + 1] = "--header"
     args[#args + 1] = k .. ": " .. v
+    redacted[#redacted + 1] = "--header"
+    redacted[#redacted + 1] = k .. ": " .. (curl_secrets.is_secret_header(k) and "<redacted>" or v)
   end
 
   -- Debug CLI output
-  if debug then table.insert(args, "--verbose") end
+  if debug then
+    table.insert(args, "--verbose")
+    table.insert(redacted, "--verbose")
+  end
 
-  -- Optional: write CLI command to file
-  local debug_path = vim.fn.stdpath("cache") .. "/reposcope/logs/gh-debug.txt"
-  require("lib.nvim.fs.write.append")(debug_path, "GH Request: gh " .. table.concat(args, " "))
+  -- Only when asked. This used to append on every single request, so the file
+  -- grew without bound whether or not anyone had turned debugging on.
+  if debug then
+    local debug_path = vim.fn.stdpath("cache") .. "/reposcope/logs/gh-debug.txt"
+    require("lib.nvim.fs.write.append")(debug_path, "GH Request: gh " .. table.concat(redacted, " "))
+  end
 
   -- Completed env (PATH + session/keyring vars) as the "KEY=VALUE" array
   -- spawn_capture's libuv-backed spawn expects; see reposcope.utils.spawn_env.
@@ -56,7 +70,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   if token and token ~= "" then vars = { GITHUB_TOKEN = token } end
   local env = require("reposcope.utils.spawn_env").array(vars)
 
-  notify("[reposcope] GH Request: gh " .. table.concat(args, " "), 2)
+  notify("[reposcope] GH Request: gh " .. table.concat(redacted, " "), 2)
 
   local argv = { "gh" }
   for _, a in ipairs(args) do

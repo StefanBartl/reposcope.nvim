@@ -13,6 +13,7 @@ local M = {}
 local hrtime = vim.uv.hrtime
 -- Async spawn+capture (delegates the pipe/timer/handle bookkeeping)
 local spawn_capture = require("lib.nvim.cross.uv.spawn_capture")
+local curl_secrets = require("lib.nvim.net.curl")
 -- Utilities and Debugging
 local notify = require("reposcope.utils.debug").notify
 local metrics = require("reposcope.utils.metrics")
@@ -31,15 +32,33 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   local safe_uuid = uuid or "n/a"
   local safe_context = context or "unspecified"
 
+  -- A credential-bearing header goes into a curl config fed on stdin (`-K -`),
+  -- never into argv: a process's command line is readable by any other process
+  -- on the machine (`ps`, Win32_Process), so an `-H "Authorization: …"` there
+  -- is public for the lifetime of the request.
   local args = { "-s", "-X", method, url }
+  local config, redacted = {}, {}
   for k, v in pairs(headers or {}) do
-    table.insert(args, "-H")
-    table.insert(args, k .. ": " .. v)
+    if curl_secrets.is_secret_header(k) then
+      config[#config + 1] = "header = " .. curl_secrets.config_quote(k .. ": " .. v)
+      redacted[#redacted + 1] = "-H " .. k .. ": <redacted>"
+    else
+      table.insert(args, "-H")
+      table.insert(args, k .. ": " .. v)
+      redacted[#redacted + 1] = "-H " .. k .. ": " .. v
+    end
   end
 
-  notify("[reposcope] CURL Request: curl " .. table.concat(args, " "), 1)
+  -- The log line is built from `redacted`, not `args`: this used to print the
+  -- full command including the Authorization header, and :messages is the
+  -- first thing that gets pasted into a bug report.
+  notify("[reposcope] CURL Request: curl " .. table.concat(args, " ") .. " " .. table.concat(redacted, " "), 1)
 
   local argv = { "curl" }
+  if #config > 0 then
+    argv[#argv + 1] = "-K"
+    argv[#argv + 1] = "-"
+  end
   for _, a in ipairs(args) do
     argv[#argv + 1] = a
   end
@@ -48,7 +67,9 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   -- (.netrc, cookie jars) depend on HOME/session vars just as much as gh does.
   local env = require("reposcope.utils.spawn_env").array()
 
-  spawn_capture(argv, { env = env }, function(result)
+  local stdin = #config > 0 and (table.concat(config, "\n") .. "\n") or nil
+
+  spawn_capture(argv, { env = env, stdin = stdin }, function(result)
     local duration = (hrtime() - start_time) / 1e6 -- ms
 
     if debug and result.stderr ~= "" then notify("[reposcope] curl stderr: " .. result.stderr, 4) end
