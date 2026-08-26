@@ -341,7 +341,7 @@ function M.set_close_ui_keymaps()
     "<Esc>",
     function() require("reposcope.init").close_ui() end,
     buffers,
-    { silent = true, desc = "Close Reposcope" },
+    { silent = true, desc = "close the UI" },
     "reposcope_ui"
   )
 
@@ -411,28 +411,42 @@ function M.unset_prompt_keymaps() _clear_registered_keymaps("reposcope_prompt") 
 ---@return nil
 function M.unset_close_ui_keymaps() _clear_registered_keymaps("reposcope_ui") end
 
----Sets user keymaps for opening/closing Reposcope.
----Set `map_cfg.open`/`map_cfg.close` to `false` or `""` to disable that keymap.
+---Declares and binds the user keymaps for opening/closing Reposcope.
+---
+---These two are the plugin's only *global* keymaps -- everything else in this
+---file is buffer-local to Reposcope's own UI windows and is attached and
+---detached with them, which is lifecycle management rather than a preset a
+---user rebinds by name.
+---
+---Declared through `lib.nvim.bindings.keymap`'s registry, so `open`/`close`
+---are named actions: `false` or `""` still disables one, and a wrong name is
+---now reported instead of silently binding nothing.
 ---@param map_cfg? table Optional map override: { open = "...", close = "..." }
 ---@param opts? table Optional map opts (e.g. { silent = false })
----@return nil
+---@return Lib.Keymap.Registered[]
 function M.set_user_keymaps(map_cfg, opts)
   map_cfg = map_cfg or cfg_get_option("keymaps")
   opts = opts or cfg_get_option("keymap_opts")
 
-  if map_cfg.open and map_cfg.open ~= "" then
-    set_km("n", map_cfg.open, function()
-      local ok, err = pcall(function() require("reposcope.init").open_ui() end)
-      if not ok then notify("Error while opening Reposcope: " .. err, 4) end
-    end, tbl_extend("force", { desc = "Open Reposcope" }, opts))
+  ---@param what "open"|"close"
+  ---@param fn_name string
+  ---@return fun(): nil
+  local function ui(what, fn_name)
+    return function()
+      local ok, err = pcall(function() require("reposcope.init")[fn_name]() end)
+      if not ok then notify(("Error while %sing Reposcope: %s"):format(what, err), 4) end
+    end
   end
 
-  if map_cfg.close and map_cfg.close ~= "" then
-    set_km("n", map_cfg.close, function()
-      local ok, err = pcall(function() require("reposcope.init").close_ui() end)
-      if not ok then notify("Error while closing Reposcope: " .. err, 4) end
-    end, tbl_extend("force", { desc = "Close Reposcope" }, opts))
-  end
+  return require("lib.nvim.bindings.keymap").register("Reposcope", {
+    prefix = "<leader>r",
+    which_key = { group = "Reposcope" },
+    order = { "open", "close" },
+    actions = {
+      open = { default = "<leader>rs", rhs = ui("open", "open_ui"), desc = "open the UI", opts = opts },
+      close = { default = "<leader>rc", rhs = ui("clos", "close_ui"), desc = "Close Reposcope", opts = opts },
+    },
+  }, map_cfg)
 end
 
 return M
