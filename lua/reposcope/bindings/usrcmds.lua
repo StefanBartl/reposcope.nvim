@@ -13,7 +13,7 @@
 --- fields, directories, ...). Running `:Reposcope` with no subcommand prints the
 --- list of available subcommands.
 
-local composer = require("lib.nvim.usercmd.composer")
+local composer = require("lib.nvim.bindings.usercmd.composer")
 -- State and Cache
 local display_repositories = require("reposcope.controllers.list_controller").display_repositories
 local restore_relevance_sorting = require("reposcope.cache.repository_cache").restore_relevance_sorting

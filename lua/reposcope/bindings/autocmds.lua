@@ -14,7 +14,7 @@ local nvim_win_get_buf = vim.api.nvim_win_get_buf
 local nvim_buf_get_name = vim.api.nvim_buf_get_name
 local nvim_del_autocmd = vim.api.nvim_del_autocmd
 
-local autocmd = require("lib.nvim.autocmd")
+local autocmd = require("lib.nvim.bindings.autocmd")
 
 ---@type integer|nil
 local close_autocmd_id

@@ -24,7 +24,7 @@ local nvim_buf_line_count = api.nvim_buf_line_count
 -- State
 local ui_state = require("reposcope.state.ui.ui_state")
 local prompt_set_field_text = require("reposcope.state.ui.prompt_state").set_field_text
-local autocmd = require("lib.nvim.autocmd")
+local autocmd = require("lib.nvim.bindings.autocmd")
 
 ---@private
 ---@internal

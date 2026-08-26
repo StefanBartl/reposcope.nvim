@@ -39,7 +39,7 @@
 local M = {}
 
 local kit = require("lib.nvim.ui.kit")
-local map = require("lib.nvim.map")
+local map = require("lib.nvim.bindings.keymap")
 local open_named_scratch = require("lib.nvim.window.open_named_scratch")
 local copy_to_clipboard = require("lib.nvim.cross.copy_to_clipboard")
 local write_to_file = require("lib.nvim.fs.write.to_file")
