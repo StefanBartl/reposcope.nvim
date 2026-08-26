@@ -90,9 +90,13 @@ refresh this repo."
 discovery (`utils/repos.lua`, immediate subdirectories only, non-recursive).
 Treat `status` as the read-only preview of what `update` is about to do:
 
-1. `:Reposcope status` — shows branch, ahead/behind counts and dirty state
-   per repo (`clean`/`dirty`/`ahead`/`behind`/`diverged`), read via `git
-   status --porcelain=v2 --branch`. Nothing is modified.
+1. `:Reposcope status` — shows branch, sync state, working-tree state
+   (`clean`/`dirty`/`ahead`/`behind`/`diverged`) and the age of `HEAD` per
+   repo, read via `git status --porcelain=v2 --branch`. Nothing is modified by
+   the scan itself. The `SYNC` column carries arrows (`↑2 ↓1`) only for
+   branches that have actually diverged, and disappears entirely when no
+   repository has anything to report there — which is the normal case, and the
+   reason a `+0/-0` on every row used to bury the two that mattered.
 2. `:Reposcope update [dir]` — runs `git fetch --all --prune` then `git pull
    --ff-only` per repo, sequentially, asynchronously. A repo already shown
    as `diverged` in `status` will fail (not rewrite) in `update` — the
@@ -109,6 +113,37 @@ report "no repositories found."
 popup: it writes the raw table to a file instead, which is the natural
 input to a shell script if you want "list every dirty repo" outside Neovim
 entirely.
+
+## The status overview is a dashboard, not a printout
+
+Every row is actionable, and that is the difference between checking on
+thirty clones and maintaining them.
+
+`p` pushes, `P` pulls (`--ff-only`), `f` fetches (`--prune`) the repository
+under the cursor. After each one the row is re-read and redrawn in place, so
+the table stays true without a rescan. `r` re-reads one row, `R` re-scans the
+whole directory — and `:Reposcope status <dir>` passes that directory through,
+so `R` re-reads what you actually asked for rather than the configured default.
+
+`S` opens a nested popup with the full `git status --short` and the last five
+commits: the natural next step when a row says `dirty` and you want to know
+whether that is a stray build artifact or real work.
+
+`s` cycles the sort order — discovery / name / state / age. **`state` ranks
+worst-first** (diverged, dirty, behind, ahead, clean) rather than
+alphabetically, so what needs attention floats up; that is the one to reach for
+on a directory you have not looked at in a while. Discovery order is kept as a
+snapshot, so the cycle is reversible without a rescan.
+
+`y` yanks the repository path, which is how you leave the dashboard for a
+terminal. `?` lists every binding, generated from the same table that installs
+them. The winbar legend deliberately shows only some of them — `r`, `R` and `y`
+are left out so it does not overflow, and `?` is where the full list lives.
+
+**Opening a README from a row is reversible now.** It used to tear the popup
+down with no way back short of re-running the whole directory scan; the README
+buffer now carries a buffer-local `q` that wipes it and restores the overview
+on the same row.
 
 ## Session persistence restores search state, not window layout
 
@@ -203,6 +238,17 @@ can tell whether a slow preview is a cache miss or a genuinely slow
 network call, and `skipped-readmes` distinguishes "debounce skipped this
 fetch on purpose" from "something is actually broken." Both are read-only
 and safe to check mid-session without disrupting the current search.
+
+## `:Reposcope filter` completes against what is on screen
+
+The filter is a substring over `owner/name: description`, so the only
+candidates that can match anything are the repository names and owners in the
+current result set — and those are what it completes, prefix-matched. Owners
+are offered alongside names because narrowing to one owner is a real thing to
+want.
+
+Guessing at a filter and getting an empty list back was the whole friction, and
+it is the reason to reach for `<Tab>` here rather than typing.
 
 ## Cross-references
 
