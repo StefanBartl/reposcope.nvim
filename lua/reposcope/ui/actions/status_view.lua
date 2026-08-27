@@ -142,12 +142,44 @@ local MAX_BRANCH_W = 22
 ---@private
 ---@internal
 ---Truncates `s` to `width` display cells, marking elision with an ellipsis.
+---
+---Cuts the tail, which is right where the head identifies the value -- a
+---repository name is recognised by how it starts.
 ---@param s string
 ---@param width integer
 ---@return string
 local function _elide(s, width)
   if vim.fn.strdisplaywidth(s) <= width then return s end
   return vim.fn.strcharpart(s, 0, width - 1) .. "…"
+end
+
+---@private
+---@internal
+---Truncates `s` to `width` display cells, cutting out of the MIDDLE.
+---
+---For branch names, where the tail is what tells two of them apart. Every
+---branch off one workflow shares a prefix -- `claude/nvim-plugin-debugging-47a46e`
+---and `claude/nvim-rules-checklists-merge-6656cc` agree for twelve characters
+---and differ in a hash at the very end. Cutting the tail throws away exactly
+---the half that answers "which one is this".
+---
+---Two thirds head, one third tail: the head still has to carry enough to read
+---as a name, while the tail only has to carry the part that distinguishes.
+---@param s string
+---@param width integer
+---@return string
+local function _elide_middle(s, width)
+  if vim.fn.strdisplaywidth(s) <= width then return s end
+  -- Below four cells there is no room for head + ellipsis + tail, and a
+  -- one-character head next to a one-character tail reads as noise; fall back
+  -- to the plain form rather than producing "c…6".
+  if width < 4 then return _elide(s, width) end
+
+  local keep = width - 1 -- the ellipsis takes one cell
+  local head = math.ceil(keep * 2 / 3)
+  local tail = keep - head
+  local chars = vim.fn.strchars(s)
+  return vim.fn.strcharpart(s, 0, head) .. "…" .. vim.fn.strcharpart(s, chars - tail, tail)
 end
 
 ---@private
@@ -181,7 +213,7 @@ function M.render(records)
   local sync_cells, name_cells, branch_cells = {}, {}, {}
   for i, r in ipairs(records) do
     name_cells[i] = _elide(r.name, MAX_NAME_W)
-    branch_cells[i] = _elide(r.branch, MAX_BRANCH_W)
+    branch_cells[i] = _elide_middle(r.branch, MAX_BRANCH_W)
     name_w = math.max(name_w, vim.fn.strdisplaywidth(name_cells[i]))
     branch_w = math.max(branch_w, vim.fn.strdisplaywidth(branch_cells[i]))
     sync_cells[i] = _sync_cell(r)
