@@ -8,26 +8,13 @@
 --- version-manager entries, and `gh`'s OS-keyring lookup depends on session
 --- variables (`DBUS_SESSION_BUS_ADDRESS`, the macOS login-session binding,
 --- the Windows user context) that a non-login Neovim start never received.
---- `lib.nvim.cross.run.env` fixes exactly this, but `build()` returns a
---- `{ [key] = value }` dict — libuv's own `env` spawn option is an array of
---- `"KEY=VALUE"` strings, so `spawn_capture` (see its own doc comment)
---- passes `opts.env` straight through, unconverted. This module is the one
---- place that does the dict->array conversion, so `gh.lua`/`curl.lua`/
---- `wget.lua` don't each hand-roll it.
+--- `lib.nvim.cross.run.env` fixes exactly this: `.array()` is the
+--- array-of-`"KEY=VALUE"` shape `spawn_capture` wants (`build()` itself
+--- returns the `{ [key] = value }` dict `vim.system`/`jobstart` want), so
+--- `gh.lua`/`curl.lua`/`wget.lua` don't each hand-roll the conversion.
 
 local M = {}
 
----Build the completed environment as an array of `"KEY=VALUE"` strings,
----ready for `spawn_capture`'s `opts.env`.
----@param vars? table<string, string> Explicit overrides, applied last (e.g. GITHUB_TOKEN)
----@return string[]
-function M.array(vars)
-  local env = require("lib.nvim.cross.run.env").build({ vars = vars })
-  local out = {}
-  for k, v in pairs(env) do
-    out[#out + 1] = k .. "=" .. v
-  end
-  return out
-end
+M.array = require("lib.nvim.cross.run.env").array
 
 return M
