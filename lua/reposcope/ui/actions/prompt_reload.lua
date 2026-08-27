@@ -27,7 +27,11 @@ function M.reload_prompt(fields)
 
   notify("[reposcope] Prompt fields set to: " .. table.concat(fields, ", "), vim.log.levels.INFO)
 
-  -- Restart the UI
+  -- Restart the UI. The 80ms are not a setting and deliberately stay a
+  -- literal: they exist to let `close_ui`'s window teardown finish before the
+  -- reopen, i.e. to get off the current tick, not to be tuned. A config key
+  -- here would invite someone to lower it to 0 and get a reopen that races
+  -- the close it is waiting for.
   pcall(require("reposcope.init").close_ui)
   vim.defer_fn(function() pcall(require("reposcope.init").open_ui) end, 80)
 end
