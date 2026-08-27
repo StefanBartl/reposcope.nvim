@@ -66,6 +66,17 @@ end
 function M.open_ui()
   notify("[reposcope] REPOSCOPE START")
 
+  -- Size the UI to the editor as it is NOW. Every layout module used to
+  -- compute its geometry once, when it was first required, so a terminal
+  -- resized after that point left the picker opening at the old size for the
+  -- rest of the session. The order matters: the four dependents read
+  -- `ui_config`, so it has to go first.
+  require("reposcope.ui.config").recompute()
+  require("reposcope.ui.list.list_config").recompute()
+  require("reposcope.ui.preview.preview_config").recompute()
+  require("reposcope.ui.prompt.prompt_config").recompute()
+  require("reposcope.ui.background.background_config").recompute()
+
   notify("[reposcope] CAPTURING SEQUENCE")
   -- Capture users window and cursor for placing him back after closing Reposcope UI
   ui_state.capture_invocation_state()

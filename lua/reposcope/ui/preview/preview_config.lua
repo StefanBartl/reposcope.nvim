@@ -15,10 +15,17 @@ local M = {}
 local ui_config = require("reposcope.ui.config")
 
 -- Initial window layout: right-hand side  NOTE: Layouts
-M.width = math.floor((ui_config.width * 0.5) - 3)
-M.height = math.floor(ui_config.height - 2)
-M.row = math.floor(ui_config.row + 1)
-M.col = math.floor(ui_config.col + (ui_config.width / 2) + 2)
+--- Re-derive from `ui_config`, which is itself re-derived on every UI open.
+--- Computed once at load, these froze together with it.
+---@return nil
+function M.recompute()
+  M.width = math.floor((ui_config.width * 0.5) - 3)
+  M.height = math.floor(ui_config.height - 2)
+  M.row = math.floor(ui_config.row + 1)
+  M.col = math.floor(ui_config.col + (ui_config.width / 2) + 2)
+end
+
+M.recompute()
 
 -- LAYOUTS! layout functionality
 

@@ -11,10 +11,16 @@ local M = {}
 -- Project-Specific Configuration (Global UI Config)
 local ui_config = require("reposcope.ui.config")
 
-M.row = ui_config.row
-M.col = ui_config.col
-M.width = math.floor(ui_config.width)
-M.height = math.floor(ui_config.height)
+--- Re-derive from `ui_config`; see ui/config.lua on why once-at-load was wrong.
+---@return nil
+function M.recompute()
+  M.row = ui_config.row
+  M.col = ui_config.col
+  M.width = math.floor(ui_config.width)
+  M.height = math.floor(ui_config.height)
+end
+
+M.recompute()
 M.color_bg = ui_config.colortheme.background
 M.border = "none"
 

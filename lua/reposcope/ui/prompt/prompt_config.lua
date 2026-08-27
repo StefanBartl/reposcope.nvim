@@ -17,10 +17,16 @@ local put_to_front_if_present = require("reposcope.utils.core").put_to_front_if_
 local notify = require("reposcope.utils.debug").notify
 
 -- Static layout values
-M.row = ui_config.row
-M.col = ui_config.col
-M.width = math.floor(ui_config.width / 2)
-M.height = 3
+--- Re-derive from `ui_config`; see ui/config.lua on why once-at-load was wrong.
+---@return nil
+function M.recompute()
+  M.row = ui_config.row
+  M.col = ui_config.col
+  M.width = math.floor(ui_config.width / 2)
+  M.height = 3
+end
+
+M.recompute()
 
 -- Prefix
 M.prefix = " " .. "\u{f002}" .. " "
