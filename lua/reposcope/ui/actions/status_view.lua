@@ -157,15 +157,17 @@ local function _define_highlights()
   -- and Neovim's highlight API cannot express that: a group either links or
   -- carries its own attributes. So `Title` is resolved here and re-resolved on
   -- ColorScheme -- which is what the link would have done for free if it could
-  -- have carried the bold/underline with it.
+  -- have carried the bold with it.
   --
-  -- Underlined rather than merely coloured because the header doubles as the
-  -- table's rule: `M.render` pads it out to the full width, so the underline
-  -- draws the line between header and data without spending a buffer line on it.
+  -- Bold and nothing more. An underline across the full width was tried and
+  -- read as a hard rule cutting the table in half -- far louder than the one
+  -- thing it was meant to say, which is "this row is the heading". Boxing the
+  -- header instead would have needed side rules that cannot join anything: the
+  -- popup's frame is the window's own border, drawn outside the buffer, so a
+  -- drawn line inside it stops short of the frame and reads as broken.
   local title = vim.api.nvim_get_hl(0, { name = "Title", link = false })
   title.link = nil
   title.bold = true
-  title.underline = true
   title.default = true
   vim.api.nvim_set_hl(0, HL.header, title)
 end
@@ -398,12 +400,8 @@ function M.render(records)
   ---@type StatusHighlight[]
   local hls = {}
 
-  -- The header alone keeps its trailing blanks. Every column is padded to a
-  -- width the header itself takes part in, so the untrimmed header line is
-  -- exactly as wide as the table -- which is what turns its underline (see
-  -- `_define_highlights`) into the rule beneath the whole thing rather than a
-  -- line that stops under "LAST COMMIT".
-  local lines = { (build(MARK_GUTTER, cells("REPOSITORY", "BRANCH", "SYNC", "STATE", "LAST COMMIT"))) }
+  local header = build(MARK_GUTTER, cells("REPOSITORY", "BRANCH", "SYNC", "STATE", "LAST COMMIT"))
+  local lines = { (header:gsub("%s+$", "")) }
   hls[#hls + 1] = { row = 0, col = 0, end_col = -1, hl = HL.header }
 
   for i, r in ipairs(records) do

@@ -299,9 +299,9 @@ upstream (`↑2 ↓1`), and is dropped entirely when no repository has anything
 to report there. Repository, branch, state and age are highlighted through
 `ReposcopeStatus*` groups, which link to the colorscheme's diagnostic colors
 with `default = true` and can therefore be overridden freely. The exception is
-`ReposcopeStatusHeader`: bold and underline cannot ride along on a highlight
-link, so it is resolved from `Title` instead and re-resolved on `ColorScheme`
-(still `default = true`, so your own definition wins). Example: >
+`ReposcopeStatusHeader`: bold cannot ride along on a highlight link, so it is
+resolved from `Title` instead and re-resolved on `ColorScheme` (still
+`default = true`, so your own definition wins). Example: >
 
       REPOSITORY       BRANCH     SYNC      STATE      LAST COMMIT
       reposcope.nvim    main                clean          15h
@@ -313,8 +313,10 @@ They are blank on unmarked rows, so marking never shifts the table sideways.
 
 REPOSITORY is left-aligned — it is the column you scan down looking for one
 entry. Every other column is centred under its heading. The header row is
-bold and underlined across the full table width, so it doubles as the rule
-between headings and data without costing a line.
+set apart by weight (bold, in `Title`'s colour) rather than by a rule: a
+full-width underline read as a hard line cutting the table in half, and a
+box around the header would need side rules that cannot meet the popup's
+frame, which is the window's own border and lives outside the buffer.
 
 
 If no {dir} argument is given, the configured clone directory (`clone.std_dir`,

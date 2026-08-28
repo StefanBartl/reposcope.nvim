@@ -254,18 +254,21 @@ they are blank on unmarked rows, so marking never shifts the table sideways.
 
 `REPOSITORY` is left-aligned — it is the column you scan down looking for one
 entry, and a ragged left edge makes that impossible. Every other column is
-centred under its heading. The header itself is bold and underlined across the
-full table width, so it doubles as the rule between headings and data without
-costing a line.
+centred under its heading. The header row is set apart by weight (bold, in
+`Title`'s colour) rather than by a rule: a full-width underline was tried and
+read as a hard line cutting the table in half, and boxing the header would
+have needed side rules that cannot meet the popup's frame, since that frame is
+the window's own border and lives outside the buffer.
 
 The `SYNC` column only reports branches that have actually diverged from
 their upstream, and disappears entirely when no repository has anything to
 report there. `LAST COMMIT` is the age of `HEAD`. Repository, branch, state
 and age are highlighted via `ReposcopeStatus*` groups, which link to the
 colorscheme's diagnostic colors and can be overridden. The one exception is
-`ReposcopeStatusHeader`, which needs bold and underline *on top of* a colour
-and so is resolved from `Title` rather than linked to it — re-resolved on every
-`ColorScheme`, and still skipped entirely if you define the group yourself. The popup title
+`ReposcopeStatusHeader`, which needs bold *on top of* a colour — something a
+highlight link cannot carry — and so is resolved from `Title` rather than
+linked to it, re-resolved on every `ColorScheme`, and still skipped entirely if
+you define the group yourself. The popup title
 summarizes the scan, e.g. `Reposcope Status — 54 repos · 3 dirty · 1 out of
 sync · 4 marked`, and is re-stamped as rows are marked or refreshed.
 

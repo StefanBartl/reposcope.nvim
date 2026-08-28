@@ -76,10 +76,11 @@ return function(H)
   centered("STATE", "clean", "a state value shares the centre of its heading")
   centered("LAST COMMIT", "2h", "so does an age value")
 
-  -- The header keeps its trailing padding: its highlight is underlined, and
-  -- that underline is the rule under the whole table.
-  H.ok(#lines[1] > #lines[2]:gsub("%s+$", ""), "the header spans the full table width")
-  H.excludes(lines[2], "  \n", "data rows are trimmed")
+  -- No line carries trailing padding: the header is trimmed like every other
+  -- row, since it is set apart by weight rather than by a full-width rule.
+  for i, line in ipairs(lines) do
+    H.falsy(line:find("%s$"), "line " .. i .. " has no trailing whitespace")
+  end
 
   -- summary -------------------------------------------------------------------
   local summary = sv.summary(records)
