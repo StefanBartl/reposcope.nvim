@@ -43,6 +43,7 @@ local specs = {
   "query_builder_spec.lua",
   "repository_cache_spec.lua",
   "config_spec.lua",
+  "status_view_spec.lua",
 }
 
 local failed = 0
