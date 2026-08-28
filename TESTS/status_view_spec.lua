@@ -45,14 +45,41 @@ return function(H)
     H.eq(line:sub(1, 2), "  ", "row " .. i .. " opens with the blank mark gutter")
   end
 
-  -- The repository-name highlight has to start on the name, not on the gutter
-  -- or on padding: it is the span most likely to break when the offsets move.
+  -- Every highlight span has to start on text, never on padding — centring puts
+  -- blanks on both sides of a cell, which is exactly what a span computed from
+  -- the column edge would colour instead of the word.
   for _, h in ipairs(hls) do
-    if h.hl == "ReposcopeStatusRepo" then
+    if h.hl ~= "ReposcopeStatusHeader" and h.hl ~= "ReposcopeStatusMark" then
       local row = lines[h.row + 1]
-      H.ok(row:sub(h.col + 1, h.col + 1) ~= " ", "the repo highlight starts on the name")
+      H.ok(row:sub(h.col + 1, h.col + 1) ~= " ", ("the %s span starts on text"):format(h.hl))
+      H.ok(row:sub(h.end_col, h.end_col) ~= " ", ("the %s span ends on text"):format(h.hl))
     end
   end
+
+  -- Repository names are the column the eye scans, so they stay left-aligned
+  -- against the gutter; everything else is centred under its heading.
+  for i = 2, #lines do
+    H.eq(lines[i]:sub(3, 3), lines[i]:match("^  (%S)"), "row " .. i .. "'s name starts flush left")
+  end
+
+  -- Centres are compared with a one-cell tolerance: a cell whose width has the
+  -- opposite parity to its column cannot sit exactly on the axis, and the odd
+  -- cell deliberately goes to the right.
+  local function cell_center(line, needle)
+    local from, to = line:find(needle, 1, true)
+    return (from + to) / 2
+  end
+  local function centered(heading, value, msg)
+    local drift = math.abs(cell_center(lines[1], heading) - cell_center(lines[2], value))
+    H.ok(drift <= 1, ("%s (off by %s cells)"):format(msg, drift))
+  end
+  centered("STATE", "clean", "a state value shares the centre of its heading")
+  centered("LAST COMMIT", "2h", "so does an age value")
+
+  -- The header keeps its trailing padding: its highlight is underlined, and
+  -- that underline is the rule under the whole table.
+  H.ok(#lines[1] > #lines[2]:gsub("%s+$", ""), "the header spans the full table width")
+  H.excludes(lines[2], "  \n", "data rows are trimmed")
 
   -- summary -------------------------------------------------------------------
   local summary = sv.summary(records)
@@ -122,4 +149,31 @@ return function(H)
     visual_maps[m.lhs] = true
   end
   H.ok(visual_maps["m"], "m is bound in Visual mode too")
+
+  -- winbar legend -------------------------------------------------------------
+  -- The legend is a `%!` expression so it re-fits on resize; what matters is
+  -- that it never overflows (Neovim would truncate it from the left, leaving a
+  -- bare `<` where `<CR> README` used to be) and never drops `? Keys`, which is
+  -- how everything it *did* drop stays reachable.
+  local winbar = vim.api.nvim_get_option_value("winbar", { win = 0 })
+  H.contains(winbar, "%!", "the winbar is an expression, not a frozen string")
+
+  vim.cmd("vsplit")
+  local filler = vim.api.nvim_get_current_win()
+  local status_win = vim.fn.bufwinid(buf)
+  vim.api.nvim_set_current_win(status_win)
+  vim.o.winminwidth = 1
+
+  for _, want in ipairs({ 74, 55, 30 }) do
+    vim.api.nvim_win_set_width(status_win, want)
+    local width = vim.api.nvim_win_get_width(status_win)
+    local text = vim.api.nvim_eval_statusline(winbar, { winid = status_win, use_winbar = true }).str
+    H.ok(vim.fn.strdisplaywidth(text) <= width, ("the legend fits a window of %d"):format(width))
+    H.contains(text, "? Keys", ("? Keys survives a window of %d"):format(width))
+    if text:match("^%s*(.)") == "<" then
+      H.contains(text, "<CR>", ("the legend is not truncated at %d"):format(width))
+    end
+  end
+
+  vim.api.nvim_win_close(filler, true)
 end
