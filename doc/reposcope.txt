@@ -298,15 +298,23 @@ The SYNC column reports only branches that have actually diverged from their
 upstream (`↑2 ↓1`), and is dropped entirely when no repository has anything
 to report there. Repository, branch, state and age are highlighted through
 `ReposcopeStatus*` groups, which link to the colorscheme's diagnostic colors
-with `default = true` and can therefore be overridden freely. Example: >
+with `default = true` and can therefore be overridden freely. The exception is
+`ReposcopeStatusHeader`: bold and underline cannot ride along on a highlight
+link, so it is resolved from `Title` instead and re-resolved on `ColorScheme`
+(still `default = true`, so your own definition wins). Example: >
 
-      REPOSITORY      BRANCH   SYNC      STATE       LAST COMMIT
-      reposcope.nvim  main               clean       15h
-    ✓ my-fork         feature  ↑2 ↓1     dirty (3)   4d
-      some-lib        main     ↓4        behind      10mo
+      REPOSITORY       BRANCH     SYNC      STATE      LAST COMMIT
+      reposcope.nvim    main                clean          15h
+    ✓ my-fork          feature   ↑2 ↓1    dirty (3)        4d
+      some-lib          main       ↓4       behind         10mo
 <
 The two leading cells are the mark gutter (see "Marks and batches" below).
 They are blank on unmarked rows, so marking never shifts the table sideways.
+
+REPOSITORY is left-aligned — it is the column you scan down looking for one
+entry. Every other column is centred under its heading. The header row is
+bold and underlined across the full table width, so it doubles as the rule
+between headings and data without costing a line.
 
 
 If no {dir} argument is given, the configured clone directory (`clone.std_dir`,
@@ -357,9 +365,11 @@ published via `lib.nvim.progress`, so a statusline component using its
 `statusline` style can display it. Sorting by state ranks worst-first
 (diverged, dirty, behind, ahead, clean).
 
-A shortened legend is shown in the window's `winbar`; `M`, the `g` forms,
-`r`, `R` and `y` are left out of it to keep it on one line and are listed
-under `?`.
+A legend of these keys is shown centred in the window's `winbar`. `M`, the
+`g` forms, `r`, `R` and `y` are never listed there; the rest is fitted to the
+window's width, dropping entries from the right as it narrows — except
+`? Keys`, which is pinned, since it is how everything dropped stays
+reachable. The legend is a `%!` expression, so it re-fits on resize.
 
                                                     *reposcope-status-marks*
 Marks and batches ~

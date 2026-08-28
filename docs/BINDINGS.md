@@ -110,8 +110,12 @@ whenever it opens/closes.
 The status-overview keys above are declared in one table in
 [`status_view.lua`](../lua/reposcope/ui/actions/status_view.lua), which also
 generates the `winbar` legend and the `?` cheatsheet, so the three can't drift
-apart. `M`, the `g` forms, `r`, `R` and `y` are intentionally left out of the
-legend to keep it on one line; `?` lists them.
+apart. `M`, the `g` forms, `r`, `R` and `y` carry no legend label and appear
+only under `?`. The labelled rest is fitted to the window width and centred in
+it, dropping entries from the right when the window is too narrow — `? Keys`
+excepted, which is pinned so the dropped keys stay reachable. Left whole, an
+over-long legend is truncated by Neovim itself, from the *left*, replacing the
+first entries with a bare `<`.
 
 Every batch (`p`/`P`/`f` with marks set, and all four `g` forms) is confirmed
 through `lib.nvim.ui.kit`'s button dialog before it starts, then runs its

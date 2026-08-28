@@ -243,20 +243,29 @@ Unlike a plain `vim.notify`, the result is never truncated or unscrollable —
 Example output:
 
 ```
-  REPOSITORY      BRANCH   SYNC      STATE       LAST COMMIT
-  reposcope.nvim  main               clean       15h
-✓ my-fork         feature  ↑2 ↓1     dirty (3)   4d
-  some-lib        main     ↓4        behind      10mo
+  REPOSITORY       BRANCH     SYNC      STATE      LAST COMMIT
+  reposcope.nvim    main                clean          15h
+✓ my-fork          feature   ↑2 ↓1    dirty (3)        4d
+  some-lib          main       ↓4       behind         10mo
 ```
 
 The two leading cells are the mark gutter (see *Marks and batches* below);
 they are blank on unmarked rows, so marking never shifts the table sideways.
 
+`REPOSITORY` is left-aligned — it is the column you scan down looking for one
+entry, and a ragged left edge makes that impossible. Every other column is
+centred under its heading. The header itself is bold and underlined across the
+full table width, so it doubles as the rule between headings and data without
+costing a line.
+
 The `SYNC` column only reports branches that have actually diverged from
 their upstream, and disappears entirely when no repository has anything to
 report there. `LAST COMMIT` is the age of `HEAD`. Repository, branch, state
 and age are highlighted via `ReposcopeStatus*` groups, which link to the
-colorscheme's diagnostic colors and can be overridden. The popup title
+colorscheme's diagnostic colors and can be overridden. The one exception is
+`ReposcopeStatusHeader`, which needs bold and underline *on top of* a colour
+and so is resolved from `Title` rather than linked to it — re-resolved on every
+`ColorScheme`, and still skipped entirely if you define the group yourself. The popup title
 summarizes the scan, e.g. `Reposcope Status — 54 repos · 3 dirty · 1 out of
 sync · 4 marked`, and is re-stamped as rows are marked or refreshed.
 
@@ -284,10 +293,12 @@ published through `lib.nvim.progress`, so a statusline component using its
 `statusline` style can show it. Sorting by `state` ranks worst-first
 (diverged, dirty, behind, ahead, clean) rather than alphabetically.
 
-A shortened legend of these keys is shown in the window's `winbar`; `M`, the
-`g` forms, `r`, `R` and `y` are omitted there to keep it on one line and are
-listed under `?`. See [BINDINGS.md](BINDINGS.md#14-component-local) for the
-full keymap entry.
+A legend of these keys is shown centred in the window's `winbar`. `M`, the
+`g` forms, `r`, `R` and `y` are never listed there; the rest is fitted to the
+window, dropping entries from the right as it narrows — except `? Keys`, which
+is pinned, because it is how everything dropped stays reachable. The legend
+re-fits itself when the window is resized. See
+[BINDINGS.md](BINDINGS.md#14-component-local) for the full keymap entry.
 
 ##### Marks and batches
 
