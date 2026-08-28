@@ -130,24 +130,53 @@ local HL = {
   mark = "ReposcopeStatusMark",
 }
 
-do
-  local links = {
-    [HL.header] = "Title",
-    [HL.repo] = "Directory",
-    [HL.branch] = "Identifier",
-    [HL.clean] = "DiagnosticOk",
-    [HL.dirty] = "DiagnosticWarn",
-    [HL.ahead] = "DiagnosticInfo",
-    [HL.behind] = "DiagnosticInfo",
-    [HL.diverged] = "DiagnosticError",
-    [HL.muted] = "Comment",
-    [HL.pending] = "Special",
-    [HL.mark] = "DiagnosticOk",
-  }
-  for group, target in pairs(links) do
+local HL_LINKS = {
+  [HL.repo] = "Directory",
+  [HL.branch] = "Identifier",
+  [HL.clean] = "DiagnosticOk",
+  [HL.dirty] = "DiagnosticWarn",
+  [HL.ahead] = "DiagnosticInfo",
+  [HL.behind] = "DiagnosticInfo",
+  [HL.diverged] = "DiagnosticError",
+  [HL.muted] = "Comment",
+  [HL.pending] = "Special",
+  [HL.mark] = "DiagnosticOk",
+}
+
+---@private
+---@internal
+---(Re)defines the table's highlight groups. Called at load and again on every
+---`ColorScheme`, since a colorscheme clears user-defined groups.
+---@return nil
+local function _define_highlights()
+  for group, target in pairs(HL_LINKS) do
     vim.api.nvim_set_hl(0, group, { link = target, default = true })
   end
+
+  -- The header is the one group that wants an attribute *on top of* a link,
+  -- and Neovim's highlight API cannot express that: a group either links or
+  -- carries its own attributes. So `Title` is resolved here and re-resolved on
+  -- ColorScheme -- which is what the link would have done for free if it could
+  -- have carried the bold/underline with it.
+  --
+  -- Underlined rather than merely coloured because the header doubles as the
+  -- table's rule: `M.render` pads it out to the full width, so the underline
+  -- draws the line between header and data without spending a buffer line on it.
+  local title = vim.api.nvim_get_hl(0, { name = "Title", link = false })
+  title.link = nil
+  title.bold = true
+  title.underline = true
+  title.default = true
+  vim.api.nvim_set_hl(0, HL.header, title)
 end
+
+_define_highlights()
+
+vim.api.nvim_create_autocmd("ColorScheme", {
+  group = vim.api.nvim_create_augroup("ReposcopeStatusHighlights", { clear = true }),
+  desc = "[reposcope] Re-define the status overview's highlight groups",
+  callback = _define_highlights,
+})
 
 ---@private
 ---@internal
@@ -221,6 +250,40 @@ local function _elide_middle(s, width)
   return vim.fn.strcharpart(s, 0, head) .. "…" .. vim.fn.strcharpart(s, chars - tail, tail)
 end
 
+---Widest the STATE column is allowed to shrink to. Fixed rather than derived
+---from the widest cell so the column does not jump a character sideways the
+---moment a row swaps `clean` for the wider `⟳ push...` spinner.
+local MIN_STATE_W = 12
+
+---Two spaces between every pair of columns.
+local GAP = "  "
+
+---@private
+---@internal
+---Pads `s` on the right to `width` display cells.
+---@param s string
+---@param width integer
+---@return string
+local function _ljust(s, width)
+  local pad = width - vim.fn.strdisplaywidth(s)
+  return pad > 0 and (s .. (" "):rep(pad)) or s
+end
+
+---@private
+---@internal
+---Pads `s` on both sides so it sits centred in `width` display cells, with the
+---odd cell going to the right (a centred cell that cannot be exact reads
+---better leaning left, the way the eye scans the column).
+---@param s string
+---@param width integer
+---@return string
+local function _center(s, width)
+  local pad = width - vim.fn.strdisplaywidth(s)
+  if pad <= 0 then return s end
+  local left = math.floor(pad / 2)
+  return (" "):rep(left) .. s .. (" "):rep(pad - left)
+end
+
 ---@private
 ---@internal
 ---Renders a record's upstream divergence. Empty when the branch tracks an
@@ -238,6 +301,12 @@ end
 
 ---Renders a list of repository status records into an aligned, human-readable block.
 ---
+---Only REPOSITORY is left-aligned; every other column is centred under its
+---header. Names are what the eye scans down looking for one entry, and a
+---ragged left edge makes that scan impossible — the short values in the other
+---columns (a branch, `↑2`, `clean`, `3d`) have no such job and read as a
+---column rather than as a ragged stripe when they sit under their heading.
+---
 ---The SYNC column is omitted entirely when no repository has anything to report
 ---there, so a directory of perfectly in-sync clones doesn't carry a column of
 ---blanks. Highlight spans are returned alongside the text (rather than matched
@@ -248,86 +317,111 @@ end
 ---@return string[] lines Column-aligned overview, one entry per line
 ---@return StatusHighlight[] highlights Highlight spans, 0-indexed rows and byte columns
 function M.render(records)
+  local dw = vim.fn.strdisplaywidth
+  local name_cells, branch_cells, sync_cells, state_cells, age_cells = {}, {}, {}, {}, {}
   local name_w, branch_w, sync_w = #"REPOSITORY", #"BRANCH", 0
-  local sync_cells, name_cells, branch_cells = {}, {}, {}
+  local state_w, age_w = math.max(#"STATE", MIN_STATE_W), #"LAST COMMIT"
+
   for i, r in ipairs(records) do
     name_cells[i] = _elide(r.name, MAX_NAME_W)
     branch_cells[i] = _elide_middle(r.branch, MAX_BRANCH_W)
-    name_w = math.max(name_w, vim.fn.strdisplaywidth(name_cells[i]))
-    branch_w = math.max(branch_w, vim.fn.strdisplaywidth(branch_cells[i]))
     sync_cells[i] = _sync_cell(r)
-    sync_w = math.max(sync_w, vim.fn.strdisplaywidth(sync_cells[i]))
+
+    local state = r.state
+    if r.state == "dirty" then state = ("dirty (%d)"):format(r.dirty) end
+    local pending = _pending[i]
+    if pending then state = ("%s %s..."):format(SPINNER, pending) end
+    state_cells[i] = state
+    age_cells[i] = _relative_age(r.last_commit)
+
+    name_w = math.max(name_w, dw(name_cells[i]))
+    branch_w = math.max(branch_w, dw(branch_cells[i]))
+    sync_w = math.max(sync_w, dw(sync_cells[i]))
+    state_w = math.max(state_w, dw(state_cells[i]))
+    age_w = math.max(age_w, dw(age_cells[i]))
   end
 
   local show_sync = sync_w > 0
   if show_sync then sync_w = math.max(sync_w, #"SYNC") end
 
-  ---@type StatusHighlight[]
-  local hls = {}
-  local lines = {}
+  -- Cell positions, so the highlight lookups below don't have to repeat the
+  -- "is SYNC showing?" arithmetic at every call site.
+  local NAME, BRANCH = 1, 2
+  local STATE = show_sync and 4 or 3
+  local AGE = STATE + 1
 
-  ---Appends one row, tracking byte offsets so each cell can be highlighted.
-  ---
-  ---`gutter` is passed in rather than derived here because it is the one cell
-  ---whose *byte* width differs per row (the indicator is multi-byte, the blank
-  ---is not) while its display width does not -- every offset below is therefore
-  ---measured from it instead of from column zero.
-  ---@param gutter string Mark column, always two display cells wide
+  ---Builds one line's cell list. The same function feeds the header, so the
+  ---headings are padded and centred exactly like the values beneath them.
   ---@param name string
   ---@param branch string
   ---@param sync string
   ---@param state string
   ---@param age string
-  ---@return integer name_start, integer name_end, integer branch_start, integer branch_end, integer state_start, integer state_end, integer age_start
-  local function push(gutter, name, branch, sync, state, age)
-    local parts = { gutter, name .. (" "):rep(name_w - vim.fn.strdisplaywidth(name)) }
-    local name_start = #gutter
-    local name_end = name_start + #parts[2]
-
-    parts[#parts + 1] = "  " .. branch .. (" "):rep(branch_w - vim.fn.strdisplaywidth(branch))
-    local branch_start = name_end + 2
-    local branch_end = name_end + #parts[#parts]
-
-    if show_sync then parts[#parts + 1] = "  " .. sync .. (" "):rep(sync_w - vim.fn.strdisplaywidth(sync)) end
-
-    local prefix = table.concat(parts)
-    local state_start = #prefix + 2
-    parts[#parts + 1] = "  " .. state
-    local state_end = state_start + #state
-
-    local padded_state = state .. (" "):rep(math.max(0, 12 - vim.fn.strdisplaywidth(state)))
-    parts[#parts] = "  " .. padded_state
-    local age_start = #table.concat(parts) + 2
-    parts[#parts + 1] = "  " .. age
-
-    lines[#lines + 1] = (table.concat(parts):gsub("%s+$", ""))
-    return name_start, name_end, branch_start, branch_end, state_start, state_end, age_start
+  ---@return { text: string, width: integer, center?: boolean }[]
+  local function cells(name, branch, sync, state, age)
+    local list = {
+      { text = name, width = name_w },
+      { text = branch, width = branch_w, center = true },
+    }
+    if show_sync then list[#list + 1] = { text = sync, width = sync_w, center = true } end
+    list[#list + 1] = { text = state, width = state_w, center = true }
+    list[#list + 1] = { text = age, width = age_w, center = true }
+    return list
   end
 
-  push(MARK_GUTTER, "REPOSITORY", "BRANCH", "SYNC", "STATE", "LAST COMMIT")
+  ---Assembles a line from its mark gutter and cells, reporting the byte range
+  ---of each cell's *text* rather than of its padded box — centring puts blanks
+  ---on both sides, and a highlight that covered them would colour half a column
+  ---of whitespace. The gutter is measured in bytes for the same reason it is
+  ---passed in at all: the tick is multi-byte where the blank is not, so every
+  ---offset has to start from it rather than from column zero.
+  ---@param gutter string Mark column, always two display cells wide
+  ---@param list { text: string, width: integer, center?: boolean }[]
+  ---@return string line, integer[][] spans One { start, stop } byte pair per cell
+  local function build(gutter, list)
+    local parts, spans = { gutter }, {}
+    local col = #gutter
+    for i, cell in ipairs(list) do
+      if i > 1 then
+        parts[#parts + 1] = GAP
+        col = col + #GAP
+      end
+      local padded = cell.center and _center(cell.text, cell.width) or _ljust(cell.text, cell.width)
+      local lead = #(padded:match("^ *"))
+      spans[i] = { col + lead, col + lead + #cell.text }
+      parts[#parts + 1] = padded
+      col = col + #padded
+    end
+    return table.concat(parts), spans
+  end
+
+  ---@type StatusHighlight[]
+  local hls = {}
+
+  -- The header alone keeps its trailing blanks. Every column is padded to a
+  -- width the header itself takes part in, so the untrimmed header line is
+  -- exactly as wide as the table -- which is what turns its underline (see
+  -- `_define_highlights`) into the rule beneath the whole thing rather than a
+  -- line that stops under "LAST COMMIT".
+  local lines = { (build(MARK_GUTTER, cells("REPOSITORY", "BRANCH", "SYNC", "STATE", "LAST COMMIT"))) }
   hls[#hls + 1] = { row = 0, col = 0, end_col = -1, hl = HL.header }
 
   for i, r in ipairs(records) do
-    local state = r.state
-    if r.state == "dirty" then state = ("dirty (%d)"):format(r.dirty) end
-
-    local pending = _pending[i]
-    if pending then state = ("%s %s..."):format(SPINNER, pending) end
-
     local marked = _marks[r.path] == true
     local gutter = marked and (MARK_INDICATOR .. " ") or MARK_GUTTER
+    local line, spans =
+      build(gutter, cells(name_cells[i], branch_cells[i], sync_cells[i], state_cells[i], age_cells[i]))
 
-    local name_start, name_end, branch_start, branch_end, state_start, state_end, age_start =
-      push(gutter, name_cells[i], branch_cells[i], sync_cells[i], state, _relative_age(r.last_commit))
-
+    lines[#lines + 1] = (line:gsub("%s+$", ""))
     local row = #lines - 1
-    if marked then hls[#hls + 1] = { row = row, col = 0, end_col = #gutter, hl = HL.mark } end
-    hls[#hls + 1] = { row = row, col = name_start, end_col = name_end, hl = HL.repo }
-    hls[#hls + 1] = { row = row, col = branch_start, end_col = branch_end, hl = HL.branch }
 
-    local state_hl = pending and HL.pending or HL[r.state] or HL.muted
-    hls[#hls + 1] = { row = row, col = state_start, end_col = state_end, hl = state_hl }
-    hls[#hls + 1] = { row = row, col = age_start, end_col = -1, hl = HL.muted }
+    if marked then hls[#hls + 1] = { row = row, col = 0, end_col = #gutter, hl = HL.mark } end
+    hls[#hls + 1] = { row = row, col = spans[NAME][1], end_col = spans[NAME][2], hl = HL.repo }
+    hls[#hls + 1] = { row = row, col = spans[BRANCH][1], end_col = spans[BRANCH][2], hl = HL.branch }
+
+    local state_hl = _pending[i] and HL.pending or HL[r.state] or HL.muted
+    hls[#hls + 1] = { row = row, col = spans[STATE][1], end_col = spans[STATE][2], hl = state_hl }
+    hls[#hls + 1] = { row = row, col = spans[AGE][1], end_col = spans[AGE][2], hl = HL.muted }
   end
 
   return lines, hls
@@ -1047,22 +1141,72 @@ _show_keymap_help = function()
   })
 end
 
+---Separator between two legend entries, and its width in display cells.
+local LEGEND_SEP_W = 5
+
 ---@private
 ---@internal
 ---Builds the winbar legend from `ROW_KEYMAPS`, so it can never list a key that
 ---isn't actually bound. Keys are highlighted separately from their labels via
 ---`%#Group#` items, which the winbar understands natively.
+---
+---Fitted to `width` rather than emitted whole: a legend longer than the window
+---is truncated by Neovim itself, which cuts it *from the left* and marks the
+---cut with a bare `<` — so the overflow silently ate `<CR> README` and `m Mark`,
+---the two entries most worth showing, and left a stray `<` in their place.
+---Entries are therefore dropped from the right until the line fits, except the
+---last one (`? Keys`), which is pinned because it is how everything dropped
+---here is still reachable.
+---
+---What is left is then centred, so the gap before the first entry and the gap
+---after the last one match.
+---@param width integer Window width in display cells
 ---@return string
-local function _legend()
-  local parts = {}
+local function _legend(width)
+  local labels = {}
   for _, entry in ipairs(ROW_KEYMAPS) do
-    if entry.label then
-      local key, text = entry.label:match("^(%S+)%s+(.*)$")
-      parts[#parts + 1] = ("%%#%s#%s %%#%s#%s"):format(HL.pending, key, HL.muted, text)
-    end
+    if entry.label then labels[#labels + 1] = entry.label end
   end
-  return "  " .. table.concat(parts, ("  %%#%s#│  "):format(HL.muted))
+  if #labels == 0 then return "" end
+
+  local pinned = table.remove(labels)
+  local used = vim.fn.strdisplaywidth(pinned)
+  local budget = math.max(width, 0) - 4 -- a two-cell margin on either side
+
+  local kept = {}
+  for _, label in ipairs(labels) do
+    local cost = vim.fn.strdisplaywidth(label) + LEGEND_SEP_W
+    if used + cost > budget then break end
+    kept[#kept + 1] = label
+    used = used + cost
+  end
+  kept[#kept + 1] = pinned
+
+  local rendered = {}
+  for i, label in ipairs(kept) do
+    local key, text = label:match("^(%S+)%s+(.*)$")
+    rendered[i] = ("%%#%s#%s %%#%s#%s"):format(HL.pending, key, HL.muted, text)
+  end
+
+  local lead = math.max(2, math.floor((width - used) / 2))
+  return (" "):rep(lead) .. table.concat(rendered, ("%%#%s#  │  "):format(HL.muted))
 end
+
+---The winbar legend for the window Neovim is currently drawing.
+---
+---Public only because the `winbar` option has to name something callable from
+---Vimscript: it is set to a `%!` expression rather than to a fixed string, so
+---the legend re-fits itself when the window is resized instead of being frozen
+---at the width the overview happened to open with.
+---@return string
+function M.legend()
+  local win = vim.g.statusline_winid
+  if not (win and vim.api.nvim_win_is_valid(win)) then win = vim.api.nvim_get_current_win() end
+  return _legend(vim.api.nvim_win_get_width(win))
+end
+
+---The `winbar` value installed on every interactive status window.
+local WINBAR = "%!v:lua.require'reposcope.ui.actions.status_view'.legend()"
 
 ---@private
 ---@internal
@@ -1104,7 +1248,7 @@ local function show_popup(lines, hls, records)
     -- content out of a height sized exactly to the number of status lines
     -- (make_scratch still clamps this to the editor's available height).
     height = #lines + 1,
-    wo = { wrap = false, cursorline = true, winbar = _legend() },
+    wo = { wrap = false, cursorline = true, winbar = WINBAR },
   })
   if not surf then return end
   _set_buffer_lines(surf.bufnr, lines, hls)
@@ -1132,7 +1276,7 @@ local function show_buffer(lines, hls, records)
   _set_buffer_lines(bufnr, lines, hls)
   vim.bo[bufnr].modifiable = false
   vim.api.nvim_win_set_buf(0, bufnr)
-  vim.api.nvim_set_option_value("winbar", _legend(), { win = 0 })
+  vim.api.nvim_set_option_value("winbar", WINBAR, { win = 0 })
   _attach_row_keymaps(bufnr, records)
 end
 
@@ -1150,7 +1294,7 @@ local function show_split(lines, hls, vertical, records)
     split = vertical and "right" or "below",
   })
   _set_buffer_lines(bufnr, lines, hls)
-  vim.api.nvim_set_option_value("winbar", _legend(), { win = winid })
+  vim.api.nvim_set_option_value("winbar", WINBAR, { win = winid })
   _attach_row_keymaps(bufnr, records)
 end
 
