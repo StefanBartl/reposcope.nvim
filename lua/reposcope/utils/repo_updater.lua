@@ -36,32 +36,10 @@ local notify = require("reposcope.utils.debug").notify
 local repos_util = require("reposcope.utils.repos")
 local resolve_base_dir = repos_util.resolve_base_dir
 local collect_repos = repos_util.collect_repos
+-- Single-repository git actions (this module is the directory-wide queue over them)
+local repo_actions = require("reposcope.utils.repo_actions")
 -- Progress indicator (optional dependency, see utils/progress.lua)
 local progress = require("reposcope.utils.progress")
-
----@private
----@internal
----Runs `git fetch --all --prune` then `git pull --ff-only` for a single repository.
----@param repo string Absolute path to the repository
----@param on_done fun(success: boolean, err: string|nil): nil
----@return nil
-local function update_repo(repo, on_done)
-  vim.system({ "git", "fetch", "--all", "--prune" }, { cwd = repo, text = true }, function(fetch_res)
-    if fetch_res.code ~= 0 then
-      on_done(false, (fetch_res.stderr ~= "" and fetch_res.stderr) or "git fetch failed")
-      return
-    end
-
-    vim.system({ "git", "pull", "--ff-only" }, { cwd = repo, text = true }, function(pull_res)
-      if pull_res.code ~= 0 then
-        on_done(false, (pull_res.stderr ~= "" and pull_res.stderr) or "git pull failed")
-        return
-      end
-
-      on_done(true, nil)
-    end)
-  end)
-end
 
 ---Updates every git repository found in the resolved base directory.
 ---Validation failures (missing git, inaccessible directory, no repositories) are
@@ -130,7 +108,7 @@ function M.update_all(path, on_complete)
       })
     end
 
-    update_repo(repo, function(success, err)
+    repo_actions.update(repo, function(success, err)
       if success then
         updated = updated + 1
         notify("[reposcope] Updated " .. fnamemodify(repo, ":t"), 2)
