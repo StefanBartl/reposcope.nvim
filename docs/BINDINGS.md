@@ -92,9 +92,13 @@ whenever it opens/closes.
 | `q`, `<Esc>`  | n    | [`utils/stats.lua`](../lua/reposcope/utils/stats.lua) | Closes the stats popup buffer/window                        |
 | `q`, `<Esc>`  | n    | [`ui/actions/help_view.lua`](../lua/reposcope/ui/actions/help_view.lua) (via `lib.nvim.ui.kit`'s `nice_quit`) | Closes the `?` keymap cheatsheet |
 | `<CR>`, `<2-LeftMouse>` | n | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, on every interactive `--out` backend of `:Reposcope status`) | Prompts to confirm (`lib.nvim.ui.kit`'s button-confirm dialog), then opens the `README.md` of the repository under the cursor (`:edit`). A repository with no readable `README.md` just gets a notification — nothing to confirm |
-| `p`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Pushes the repository under the cursor (`utils/repo_actions.lua`), then re-reads and redraws that row |
-| `P`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Pulls the repository under the cursor (`git pull --ff-only`), then re-reads and redraws that row |
-| `f`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Fetches the repository under the cursor (`git fetch --prune`), then re-reads and redraws that row |
+| `m`           | n, x | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Toggles the mark on the repository under the cursor; in Visual mode marks every row the selection spans. Marks are keyed by repository path, so they survive `s` and `R` |
+| `M`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Marks every repository in the overview — or clears all marks when everything is already marked |
+| `p`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Pushes the marked repositories (`utils/repo_actions.lua`), or the one under the cursor when nothing is marked. Each row is re-read and redrawn as its push settles |
+| `P`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Pulls (`git pull --ff-only`) the marked repositories, or the one under the cursor when nothing is marked |
+| `f`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Fetches (`git fetch --prune`) the marked repositories, or the one under the cursor when nothing is marked |
+| `gp` / `gP` / `gf` | n | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Pushes / pulls / fetches **every** repository in the overview, marks ignored |
+| `gu`          | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Updates every repository in the overview: `git fetch --all --prune` + `git pull --ff-only`, the same pair `:Reposcope update` runs |
 | `S`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Opens a nested popup with the repository's `git status --short` and its last five commits |
 | `s`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Cycles the sort order: discovery → name → state (worst first) → last-commit age → discovery |
 | `r`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Re-reads the repository under the cursor and redraws that row |
@@ -106,8 +110,17 @@ whenever it opens/closes.
 The status-overview keys above are declared in one table in
 [`status_view.lua`](../lua/reposcope/ui/actions/status_view.lua), which also
 generates the `winbar` legend and the `?` cheatsheet, so the three can't drift
-apart. `r`, `R` and `y` are intentionally left out of the legend to keep it on
-one line; `?` lists them.
+apart. `M`, the `g` forms, `r`, `R` and `y` are intentionally left out of the
+legend to keep it on one line; `?` lists them.
+
+Every batch (`p`/`P`/`f` with marks set, and all four `g` forms) is confirmed
+through `lib.nvim.ui.kit`'s button dialog before it starts, then runs its
+repositories one after another through `lib.nvim.progress` — cancelling there
+stops the queue rather than the `git` call in flight. `s` and `R` are refused
+while a batch is running, since both would move rows out from under the
+in-flight spinners. `gp`, `gP`, `gf` and `gu` shadow the built-in `gp`, `gP`,
+`gf` and `gu` inside the status buffer only, where a non-modifiable table
+makes the originals meaningless anyway.
 
 ---
 
@@ -128,7 +141,7 @@ available for subcommand names and, where noted, their arguments.
 | `filter-prompt`     | –                      | Open a floating prompt to filter repositories interactively            |
 | `filter-clear`      | –                      | Clear the active filter and show the full list again                   |
 | `update`            | `[dir]`                | Update (fetch + ff-only pull) all cloned repositories in a directory   |
-| `status`            | `[dir] [--out] [--to]` | Show the git status overview of repositories in a directory (see below) |
+| `status`            | `[dir] [--out] [--to]` | Show the git status overview of repositories in a directory, with marks and batch push/pull/fetch/update (see below) |
 | `providers`         | –                      | List available providers and mark the active one                      |
 | `session`           | `save`\|`restore`\|`clear` | Save, restore, or clear the persisted search session (provider, prompt input, query, filter, sort) |
 | `favorites`         | `list`\|`clear`        | List favorited repositories in a popup, or clear all favorites        |

@@ -93,7 +93,11 @@ Treat `status` as the read-only preview of what `update` is about to do:
 1. `:Reposcope status` — shows branch, sync state, working-tree state
    (`clean`/`dirty`/`ahead`/`behind`/`diverged`) and the age of `HEAD` per
    repo, read via `git status --porcelain=v2 --branch`. Nothing is modified by
-   the scan itself. The `SYNC` column carries arrows (`↑2 ↓1`) only for
+   the scan itself; the row and batch keys in the overview are what modify,
+   and each batch asks first (see *Marks turn the row keys into batch keys*).
+   `gu` in that overview is `update` applied to the same directory, so in
+   practice step 2 is usually one keystroke away rather than a second
+   command. The `SYNC` column carries arrows (`↑2 ↓1`) only for
    branches that have actually diverged, and disappears entirely when no
    repository has anything to report there — which is the normal case, and the
    reason a `+0/-0` on every row used to bury the two that mattered.
@@ -124,6 +128,40 @@ under the cursor. After each one the row is re-read and redrawn in place, so
 the table stays true without a rescan. `r` re-reads one row, `R` re-scans the
 whole directory — and `:Reposcope status <dir>` passes that directory through,
 so `R` re-reads what you actually asked for rather than the configured default.
+
+## Marks turn the row keys into batch keys
+
+The interesting unit of maintenance is rarely one repository and rarely all
+of them: it is *these six*. So `m` marks the row under the cursor (`Vjjm`
+marks a run of them), and while anything is marked `p`, `P` and `f` act on
+the marked set instead of on the cursor row. Same keys, same meaning, one
+scale up — which is why there is no second alphabet of uppercase batch verbs
+to learn, and why unmarking everything silently gives you the old
+single-row behaviour back.
+
+`gp`, `gP`, `gf` and `gu` are the whole-directory forms, marks ignored:
+push all, pull all, fetch all, update all. `gu` is `:Reposcope update`
+without leaving the dashboard — the same `fetch --all --prune` +
+`pull --ff-only`, run through the same code path — so the loop closes where
+you are already looking: scan, see what is behind, update it, watch the rows
+go clean.
+
+Three deliberate constraints:
+
+- **Batches confirm; single rows do not.** A row action names its target by
+  the line the cursor is on. A batch may touch repositories scrolled off
+  screen, so the count is the only thing that can state what is about to
+  happen — and it has to be stated before, not after.
+- **Batches are sequential.** Forty parallel `git push`es are a rate limit,
+  forty credential prompts, or both. Cancelling through the progress
+  indicator stops the queue from starting the next repository rather than
+  interrupting the `git` call in flight — a half-done fetch is harmless, an
+  interrupted `pull` is not.
+- **Marks belong to repositories, not rows.** They are stored by path, so
+  `s` (re-sort), `R` (re-scan) and closing/reopening the overview all leave
+  them where you put them. The reverse — `s` or `R` *during* a batch — is
+  refused outright, since both would slide rows out from under the
+  in-flight spinners.
 
 `S` opens a nested popup with the full `git status --short` and the last five
 commits: the natural next step when a row says `dirty` and you want to know

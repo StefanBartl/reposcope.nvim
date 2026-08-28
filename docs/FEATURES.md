@@ -6,6 +6,7 @@
 - 🔧 Clone support: `git`, `gh`, `wget`, `curl`
 - 🔄 Bulk-update all cloned repositories (`git fetch` + ff-only `pull`) in one command
 - 📋 Interactive git status dashboard across a whole folder of repos (branch, sync, state, last-commit age, colored by state) — `<CR>` opens a row's README.md (`q` returns to the dashboard), `p`/`P`/`f` push/pull/fetch it in place with live progress, `S` shows its full `git status`, `s` cycles the sort order, `r`/`R` refresh, `y` yanks the path, `?` lists every key
+- ✅ Marks and batches in that dashboard — `m` marks a row (or a Visual selection), after which `p`/`P`/`f` act on the whole marked set; `gp`/`gP`/`gf`/`gu` push, pull, fetch or update *every* repo in the folder. Batches confirm first, run sequentially through the progress indicator, and refresh each row as it lands
 - 🔁 Debounced README fetches to avoid redundant API calls
 - 📦 Clean, fully modular architecture (UI, state, providers, controllers)
 - 🧪 Strongly annotated with EmmyLua for LuaLS support

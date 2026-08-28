@@ -180,7 +180,7 @@ The following subcommands are available:
 | `:Reposcope filter-prompt`    | Prompt input for interactive filtering       |
 | `:Reposcope filter-clear`     | Resets the filter and restores full list     |
 | `:Reposcope update [dir]`     | Updates all cloned git repositories          |
-| `:Reposcope status [dir] [--out] [--to]` | Shows git status overview of repositories |
+| `:Reposcope status [dir] [--out] [--to]` | Git status overview, with batch actions |
 | `:Reposcope providers`        | Lists providers and marks the active one     |
 | `:Reposcope session ...`      | Save, restore, or clear the search session   |
 | `:Reposcope favorites ...`    | Lists favorited repositories, or clears them |
@@ -300,11 +300,14 @@ to report there. Repository, branch, state and age are highlighted through
 `ReposcopeStatus*` groups, which link to the colorscheme's diagnostic colors
 with `default = true` and can therefore be overridden freely. Example: >
 
-    REPOSITORY      BRANCH   SYNC      STATE       LAST COMMIT
-    reposcope.nvim  main               clean       15h
-    my-fork         feature  ↑2 ↓1     dirty (3)   4d
-    some-lib        main     ↓4        behind      10mo
+      REPOSITORY      BRANCH   SYNC      STATE       LAST COMMIT
+      reposcope.nvim  main               clean       15h
+    ✓ my-fork         feature  ↑2 ↓1     dirty (3)   4d
+      some-lib        main     ↓4        behind      10mo
 <
+The two leading cells are the mark gutter (see "Marks and batches" below).
+They are blank on unmarked rows, so marking never shifts the table sideways.
+
 
 If no {dir} argument is given, the configured clone directory (`clone.std_dir`,
 see |reposcope-config|) is used. If {dir} is itself a git repository, only that
@@ -332,7 +335,12 @@ On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
 | Key                     | Action                                          |
 |-------------------------|-------------------------------------------------|
 | `<CR>`, `<2-LeftMouse>` | Confirm, then open that repo's `README.md`      |
-| `p` / `P` / `f`         | Push / pull (`--ff-only`) / fetch the repo      |
+| `m`                     | Toggle the mark (Visual: mark the selection)    |
+| `M`                     | Mark everything / clear all marks               |
+| `p` / `P` / `f`         | Push / pull (`--ff-only`) / fetch the marked    |
+|                         | repos, or the row under the cursor if none      |
+| `gp` / `gP` / `gf`      | Push / pull / fetch every repo, marks ignored   |
+| `gu`                    | Update every repo: fetch --all + pull --ff-only |
 | `S`                     | Full `git status` + last 5 commits, in a popup  |
 | `s`                     | Cycle sort: discovery / name / state / age      |
 | `r` / `R`               | Re-read the row / re-scan the whole directory   |
@@ -349,12 +357,44 @@ published via `lib.nvim.progress`, so a statusline component using its
 `statusline` style can display it. Sorting by state ranks worst-first
 (diverged, dirty, behind, ahead, clean).
 
-A shortened legend is shown in the window's `winbar`; `r`, `R` and `y` are
-left out of it to keep it on one line and are listed under `?`.
+A shortened legend is shown in the window's `winbar`; `M`, the `g` forms,
+`r`, `R` and `y` are left out of it to keep it on one line and are listed
+under `?`.
+
+                                                    *reposcope-status-marks*
+Marks and batches ~
+
+`m` marks the repository under the cursor with a `✓` in the gutter; over a
+Visual selection it marks every row the selection spans, so `Vjjm` marks
+four at once. `M` marks everything, or clears everything once everything is
+marked.
+
+While anything is marked, `p`, `P` and `f` act on the marked set instead of
+on the row under the cursor: mark the four repositories you want to push,
+press `p`, confirm. `gp`, `gP`, `gf` and `gu` are the whole-directory forms
+and ignore marks entirely — push all, pull all, fetch all, or update all
+(the same two commands |:Reposcope-update| runs) without leaving the
+overview.
+
+- Every batch is confirmed first ("Push 4 marked repositories?"): unlike a
+  single row, nothing on screen states what a batch is about to touch. A
+  single-row action with no marks set stays unconfirmed.
+- Batches run sequentially, not in parallel — forty simultaneous pushes are
+  a rate limit, forty credential prompts, or both. Cancelling through
+  |lib.nvim.progress| stops the queue rather than the `git` call in flight.
+- Each row is re-read as its action settles, and the closing summary reports
+  how many succeeded and lists the failures.
+- Marks are keyed by repository path, so they survive `s`, `R` and
+  closing/reopening the overview.
+- `s` and `R` are refused while a batch runs: both would move rows out from
+  under the in-flight spinners.
+- Inside the status buffer, `gp`/`gP`/`gf`/`gu` shadow the built-in commands
+  of the same name, which are meaningless in a non-modifiable table anyway.
 
 Notes:
 - Only immediate subdirectories are scanned (non-recursive).
-- The command never modifies anything; it only reads.
+- The scan itself only reads; the row and batch keys above are the only
+  things that modify a repository, and every batch asks first.
 - Requires `git` to be available in $PATH.
 
 - Example: >

@@ -85,7 +85,7 @@ subcommand; remaining arguments are forwarded to it.
 | Command                     | Description                                                                       |
 | --------------------------- | --------------------------------------------------------------------------------- |
 | `:Reposcope update [dir]`   | Updates all cloned git repositories (`git fetch --all --prune` + `git pull --ff-only`) in `clone.std_dir` (or the given directory) |
-| `:Reposcope status [dir] [--out] [--to]` | Shows an interactive git status overview (branch, sync, state, last commit) for every repo in `clone.std_dir` (or the given directory / a single repo) |
+| `:Reposcope status [dir] [--out] [--to]` | Shows an interactive git status overview (branch, sync, state, last commit) for every repo in `clone.std_dir` (or the given directory / a single repo), with marks and batch push/pull/fetch/update |
 
 **Providers**
 
@@ -243,18 +243,22 @@ Unlike a plain `vim.notify`, the result is never truncated or unscrollable —
 Example output:
 
 ```
-REPOSITORY      BRANCH   SYNC      STATE       LAST COMMIT
-reposcope.nvim  main               clean       15h
-my-fork         feature  ↑2 ↓1     dirty (3)   4d
-some-lib        main     ↓4        behind      10mo
+  REPOSITORY      BRANCH   SYNC      STATE       LAST COMMIT
+  reposcope.nvim  main               clean       15h
+✓ my-fork         feature  ↑2 ↓1     dirty (3)   4d
+  some-lib        main     ↓4        behind      10mo
 ```
+
+The two leading cells are the mark gutter (see *Marks and batches* below);
+they are blank on unmarked rows, so marking never shifts the table sideways.
 
 The `SYNC` column only reports branches that have actually diverged from
 their upstream, and disappears entirely when no repository has anything to
 report there. `LAST COMMIT` is the age of `HEAD`. Repository, branch, state
 and age are highlighted via `ReposcopeStatus*` groups, which link to the
 colorscheme's diagnostic colors and can be overridden. The popup title
-summarizes the scan, e.g. `Reposcope Status — 54 repos · 3 dirty · 1 out of sync`.
+summarizes the scan, e.g. `Reposcope Status — 54 repos · 3 dirty · 1 out of
+sync · 4 marked`, and is re-stamped as rows are marked or refreshed.
 
 On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
 `clipboard`/`path`), the row under the cursor is interactive:
@@ -262,7 +266,11 @@ On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
 | Key | Action |
 | --- | ------ |
 | `<CR>`, `<2-LeftMouse>` | Confirm, then open that repository's `README.md`. Press `q` in the README to close it and return to the overview |
-| `p` / `P` / `f` | Push / pull (`--ff-only`) / fetch the repository |
+| `m` | Toggle the mark on the row; in Visual mode, mark every row the selection spans |
+| `M` | Mark every repository — or clear all marks when everything is already marked |
+| `p` / `P` / `f` | Push / pull (`--ff-only`) / fetch **the marked repositories**, or the row under the cursor when nothing is marked |
+| `gp` / `gP` / `gf` | Push / pull / fetch **every** repository in the overview, marks ignored |
+| `gu` | Update every repository in the overview: `fetch --all --prune` + `pull --ff-only` |
 | `S` | Full `git status --short` plus the last five commits, in a nested popup |
 | `s` | Cycle sort order: discovery → name → state → age → discovery |
 | `r` / `R` | Re-read the row under the cursor / re-scan the whole directory |
@@ -276,9 +284,39 @@ published through `lib.nvim.progress`, so a statusline component using its
 `statusline` style can show it. Sorting by `state` ranks worst-first
 (diverged, dirty, behind, ahead, clean) rather than alphabetically.
 
-A shortened legend of these keys is shown in the window's `winbar`; `r`, `R`
-and `y` are omitted there to keep it on one line and are listed under `?`.
-See [BINDINGS.md](BINDINGS.md#14-component-local) for the full keymap entry.
+A shortened legend of these keys is shown in the window's `winbar`; `M`, the
+`g` forms, `r`, `R` and `y` are omitted there to keep it on one line and are
+listed under `?`. See [BINDINGS.md](BINDINGS.md#14-component-local) for the
+full keymap entry.
+
+##### Marks and batches
+
+`m` marks the repository under the cursor with a `✓` in the gutter (over a
+Visual selection it marks every row the selection spans, so `Vjjm` marks four
+in one go). While anything is marked, `p`, `P` and `f` act on the *marked
+set* instead of on the row under the cursor — mark the four repositories you
+actually want to push, press `p`, confirm, done.
+
+`gp` / `gP` / `gf` / `gu` are the whole-directory forms and ignore marks
+entirely: push all, pull all, fetch all, or update all (the same two commands
+`:Reposcope update` runs, without leaving the overview).
+
+* Every batch asks for confirmation first (`Push 4 marked repositories?`),
+  because unlike a single row there is nothing on screen that states what is
+  about to be touched. A single-row action with no marks set is unconfirmed,
+  exactly as before.
+* Batches run **sequentially**, not in parallel: forty simultaneous `git
+  push`es are a rate limit, forty credential prompts, or both. Progress goes
+  through `lib.nvim.progress`, and cancelling there stops the queue from
+  starting further repositories rather than interrupting the one in flight.
+* Every row is re-read as its action settles, so ahead/behind and dirty state
+  stay current without re-scanning the directory. The final summary reports
+  how many succeeded, and lists the failures.
+* Marks are stored **by repository path**, so they survive `s` (re-sort), `R`
+  (re-scan) and closing/reopening the overview — a mark stays on the
+  repository you put it on, not on the row number.
+* `s` and `R` are refused while a batch is running: both would move rows out
+  from under the spinners.
 
 Examples:
 

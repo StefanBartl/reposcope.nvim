@@ -41,7 +41,7 @@ Telescope-inspired interface.
 | Capability | What it does | Details |
 | --- | --- | --- |
 | `:Reposcope start` | Search/preview/clone repositories across GitHub, GitLab and Codeberg, with README caching and precaching | [Commands](docs/COMMANDS.md) |
-| `:Reposcope status [dir]` | Git status overview (branch, ahead/behind, dirty) across a folder of cloned repos, with inline push/pull/fetch per row | [Commands](docs/COMMANDS.md) |
+| `:Reposcope status [dir]` | Git status overview (branch, ahead/behind, dirty) across a folder of cloned repos: push/pull/fetch a row inline, `m` to mark a set and act on all of them, or `gp`/`gP`/`gf`/`gu` for the whole folder | [Commands](docs/COMMANDS.md) |
 | `:Reposcope update [dir]` | Bulk `git fetch` + fast-forward-only `pull` across a folder of cloned repos | [Commands](docs/COMMANDS.md) |
 | `:Reposcope filter` / `filter-prompt` / `sort` | Filter and sort the current search results | [Commands](docs/COMMANDS.md) |
 | `:Reposcope favorites` | Save favorite repositories, including a README snapshot for offline viewing | [Commands](docs/COMMANDS.md) |

@@ -21,9 +21,12 @@ branches are reported as errors rather than rewritten.
 Reads `git status --porcelain=v2 --branch` for every repo directly inside
 a directory (or a single repo) and shows branch, ahead/behind counts, and
 dirty state (`clean`/`dirty`/`ahead`/`behind`/`diverged`) in a compact
-table. Read-only counterpart to `update`.
+table. The scan is the read-only counterpart to `update`; the rows are not
+— `m` marks repositories and `p`/`P`/`f` then act on the marked set, while
+`gp`/`gP`/`gf`/`gu` act on every repository in the overview.
 
-- **Module:** `utils/repo_status.lua` (`M.status_all`),
+- **Module:** `utils/repo_status.lua` (`M.status_all`, `M.status_one`),
+  `utils/repo_actions.lua` (per-repo push/pull/fetch/update),
   `ui/actions/status_view.lua`, `bindings/usrcmds.lua` (`run_status`,
   `status_route`)
 - **Config:** `clone.std_dir`, `progress_style`
