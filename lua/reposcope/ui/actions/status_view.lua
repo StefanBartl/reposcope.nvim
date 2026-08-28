@@ -26,6 +26,23 @@
 --- table in place, so ahead/behind counts and dirty state stay current
 --- without re-scanning the whole directory. A one-line legend of these keys
 --- is shown in the window's `winbar`.
+---
+--- Those same three keys are also the batch: `m` marks the row under the
+--- cursor (or, over a Visual selection, every row it spans) and while
+--- anything is marked `p`/`P`/`f` act on the marked set instead of on one
+--- row. That is one key doing one thing at two scales, rather than a second
+--- uppercase alphabet of batch verbs nobody would find -- and it is why a
+--- mark is stored by repository path: `s` re-sorts and `R` re-scans, and a
+--- mark that followed the row index would quietly end up on a different
+--- repository.
+---
+--- `gp`/`gP`/`gf`/`gu` are the whole-directory forms, ignoring marks: push,
+--- pull, fetch, or update (fetch + ff-only pull, the same pair
+--- `:Reposcope update` runs) every repository in the overview. Batches run
+--- sequentially and report through `utils.progress` -- these are network
+--- calls, and forty simultaneous pushes are a rate limit or an auth-prompt
+--- storm -- and every batch is confirmed first, because unlike a single row
+--- there is nothing on screen that says what is about to be touched.
 
 ---One highlight span produced by `M.render`. Rows and columns are 0-indexed
 ---byte offsets; `end_col = -1` means "to the end of the line".
@@ -55,6 +72,20 @@ local notify = require("reposcope.utils.debug").notify
 ---@type table<integer, string>
 local _pending = {}
 
+---Marked repositories, keyed by absolute path -> true.
+---
+---By path and not by row index: `s` re-sorts the records in place and `R`
+---rebuilds them from a fresh scan, so an index-keyed mark would survive both
+---and mean a different repository afterwards.
+---@type table<string, boolean>
+local _marks = {}
+
+---The verb of the batch currently running ("push", "pull", ...), or nil.
+---Guards the operations that would move rows out from under an in-flight
+---batch, whose `_pending` spinners are keyed by index.
+---@type string|nil
+local _bulk_running
+
 ---The most recent overview, kept so the popup can be restored after it is torn
 ---down to open a README. Without this the records only lived in the popup's
 ---own closure, so closing it meant re-scanning the whole directory to get back.
@@ -72,6 +103,12 @@ local _sort_index = 1
 local SCRATCH_NAME = "reposcope://status"
 local DEFAULT_PATH_OUT = vim.fn.stdpath("cache") .. "/reposcope/status.txt"
 local SPINNER = "⟳"
+
+---Mark column, rendered as the first two cells of every row. Present (as two
+---spaces) on unmarked rows too, so marking a repository never reflows the
+---table sideways.
+local MARK_INDICATOR = "✓"
+local MARK_GUTTER = "  "
 local NS = vim.api.nvim_create_namespace("reposcope_status")
 
 ---Highlight groups for the status table. Linked with `default = true` so a
@@ -90,6 +127,7 @@ local HL = {
   diverged = "ReposcopeStatusDiverged",
   muted = "ReposcopeStatusMuted",
   pending = "ReposcopeStatusPending",
+  mark = "ReposcopeStatusMark",
 }
 
 do
@@ -104,6 +142,7 @@ do
     [HL.diverged] = "DiagnosticError",
     [HL.muted] = "Comment",
     [HL.pending] = "Special",
+    [HL.mark] = "DiagnosticOk",
   }
   for group, target in pairs(links) do
     vim.api.nvim_set_hl(0, group, { link = target, default = true })
@@ -228,15 +267,22 @@ function M.render(records)
   local lines = {}
 
   ---Appends one row, tracking byte offsets so each cell can be highlighted.
+  ---
+  ---`gutter` is passed in rather than derived here because it is the one cell
+  ---whose *byte* width differs per row (the indicator is multi-byte, the blank
+  ---is not) while its display width does not -- every offset below is therefore
+  ---measured from it instead of from column zero.
+  ---@param gutter string Mark column, always two display cells wide
   ---@param name string
   ---@param branch string
   ---@param sync string
   ---@param state string
   ---@param age string
-  ---@return integer name_end, integer branch_start, integer branch_end, integer state_start, integer state_end, integer age_start
-  local function push(name, branch, sync, state, age)
-    local parts = { name .. (" "):rep(name_w - vim.fn.strdisplaywidth(name)) }
-    local name_end = #parts[1]
+  ---@return integer name_start, integer name_end, integer branch_start, integer branch_end, integer state_start, integer state_end, integer age_start
+  local function push(gutter, name, branch, sync, state, age)
+    local parts = { gutter, name .. (" "):rep(name_w - vim.fn.strdisplaywidth(name)) }
+    local name_start = #gutter
+    local name_end = name_start + #parts[2]
 
     parts[#parts + 1] = "  " .. branch .. (" "):rep(branch_w - vim.fn.strdisplaywidth(branch))
     local branch_start = name_end + 2
@@ -255,10 +301,10 @@ function M.render(records)
     parts[#parts + 1] = "  " .. age
 
     lines[#lines + 1] = (table.concat(parts):gsub("%s+$", ""))
-    return name_end, branch_start, branch_end, state_start, state_end, age_start
+    return name_start, name_end, branch_start, branch_end, state_start, state_end, age_start
   end
 
-  push("REPOSITORY", "BRANCH", "SYNC", "STATE", "LAST COMMIT")
+  push(MARK_GUTTER, "REPOSITORY", "BRANCH", "SYNC", "STATE", "LAST COMMIT")
   hls[#hls + 1] = { row = 0, col = 0, end_col = -1, hl = HL.header }
 
   for i, r in ipairs(records) do
@@ -268,11 +314,15 @@ function M.render(records)
     local pending = _pending[i]
     if pending then state = ("%s %s..."):format(SPINNER, pending) end
 
-    local name_end, branch_start, branch_end, state_start, state_end, age_start =
-      push(name_cells[i], branch_cells[i], sync_cells[i], state, _relative_age(r.last_commit))
+    local marked = _marks[r.path] == true
+    local gutter = marked and (MARK_INDICATOR .. " ") or MARK_GUTTER
+
+    local name_start, name_end, branch_start, branch_end, state_start, state_end, age_start =
+      push(gutter, name_cells[i], branch_cells[i], sync_cells[i], state, _relative_age(r.last_commit))
 
     local row = #lines - 1
-    hls[#hls + 1] = { row = row, col = 0, end_col = name_end, hl = HL.repo }
+    if marked then hls[#hls + 1] = { row = row, col = 0, end_col = #gutter, hl = HL.mark } end
+    hls[#hls + 1] = { row = row, col = name_start, end_col = name_end, hl = HL.repo }
     hls[#hls + 1] = { row = row, col = branch_start, end_col = branch_end, hl = HL.branch }
 
     local state_hl = pending and HL.pending or HL[r.state] or HL.muted
@@ -287,15 +337,20 @@ end
 ---@param records RepoStatusRecord[]
 ---@return string
 function M.summary(records)
-  local dirty, out_of_sync = 0, 0
+  local dirty, out_of_sync, marked = 0, 0, 0
   for _, r in ipairs(records) do
     if r.dirty > 0 then dirty = dirty + 1 end
     if r.ahead > 0 or r.behind > 0 then out_of_sync = out_of_sync + 1 end
+    if _marks[r.path] then marked = marked + 1 end
   end
 
   local parts = { ("%d repo%s"):format(#records, #records == 1 and "" or "s") }
   if dirty > 0 then parts[#parts + 1] = ("%d dirty"):format(dirty) end
   if out_of_sync > 0 then parts[#parts + 1] = ("%d out of sync"):format(out_of_sync) end
+  -- Last, because it is the only part that changes while the window is open --
+  -- appending keeps the leading counts from shifting sideways as marks come
+  -- and go (see `_redraw`, which re-stamps this onto the float's border).
+  if marked > 0 then parts[#parts + 1] = ("%d marked"):format(marked) end
   return "Reposcope Status — " .. table.concat(parts, " · ")
 end
 
@@ -388,6 +443,52 @@ local function _redraw(bufnr, records)
   local lines, hls = M.render(records)
   _set_buffer_lines(bufnr, lines, hls)
   if cursor then pcall(vim.api.nvim_win_set_cursor, win, cursor) end
+
+  -- A float's title is stamped once at open, but the summary it carries counts
+  -- marks and dirty repositories -- both of which change while the window
+  -- stays open. Re-stamping here is what keeps "3 marked" honest.
+  if win ~= -1 then
+    local ok, cfg = pcall(vim.api.nvim_win_get_config, win)
+    if ok and cfg and cfg.relative and cfg.relative ~= "" and cfg.title then
+      cfg.title = M.summary(records)
+      pcall(vim.api.nvim_win_set_config, win, cfg)
+    end
+  end
+end
+
+---@private
+---@internal
+---Row indices of the marked records, in row order.
+---@param records RepoStatusRecord[]
+---@return integer[]
+local function _marked_indices(records)
+  local out = {}
+  for i, r in ipairs(records) do
+    if _marks[r.path] then out[#out + 1] = i end
+  end
+  return out
+end
+
+---@private
+---@internal
+---Sets or clears the mark on every record whose row falls inside [first, last].
+---Line 1 is the header, so row N holds record N-1 (see `_record_at_cursor`).
+---@param records RepoStatusRecord[]
+---@param first integer First buffer line, 1-based
+---@param last integer Last buffer line, 1-based
+---@param marked boolean Mark when true, unmark when false
+---@return integer changed Number of records whose mark actually flipped
+local function _mark_rows(records, first, last, marked)
+  local value = marked or nil
+  local changed = 0
+  for line = first, last do
+    local record = records[line - 1]
+    if record and _marks[record.path] ~= value then
+      _marks[record.path] = value
+      changed = changed + 1
+    end
+  end
+  return changed
 end
 
 ---@private
@@ -421,6 +522,11 @@ end
 ---@param action_fn fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil One of `repo_actions.push/pull/fetch`
 ---@return nil
 local function _run_row_action(bufnr, records, verb, action_fn)
+  if _bulk_running then
+    notify(("[reposcope] A bulk %s is running - wait for it to finish"):format(_bulk_running), 3)
+    return
+  end
+
   local line = vim.api.nvim_win_get_cursor(0)[1]
   local idx = line - 1
   local record = records[idx]
@@ -454,6 +560,188 @@ local function _run_row_action(bufnr, records, verb, action_fn)
   end)
 end
 
+---@private
+---@internal
+---Runs `action_fn` against every record named by `indices`, one after another,
+---then reports a single summary.
+---
+---Sequential, not parallel: `git push` over forty clones at once is a rate
+---limit, forty credential prompts, or both, and the queue is the same shape
+---`repo_updater` already uses for a directory-wide update. Cancelling through
+---the progress handle stops the queue from starting further repositories
+---rather than killing the one in flight -- interrupting a `pull` mid-write is
+---the one outcome worth avoiding.
+---@param bufnr integer
+---@param records RepoStatusRecord[]
+---@param verb string Human-readable action name, used in notifications
+---@param action_fn fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil
+---@param indices integer[] Record indices to act on, in row order
+---@return nil
+local function _run_bulk(bufnr, records, verb, action_fn, indices)
+  local total = #indices
+  if total == 0 then return end
+
+  if _bulk_running then
+    notify(("[reposcope] A bulk %s is already running"):format(_bulk_running), 3)
+    return
+  end
+  for _, idx in ipairs(indices) do
+    if _pending[idx] then
+      notify(("[reposcope] %s: %s already running"):format(records[idx].name, _pending[idx]), 3)
+      return
+    end
+  end
+
+  -- Every target is marked pending up front, so the whole batch is visible as
+  -- a column of spinners instead of one row lighting up at a time with no clue
+  -- what else is queued behind it.
+  _bulk_running = verb
+  for _, idx in ipairs(indices) do
+    _pending[idx] = verb
+  end
+  _redraw(bufnr, records)
+
+  local handle = progress.create(("%s %d repositories"):format(verb, total), total)
+  local cancelled = false
+  if handle then handle:on_cancel(function() cancelled = true end) end
+
+  ---@type string[]
+  local errors = {}
+  local succeeded, position = 0, 1
+
+  local function finish()
+    _bulk_running = nil
+    -- Clears the queue's own spinners as well as the cancelled tail's.
+    for _, idx in ipairs(indices) do
+      _pending[idx] = nil
+    end
+    _redraw(bufnr, records)
+
+    if handle then handle:finish(("%s: %d of %d repositories"):format(verb, succeeded, total)) end
+    if #errors > 0 then
+      notify(
+        ("[reposcope] %s: %d of %d failed:\n\n%s"):format(verb, #errors, total, table.concat(errors, "\n")),
+        vim.log.levels.WARN
+      )
+    else
+      notify(("[reposcope] %s: %d repositor%s done"):format(verb, succeeded, succeeded == 1 and "y" or "ies"), 3)
+    end
+  end
+
+  local function step()
+    if cancelled or position > total then
+      finish()
+      return
+    end
+
+    local idx = indices[position]
+    local record = records[idx]
+    if handle then handle:update({ text = record.name, current = position - 1, total = total }) end
+
+    action_fn(record.path, function(ok, err)
+      vim.schedule(function()
+        _pending[idx] = nil
+        if ok then
+          succeeded = succeeded + 1
+        else
+          errors[#errors + 1] = record.name .. ": " .. vim.trim(err or "unknown error")
+        end
+
+        -- The row is re-read *before* the queue moves on, not alongside it:
+        -- fired off in parallel, the last repository's re-read would still be
+        -- in flight when `finish()` draws the table and announces the batch as
+        -- done, leaving that one row showing the state it had before its own
+        -- push.
+        status_one(record.path, function(new_record)
+          vim.schedule(function()
+            if new_record then records[idx] = new_record end
+            _redraw(bufnr, records)
+            position = position + 1
+            step()
+          end)
+        end)
+      end)
+    end)
+  end
+
+  step()
+end
+
+---@private
+---@internal
+---Asks before starting a batch, then runs it.
+---
+---Confirmed where the single-row actions are not: a row action names its
+---target by the line the cursor is on, whereas a batch touches repositories
+---that may be scrolled off screen entirely -- so the count is the only thing
+---that can state what is about to happen, and it has to be stated.
+---@param bufnr integer
+---@param records RepoStatusRecord[]
+---@param verb string
+---@param action_fn fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil
+---@param indices integer[]
+---@param what string Noun phrase describing the target set, e.g. "marked repositories"
+---@return nil
+local function _confirm_bulk(bufnr, records, verb, action_fn, indices, what)
+  if #indices == 0 then
+    notify("[reposcope] No repositories to " .. verb, 3)
+    return
+  end
+
+  kit.confirm({
+    question = ("%s%s %d %s?"):format(verb:sub(1, 1):upper(), verb:sub(2), #indices, what),
+    on_answer = function(yes)
+      if yes then _run_bulk(bufnr, records, verb, action_fn, indices) end
+    end,
+  })
+end
+
+---@private
+---@internal
+---The row keys' two scales: with marks set, act on the marked repositories;
+---with none set, act on the row under the cursor exactly as before.
+---@param ctx StatusRowContext
+---@param verb string
+---@param action_fn fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil
+---@return nil
+local function _run_marked_or_row(ctx, verb, action_fn)
+  local marked = _marked_indices(ctx.records)
+  if #marked == 0 then
+    _run_row_action(ctx.bufnr, ctx.records, verb, action_fn)
+    return
+  end
+  _confirm_bulk(
+    ctx.bufnr,
+    ctx.records,
+    verb,
+    action_fn,
+    marked,
+    ("marked repositor%s"):format(#marked == 1 and "y" or "ies")
+  )
+end
+
+---@private
+---@internal
+---The `g`-prefixed forms: every repository in the overview, marks ignored.
+---@param ctx StatusRowContext
+---@param verb string
+---@param action_fn fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil
+---@return nil
+local function _run_all(ctx, verb, action_fn)
+  local indices = {}
+  for i = 1, #ctx.records do
+    indices[i] = i
+  end
+  _confirm_bulk(
+    ctx.bufnr,
+    ctx.records,
+    verb,
+    action_fn,
+    indices,
+    ("repositor%s in this overview"):format(#indices == 1 and "y" or "ies")
+  )
+end
+
 ---Context handed to every row keymap handler.
 ---@class StatusRowContext
 ---@field bufnr integer
@@ -466,6 +754,7 @@ end
 ---@field label? string Short "key desc" text for the winbar legend; omitted = listed only under `?`
 ---@field desc string Full description, used as the keymap's `desc`
 ---@field run fun(ctx: StatusRowContext): nil
+---@field visual? fun(ctx: StatusRowContext): nil Optional Visual-mode variant, bound on the same keys
 
 ---Sort modes cycled by `s`, in cycle order. "discovery" restores the original
 ---directory order, so the cycle is always reversible without a rescan.
@@ -540,6 +829,11 @@ end
 ---@param ctx StatusRowContext
 ---@return nil
 local function _rescan_all(ctx)
+  if _bulk_running then
+    notify(("[reposcope] Cannot re-scan while a bulk %s is running"):format(_bulk_running), 3)
+    return
+  end
+
   local dir = (_last_view and _last_view.opts and _last_view.opts.dir) or nil
   notify("[reposcope] Re-scanning repositories ...", 3)
   require("reposcope.utils.repo_status").status_all(dir, function(records)
@@ -576,22 +870,88 @@ local ROW_KEYMAPS = {
     end,
   },
   {
+    keys = { "m" },
+    label = "m Mark",
+    desc = "Toggle the mark on the repository under cursor (Visual: mark the selection)",
+    run = function(ctx)
+      local record = _record_at_cursor(ctx.records)
+      if not record then return end
+      _marks[record.path] = (not _marks[record.path]) or nil
+      _redraw(ctx.bufnr, ctx.records)
+    end,
+    -- Marking a run of repositories one `m` at a time is exactly the job a
+    -- Visual selection over a table already does well; `V}m` beats twelve
+    -- keystrokes. Visual mode is left first, because the redraw below changes
+    -- the buffer under a selection that would otherwise linger over it.
+    visual = function(ctx)
+      local first, last = vim.fn.line("v"), vim.fn.line(".")
+      if first > last then
+        first, last = last, first
+      end
+      vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<Esc>", true, false, true), "n", false)
+
+      local changed = _mark_rows(ctx.records, first, last, true)
+      _redraw(ctx.bufnr, ctx.records)
+      notify(("[reposcope] Marked %d repositor%s"):format(changed, changed == 1 and "y" or "ies"), 3)
+    end,
+  },
+  {
+    keys = { "M" },
+    desc = "Mark every repository, or clear all marks when everything is marked",
+    run = function(ctx)
+      local total = #ctx.records
+      local marked = #_marked_indices(ctx.records)
+
+      -- One key for both directions: "mark all" is only ever wanted when
+      -- something is still unmarked, and once everything is marked the only
+      -- remaining use for the key is to undo that.
+      if total > 0 and marked == total then
+        _mark_rows(ctx.records, 2, total + 1, false)
+        notify("[reposcope] Cleared all marks", 3)
+      else
+        _mark_rows(ctx.records, 2, total + 1, true)
+        notify(("[reposcope] Marked %d repositor%s"):format(total, total == 1 and "y" or "ies"), 3)
+      end
+      _redraw(ctx.bufnr, ctx.records)
+    end,
+  },
+  {
     keys = { "p" },
     label = "p Push",
-    desc = "Push repository under cursor",
-    run = function(ctx) _run_row_action(ctx.bufnr, ctx.records, "push", repo_actions.push) end,
+    desc = "Push the marked repositories, or the one under cursor when nothing is marked",
+    run = function(ctx) _run_marked_or_row(ctx, "push", repo_actions.push) end,
   },
   {
     keys = { "P" },
     label = "P Pull",
-    desc = "Pull repository under cursor",
-    run = function(ctx) _run_row_action(ctx.bufnr, ctx.records, "pull", repo_actions.pull) end,
+    desc = "Pull the marked repositories, or the one under cursor when nothing is marked",
+    run = function(ctx) _run_marked_or_row(ctx, "pull", repo_actions.pull) end,
   },
   {
     keys = { "f" },
     label = "f Fetch",
-    desc = "Fetch repository under cursor",
-    run = function(ctx) _run_row_action(ctx.bufnr, ctx.records, "fetch", repo_actions.fetch) end,
+    desc = "Fetch the marked repositories, or the one under cursor when nothing is marked",
+    run = function(ctx) _run_marked_or_row(ctx, "fetch", repo_actions.fetch) end,
+  },
+  {
+    keys = { "gp" },
+    desc = "Push every repository in the overview (marks ignored)",
+    run = function(ctx) _run_all(ctx, "push", repo_actions.push) end,
+  },
+  {
+    keys = { "gP" },
+    desc = "Pull every repository in the overview (marks ignored)",
+    run = function(ctx) _run_all(ctx, "pull", repo_actions.pull) end,
+  },
+  {
+    keys = { "gf" },
+    desc = "Fetch every repository in the overview (marks ignored)",
+    run = function(ctx) _run_all(ctx, "fetch", repo_actions.fetch) end,
+  },
+  {
+    keys = { "gu" },
+    desc = "Update every repository in the overview: fetch + ff-only pull (marks ignored)",
+    run = function(ctx) _run_all(ctx, "update", repo_actions.update) end,
   },
   {
     keys = { "S" },
@@ -607,6 +967,13 @@ local ROW_KEYMAPS = {
     label = "s Sort",
     desc = "Cycle sort order (discovery / name / state / age)",
     run = function(ctx)
+      -- `_pending` is keyed by row index, so reordering mid-batch would leave
+      -- the spinners pointing at repositories that are not the ones running.
+      if _bulk_running then
+        notify(("[reposcope] Cannot re-sort while a bulk %s is running"):format(_bulk_running), 3)
+        return
+      end
+
       _sort_index = (_sort_index % #SORT_MODES) + 1
       local mode = SORT_MODES[_sort_index]
       _sort_records(ctx.records, mode, _discovery_order)
@@ -713,6 +1080,7 @@ local function _attach_row_keymaps(bufnr, records, before_open)
   for _, entry in ipairs(ROW_KEYMAPS) do
     for _, lhs in ipairs(entry.keys) do
       map("n", lhs, function() entry.run(ctx) end, mo, entry.desc)
+      if entry.visual then map("x", lhs, function() entry.visual(ctx) end, mo, entry.desc) end
     end
   end
 end

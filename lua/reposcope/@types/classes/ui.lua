@@ -19,8 +19,10 @@
 ---@field set_viewer_keymap fun(buf: integer): nil Sets keymaps for the viewer buffer (e.g., 'q' to close')
 
 ---@class ActionStatusViewModule
----@field render fun(records: RepoStatusRecord[]): string[] Renders status records into an aligned, column-formatted block
----@field show fun(records: RepoStatusRecord[], opts?: { output?: StatusOutputMode, path?: string }): nil Renders and displays status records via the requested output backend
+---@field render fun(records: RepoStatusRecord[]): string[], StatusHighlight[] Renders status records into an aligned, column-formatted block, plus its highlight spans
+---@field summary fun(records: RepoStatusRecord[]): string One-line summary used as the overview's title (counts, and how many rows are marked)
+---@field show fun(records: RepoStatusRecord[], opts?: { output?: StatusOutputMode, path?: string, dir?: string }): nil Renders and displays status records via the requested output backend
+---@field reopen fun(): boolean Re-displays the cached overview without re-scanning; false when nothing has been shown yet
 
 ---@class ActionHelpViewModule
 ---@field show fun(): nil Shows the `?` keymap cheatsheet, or closes it if already open (toggle)
