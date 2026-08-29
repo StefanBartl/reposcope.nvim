@@ -1,10 +1,9 @@
 # Features
 
 A `docs/FEATURES_FORMAT.md`-shaped catalog of Reposcope's shipped features,
-grouped by theme. Source of truth for *what shipped* stays
-[`docs/ROADMAP.md`](../ROADMAP.md) ("Shipped" section); this folder exists
-so `documentation.nvim`'s Features tab (and any human reading this repo) has
-a per-feature summary with the module, config key, and command behind it.
+grouped by theme. It is the source of truth for what shipped, and gives
+`documentation.nvim`'s Features tab (and any human reading this repo) a
+per-feature summary with the module, config key, and command behind it.
 
 ## Files
 

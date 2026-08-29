@@ -83,7 +83,6 @@ Then launch the UI:
 - [Authentication](docs/AUTHENTICATION.md) — using a `GITHUB_TOKEN` with the `gh` backend.
 - [Architecture](docs/ARCHITECTURE.md) — module layout overview.
 - [Development & Debugging](docs/DEVELOPMENT.md) — dev mode, logging, and debug file locations.
-- [Roadmap](docs/ROADMAP.md) — shipped features and what's planned next.
 - [Contributing](docs/CONTRIBUTING.md) — how to get involved.
 
 ---
