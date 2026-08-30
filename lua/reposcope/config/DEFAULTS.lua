@@ -39,6 +39,7 @@ local defaults = {
     backspace = "<BS>", -- Backspace (disabled at column 0, line 2)
     preview_scroll_down = "<C-d>", -- Scroll the README preview down (stays focused in the prompt)
     preview_scroll_up = "<C-u>", -- Scroll the README preview up (stays focused in the prompt)
+    preview_image = "<C-p>", -- Draw the README's image over the preview; needs images.nvim with `display.remote.enabled = true`
     help = "?", -- Show the keymap cheatsheet (normal mode only, so "?" still types in insert mode)
     toggle_favorite = "<C-f>", -- Toggle favorite for the currently selected repository
   }, -- Set an action to `false` or `""` to disable it

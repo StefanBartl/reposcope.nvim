@@ -55,6 +55,50 @@ prompt, so browsing a long README needs no window switch.
 - **Config:** `prompt_keymaps.preview_scroll_up`/`preview_scroll_down`
   (default `<C-u>`/`<C-d>`)
 
+## README image in the preview (`<C-p>`, needs images.nvim)
+
+Draws the screenshot or demo GIF a repository's README references over the
+preview pane, instead of leaving the reader with link text. A soft dependency:
+without [images.nvim](https://github.com/StefanBartl/images.nvim) everything
+else works unchanged, and the key says what is missing.
+
+**It is a keypress rather than part of the preview, and that came out of a
+measurement** (2026-08-29, 25 repositories — 20 widely-used Neovim plugins and
+five of this author's):
+
+| | |
+|---|---|
+| carried a real image once badges were excluded | 8 of 25 |
+| cost of the ones that did | 883 ms and 232 kB on average, 925 kB worst case |
+| cost of finding out there is none | nothing |
+
+Detection reads the README that `readme_cache` already holds, so the
+two-thirds case with no image is answered locally, with no request and no
+latency. Only an explicit `<C-p>` ever reaches the network.
+
+The image itself lands in images.nvim's own SHA256-keyed cache, so a second
+look at the same repository costs nothing either. This feature adds no cache
+of its own — there is nothing left for one to hold.
+
+Badges are excluded (shields.io and the rest), and only raster formats are
+accepted: SVG display would make ImageMagick a requirement for the common
+path, and badges are overwhelmingly SVG, so the two rules reinforce each
+other. Relative paths (`./assets/demo.png`) are not resolved — measured at one
+repository in 25, and that one carried an absolute URL as well.
+
+The rejected alternative is recorded because it is the obvious thing to reach
+for next: GitHub's **social preview card** (`opengraph.githubassets.com`)
+allows 100 unauthenticated requests per IP and then answers `429` with
+`Retry-After: 900`. `readme_precache_count` alone spends 5 of those per
+search.
+
+- **Module:** `ui/preview/preview_image.lua` (`M.find_url`, `M.show`, `M.clear`)
+- **Config:** `prompt_keymaps.preview_image` (default `<C-p>`); needs
+  images.nvim's own `display.remote.enabled = true`
+- **Keymaps:** `<C-p>` — see [BINDINGS.md](../BINDINGS.md)
+- **Health:** `:checkhealth reposcope` reports whether images.nvim is present,
+  whether remote images are on, and the effective download cap
+
 ## List/preview highlight colors sourced from the active colortheme
 
 List selection/text colors and preview highlighting read from the active

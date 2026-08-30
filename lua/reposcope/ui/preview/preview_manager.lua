@@ -21,15 +21,23 @@ local readme_cache_get = require("reposcope.cache.readme_cache").get
 -- Preview-Specific Configuration and Banner
 local preview_config = require("reposcope.ui.preview.preview_config")
 local banner = require("reposcope.ui.preview.preview_banner").get_banner
+local preview_image_clear = require("reposcope.ui.preview.preview_image").clear
 -- Utilities and Debugging
 local notify = require("reposcope.utils.debug").notify
 
 --- Updates the preview buffer with the README of the given repository.
 --- Attempts to load the README from cache and inject it into the buffer.
+---
+--- Clears a drawn README image first (see `preview_image`): a terminal image is
+--- painted over the grid rather than into the buffer, so replacing the buffer's
+--- lines would leave the previous repository's screenshot hanging over the new
+--- one's text.
 ---@param owner string
 ---@param repo_name string
 ---@return nil
 function M.update_preview(owner, repo_name)
+  preview_image_clear()
+
   if type(owner) ~= "string" or owner == "" or type(repo_name) ~= "string" or repo_name == "" then
     notify("[reposcope] Invalid repository owner or name for preview update.", 4)
     return
@@ -93,9 +101,11 @@ function M.scroll(direction)
   nvim_win_call(win, function() vim.cmd("normal! " .. keys) end)
 end
 
----Set preview window to a blank line
+---Set preview window to a blank line, and remove a drawn README image with it.
 ---@return nil
 function M.clear_preview()
+  preview_image_clear()
+
   local buf = ui_state.buffers.preview
   if not buf or not nvim_buf_is_valid(buf) then
     notify("[reposcope] Cannot clear invalid preview buffer", 4)

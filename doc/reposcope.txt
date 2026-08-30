@@ -58,6 +58,7 @@ Advanced setup:
     },
     prompt_keymaps = {
       open_viewer = "<C-v>",            -- rebind or set to false/"" to disable
+      preview_image = "<C-p>",          -- README image over the preview (images.nvim)
       help = "?",                       -- keymap cheatsheet (normal mode only)
     },
     prompt_prefix_symbol = " " .. "\u{f002}" .. " ", -- needs a Nerd Font; e.g. "> " for plain terminals
@@ -156,6 +157,7 @@ Inside the Reposcope UI:
 | `<CR>`      | Trigger search                              |
 | `<C-u>`     | Scroll the README preview up (stays in the prompt)   |
 | `<C-d>`     | Scroll the README preview down (stays in the prompt) |
+| `<C-p>`     | Draw the README's image over the preview (images.nvim) |
 | `<C-f>`     | Toggle favorite for the selected repository          |
 | `?`         | Show the keymap cheatsheet (normal mode only)        |
 
@@ -163,6 +165,15 @@ All prompt keymaps are configurable/disableable via `prompt_keymaps` in
 |reposcope-config|, and carry a `desc` so which-key picks them up
 automatically if installed. See `docs/BINDINGS.md` in the repository for
 the full, authoritative table.
+
+`<C-p>` needs images.nvim with `display.remote.enabled = true`. Without it
+every other key behaves the same and `<C-p>` says what is missing. It is a
+key rather than something the preview does on its own because only 8 of 25
+measured repositories carry a real README image, and the ones that do cost
+roughly 900ms and 230kB. Finding out that a repository has none costs
+nothing: the check runs against the README already in Reposcope's cache.
+See `docs/CONFIGURATION.md` for the measurement and the images.nvim
+settings it argues for.
 
 ==============================================================================
 COMMANDS                                                  *reposcope-commands*

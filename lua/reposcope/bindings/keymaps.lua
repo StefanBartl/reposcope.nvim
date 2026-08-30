@@ -193,6 +193,11 @@ local prompt_keymap_actions = {
     desc = "Scroll README preview up",
     rhs = function() require("reposcope.ui.preview.preview_manager").scroll(-1) end,
   },
+  preview_image = {
+    mode = { "n", "i" },
+    desc = "Show the README's image in the preview (needs images.nvim)",
+    rhs = function() require("reposcope.ui.preview.preview_image").show() end,
+  },
   help = {
     mode = "n",
     desc = "Show the keymap cheatsheet",
@@ -237,6 +242,7 @@ local ACTION_ORDER = {
   "backspace",
   "preview_scroll_up",
   "preview_scroll_down",
+  "preview_image",
   "help",
   "toggle_favorite",
 }

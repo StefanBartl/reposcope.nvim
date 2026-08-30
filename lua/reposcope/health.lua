@@ -61,6 +61,38 @@ function M.check()
     health.warn("GITHUB_TOKEN not set – GitHub API may be rate-limited")
   end
 
+  ---------------------------------------------------------------------------
+  -- README image preview (optional, images.nvim)
+  ---------------------------------------------------------------------------
+  local ok_images, images_config = pcall(require, "images.config")
+  if not ok_images then
+    health.info("images.nvim not installed – the README image preview is unavailable (nothing else is affected)")
+  else
+    local ok_cfg, cfg = pcall(images_config.get)
+    local remote = ok_cfg and cfg and cfg.display and cfg.display.remote or {}
+
+    if remote.enabled then
+      -- The download cap lives in images.nvim, not here: the transfer happens
+      -- inside `images.remote.fetch`, which reads its own config. Reporting
+      -- the effective value is the only honest thing this check can do about
+      -- size — a cap applied on this side would refuse to draw bytes that
+      -- have already been paid for.
+      local mb = (remote.max_bytes or (20 * 1024 * 1024)) / 1024 / 1024
+      health.ok(("images.nvim remote images enabled (download cap %.1f MB)"):format(mb))
+      if mb > 2 then
+        health.info(
+          "README images measured 232 kB on average, 925 kB worst case; lowering "
+            .. "`display.remote.max_bytes` in images.nvim caps what one preview can pull"
+        )
+      end
+    else
+      health.info(
+        "images.nvim installed but remote images are off – set `display.remote.enabled = true` "
+          .. "there to use the README image preview"
+      )
+    end
+  end
+
   require("lib.nvim.bindings.usercmd.composer").checkhealth("Reposcope")
 end
 

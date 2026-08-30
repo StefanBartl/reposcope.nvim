@@ -48,6 +48,7 @@ end, { desc = "Open Reposcope" })
 | `<Tab>`       | i    | Cycle to next prompt field            |
 | `<S-Tab>`     | i    | Cycle to previous prompt field        |
 | `<C-u>`/`<C-d>` | n/i | Scroll the README preview, staying in the prompt |
+| `<C-p>`       | n/i  | Draw the README's image over the preview (needs images.nvim) |
 | `<C-f>`       | n/i  | Toggle favorite for the selected repository |
 | `?`           | n    | Show the keymap cheatsheet            |
 

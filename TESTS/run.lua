@@ -44,6 +44,7 @@ local specs = {
   "repository_cache_spec.lua",
   "config_spec.lua",
   "status_view_spec.lua",
+  "preview_image_spec.lua",
 }
 
 local failed = 0

@@ -81,6 +81,7 @@
 ---| "backspace"
 ---| "preview_scroll_up"
 ---| "preview_scroll_down"
+---| "preview_image"
 ---| "help"
 ---| "toggle_favorite"
 

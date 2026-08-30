@@ -59,6 +59,7 @@ these keys are also bound, so the behaviour there is unchanged.
 | `backspace`            | `<BS>`                         | n, i   | Backspace (disabled at column 0, line 2 of prompt)       |
 | `preview_scroll_up`    | `<C-u>`                        | n, i   | Scroll the README preview up, without leaving the prompt |
 | `preview_scroll_down`  | `<C-d>`                        | n, i   | Scroll the README preview down, without leaving the prompt |
+| `preview_image`        | `<C-p>`                        | n, i   | Draw the README's screenshot over the preview — needs [images.nvim](https://github.com/StefanBartl/images.nvim) with `display.remote.enabled = true` |
 | `help`                 | `?`                            | n      | Show the `?` keymap cheatsheet (normal mode only, so `?` still types in insert mode) |
 | `toggle_favorite`      | `<C-f>`                        | n, i   | Toggle favorite for the currently selected repository (see `:Reposcope favorites`) |
 

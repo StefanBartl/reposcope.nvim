@@ -25,6 +25,7 @@ require("reposcope").setup({
   },
   prompt_keymaps = {
     open_viewer = "<C-v>",                  -- Rebind or set to false/"" to disable; see docs/BINDINGS.md
+    preview_image = "<C-p>",                -- README image over the preview; needs images.nvim (see below)
     help = "?",                             -- Keymap cheatsheet (normal mode only)
   },
   prompt_prefix_symbol = " " .. "\u{f002}" .. " ", -- Symbol in the `prefix` field; needs a Nerd Font. Set e.g. "> " for plain terminals
@@ -149,3 +150,62 @@ require("reposcope").setup({
   readme_precache_count = 5, -- 0 disables pre-caching
 })
 ```
+
+---
+
+## README Image Preview
+
+`<C-p>` in the prompt draws the screenshot or demo GIF a repository's README
+references over the preview pane. It is a **soft dependency** on
+[images.nvim](https://github.com/StefanBartl/images.nvim): without it every
+other part of Reposcope works unchanged, and the key says what is missing.
+
+```lua
+require("reposcope").setup({
+  prompt_keymaps = {
+    preview_image = "<C-p>", -- false/"" disables the action entirely
+  },
+})
+```
+
+images.nvim needs remote images turned on — they are off by default there, on
+the same privacy grounds mail clients block external images:
+
+```lua
+require("images").setup({
+  display = {
+    remote = {
+      enabled = true,
+      -- The download cap for one image. images.nvim's default is 20 MB, which
+      -- is sane for a local hover and generous for a preview pane: README
+      -- images measured 232 kB on average and 925 kB worst case.
+      max_bytes = 1024 * 1024,
+    },
+  },
+})
+```
+
+**Why a keypress and not part of the preview.** Measured on 2026-08-29 over 25
+repositories (20 widely-used Neovim plugins plus five of this author's): only
+**8 of 25** carried a real image once badges were excluded, and the ones that
+did cost **883 ms and 232 kB on average**. That is a reasonable price for
+something asked for and the wrong one for something that fires because the
+selection moved.
+
+Finding out that a repository has *no* image costs nothing at all: the check
+runs against the README already sitting in Reposcope's own cache, so the
+two-thirds case is answered locally with no request. Nothing is fetched until
+`<C-p>` is pressed.
+
+**No cache is added for this.** The image itself persists in images.nvim's
+SHA256-keyed cache across restarts, and the detection result is derived from a
+README this plugin already caches on disk — caching "this repository has no
+image" would cache something that is free to recompute.
+
+`:checkhealth reposcope` reports whether images.nvim is installed, whether
+remote images are enabled, and the effective download cap.
+
+> ℹ️ GitHub's **social preview card** was measured alongside this and
+> rejected: `opengraph.githubassets.com` allows 100 unauthenticated requests
+> per IP and then answers `429` with `Retry-After: 900`. `readme_precache_count`
+> alone spends 5 of those per search.

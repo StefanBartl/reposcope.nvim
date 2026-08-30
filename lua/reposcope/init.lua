@@ -115,6 +115,11 @@ end
 ---Closes the Reposcope UI. Restores the caller window, closes all Reposcope windows, and unsets keymaps.
 ---@return nil
 function M.close_ui()
+  -- A drawn README image sits on the terminal grid, not in a buffer, so
+  -- deleting the buffers below does not take it with them. Clear it first,
+  -- while the windows this ran against still exist.
+  require("reposcope.ui.preview.preview_image").clear()
+
   -- save row number in list
   ui_state.list.last_selected_line = list_window.highlighted_line
 
