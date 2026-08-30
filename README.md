@@ -86,3 +86,7 @@ Then launch the UI:
 - [Contributing](docs/CONTRIBUTING.md) — how to get involved.
 
 ---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
