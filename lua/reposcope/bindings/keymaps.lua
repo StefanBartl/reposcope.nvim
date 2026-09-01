@@ -7,6 +7,10 @@ local M = {}
 -- Vim Utilities
 local tbl_extend = vim.tbl_extend
 local list_extend = vim.list_extend
+-- `vim.keymap.set` is not optional, but reading it through a file-local made
+-- LuaLS treat the call sites below as nil-able; the two `del_km`/`set_km`
+-- aliases stay for the other call shapes.
+---@type fun(mode: string|string[], lhs: string, rhs: string|function, opts?: table)
 local set_km = vim.keymap.set
 local del_km = vim.keymap.del
 local nvim_get_current_buf = vim.api.nvim_get_current_buf
@@ -434,7 +438,7 @@ function M.set_user_keymaps(map_cfg, opts)
   map_cfg = map_cfg or cfg_get_option("keymaps")
   opts = opts or cfg_get_option("keymap_opts")
 
-  ---@param what "open"|"close"
+  ---@param what "open"|"clos" The verb stem the error message appends "ing" to -- "clos" on purpose, so that "closing" comes out and not "closeing".
   ---@param fn_name string
   ---@return fun(): nil
   local function ui(what, fn_name)

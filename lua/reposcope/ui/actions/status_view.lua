@@ -165,11 +165,17 @@ local function _define_highlights()
   -- header instead would have needed side rules that cannot join anything: the
   -- popup's frame is the window's own border, drawn outside the buffer, so a
   -- drawn line inside it stops short of the frame and reads as broken.
+  -- Built rather than mutated: `nvim_get_hl` answers with the *read* side of a
+  -- highlight (each attribute `true?`, because it only reports the ones that
+  -- are set), `nvim_set_hl` takes the *write* side, which can also unset them.
+  -- Two classes for one table, and LuaLS refuses to cast between them.
   local title = vim.api.nvim_get_hl(0, { name = "Title", link = false })
-  title.link = nil
-  title.bold = true
-  title.default = true
-  vim.api.nvim_set_hl(0, HL.header, title)
+  local header = vim.tbl_extend("force", {}, title, {
+    link = nil,
+    bold = true,
+    default = true,
+  })
+  vim.api.nvim_set_hl(0, HL.header, header)
 end
 
 _define_highlights()

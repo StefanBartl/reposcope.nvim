@@ -27,6 +27,8 @@ return function(H)
   H.eq(#deduped, 3, "duplicates are removed")
   H.eq(deduped[1], "a", "and the first occurrence keeps its position")
   H.eq(deduped[2], "b", "order is preserved")
+  -- Deliberately the wrong type: coping with it is what the case tests.
+  ---@diagnostic disable-next-line: param-type-mismatch
   H.eq(#core.dedupe_list("not a table"), 0, "a non-table yields an empty list")
 
   -- put_to_front_if_present ---------------------------------------------------
@@ -41,6 +43,8 @@ return function(H)
   H.eq(#absent, 2, "a value that is not there changes nothing")
   H.eq(absent[1], "curl", "and the list is returned as it was")
 
+  -- Same here.
+  ---@diagnostic disable-next-line: param-type-mismatch
   H.eq(#core.put_to_front_if_present("nope", "x"), 0, "a non-list yields an empty list")
 
   -- ensure_string -------------------------------------------------------------

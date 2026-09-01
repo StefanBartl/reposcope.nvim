@@ -21,7 +21,10 @@ return function(H)
   -- Empty and invalid input ---------------------------------------------------
   H.eq(github.build({}), "", "an empty table builds an empty query")
   H.eq(github.build({ owner = "" }), "", "an empty value contributes nothing")
+  -- Both calls pass the wrong type on purpose: not crashing is the point.
+  ---@diagnostic disable-next-line: param-type-mismatch
   H.eq(github.build(nil), "", "and a non-table is not a crash")
+  ---@diagnostic disable-next-line: param-type-mismatch
   H.eq(github.build("string"), "", "whatever the caller passes")
 
   -- Composition ---------------------------------------------------------------

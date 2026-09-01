@@ -42,7 +42,9 @@ function M.resolve_base_dir(override)
 
   if not dir or dir == "" then return nil end
 
-  return fnamemodify(expand(dir), ":p"):gsub("[\\/]+$", "")
+  -- Parenthesised: `gsub` answers with the string *and* the replacement count,
+  -- and this function promises one value.
+  return (fnamemodify(expand(dir), ":p"):gsub("[\\/]+$", ""))
 end
 
 ---Collects all immediate subdirectories of `base_dir` that are git repositories.
