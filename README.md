@@ -46,6 +46,7 @@ Telescope-inspired interface.
 | `:Reposcope favorites` | Save favorite repositories, including a README snapshot for offline viewing | [Commands](docs/COMMANDS.md) |
 | `:Reposcope session` | Persist/restore the last search, filter and sort mode across restarts | [Commands](docs/COMMANDS.md) |
 | `:Reposcope queries` | Track and list your most-frequent searches | [Commands](docs/COMMANDS.md) |
+| `owner/repo` hover | With [hover.nvim](https://github.com/StefanBartl/hover.nvim) installed, resting the cursor on a slug previews that repository's cached README — anywhere, not just in the picker | [hover.nvim integration](docs/hover.md) |
 | `:Reposcope providers` / `stats` / `toggle-dev` | List providers, request metrics, and developer/debug tooling | [Commands](docs/COMMANDS.md) |
 
 ---
@@ -75,6 +76,7 @@ Then launch the UI:
 ## Documentation
 
 - [Features](docs/FEATURES.md) — full feature list and a demo video.
+- [hover.nvim integration](docs/hover.md) — resting the cursor on `owner/repo` previews that repository's cached README, anywhere in Neovim.
 - [Installation](docs/INSTALLATION.md) — install with Lazy.nvim or packer.nvim.
 - [Configuration](docs/CONFIGURATION.md) — all available setup options and defaults.
 - [Commands](docs/COMMANDS.md) — UI keymaps and the full `:Reposcope` subcommand reference.

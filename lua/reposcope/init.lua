@@ -59,6 +59,12 @@ function M.setup(opts)
   -- but without this a fresh session still pays a disk read on the first
   -- navigation to each repository even though the content was already there.
   require("reposcope.cache.readme_cache").warm_ram_from_file_cache()
+
+  -- Tell hover.nvim that `owner/repo` is a target, when it is one reposcope
+  -- has cached. Soft: without hover.nvim this does nothing, and hover.nvim
+  -- never names this plugin -- contributions arrive through its registry.
+  -- `hover = false` in the spec turns it off.
+  if config.get_option("hover") ~= false then require("reposcope.hover").setup() end
 end
 
 ---Opens the Reposcope UI. Captures caller position, creates background, preview, list, and prompt windows, and sets keymaps.

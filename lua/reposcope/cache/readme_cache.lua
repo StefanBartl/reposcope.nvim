@@ -169,6 +169,19 @@ function M.set_file(owner, repo_name, readme_text)
   return true
 end
 
+---Where a repository's cached README lives on disk, whether or not it is
+--- there yet.
+---
+--- Public because a consumer that wants the README as a *file* rather than as
+--- a string -- hover.nvim's preview, which reads the head of a markdown file
+--- -- would otherwise have to rebuild this path from the directory and the
+--- naming scheme. That is a second source of truth for the layout, and it
+--- falls behind the first one the moment either changes.
+---@param owner string
+---@param repo_name string
+---@return string path
+function M.file_path(owner, repo_name) return _get_file_path(owner, repo_name) end
+
 ---Loads README content from the file cache
 ---@param owner string
 ---@param repo_name string

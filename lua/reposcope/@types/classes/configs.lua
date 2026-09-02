@@ -16,6 +16,7 @@
 ---@field gitlab_token? string Optional GitLab token for authenticated API calls
 ---@field codeberg_token? string Optional Codeberg token for authenticated API calls
 ---@field results_limit number Maximum number of search results to show
+---@field hover boolean Register a hover.nvim source for `owner/repo` slugs whose README is cached (a no-op without hover.nvim)
 ---@field layout LayoutType Default layout for result view
 ---@field clone CloneOptions Options related to downloading/cloning repositories
 ---@field keymaps table<string, string> Custom key mappings for plugin actions
@@ -47,6 +48,7 @@
 ---@field gitlab_token? string
 ---@field codeberg_token? string
 ---@field results_limit? number
+---@field hover? boolean
 ---@field layout? LayoutType
 ---@field clone? CloneOptions
 ---@field keymaps? table<string, string>

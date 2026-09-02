@@ -19,6 +19,12 @@ local defaults = {
     std_dir = env_get("REPOS_DIR") or "~/temp", -- Standard path for cloning repositories (defaults to $REPOS_DIR, if set)
     type = "", -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
   },
+  -- Register a hover.nvim source, so resting the cursor on `owner/repo`
+  -- anywhere -- a plugin spec, a lockfile, a note -- previews that
+  -- repository's cached README. Answers only for repositories reposcope has
+  -- already fetched, never for arbitrary slug-shaped text. A no-op without
+  -- hover.nvim installed. See docs/hover.md.
+  hover = true,
   keymaps = {
     open = "<leader>rs", -- Set the keymap to open Repsocope
     close = "<leader>rc", -- Set the keymap to close Reposcope
