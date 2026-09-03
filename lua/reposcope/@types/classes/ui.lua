@@ -74,6 +74,7 @@
 ---@field close_window fun(): nil Closes the list window
 ---@field configure fun(): nil Configures the list buffer with UI settings (no editing, restricted keymaps)
 ---@field apply_layout fun(): nil Applies layout and styling to the list window
+---@field reveal_line fun(index: number): nil Scrolls the list window so the given line is inside the viewport
 ---@field highlight_selected fun(index: number): nil Highlights the selected list entry
 ---@field set_highlighted_line fun(line: number): nil Sets the highlighted line in the list UI  --NIUY
 ---@field get_highlighted_entry fun(): string|nil Returns the currently highlighted list entry  --NIUY

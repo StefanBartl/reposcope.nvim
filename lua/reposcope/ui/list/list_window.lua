@@ -16,8 +16,10 @@ local nvim_win_close = api.nvim_win_close
 local nvim_open_win = api.nvim_open_win
 local nvim_set_hl = vim.api.nvim_set_hl
 local nvim_buf_get_lines = vim.api.nvim_buf_get_lines
+local nvim_buf_line_count = vim.api.nvim_buf_line_count
 local nvim_buf_clear_namespace = vim.api.nvim_buf_clear_namespace
 local nvim_buf_set_extmark = vim.api.nvim_buf_set_extmark
+local nvim_win_set_cursor = vim.api.nvim_win_set_cursor
 local nvim_win_set_hl_ns = vim.api.nvim_win_set_hl_ns
 -- Configuration and Layout
 local config = require("reposcope.ui.list.list_config")
@@ -147,6 +149,30 @@ function M.apply_layout()
   })
 end
 
+---Scrolls the list window so `index` is inside the viewport.
+---
+---The list window is never the current window — navigation happens from the
+---prompt while the selection is drawn as an extmark — so its cursor only ever
+---moves from here. Without this the view stays pinned to the first page and
+---the highlight walks off the bottom edge: the list looks frozen. Note that
+---`nvim_win_set_cursor` updates the topline of a non-current window too, and
+---honors that window's `scrolloff`.
+---@param index number The 1-based line to bring into view
+---@return nil
+function M.reveal_line(index)
+  local win = ui_state.windows.list
+  local buf = ui_state.buffers.list
+  if type(index) ~= "number" then return end
+  if not win or not nvim_win_is_valid(win) then return end
+  if not buf or not nvim_buf_is_valid(buf) then return end
+
+  local line_count = nvim_buf_line_count(buf)
+  if line_count == 0 then return end
+
+  local line = math.min(math.max(math.floor(index), 1), line_count)
+  pcall(nvim_win_set_cursor, win, { line, 0 })
+end
+
 ---Highlights the selected list entry at the specified index
 ---@param index number The index of the entry to highlight
 ---@return nil
@@ -185,6 +211,7 @@ function M.highlight_selected(index)
   })
 
   M.highlighted_line = index
+  M.reveal_line(index)
 end
 
 ---Sets the highlighted line in the list UI.
@@ -204,13 +231,18 @@ function M.set_highlighted_line(line)
 
   nvim_buf_clear_namespace(buf, HIGHLIGHT_NS, 0, -1)
 
+  -- The end column is the row's length, as in `highlight_selected`. `-1` reads
+  -- as "to the end" in most of the API but `nvim_buf_set_extmark` rejects it,
+  -- so this raised "Invalid 'end_col': out of range" on every call.
+  local text = nvim_buf_get_lines(buf, line - 1, line, false)[1] or ""
   nvim_buf_set_extmark(buf, HIGHLIGHT_NS, line - 1, 0, {
     end_row = line - 1,
-    end_col = -1,
+    end_col = #text,
     hl_group = "ReposcopeListSelected",
   })
 
   M.highlighted_line = line
+  M.reveal_line(line)
 end
 
 ---Returns the currently highlighted list entry
