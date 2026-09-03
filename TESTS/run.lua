@@ -46,6 +46,7 @@ local specs = {
   "status_view_spec.lua",
   "preview_image_spec.lua",
   "hover_spec.lua",
+  "readme_urls_spec.lua",
   "list_window_spec.lua",
 }
 

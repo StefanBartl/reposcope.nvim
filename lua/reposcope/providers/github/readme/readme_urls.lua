@@ -31,7 +31,11 @@ function M.get_urls(owner, repo, branch)
   end
 
   local raw_url = "https://raw.githubusercontent.com/" .. owner .. "/" .. repo .. "/" .. branch .. "/README.md"
-  local api_url = "https://api.github.com/repos/" .. owner .. "/" .. repo .. "/contents/README.md"
+  -- `/readme` rather than `/contents/README.md`: it resolves whatever the
+  -- repository actually calls its README (`readme.md`, `README.rst`, ...)
+  -- instead of only the one spelling, and answers with the same
+  -- `{content, encoding = "base64"}` shape, so `fetch_api` decodes it unchanged.
+  local api_url = "https://api.github.com/repos/" .. owner .. "/" .. repo .. "/readme?ref=" .. branch
 
   return {
     raw = raw_url,

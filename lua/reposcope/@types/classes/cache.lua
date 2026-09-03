@@ -30,6 +30,9 @@
 ---@field html_url string Repository URL
 ---@field owner RepositoryOwner Owner of the repository
 ---@field default_branch? string The default branch of the repository (optional)
+-- Bracketed because a bare `private` would be read as a visibility modifier by
+-- the language server, not as the field name the GitHub API actually uses.
+---@field ["private"]? boolean Whether the repository is private (GitHub only; the other providers' normalizers do not carry it). Decides whether a raw README fetch is worth attempting — see the GitHub readme manager.
 ---@field stargazers_count? number
 ---@field updated_at? string ISO8601 timestamp of the repository's last update (GitHub: `updated_at`, GitLab: `last_activity_at`, Codeberg: `updated_at`); used to detect a stale cached README
 

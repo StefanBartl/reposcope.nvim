@@ -31,6 +31,31 @@ local inject_content = require("reposcope.ui.preview.preview_manager").inject_co
 local clear_preview = require("reposcope.ui.preview.preview_manager").clear_preview
 local ui_state = require("reposcope.state.ui.ui_state")
 
+-- Shown in the preview when a repository has no README we can reach. Plenty of
+-- repositories simply do not carry one, so this is an ordinary outcome of
+-- walking the list — not an error worth a message of its own.
+local UNAVAILABLE_MSG = "README from this repository couldn't be fetched."
+
+---@private
+---@internal
+---Puts `UNAVAILABLE_MSG` in the preview, but only while `owner/repo_name` is
+--- still the selected entry: a fetch that fails after the user has already
+--- moved on must not paint over the README of whatever they moved to.
+---@param owner string
+---@param repo_name string
+---@return nil
+local function _show_unavailable(owner, repo_name)
+  local selected = get_selected_repo()
+  if not selected or selected.name ~= repo_name then return end
+  if not selected.owner or selected.owner.login ~= owner then return end
+
+  local buf = ui_state.buffers.preview
+  if not buf then return end
+
+  clear_preview() -- Drops a drawn README image along with the old text
+  inject_content(buf, { UNAVAILABLE_MSG }, "text")
+end
+
 ---@private
 ---@internal
 ---@param owner string
@@ -38,12 +63,14 @@ local ui_state = require("reposcope.state.ui.ui_state")
 ---@param branch string
 ---@param uuid string
 ---@param updated_at string|nil
----@return boolean
+---@return nil
 local function _fetch_from_api_fallback(owner, repo_name, branch, uuid, updated_at)
   readme_fetch_api(owner, repo_name, branch, function(success, content, err)
     if not success or not content then
-      notify("[reposcope] API fetch failed: " .. (err or "unknown error"), 4)
-      return false
+      notify("[reposcope] API README fetch failed for " .. owner .. "/" .. repo_name .. ": " .. (err or "not found"), 2)
+      request_state.end_request(uuid)
+      vim.schedule(function() _show_unavailable(owner, repo_name) end)
+      return
     end
 
     vim.schedule(function()
@@ -54,8 +81,6 @@ local function _fetch_from_api_fallback(owner, repo_name, branch, uuid, updated_
       request_state.end_request(uuid)
     end)
   end)
-
-  return true
 end
 
 ---@private
@@ -145,6 +170,7 @@ function M.fetch_for_selected(uuid)
 
   if has_fresh(owner, repo_name, repo.updated_at) then
     _record_metrics(repo, owner, repo_name)
+    request_state.end_request(uuid)
     vim.schedule(function() update_preview(owner, repo_name) end)
     return
   end
@@ -159,19 +185,11 @@ function M.fetch_for_selected(uuid)
         request_state.end_request(uuid)
       end)
     else
-      notify("[reposcope] Raw fetch failed: " .. (err or "unknown error"), vim.log.levels.WARN)
-      if not _fetch_from_api_fallback(owner, repo_name, branch, uuid, repo.updated_at) then
-        -- If neither readme raw or api fetch was valid, let user know README is not available
-        local buf = ui_state.buffers.preview
-        if not buf then
-          clear_preview()
-          notify("[reposcope] README couldn't be fetched. Preview window cleared.")
-        else
-          local lines = "README from this repository couldn't be fetched."
-          inject_content(buf, { lines }, "text")
-          notify("[reposcope] README couldn't be fetched. User message in preview window.")
-        end
-      end
+      -- A missing README.md on `branch` is the common case here, not a fault:
+      -- report it to dev mode only and let the API fallback have its turn. It
+      -- is the fallback that decides whether the user sees anything.
+      notify("[reposcope] Raw README fetch failed for " .. owner .. "/" .. repo_name .. ": " .. (err or "not found"), 2)
+      _fetch_from_api_fallback(owner, repo_name, branch, uuid, repo.updated_at)
     end
   end)
 end

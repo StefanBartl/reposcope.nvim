@@ -29,7 +29,7 @@ function M.fetch_raw(owner, repo, branch, cb)
 
   request("GET", urls.raw, function(response, err)
     if err or not response then
-      cb(false, nil, nil) -- Silent failure, no error shown to user
+      cb(false, nil, err or "empty response") -- The manager decides what, if anything, the user sees
       return
     end
     cb(true, response)
@@ -51,7 +51,7 @@ function M.fetch_api(owner, repo, branch, cb)
 
   request("GET", urls.api, function(response, err)
     if err or not response then
-      cb(false, nil, nil) -- Silent fallback
+      cb(false, nil, err or "empty response") -- The manager decides what, if anything, the user sees
       return
     end
 

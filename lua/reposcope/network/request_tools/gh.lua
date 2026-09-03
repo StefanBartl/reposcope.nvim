@@ -84,7 +84,12 @@ function M.request(method, url, callback, headers, debug, context, uuid)
       if metrics.record_metrics() then
         metrics.increase_failed(safe_uuid, url, "gh", safe_context, duration, result.code, "gh CLI error", url)
       end
-      notify("[reposcope] gh exited with code " .. result.code, 4)
+      -- Dev level, not error: the failure travels back through `callback`, and
+      -- it is the caller that knows whether it matters. A 404 from a README
+      -- probe is routine (many repositories have none) and used to raise an
+      -- error message per keypress while walking the list. `curl` and `wget`
+      -- already report through the callback alone.
+      notify("[reposcope] gh exited with code " .. result.code, 2)
       notify("[reposcope] stderr: " .. result.stderr, 2)
       callback(nil, "gh request failed (code " .. result.code .. ")")
     else
