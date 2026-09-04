@@ -12,7 +12,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Neovim](https://img.shields.io/badge/Neovim-0.10%2B-57A143?logo=neovim&logoColor=white)](https://neovim.io)
 [![Lua](https://img.shields.io/badge/Lua-5.1%2FLuaJIT-2C2D72?logo=lua&logoColor=white)](https://www.lua.org)
-![Status](https://img.shields.io/badge/status-alpha-orange)
+![Status](https://img.shields.io/badge/status-alpha-red)
 
 Search, preview and clone repositories from GitHub, GitLab or Codeberg –
 directly from inside Neovim. It doesn't stop at discovery: Reposcope also
