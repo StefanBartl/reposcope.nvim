@@ -1,15 +1,19 @@
 # Workflow — getting real use out of reposcope.nvim day to day
 
 Every feature here is documented on its own elsewhere (`docs/FEATURES/*.md`,
-`docs/COMMANDS.md`, `docs/AUTHENTICATION.md`). This is the different
+`docs/commands.md`, `docs/authentication.md`). This is the different
 question: once search, README caching, cloning, bulk maintenance and session
 persistence all exist at once, *how do they actually combine* into something
 worth reaching for daily, rather than a one-off "find a repo, clone it,
 forget the plugin exists" tool.
 
-For the repo-maintenance/session/diagnostics *command* catalog specifically,
-see [`docs/FEATURES/WORKFLOW.md`](FEATURES/WORKFLOW.md) — this file is the
-broader picture of how a session actually flows.
+> **There is a second file called `WORKFLOW.md`, and it is not this one.**
+> [`docs/FEATURES/WORKFLOW.md`](FEATURES/WORKFLOW.md) is one theme of the
+> feature catalog: the per-feature entries for the maintenance, session,
+> favorites, query-history and diagnostics subcommands, each naming its
+> module and config key. This file is the narrative — how those pieces plus
+> search, caching and cloning combine into a routine. Catalog there,
+> narrative here.
 
 ## The core loop: search → preview → clone
 
@@ -74,14 +78,12 @@ detection isn't catching it (or you just want to guarantee a live copy),
 there's no per-repository "refresh" command — the reset is at the cache
 layer:
 
-- `cache.readme_cache.clear(owner, repo_name)` (Lua, `both`/`ram`/`file`
-  target) for a single repository.
-- `cache.readme_cache.clear_all()` to wipe everything (RAM + file +
-  freshness metadata) and start over.
-
-There is currently no `:Reposcope` subcommand wrapping either — both are
-Lua API calls, worth knowing if you script your own keymap for "force
-refresh this repo."
+`cache.readme_cache.clear(owner, repo_name, target)` drops one repository,
+`clear_all()` wipes everything including the freshness metadata. There is no
+`:Reposcope` subcommand wrapping either — both are Lua API calls, worth
+knowing if you script your own "force refresh this repo" keymap. The exact
+snippets are in
+[`docs/troubleshooting.md`](troubleshooting.md#forcing-a-fresh-readme).
 
 ## Bulk update and status are a pair, not two separate features
 
@@ -99,8 +101,8 @@ Treat `status` as the read-only preview of what `update` is about to do:
    practice step 2 is usually one keystroke away rather than a second
    command. The `SYNC` column carries arrows (`↑2 ↓1`) only for
    branches that have actually diverged, and disappears entirely when no
-   repository has anything to report there — which is the normal case, and the
-   reason a `+0/-0` on every row used to bury the two that mattered.
+   repository has anything to report there — which is the normal case. A
+   `+0/-0` on every row would bury the two that matter.
 2. `:Reposcope update [dir]` — runs `git fetch --all --prune` then `git pull
    --ff-only` per repo, sequentially, asynchronously. A repo already shown
    as `diverged` in `status` will fail (not rewrite) in `update` — the
@@ -178,10 +180,9 @@ terminal. `?` lists every binding, generated from the same table that installs
 them. The winbar legend deliberately shows only some of them — `r`, `R` and `y`
 are left out so it does not overflow, and `?` is where the full list lives.
 
-**Opening a README from a row is reversible now.** It used to tear the popup
-down with no way back short of re-running the whole directory scan; the README
-buffer now carries a buffer-local `q` that wipes it and restores the overview
-on the same row.
+**Opening a README from a row is reversible.** The README buffer carries a
+buffer-local `q` that wipes it and restores the overview on the same row, so
+reading one is not a one-way trip out of the dashboard.
 
 ## Session persistence restores search state, not window layout
 
@@ -249,7 +250,7 @@ Consequences worth knowing before assuming continuity across a switch:
 
 ## Token setup affects which clone tool is safe to use, not just rate limits
 
-Per [`docs/AUTHENTICATION.md`](AUTHENTICATION.md), reposcope works
+Per [`docs/authentication.md`](authentication.md), reposcope works
 unauthenticated by default (`curl`/`wget`-based requests, no clone tool
 requiring auth) but at GitHub's lower anonymous rate limit. Two details
 that matter once you reach for `gh` as the clone/request tool specifically:
@@ -299,6 +300,8 @@ it is the reason to reach for `<Tab>` here rather than typing.
 - [`docs/FEATURES/WORKFLOW.md`](FEATURES/WORKFLOW.md) — the
   `update`/`status`/`session`/`queries`/diagnostics command catalog this
   file assumes you've already skimmed.
-- [`docs/COMMANDS.md`](COMMANDS.md) — full command reference with syntax
+- [`docs/commands.md`](commands.md) — full command reference with syntax
   and examples.
-- [`docs/AUTHENTICATION.md`](AUTHENTICATION.md) — token setup per provider.
+- [`docs/authentication.md`](authentication.md) — token setup per provider.
+- [`docs/troubleshooting.md`](troubleshooting.md) — symptoms, developer
+  mode, and where the cache and log files live.

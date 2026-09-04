@@ -14,7 +14,26 @@ a single command and torn down together on close.
   `controllers/repository_ui_loader.lua`
 - **Config:** `layout` (default `"default"`)
 - **Usercmds:** `:Reposcope start` / `:Reposcope close` (see
-  [COMMANDS.md](../COMMANDS.md))
+  [commands.md](../commands.md))
+
+## Filtering and sorting the result list
+
+The list a search produced can be narrowed and reordered without
+re-querying the provider. `:Reposcope filter {text}` is a
+case-insensitive substring over `owner/name: description` and completes
+against the names and owners actually on screen — the only candidates that
+can match anything — so narrowing does not start with a guess.
+`filter-prompt` is the same filter entered in a floating input,
+`filter-clear` restores the full list, and `:Reposcope sort` opens a
+selection menu for the sort mode. Both the active filter text and the sort
+mode are part of what a saved session restores.
+
+- **Module:** `ui/actions/filter_repos.lua`,
+  `ui/actions/filter_prompt.lua`, `ui/actions/sort_prompt.lua`,
+  `controllers/list_controller.lua`
+- **Usercmds:** `:Reposcope filter [text]`, `:Reposcope filter-prompt`,
+  `:Reposcope filter-clear`, `:Reposcope sort` (see
+  [commands.md](../commands.md#repository-list-sorting--filtering))
 
 ## Viewer/editor for README content
 
@@ -25,7 +44,7 @@ it into a hidden, named scratch buffer for scripting/exporting.
 - **Module:** `ui/actions/readme_viewer.lua` (`M.open_viewer`),
   `ui/actions/readme_editor.lua` (`M.open_editor`)
 - **Keymaps:** `<C-v>` (viewer), `<C-b>` (editor) — see
-  [BINDINGS.md](../BINDINGS.md#keymaps)
+  [BINDINGS.md](../BINDINGS.md#1-keymaps)
 
 ## Help docs via `:h reposcope`
 
@@ -44,7 +63,7 @@ drift out of sync with what is actually bound.
 - **Module:** `ui/actions/help_view.lua` (`M.show`), `bindings/keymaps.lua`
   (`ACTION_ORDER`)
 - **Keymaps:** `?` (normal mode only) — see
-  [BINDINGS.md](../BINDINGS.md#keymaps)
+  [BINDINGS.md](../BINDINGS.md#1-keymaps)
 
 ## Scroll the README preview (`<C-u>`/`<C-d>`) without leaving the prompt
 
@@ -126,9 +145,9 @@ the plugin's cache directory.
 
 - **Module:** `state/favorites_state.lua`, `ui/actions/favorites_view.lua`
 - **Keymaps:** `<C-f>` (toggle) — see
-  [BINDINGS.md](../BINDINGS.md#keymaps)
+  [BINDINGS.md](../BINDINGS.md#1-keymaps)
 - **Usercmds:** `:Reposcope favorites list|clear` (see
-  [COMMANDS.md](../COMMANDS.md))
+  [commands.md](../commands.md))
 
 ## Start view — show favorites immediately on open instead of an empty prompt
 

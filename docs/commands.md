@@ -64,7 +64,7 @@ list of keymaps, user commands, and autocommands.
 Everything lives under the single `:Reposcope` command. The first argument is the
 subcommand; remaining arguments are forwarded to it.
 
-**UI Lifecycle & Prompt Configuration**
+### UI Lifecycle & Prompt Configuration
 
 | Command                 | Description                                                         |
 | ----------------------- | ------------------------------------------------------------------- |
@@ -72,7 +72,7 @@ subcommand; remaining arguments are forwarded to it.
 | `:Reposcope close`      | Closes all Reposcope windows and buffers                            |
 | `:Reposcope prompt ...` | Dynamically sets new prompt fields (e.g. `prefix`, `keywords`, ...) |
 
-**Repository List: Sorting & Filtering**
+### Repository List: Sorting & Filtering
 
 | Command                    | Description                                                            |
 | -------------------------- | ---------------------------------------------------------------------- |
@@ -81,20 +81,20 @@ subcommand; remaining arguments are forwarded to it.
 | `:Reposcope filter-prompt` | Opens a floating prompt window to input a filter string interactively  |
 | `:Reposcope filter-clear`  | Clears any active filter and restores the full list of repositories    |
 
-**Repository Maintenance**
+### Repository Maintenance
 
 | Command                     | Description                                                                       |
 | --------------------------- | --------------------------------------------------------------------------------- |
 | `:Reposcope update [dir]`   | Updates all cloned git repositories (`git fetch --all --prune` + `git pull --ff-only`) in `clone.std_dir` (or the given directory) |
 | `:Reposcope status [dir] [--out] [--to]` | Shows an interactive git status overview (branch, sync, state, last commit) for every repo in `clone.std_dir` (or the given directory / a single repo), with marks and batch push/pull/fetch/update |
 
-**Providers**
+### Providers
 
 | Command                | Description                                                    |
 | ----------------------- | --------------------------------------------------------------- |
 | `:Reposcope providers`  | Lists available providers (`github`, `gitlab`, `codeberg`) and marks the active one |
 
-**Session**
+### Session
 
 | Command                                    | Description                                                    |
 | ------------------------------------------- | --------------------------------------------------------------- |
@@ -102,7 +102,7 @@ subcommand; remaining arguments are forwarded to it.
 | `:Reposcope session restore`               | Restores the saved session and re-runs the last search          |
 | `:Reposcope session clear`                 | Deletes the saved session file, if any                          |
 
-**Favorites & Query History**
+### Favorites & Query History
 
 | Command                          | Description                                                    |
 | ---------------------------------- | --------------------------------------------------------------- |
@@ -111,7 +111,7 @@ subcommand; remaining arguments are forwarded to it.
 | `:Reposcope queries` / `queries list`     | Prints your top-10 most-frequent search queries          |
 | `:Reposcope queries clear`         | Clears the recorded query stats                                  |
 
-**Debugging, Stats & Metrics**
+### Debugging, Stats & Metrics
 
 | Command                      | Description                                                              |
 | ---------------------------- | ------------------------------------------------------------------------ |
@@ -150,7 +150,7 @@ The input is matched against the format: `owner/name: description`.
 
 > If called without arguments, it resets the list to the original API result.
 
-**`<Tab>` completes against the list actually on screen** (2026-08-24): the
+**`<Tab>` completes against the list actually on screen**: the
 repository names and owners in the current result set, prefix-matched. Those
 are the only candidates that can match anything, since the filter is a
 substring over `owner/name: description` — guessing at one and getting an

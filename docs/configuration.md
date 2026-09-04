@@ -16,10 +16,12 @@ require("reposcope").setup({
   provider = "github",                      -- Which backend to use: "github" (default), "gitlab", "codeberg"
   request_tool = "curl",                    -- Tool for API requests: "gh", "curl", "wget" ("gh" only works with provider = "github")
   layout = "default",                       -- Currently only "default" supported
-  github_token = os.getenv("GITHUB_TOKEN"), -- If higher API Limits neeeded set the token here. If that doesn't works: see docs/AUTHENTICATION.md
+  github_token = os.getenv("GITHUB_TOKEN"), -- If higher API Limits neeeded set the token here. If that doesn't works: see docs/authentication.md
   gitlab_token = os.getenv("GITLAB_TOKEN"),     -- Same as github_token, for provider = "gitlab"
   codeberg_token = os.getenv("CODEBERG_TOKEN"), -- Same as github_token, for provider = "codeberg"
-    keymaps = {
+  results_limit = 25,                       -- Maximum number of search results per query
+  hover = true,                             -- Register the hover.nvim source; no-op without hover.nvim (see docs/hover.md)
+  keymaps = {
     open = "<leader>rs",                    -- Mapping to open the UI (set to false/"" to disable)
     close = "<leader>rc",                   -- Mapping to close the UI (set to false/"" to disable)
   },
@@ -43,23 +45,35 @@ require("reposcope").setup({
 
 ## Available Options
 
-| Option          | Type       | Description                                                        |
-| --------------- | ---------- | ------------------------------------------------------------------ |
-| `prompt_fields` | `string[]` | Controls which input fields appear in the prompt UI                |
-| `provider`      | `string`   | Active backend: `"github"`, `"gitlab"`, or `"codeberg"`             |
-| `request_tool`  | `string`   | CLI tool to fetch data: `"gh"`, `"curl"`, `"wget"` (`"gh"` only supports `provider = "github"`, others fall back to `curl`) |
-| `gitlab_token`  | `string`   | GitLab personal access token, used when `provider = "gitlab"`      |
-| `codeberg_token`| `string`   | Codeberg personal access token, used when `provider = "codeberg"`  |
-| `layout`        | `string`   | UI layout style (currently only `"default"`)                       |
-| `keymaps.open`  | `string\|false`   | Keymap to open Reposcope UI (`false`/`""` disables it)       |
-| `keymaps.close` | `string\|false`   | Keymap to close the UI cleanly (`false`/`""` disables it)    |
-| `prompt_keymaps`| `table`    | Per-action keymaps for the prompt buffers; see [BINDINGS.md](BINDINGS.md) |
-| `prompt_prefix_symbol` | `string` | Symbol shown in the `prefix` field (default needs a Nerd Font; e.g. `"> "` for plain terminals) |
-| `clone.std_dir` | `string`   | Base path for repository cloning                                   |
-| `clone.type`    | `string`   | Tool used to perform clone: `"git"`, `"gh"`, `"wget"`, or `"curl"` |
-| `metrics`       | `boolean`  | Enable internal request logging and performance tracking           |
-| `progress_style`| `string`   | Progress indicator for the bulk repository commands; see [below](#progress-indicator) |
-| `readme_precache_count` | `number` | After a search, pre-cache READMEs for this many top results in the background (`0` disables); see [README Caching](#readme-caching) |
+Every key `setup()` accepts, with the value it has when you don't pass one.
+The authoritative list is
+[`lua/reposcope/config/DEFAULTS.lua`](../lua/reposcope/config/DEFAULTS.lua),
+typed as `ConfigOptions` in
+[`lua/reposcope/@types/classes/configs.lua`](../lua/reposcope/@types/classes/configs.lua).
+
+| Option | Type | Default | Description |
+| --- | --- | --- | --- |
+| `prompt_fields` | `string[]` | `{ "prefix", "keywords", "owner", "language" }` | Which input fields appear in the prompt UI. Choose from `prefix`, `keywords`, `owner`, `language`, `topic`, `stars` |
+| `provider` | `string` | `"github"` | Active backend: `"github"`, `"gitlab"`, or `"codeberg"` |
+| `request_tool` | `string` | `"gh"` | CLI tool to fetch data: `"gh"`, `"curl"`, `"wget"` (`"gh"` only supports `provider = "github"`, others fall back to `curl`). Note `"gh"` needs an explicit token — see [authentication.md](authentication.md) |
+| `preferred_requesters` | `string[]` | `{ "gh", "curl", "wget" }` | Fallback order tried when `request_tool` is unavailable |
+| `github_token` | `string` | `$GITHUB_TOKEN` or `""` | GitHub personal access token; raises the API rate limit and is required for the `gh` backend |
+| `gitlab_token` | `string` | `$GITLAB_TOKEN` or `""` | GitLab personal access token, used when `provider = "gitlab"` |
+| `codeberg_token` | `string` | `$CODEBERG_TOKEN` or `""` | Codeberg personal access token, used when `provider = "codeberg"` |
+| `results_limit` | `number` | `25` | Maximum number of search results requested per query |
+| `hover` | `boolean` | `true` | Register a [hover.nvim](https://github.com/StefanBartl/hover.nvim) source so `owner/repo` under the cursor previews that repository's cached README. A no-op without hover.nvim; see [hover.md](hover.md) |
+| `layout` | `string` | `"default"` | UI layout style (currently only `"default"`) |
+| `keymaps.open` | `string\|false` | `"<leader>rs"` | Keymap to open the Reposcope UI (`false`/`""` disables it) |
+| `keymaps.close` | `string\|false` | `"<leader>rc"` | Keymap to close the UI cleanly (`false`/`""` disables it) |
+| `keymap_opts` | `table` | `{ silent = true, noremap = true }` | Options passed to the two global keymaps above |
+| `prompt_keymaps` | `table` | see [BINDINGS.md](BINDINGS.md#12-prompt-buffers) | Per-action keymaps for the prompt buffers; set an action to `false`/`""` to disable it |
+| `prompt_prefix_symbol` | `string` | a Nerd Font glyph | Symbol shown in the `prefix` field; e.g. `"> "` for terminals without an icon font |
+| `clone.std_dir` | `string` | `$REPOS_DIR` or `"~/temp"` | Base path for cloning — and the default target of `:Reposcope status`/`update` |
+| `clone.type` | `string` | `""` (→ `git`) | Tool used to perform the clone: `""`/`"git"`, `"gh"`, `"wget"`, or `"curl"` (the latter two pull a `.zip`) |
+| `metrics` | `boolean` | `false` | Enable internal request logging and performance tracking; see [troubleshooting.md](troubleshooting.md) |
+| `log_max` | `number` | `1000` | Cap on the request log's size, in entries |
+| `progress_style` | `string` | `"auto"` | Progress indicator for the bulk repository commands; see [below](#progress-indicator) |
+| `readme_precache_count` | `number` | `5` | After a search, pre-cache READMEs for this many top results in the background (`0` disables); see [README Caching](#readme-caching) |
 
 > ℹ️ You can dynamically reload prompt fields with `:Reposcope prompt prefix topic`.
 
@@ -76,10 +90,11 @@ require("reposcope").setup({
 `:Reposcope update` and `:Reposcope status` walk a whole directory of clones and
 run `git` once (or twice) per repository. Each individual call is quick, but over
 a few dozen repositories that adds up to a wait long enough to look like a hang —
-`update` in particular was silent between "Updating N repositories" and the final
-summary, because its per-repository notifications are dev-mode only.
+and `update`'s per-repository notifications are dev-mode only, so without an
+indicator there is nothing between "Updating N repositories" and the final
+summary.
 
-Both commands now report live progress through
+Both commands report live progress through
 [`lib.nvim.progress`](https://github.com/StefanBartl/lib.nvim/blob/main/lua/lib/nvim/progress/README.md),
 which separates "an operation is running" from "how that is shown":
 

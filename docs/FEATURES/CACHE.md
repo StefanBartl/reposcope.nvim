@@ -33,13 +33,30 @@ Three related mechanisms around the README cache:
 - **Config:** `readme_precache_count` (default `5`, `0` disables
   pre-caching)
 
-## Metrics/logging correctness fixes
+## Debounced README fetches
 
-A set of correctness fixes to the request/cache logging pipeline: clone
-operations are now logged, request/cache-hit log entries carry a real
-`url` field, a bug where a repository's own URL was logged into the
-cache-hit "source" field instead of `"ram"`/`"file"` was fixed, and
-`check_rate_limit()`'s dead reference to a nonexistent module was
-corrected.
+Moving quickly through the repository list does not fire one fetch per
+row — only the row the selection settles on. `:Reposcope skipped-readmes`
+reports how many fetches were skipped this way, which is the first thing
+to check when a README looks like it is missing content after fast
+scrolling: the fetch was skipped, not the cache stale.
+
+- **Module:** `controllers/provider_controller.lua`,
+  `ui/list/list_manager.lua`
+- **Usercmds:** `:Reposcope skipped-readmes` (see
+  [commands.md](../commands.md#debugging-stats--metrics))
+
+## What the request and cache log records
+
+Every request and every cache hit is written to the request log
+(`metrics = true`) as one entry per `uuid:type` — `api_success`,
+`api_failed`, `cache_hit`, `filecache_hit`. An entry carries the `query`,
+the `source` (the tool or cache layer that answered: `"curl"`, `"gh"`,
+`"clone"`, `"ram"`, `"file"`), the `context`, and, where one exists, the
+actual request or repository `url` in its own field. Clone operations are
+logged through the same path.
 
 - **Module:** `utils/metrics.lua`, `@types/classes/utils.lua`
+- **Config:** `metrics` (default `false`), `log_max` (default `1000`)
+- **Docs:** [`docs/troubleshooting.md`](../troubleshooting.md) for the log
+  file's location

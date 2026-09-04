@@ -3,6 +3,13 @@
 Repository maintenance, session persistence, and diagnostics — everything
 reached through `:Reposcope <subcommand>` that isn't search/browse itself.
 
+> **Not to be confused with [`docs/WORKFLOW.md`](../WORKFLOW.md).** This
+> file is one theme of the feature catalog: a per-feature entry naming the
+> module, config key and command behind each of these subcommands. The
+> top-level `docs/WORKFLOW.md` is the other question entirely — how search,
+> caching, cloning, maintenance and sessions *combine* into a routine worth
+> reaching for daily. Catalog here, narrative there.
+
 ## Bulk-update all cloned repositories (`:Reposcope update`)
 
 Runs `git fetch --all --prune` followed by `git pull --ff-only` for every
@@ -14,7 +21,7 @@ branches are reported as errors rather than rewritten.
   `bindings/usrcmds.lua` (`run_update`)
 - **Config:** `clone.std_dir`
 - **Usercmds:** `:Reposcope update [dir]` (see
-  [COMMANDS.md](../COMMANDS.md#reposcope-update-dir))
+  [commands.md](../commands.md#reposcope-update-dir))
 
 ## Git status overview of cloned repositories (`:Reposcope status`)
 
@@ -31,7 +38,7 @@ table. The scan is the read-only counterpart to `update`; the rows are not
   `status_route`)
 - **Config:** `clone.std_dir`, `progress_style`
 - **Usercmds:** `:Reposcope status [dir] [--out] [--to]` (see
-  [COMMANDS.md](../COMMANDS.md#reposcope-status-dir---out---to))
+  [commands.md](../commands.md#reposcope-status-dir---out---to))
 
 ## Persistent session save/restore (last search, filters, sort)
 
@@ -53,7 +60,7 @@ session file.
 
 - **Module:** `bindings/usrcmds.lua` (`subcommands.session`)
 - **Usercmds:** `:Reposcope session save|restore|clear` (see
-  [COMMANDS.md](../COMMANDS.md#reposcope-session-saverestoreclear))
+  [commands.md](../commands.md#reposcope-session-saverestoreclear))
 
 ## Query-frequency tracking (`:Reposcope queries`)
 
@@ -63,7 +70,7 @@ prints the top 10, most-frequent first.
 
 - **Module:** `state/query_stats.lua` (`M.top`, `M.clear_all`)
 - **Usercmds:** `:Reposcope queries list|clear` (see
-  [COMMANDS.md](../COMMANDS.md#reposcope-queries-listclear))
+  [commands.md](../commands.md#reposcope-queries-listclear))
 
 ## Metrics, logging, and developer diagnostics
 
@@ -76,4 +83,4 @@ printing.
 - **Config:** `metrics` (default `false`), `log_max` (default `1000`)
 - **Usercmds:** `:Reposcope toggle-dev`, `:Reposcope print-dev`,
   `:Reposcope stats`, `:Reposcope skipped-readmes` (see
-  [COMMANDS.md](../COMMANDS.md#debugging-stats--metrics))
+  [commands.md](../commands.md#debugging-stats--metrics))

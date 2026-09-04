@@ -14,7 +14,7 @@ single free-text box.
   `providers/github/repositories/repository_manager.lua`
 - **Config:** `provider = "github"` (default), `results_limit`
 - **Usercmds:** `:Reposcope prompt {fields}` to change which fields are
-  shown (see [COMMANDS.md](../COMMANDS.md))
+  shown (see [commands.md](../commands.md))
 
 ## GitLab provider support
 
@@ -47,8 +47,8 @@ currently active one marked `*`.
   `controllers/provider_controller.lua` (`get_active_provider`,
   `get_registered_providers`)
 - **Usercmds:** `:Reposcope providers` (see
-  [BINDINGS.md](../BINDINGS.md#user-commands))
-- **Docs:** [`docs/COMMANDS.md`](../COMMANDS.md) "`:Reposcope providers`"
+  [BINDINGS.md](../BINDINGS.md#2-user-commands))
+- **Docs:** [`docs/commands.md`](../commands.md) "`:Reposcope providers`"
   section.
 
 ## GitHub README rendering (raw + API fallback)
@@ -75,4 +75,4 @@ latter two pulling a `.zip` archive instead) when set explicitly.
   default → `git`, or `curl`/`wget`/`gh`), `preferred_requesters`,
   `request_tool`
 - **Keymaps:** `<C-c>` in the prompt (see
-  [BINDINGS.md](../BINDINGS.md#keymaps))
+  [BINDINGS.md](../BINDINGS.md#1-keymaps))

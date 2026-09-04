@@ -162,7 +162,7 @@ file for `--out=path`. `<Tab>` on `[dir]` offers `$REPOS_DIR` and `~` ahead of
 real directory completion (see `fixed_dir_keywords` in
 [`bindings/usrcmds.lua`](../lua/reposcope/bindings/usrcmds.lua)). See
 [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua)
-and [COMMANDS.md](COMMANDS.md#reposcope-status-dir---out---to) for details.
+and [commands.md](commands.md#reposcope-status-dir---out---to) for details.
 
 `favorites`/`queries` are backed by
 [`state/favorites_state.lua`](../lua/reposcope/state/favorites_state.lua) and

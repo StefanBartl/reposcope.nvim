@@ -1,4 +1,4 @@
-*reposcope.txt* Plugin documentation for reposcope.nvim Last Change: August 2026
+*reposcope.txt* Plugin documentation for reposcope.nvim Last Change: September 2026
 
 ==============================================================================
 INTRODUCTION                                                       *:Reposcope
@@ -69,6 +69,8 @@ Advanced setup:
     metrics = true,                    -- enable request logging & metrics
     progress_style = "auto",           -- indicator for `update`/`status`
     readme_precache_count = 5,         -- pre-cache top N search results' READMEs (0 disables)
+    results_limit = 25,                -- maximum search results per query
+    hover = true,                      -- register the hover.nvim source (no-op without it)
   })
 
                                              *reposcope-config-progress_style*
@@ -172,7 +174,7 @@ key rather than something the preview does on its own because only 8 of 25
 measured repositories carry a real README image, and the ones that do cost
 roughly 900ms and 230kB. Finding out that a repository has none costs
 nothing: the check runs against the README already in Reposcope's cache.
-See `docs/CONFIGURATION.md` for the measurement and the images.nvim
+See `docs/configuration.md` for the measurement and the images.nvim
 settings it argues for.
 
 ==============================================================================
@@ -511,7 +513,7 @@ CACHE                                                        *reposcope-cache*
 README caching is handled on two levels:
 
 - RAM cache (fast)
-- File cache (~/.local/share/nvim/reposcope/data/readme/)
+- File cache (`stdpath("cache")/reposcope/data/readme/`)
 
 Caches are automatically used and updated. File cache survives restarts.
 On `setup()`, every file-cached README is preloaded into the RAM cache, so a
@@ -553,6 +555,11 @@ TROUBLESHOOTING                                    *reposcope-troubleshooting*
   `stdpath("cache")/reposcope/logs/request_log.json` — one entry per
   `uuid:type`, each carrying `query`, `source`, `context`, and (where
   available) the actual request/repository `url`
+- Session, favorites and query-stat files live beside it under
+  `stdpath("cache")/reposcope/data/`
+
+See `docs/troubleshooting.md` in the repository for the full symptom table
+and for forcing a fresh README.
 
 ==============================================================================
 HEALTHCHECK                                                *reposcope-health*
@@ -570,6 +577,8 @@ This will perform the following diagnostics:
 • Verify configured request tool (gh, curl, wget)
 • Test if the selected request binary is available in $PATH
 • Detect presence of the GitHub token (GITHUB_TOKEN)
+• Report whether images.nvim is installed, whether its remote images are
+  enabled, and the effective download cap (the `<C-p>` image preview)
 
 Example output:
 
@@ -585,8 +594,13 @@ for correction.
 ==============================================================================
 SEE ALSO                                                       *reposcope-links*
 
-- GitHub: https://github.com/StefanBartl/reposcope.nvim
-- ripgrep globs: https://github.com/BurntSushi/ripgrep/blob/master/GLOB.md
+- GitHub:      https://github.com/StefanBartl/reposcope.nvim
+- Doc index:   `docs/README.md` in the repository
+- lib.nvim:    https://github.com/StefanBartl/lib.nvim (required)
+- hover.nvim:  https://github.com/StefanBartl/hover.nvim (optional, see
+               `docs/hover.md`)
+- images.nvim: https://github.com/StefanBartl/images.nvim (optional, the
+               `<C-p>` README image preview)
 
 ==============================================================================
 vim:tw=78:ts=8:ft=help:norl:
