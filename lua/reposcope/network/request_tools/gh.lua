@@ -9,6 +9,11 @@
 ---@class GitHubRequest : GithubRequestModule
 local M = {}
 
+-- SEC-21: see curl.lua's own note -- spawn_capture's timeout_ms is opt-in,
+-- and this module never passed one either. Same 20s default for the same
+-- reason (a JSON API call or a README fetch, not a large download).
+local DEFAULT_TIMEOUT_MS = 20000
+
 -- libuv Utilities
 local hrtime = vim.uv.hrtime
 -- Async spawn+capture (delegates the pipe/timer/handle bookkeeping)
@@ -77,7 +82,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
     argv[#argv + 1] = a
   end
 
-  spawn_capture(argv, { env = env }, function(result)
+  spawn_capture(argv, { env = env, timeout_ms = DEFAULT_TIMEOUT_MS }, function(result)
     local duration = (hrtime() - start_time) / 1e6 -- ms
 
     if not result.ok then
@@ -89,9 +94,14 @@ function M.request(method, url, callback, headers, debug, context, uuid)
       -- probe is routine (many repositories have none) and used to raise an
       -- error message per keypress while walking the list. `curl` and `wget`
       -- already report through the callback alone.
-      notify("[reposcope] gh exited with code " .. result.code, 2)
-      notify("[reposcope] stderr: " .. result.stderr, 2)
-      callback(nil, "gh request failed (code " .. result.code .. ")")
+      if result.timed_out then
+        notify("[reposcope] gh timed out after " .. DEFAULT_TIMEOUT_MS .. "ms", 2)
+        callback(nil, "gh request timed out after " .. DEFAULT_TIMEOUT_MS .. "ms")
+      else
+        notify("[reposcope] gh exited with code " .. result.code, 2)
+        notify("[reposcope] stderr: " .. result.stderr, 2)
+        callback(nil, "gh request failed (code " .. result.code .. ")")
+      end
     else
       if debug and result.stderr ~= "" then notify("[reposcope] gh stderr: " .. result.stderr, 4) end
       if metrics.record_metrics() then
