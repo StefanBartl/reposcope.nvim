@@ -9,6 +9,11 @@
 ---@class CodebergCloneCommandBuilder : CloneCommandBuilderModule
 local M = {}
 
+-- SEC-21: see the GitHub clone_command's own note -- an archive download can
+-- be bounded with a single flag without imposing a byte-limit a real repo
+-- archive could legitimately exceed.
+local ARCHIVE_TIMEOUT_S = 300
+
 ---Creates the appropriate argv command for cloning
 ---@param clone_type string
 ---@param repo_url string The repository's clone URL (e.g. `https://codeberg.org/owner/repo.git`)
@@ -22,9 +27,9 @@ function M.build_command(clone_type, repo_url, output_dir)
     local zip_url = base .. "/archive/" .. branch .. ".zip"
 
     if clone_type == "curl" then
-      return { "curl", "-L", "-o", output_dir .. ".zip", zip_url }
+      return { "curl", "-L", "--max-time", tostring(ARCHIVE_TIMEOUT_S), "-o", output_dir .. ".zip", zip_url }
     else
-      return { "wget", "-O", output_dir .. ".zip", zip_url }
+      return { "wget", "--timeout=" .. ARCHIVE_TIMEOUT_S, "-O", output_dir .. ".zip", zip_url }
     end
   end
 

@@ -9,6 +9,11 @@
 ---@class WgetRequest : WgetRequestModule
 local M = {}
 
+-- SEC-21: see curl.lua's own note -- spawn_capture's timeout_ms is opt-in,
+-- and this module never passed one either. Same 20s default for the same
+-- reason (a JSON API call or a README fetch, not a large download).
+local DEFAULT_TIMEOUT_MS = 20000
+
 -- libuv
 local uv = vim.uv or vim.loop
 -- Async spawn+capture (delegates the pipe/timer/handle bookkeeping)
@@ -54,7 +59,7 @@ function M.request(method, url, callback, _headers, debug, context, uuid)
   -- rarely installed system-wide on Windows.
   local env = require("reposcope.utils.spawn_env").array()
 
-  spawn_capture(argv, { env = env }, function(result)
+  spawn_capture(argv, { env = env, timeout_ms = DEFAULT_TIMEOUT_MS }, function(result)
     local duration = (uv.hrtime() - start_time) / 1e6
 
     if debug and result.stderr ~= "" then notify("[reposcope] wget stderr: " .. result.stderr, vim.log.levels.TRACE) end
@@ -63,7 +68,11 @@ function M.request(method, url, callback, _headers, debug, context, uuid)
       if metrics.record_metrics() then
         metrics.increase_failed(safe_uuid, url, "wget", safe_context, duration, result.code, "wget error", url)
       end
-      callback(nil, "wget request failed (code " .. result.code .. ")")
+      if result.timed_out then
+        callback(nil, "wget request timed out after " .. DEFAULT_TIMEOUT_MS .. "ms")
+      else
+        callback(nil, "wget request failed (code " .. result.code .. ")")
+      end
     else
       if metrics.record_metrics() then
         metrics.increase_success(safe_uuid, url, "wget", safe_context, duration, 200, url)

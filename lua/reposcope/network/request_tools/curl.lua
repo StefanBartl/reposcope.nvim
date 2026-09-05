@@ -9,6 +9,14 @@
 ---@class CurlRequest : CurlRequestModule
 local M = {}
 
+-- SEC-21: spawn_capture's timeout_ms is opt-in ("no timer means no timeout"),
+-- and this module never passed one -- every search/README/API request the
+-- plugin makes could hang indefinitely on a stalled connection or an
+-- unresponsive host, with no way for the plugin to give up and report
+-- failure. 20s is generous for a JSON API call or a README fetch; it is not
+-- meant to bound a large download (this module isn't used for one).
+local DEFAULT_TIMEOUT_MS = 20000
+
 -- libuv Utilities
 local hrtime = vim.uv.hrtime
 -- Async spawn+capture (delegates the pipe/timer/handle bookkeeping)
@@ -69,7 +77,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
 
   local stdin = #config > 0 and (table.concat(config, "\n") .. "\n") or nil
 
-  spawn_capture(argv, { env = env, stdin = stdin }, function(result)
+  spawn_capture(argv, { env = env, stdin = stdin, timeout_ms = DEFAULT_TIMEOUT_MS }, function(result)
     local duration = (hrtime() - start_time) / 1e6 -- ms
 
     if debug and result.stderr ~= "" then notify("[reposcope] curl stderr: " .. result.stderr, 4) end
@@ -78,7 +86,11 @@ function M.request(method, url, callback, headers, debug, context, uuid)
       if metrics.record_metrics() then
         metrics.increase_failed(safe_uuid, url, "curl", safe_context, duration, result.code, "curl error", url)
       end
-      callback(nil, "curl request failed (code " .. result.code .. ")")
+      if result.timed_out then
+        callback(nil, "curl request timed out after " .. DEFAULT_TIMEOUT_MS .. "ms")
+      else
+        callback(nil, "curl request failed (code " .. result.code .. ")")
+      end
     else
       if metrics.record_metrics() then
         metrics.increase_success(safe_uuid, url, "curl", safe_context, duration, 200, url)
