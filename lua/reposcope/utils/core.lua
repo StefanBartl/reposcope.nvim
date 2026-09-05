@@ -9,7 +9,10 @@
 local M = {}
 
 -- System Access
-local uv = vim.loop
+-- DEP-01: matches the fallback pattern already used elsewhere in this repo
+-- (cache/readme_cache.lua, network/request_tools/wget.lua) rather than the
+-- bare vim.loop this module had.
+local uv = vim.uv or vim.loop
 
 ---Returns the index of a value in a list-style table
 ---@param tbl any[] The table to search in
