@@ -303,7 +303,7 @@ runs, asynchronously: >
 <
 The machine-readable output is distilled into the current branch, ahead/behind
 counts relative to the upstream, and the number of uncommitted files (the
-*dirty* count), summarized as one of the states `clean`, `dirty`, `ahead`,
+dirty count), summarized as one of the states `clean`, `dirty`, `ahead`,
 `behind` or `diverged`. A second, concurrent `git log -1` supplies the age of
 `HEAD` for the LAST COMMIT column.
 
@@ -475,7 +475,7 @@ Lists favorited repositories in a scrollable popup, or clears all of them.
 A favorite is toggled while browsing with the `toggle_favorite` prompt
 keymap (default `<C-f>`, see |reposcope-keymaps|) — there is no separate
 "add favorite" command. Toggling snapshots the repository's metadata
-(owner, name, description, URL, stars) *and* its README content if already
+(owner, name, description, URL, stars) and its README content if already
 cached, so the favorite is self-contained: viewing it later needs no live
 re-fetch. Stored as a single JSON file under the plugin's cache directory;
 survives Neovim restarts.
