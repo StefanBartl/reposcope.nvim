@@ -18,7 +18,7 @@ function M.check()
   if pcall(require, "reposcope.init") then
     health.ok("Core Reposcope modules loaded")
   else
-    health.error("Failed to load core modules")
+    health.error("Failed to load core modules", { "Reinstall reposcope.nvim" })
     return
   end
 
@@ -37,11 +37,16 @@ function M.check()
       health.ok(bin .. " is installed")
       has_any = true
     else
-      health.error(bin .. " is NOT installed")
+      -- Only one of the three is needed; a single missing tool is not an
+      -- error while another is present. The real error is below, once none
+      -- of them resolve.
+      health.info(bin .. " is not installed")
     end
   end
 
-  if not has_any then health.error("No usable request tool found (gh, curl, or wget)") end
+  if not has_any then
+    health.error("No usable request tool found (gh, curl, or wget)", { "Install one of gh, curl or wget" })
+  end
   ---------------------------------------------------------------------------
   -- Configured request tool
   ---------------------------------------------------------------------------
@@ -49,7 +54,9 @@ function M.check()
   if vim.tbl_contains(tools, request_tool) then
     health.ok("Configured request tool: " .. request_tool)
   else
-    health.warn("Request tool not properly configured: " .. tostring(request_tool))
+    health.warn("Request tool not properly configured: " .. tostring(request_tool), {
+      "Set request_tool to one of 'gh', 'curl' or 'wget' in setup()",
+    })
   end
 
   ---------------------------------------------------------------------------
@@ -58,7 +65,9 @@ function M.check()
   if env_has("GITHUB_TOKEN") then
     health.ok("GITHUB_TOKEN environment variable set")
   else
-    health.warn("GITHUB_TOKEN not set – GitHub API may be rate-limited")
+    health.warn("GITHUB_TOKEN not set – GitHub API may be rate-limited", {
+      "Set GITHUB_TOKEN to raise the API rate limit (60/hr anonymous vs 5000/hr authenticated)",
+    })
   end
 
   ---------------------------------------------------------------------------
