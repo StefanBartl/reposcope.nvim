@@ -16,7 +16,10 @@ local defaults = {
   results_limit = 25, -- Default result limit for search queries
   layout = "default", -- Default UI layout
   clone = {
-    std_dir = env_get("REPOS_DIR") or "~/temp", -- Standard path for cloning repositories (defaults to $REPOS_DIR, if set)
+    -- Via lib.nvim's env snapshot, not env_get("REPOS_DIR"): it's the one
+    -- sanctioned place this specific env var is read, so it agrees with the
+    -- $REPOS_DIR Tab-completion keyword offered in bindings/usrcmds.lua.
+    std_dir = require("lib.nvim.system.env").get().repo_base or "~/temp",
     type = "", -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
   },
   -- Register a hover.nvim source, so resting the cursor on `owner/repo`
