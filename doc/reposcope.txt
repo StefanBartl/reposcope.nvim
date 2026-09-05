@@ -1,4 +1,5 @@
 *reposcope.txt* Plugin documentation for reposcope.nvim Last Change: September 2026
+                                                              *reposcope.nvim*
 
 ==============================================================================
 INTRODUCTION                                                       *:Reposcope
