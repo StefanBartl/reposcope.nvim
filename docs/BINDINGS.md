@@ -45,12 +45,6 @@ setting it to `false`/`""` in `setup({ prompt_keymaps = {...} })`.
 | `confirm`              | `<CR>`                         | i      | Confirm prompt input (`prompt_input.on_enter`)          |
 | `nav_up`               | `<Up>`                         | n, i   | Navigate list up + fetch README for selected entry. A count moves that many entries (normal mode) |
 | `nav_down`             | `<Down>`                       | n, i   | Navigate list down + fetch README for selected entry. A count moves that many entries (normal mode) |
-
-**A count on `nav_up`/`nav_down`** moves that many entries at once, clamped
-to the list bounds. Handled inside `navigate_list_in_prompt` itself — one
-call moves `v:count1` rows — so the README is fetched once, after the move,
-rather than once per intermediate entry. `v:count` is 0 in insert mode, where
-these keys are also bound, so the behaviour there is unchanged.
 | `focus_next`           | `<C-w>`, `<C-l>`, `<Tab>`      | n, i   | Focus next prompt field                                 |
 | `focus_prev`           | `<C-h>`, `<S-Tab>`             | n, i   | Focus previous prompt field                             |
 | `open_viewer`          | `<C-v>`                        | n, i   | Open README viewer                                      |
@@ -62,6 +56,12 @@ these keys are also bound, so the behaviour there is unchanged.
 | `preview_image`        | `<C-p>`                        | n, i   | Draw the README's screenshot over the preview — needs [images.nvim](https://github.com/StefanBartl/images.nvim) with `display.remote.enabled = true` |
 | `help`                 | `?`                            | n      | Show the `?` keymap cheatsheet (normal mode only, so `?` still types in insert mode) |
 | `toggle_favorite`      | `<C-f>`                        | n, i   | Toggle favorite for the currently selected repository (see `:Reposcope favorites`) |
+
+**A count on `nav_up`/`nav_down`** moves that many entries at once, clamped
+to the list bounds. Handled inside `navigate_list_in_prompt` itself — one
+call moves `v:count1` rows — so the README is fetched once, after the move,
+rather than once per intermediate entry. `v:count` is 0 in insert mode, where
+these keys are also bound, so the behaviour there is unchanged.
 
 All prompt keymaps carry a `desc` so they are picked up automatically by
 [which-key](https://github.com/folke/which-key.nvim) if it's installed — no
