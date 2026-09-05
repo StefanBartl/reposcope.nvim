@@ -21,6 +21,7 @@
 ---| "results_limit"
 ---| "layout"
 ---| "clone"
+---| "hover"
 ---| "keymaps"
 ---| "keymap_opts"
 ---| "prompt_keymaps"
