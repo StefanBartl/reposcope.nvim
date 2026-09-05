@@ -7,7 +7,7 @@ local M = {}
 
 -- Debugging Utility
 local notify = require("reposcope.utils.debug").notify
-local system_opener = require("lib.nvim.fs.open.url.system_opener")
+local open_default = require("lib.nvim.cross.open_default")
 
 ---Returns true when running on Windows. Central check to avoid ad-hoc
 ---`sysname:match("Windows")` calls scattered across the codebase.
@@ -18,7 +18,7 @@ function M.is_windows() return require("lib.nvim.cross.platform.is_windows")() e
 ---@param url string The URL to open
 ---@return nil
 function M.open_url(url)
-  local ok = system_opener.open(url)
+  local ok = open_default(url)
   if not ok then
     local os_name = vim.uv.os_uname().sysname
     notify("[reposcope] Unsupported OS for opening URLs: " .. os_name, 4)
