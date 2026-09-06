@@ -1,9 +1,10 @@
 ---@module 'reposcope.cache.repository_cache'
----@brief Caches the most recent GitHub repository results in memory
+---@brief Caches the most recent repository search results in memory
 ---@description
---- This module temporarily caches the result of repository queries from the GitHub API.
---- It is not persistent and is overwritten on each new query. Other modules can
---- access and use this data (e.g., list UI, README fetcher, etc.)
+--- This module temporarily caches the result of repository queries against the
+--- active provider's API. It is not persistent and is overwritten on each new
+--- query. Other modules can access and use this data (e.g., list UI, README
+--- fetcher, etc.)
 
 ---@class RepositoryCache : RepositoryCacheModule
 local M = {}

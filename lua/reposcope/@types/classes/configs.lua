@@ -1,4 +1,4 @@
----@module 'reposcope.types.configs'
+---@module 'reposcope.@types.classes.configs'
 ---@brief Type definitions for user configuration
 
 ---@class CloneOptions

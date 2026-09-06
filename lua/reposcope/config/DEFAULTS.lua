@@ -20,7 +20,7 @@ local defaults = {
     -- sanctioned place this specific env var is read, so it agrees with the
     -- $REPOS_DIR Tab-completion keyword offered in bindings/usrcmds.lua.
     std_dir = require("lib.nvim.system.env").get().repo_base or "~/temp",
-    type = "", -- Tool for cloning repositories (choose curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
+    type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
   },
   -- Register a hover.nvim source, so resting the cursor on `owner/repo`
   -- anywhere -- a plugin spec, a lockfile, a note -- previews that
@@ -29,7 +29,7 @@ local defaults = {
   -- hover.nvim installed. See docs/hover.md.
   hover = true,
   keymaps = {
-    open = "<leader>rs", -- Set the keymap to open Repsocope
+    open = "<leader>rs", -- Set the keymap to open Reposcope
     close = "<leader>rc", -- Set the keymap to close Reposcope
   },
   keymap_opts = {

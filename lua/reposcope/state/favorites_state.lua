@@ -3,9 +3,9 @@
 ---@description
 --- A favorite is a lightweight snapshot of a `Repository` (owner, name,
 --- description, html_url, default_branch, stargazers_count) plus, if already
---- cached, its README content — the roadmap explicitly wants "Repo-Metadaten
---- + zugehörige README" persisted together, so a favorite is self-contained
---- and doesn't need a live re-fetch to be useful later (e.g. as a start view).
+--- cached, its README content: metadata and the matching README are persisted
+--- together, so a favorite is self-contained and doesn't need a live re-fetch
+--- to be useful later (e.g. as a start view).
 ---
 --- Stored as a single JSON file under the plugin's cache directory, following
 --- the same conventions as `state.session_state` (`safe_mkdir` before

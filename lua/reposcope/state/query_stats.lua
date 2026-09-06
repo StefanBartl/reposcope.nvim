@@ -3,9 +3,8 @@
 ---@description
 --- Every real search (`prompt_input.on_enter`) increments a persisted counter
 --- keyed by the exact built query string via `M.record`. Backs
---- `:Reposcope queries` (top-N by frequency) — the roadmap's "Häufigste
---- Queries mitschreiben und ebenfalls anbieten" companion to repository
---- favorites (`state.favorites_state`).
+--- `:Reposcope queries` (top-N by frequency), the query-history companion to
+--- repository favorites (`state.favorites_state`).
 ---
 --- Same persistence conventions as `state.session_state`/`state.favorites_state`:
 --- a single JSON file under the plugin's cache directory, `safe_mkdir` before

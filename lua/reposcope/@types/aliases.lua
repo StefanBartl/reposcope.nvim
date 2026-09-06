@@ -12,6 +12,7 @@
 ---| "JsonDecodeError"
 
 ---@alias ConfigOptionKey
+---| "prompt_fields"
 ---| "provider"
 ---| "preferred_requesters"
 ---| "request_tool"

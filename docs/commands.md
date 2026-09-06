@@ -135,8 +135,8 @@ Updates the active prompt fields dynamically. It closes and reopens the Reposcop
 Example:
 
 ```vim
-:Reposcope prompt keywords topic         "prompt without prefix: 
-:Reposcope prompt prefix topic stars     "prompt with prefix, topice and stars field
+:Reposcope prompt keywords topic         "prompt without prefix field
+:Reposcope prompt prefix topic stars     "prompt with prefix, topic and stars field
 :Reposcope prompt                        "resets to default
 ```
 

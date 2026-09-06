@@ -31,6 +31,11 @@ misleading failures.
 | `query_builder_spec.lua` | prompt input to each forge's search syntax, and that a malformed input is an empty query rather than a crash |
 | `repository_cache_spec.lua` | what a decoded API response turns into, what the list buffer shows, and the fields the API omits |
 | `config_spec.lua` | the merge — including that `setup()` here accumulates rather than rebuilding from DEFAULTS, unlike the sibling plugins |
+| `status_view_spec.lua` | the status overview's rendering (column offsets, highlights) and that marks add a gutter without shifting the rest of the row |
+| `preview_image_spec.lua` | `find_url`, the pure half of the README image preview: badge blocks are skipped and the first real raster URL is picked |
+| `hover_spec.lua` | the hover.nvim contribution — the `owner/repo` slug test, and that the source answers only for repositories reposcope has cached |
+| `readme_urls_spec.lua` | the three providers' README URL builders (raw host vs. API endpoint) |
+| `list_window_spec.lua` | `list_window`'s viewport handling: `reveal_line` scrolls a selection below the fold into view |
 
 Adding one: write `TESTS/<name>_spec.lua` returning `function(H) ... end`, then
 list it in `run.lua`. `H` is the harness — `eq`, `ok`, `falsy`, `contains`,

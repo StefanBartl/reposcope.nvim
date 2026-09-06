@@ -4,59 +4,19 @@
 --- A soft integration with [images.nvim](https://github.com/StefanBartl/images.nvim):
 --- when a repository's README carries a real screenshot or demo GIF, this shows
 --- it over the preview pane instead of leaving the reader with the link text.
+--- It is a keypress rather than part of the preview because a download only
+--- pays off when the user asks for it -- see `docs/configuration.md`
+--- ("README Image Preview") for the measurement behind that, the rejected
+--- social-preview-card alternative, and why nothing here is cached.
 ---
---- ## Why it is a keypress and not part of the preview
----
---- The shape of this feature comes out of a measurement (2026-08-29, over 25
---- repositories: 20 widely-used Neovim plugins plus five of this author's), not
---- out of preference. Three numbers decided it:
----
---- * **8 of 25** carried a real image once badges were excluded. Two thirds of
----   previews would have nothing to show.
---- * The ones that did cost **883 ms on average and 232 kB** — worst case
----   925 kB for a single GIF. That is fine for something asked for and wrong
----   for something that fires because the selection moved.
---- * **Detection is free.** `M.find_url` reads the README that
----   `reposcope.cache.readme_cache` already holds, so answering "does this
----   repository have an image at all" costs no request and no latency. The
----   two-thirds case is therefore silent *and* instant.
----
---- The rejected half of the same measurement is worth recording here, because
---- it is the obvious thing to reach for next: GitHub's **social preview card**
---- (`opengraph.githubassets.com`) is not usable. It rate-limits unauthenticated
---- callers to 100 requests per IP and then answers `429` with
---- `Retry-After: 900` — a quarter of an hour of nothing. `readme_precache_count`
---- alone spends 5 of those per search. A cache does not rescue it either: this
---- plugin exists to find repositories nobody has seen yet, so a cache would
---- pay off on exactly the repositories whose card matters least.
----
---- ## What is *not* cached here, deliberately
----
---- Nothing. There is no third cache in this module, and that is a decision
---- rather than an omission:
----
---- * **The image file** persists in images.nvim's own SHA256-keyed cache
----   (`stdpath("cache")/images.nvim/remote`), across restarts. A second look at
----   the same repository does not download again.
---- * **The detection result** needs no cache, because it is derived from a
----   README this plugin already caches on disk. Caching "this repository has no
----   image" would cache something that is free to recompute.
---- * **A failed download** is deliberately retried on the next keypress. The
----   common cause is a transient network failure, and the user asking a second
----   time is a request to try again, not a request to be told the old answer.
----
---- ## Badges are not images
----
---- A README's first `![...]()` is almost always a shields.io badge, which is
---- both useless as a preview and usually an SVG. `BADGE_PATTERNS` filters the
---- known badge hosts, and only raster formats are accepted — the two rules
---- reinforce each other, since badges are overwhelmingly SVG and SVG display
---- would drag in ImageMagick as a hard requirement for the common path.
----
---- Relative paths (`./assets/demo.png`) are not resolved. They were measured
---- too: exactly one repository of the 25 used one, and that one also carried an
---- absolute URL. Resolving them would mean a per-provider raw-URL builder for a
---- case that does not occur.
+--- Badges are not images: a README's first `![...]()` is almost always a
+--- shields.io badge, useless as a preview and usually an SVG. `BADGE_PATTERNS`
+--- filters the known badge hosts, and only raster formats are accepted -- the
+--- two rules reinforce each other, since accepting SVG would make ImageMagick a
+--- hard requirement for the common path. Relative paths (`./assets/demo.png`)
+--- are not resolved: exactly one repository of the 25 measured used one, and it
+--- also carried an absolute URL, so a per-provider raw-URL builder would be
+--- code for a case that does not occur.
 
 ---@class PreviewImage
 local M = {}

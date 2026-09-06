@@ -16,7 +16,7 @@ require("reposcope").setup({
   provider = "github",                      -- Which backend to use: "github" (default), "gitlab", "codeberg"
   request_tool = "curl",                    -- Tool for API requests: "gh", "curl", "wget" ("gh" only works with provider = "github")
   layout = "default",                       -- Currently only "default" supported
-  github_token = os.getenv("GITHUB_TOKEN"), -- If higher API Limits neeeded set the token here. If that doesn't works: see docs/authentication.md
+  github_token = os.getenv("GITHUB_TOKEN"), -- If higher API limits are needed set the token here. If that doesn't work: see docs/authentication.md
   gitlab_token = os.getenv("GITLAB_TOKEN"),     -- Same as github_token, for provider = "gitlab"
   codeberg_token = os.getenv("CODEBERG_TOKEN"), -- Same as github_token, for provider = "codeberg"
   results_limit = 25,                       -- Maximum number of search results per query

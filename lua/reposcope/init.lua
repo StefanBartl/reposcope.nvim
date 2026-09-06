@@ -1,7 +1,7 @@
 ---@module 'reposcope.init'
 ---@brief Initializes, opens, and manages the main Reposcope UI lifecycle.
 ---@description
---- This module serves as the main entry point for Reposcope’s UI initialization.
+--- This module serves as the main entry point for Reposcope's UI initialization.
 --- It applies user-defined configuration, sets up and opens the main UI components
 --- (background, prompt, preview, list), manages keymaps and autocmds, and ensures
 --- proper teardown via `close_ui()`. It delegates UI responsibilities to submodules
@@ -14,7 +14,7 @@
 --- - Closing all Reposcope-related buffers and windows cleanly
 --- - Registering and removing autocmds for automatic teardown (`QuitPre`)
 ---
---- This module is expected to be called from your plugin’s top-level `.setup()` call.
+--- This module is expected to be called from your plugin's top-level `.setup()` call.
 
 ---@class UIInit : UIInitModule
 local M = {}
