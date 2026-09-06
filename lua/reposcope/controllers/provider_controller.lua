@@ -10,7 +10,7 @@
 ---@class ProviderController : ProviderControllerModule
 local M = {}
 
--- Vim Utilties
+-- Vim Utilities
 local ui_input = vim.ui.input
 -- Utilities and Core
 local debounce_with_counter = require("reposcope.utils.protection").debounce_with_counter

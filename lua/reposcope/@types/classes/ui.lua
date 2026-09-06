@@ -132,8 +132,8 @@
 ---@field set_current_index fun(index: number): nil Sets the current prompt index
 ---@field focus_first_input fun(): nil Sets focus to the first interactive prompt input field and enters insert mode.
 ---@field focus_field_index fun(index: integer): nil Sets focus to the input field at the specified index (1-based), and positions the cursor at line 2.
----@field focus_field fun(field: string): nil Focuses a field by its name (e.g. "keywords") if it exists in the configured field list --NOTE: nuiy
----@field navigate fun(direction: "next"|"prev"): nil Navigates to the next or previous field in the list, wrapping around  --NOTE: niuy
+---@field focus_field fun(field: string): nil Focuses a field by its name (e.g. "keywords") if it exists in the configured field list
+---@field navigate fun(direction: "next"|"prev"): nil Navigates to the next or previous field in the list, wrapping around
 
 ---@class UIPromptInputModule
 ---@field collect fun(): table<string, string>
@@ -145,8 +145,8 @@
 
 ---@class UIPromptNavigationModule
 ---@field navigate_list_in_prompt fun(direction: "up"|"down"): nil Allows navigation within the list directly from the prompt
----@field set_list_to fun(line: number): nil Sets the list's current linr to given line number
+---@field set_list_to fun(line: number): nil Sets the list's current line to the given line number
 
 ---@class UIPromptManagerModule
 ---@field open_windows fun(): nil Initializes and renders the prompt UI
----@field close_windows fun(): nil Closes all prompt-related windows  --NOTE:  niuy
+---@field close_windows fun(): nil Closes all prompt-related windows

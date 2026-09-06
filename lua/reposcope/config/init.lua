@@ -96,7 +96,7 @@ function M.get_option(key)
       resolved = is_windows and (os.getenv("USERPROFILE") or "./") or (os.getenv("HOME") or "./")
     end
 
-    --@type CloneOption
+    ---@type CloneOptions
     local clone_result = {
       std_dir = resolved,
       type = M.options.clone.type,
