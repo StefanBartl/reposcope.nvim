@@ -43,6 +43,7 @@ local specs = {
   "query_builder_spec.lua",
   "repository_cache_spec.lua",
   "config_spec.lua",
+  "favorites_state_spec.lua",
   "status_view_spec.lua",
   "preview_image_spec.lua",
   "hover_spec.lua",

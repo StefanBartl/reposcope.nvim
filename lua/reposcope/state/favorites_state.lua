@@ -21,12 +21,21 @@ local get_favorites_path = require("reposcope.config").get_favorites_path
 local notify = require("reposcope.utils.debug").notify
 local readme_cache_get = require("reposcope.cache.readme_cache").get
 local is_readable_file = require("lib.nvim.fs.is_readable_file")
+local fs_read = require("lib.nvim.fs.read")
 local fs_json = require("lib.nvim.fs.json")
 
 ---@type FavoriteRepo[]|nil
 local _cache = nil
 
 ---Loads favorites from disk (cached after first call).
+---
+--- A decode failure on an existing file is not the same situation as no
+--- file existing at all: `M.toggle()` always rewrites the WHOLE file via
+--- `_save()`, so falling straight through to an empty list here means the
+--- very next favorite toggled silently replaces a corrupt file with a
+--- single-entry list -- every previously favorited repository gone with no
+--- trace it ever existed. The original bytes are backed up once, so "the
+--- file was briefly unreadable" never turns into "the favorites are gone".
 ---@return FavoriteRepo[]
 function M.load()
   if _cache then return _cache end
@@ -40,6 +49,17 @@ function M.load()
   local decoded, err = fs_json.read(path)
   if not decoded or type(decoded) ~= "table" then
     notify("[reposcope] Favorites file is corrupt or invalid JSON: " .. tostring(err), 4)
+    local raw = fs_read(path)
+    if raw then
+      local ok_write = pcall(function()
+        local fh = io.open(path .. ".corrupt", "wb")
+        if fh then
+          fh:write(raw)
+          fh:close()
+        end
+      end)
+      if not ok_write then notify("[reposcope] Failed to back up corrupt favorites file", 4) end
+    end
     _cache = {}
     return _cache
   end
