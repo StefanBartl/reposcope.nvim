@@ -51,12 +51,12 @@
 ---| "stars"
 
 ---@class PromptBufferMap
----@field prefix Buffer
----@field keywords Buffer
----@field owner Buffer
----@field language Buffer
----@field topic Buffer
----@field stars Buffer
+---@field prefix Reposcope.Buffer
+---@field keywords Reposcope.Buffer
+---@field owner Reposcope.Buffer
+---@field language Reposcope.Buffer
+---@field topic Reposcope.Buffer
+---@field stars Reposcope.Buffer
 
 ---@alias RequestToolName
 ---| "gh"
@@ -94,8 +94,8 @@
 ---| "float"
 ---| ""
 
----@alias Buffer integer|nil
----@alias Window integer|nil
+---@alias Reposcope.Buffer integer|nil
+---@alias Reposcope.Window integer|nil
 
 ---@alias Query string # A query attached from prompt input fields and build to request provider
 
