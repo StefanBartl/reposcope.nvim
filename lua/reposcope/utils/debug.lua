@@ -10,6 +10,7 @@
 local M = {}
 
 -- Vim Utilities
+---@type fun(msg: string, level?: integer, opts?: table)
 local notify = vim.notify
 
 ---@class DebugOptions

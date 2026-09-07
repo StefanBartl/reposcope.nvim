@@ -5,8 +5,8 @@
 ---@field stats StatsPopupState State for buffer and window for the stats popup
 
 ---@class StatsPopupState
----@field buf Buffer Buffer of the stats popup
----@field win Window of the stats popup
+---@field buf Reposcope.Buffer Buffer of the stats popup
+---@field win Reposcope.Window of the stats popup
 
 ---@class PromptStateManagerModule
 ---@field set_field_text fun(field: string, text: string): nil Sets the current input text for a given prompt field
@@ -35,7 +35,7 @@
 ---@field set_list_populated fun(val: boolean): nil Sets internal flag indicating list was populated
 
 ---@class UIStateInvocation
----@field win Window window ID before UI was opened
+---@field win Reposcope.Window window ID before UI was opened
 ---@field cursor UIStateCursor cursor position before UI was opened
 
 ---@class UIStateCursor
@@ -43,20 +43,20 @@
 ---@field col integer|nil
 
 ---@class UIStateBuffers
----@field backg Buffer
----@field preview Buffer
+---@field backg Reposcope.Buffer
+---@field preview Reposcope.Buffer
 ---@field prompt PromptBufferMap|nil
----@field prompt_prefix Buffer
----@field list Buffer
----@field readme_viewer Buffer
+---@field prompt_prefix Reposcope.Buffer
+---@field list Reposcope.Buffer
+---@field readme_viewer Reposcope.Buffer
 
 ---@class UIStateWindows
----@field backg Window
----@field preview Window
+---@field backg Reposcope.Window
+---@field preview Reposcope.Window
 ---@field prompt table|nil
----@field prompt_prefix Window
----@field list Window
----@field readme_viewer Window
+---@field prompt_prefix Reposcope.Window
+---@field list Reposcope.Window
+---@field readme_viewer Reposcope.Window
 
 ---@class UIStateList
 ---@field last_selected_line integer|nil The last selected line number in the list
