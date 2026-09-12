@@ -24,6 +24,13 @@ local set_prompt_fields = require("reposcope.ui.prompt.prompt_config").set_field
 ---@type ConfigOptions
 M.options = require("reposcope.config.DEFAULTS")
 
+-- Via lib.nvim's env snapshot, not env_get("REPOS_DIR"): it's the one
+-- sanctioned place this specific env var is read, so it agrees with the
+-- $REPOS_DIR Tab-completion keyword offered in bindings/usrcmds.lua. Resolved
+-- here, not in DEFAULTS.lua, so requiring that module alone stays pure data
+-- (LUA-06).
+M.options.clone.std_dir = require("lib.nvim.system.env").get().repo_base or M.options.clone.std_dir
+
 ---@private
 ---Root directory for cache and logs
 local base_cache = vim.fn.stdpath("cache") .. "/reposcope"
