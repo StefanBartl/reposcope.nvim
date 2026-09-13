@@ -1,18 +1,20 @@
 ---@module 'reposcope.config.DEFAULTS'
 ---@brief Default values for all `ConfigOptions`, merged with user options in `setup()`.
 
--- ENV-VAR Utility
-local env_get = require("reposcope.utils.env").get
-
 ---@type ConfigOptions
 local defaults = {
   prompt_fields = { "prefix", "keywords", "owner", "language" }, -- Default fields for the prompt in the UI
   provider = "github", -- Default provider for Reposcope (GitHub)
   preferred_requesters = { "gh", "curl", "wget" }, -- Preferred tools for API requests
   request_tool = "gh", -- Default request tool (GitHub CLI)
-  github_token = env_get("GITHUB_TOKEN") or "", -- Github authorization token (for higher request limits)
-  gitlab_token = env_get("GITLAB_TOKEN") or "", -- GitLab authorization token (for higher request limits)
-  codeberg_token = env_get("CODEBERG_TOKEN") or "", -- Codeberg authorization token (for higher request limits)
+  -- Placeholders: the real values (GITHUB_TOKEN/GITLAB_TOKEN/CODEBERG_TOKEN via
+  -- reposcope.utils.env) are resolved once in config/init.lua, right after this
+  -- table is required -- same spot and reason as `clone.std_dir` below: keeps
+  -- requiring DEFAULTS.lua alone free of an env read, so this module stays pure
+  -- data (LUA-06).
+  github_token = "", -- Github authorization token (for higher request limits)
+  gitlab_token = "", -- GitLab authorization token (for higher request limits)
+  codeberg_token = "", -- Codeberg authorization token (for higher request limits)
   results_limit = 25, -- Default result limit for search queries
   layout = "default", -- Default UI layout
   clone = {

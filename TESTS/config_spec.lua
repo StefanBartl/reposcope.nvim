@@ -6,10 +6,15 @@ return function(H)
   local DEFAULTS = require("reposcope.config.DEFAULTS")
 
   -- Pick a scalar key that actually exists, so this spec does not have to be
-  -- edited every time the option surface grows.
+  -- edited every time the option surface grows. Skips the three token fields:
+  -- like `clone.std_dir`, config/init.lua re-resolves them from the
+  -- environment right after requiring DEFAULTS (LUA-06), so config.options[key]
+  -- can legitimately differ from DEFAULTS[key] for those -- and on a machine
+  -- with GITHUB_TOKEN set, it does.
+  local env_resolved = { github_token = true, gitlab_token = true, codeberg_token = true }
   local key, original
   for k, v in pairs(DEFAULTS) do
-    if type(v) == "string" or type(v) == "number" or type(v) == "boolean" then
+    if not env_resolved[k] and (type(v) == "string" or type(v) == "number" or type(v) == "boolean") then
       key, original = k, v
       break
     end
