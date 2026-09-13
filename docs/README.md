@@ -7,7 +7,10 @@ for finding the page that answers a specific question.
 
 | Page | Answers |
 | --- | --- |
+| [requirements.md](requirements.md) | Neovim version, required plugins and CLI tools |
 | [installation.md](installation.md) | The plugin spec, for lazy.nvim and packer.nvim |
+| [quickstart.md](quickstart.md) | The first thing to run after installing, with the demo |
+| [what-you-get.md](what-you-get.md) | The full command surface at a glance |
 | [configuration.md](configuration.md) | Every `setup()` option with its default, the progress indicator, README caching, and the image preview |
 | [authentication.md](authentication.md) | Tokens per provider, and why a `gh auth login` session is not enough |
 
