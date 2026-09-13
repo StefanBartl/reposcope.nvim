@@ -31,6 +31,14 @@ M.options = require("reposcope.config.DEFAULTS")
 -- (LUA-06).
 M.options.clone.std_dir = require("lib.nvim.system.env").get().repo_base or M.options.clone.std_dir
 
+-- Same reason as `clone.std_dir` above: resolved here, not inline in
+-- DEFAULTS.lua's table, so requiring that module alone stays pure data
+-- (LUA-06).
+local env_get = require("reposcope.utils.env").get
+M.options.github_token = env_get("GITHUB_TOKEN") or M.options.github_token
+M.options.gitlab_token = env_get("GITLAB_TOKEN") or M.options.gitlab_token
+M.options.codeberg_token = env_get("CODEBERG_TOKEN") or M.options.codeberg_token
+
 ---@private
 ---Root directory for cache and logs
 local base_cache = vim.fn.stdpath("cache") .. "/reposcope"
