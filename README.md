@@ -42,8 +42,9 @@ favorites and session persistence for your searches.
 > leaving you with link text.
 >
 > All three are soft: without them everything else works unchanged.
-> [lib.nvim](https://github.com/StefanBartl/lib.nvim) is the one real plugin
-> dependency — see [Requirements](docs/requirements.md).
+> [lib.nvim](https://github.com/StefanBartl/lib.nvim) and
+> [ui.nvim](https://github.com/StefanBartl/ui.nvim) are the real plugin
+> dependencies — see [Requirements](docs/requirements.md).
 
 ---
 

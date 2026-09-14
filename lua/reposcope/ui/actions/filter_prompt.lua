@@ -9,7 +9,7 @@
 local M = {}
 
 local apply_filter = require("reposcope.ui.actions.filter_repos").apply_filter
-local kit = require("lib.nvim.ui.kit")
+local kit = require("ui.kit")
 
 ---Opens a floating input window to enter a filter query.
 ---@return nil

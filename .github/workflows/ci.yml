@@ -56,6 +56,15 @@ jobs:
           path: lib.nvim
           ref: ci-verified
 
+      # ui.nvim: same tier as lib.nvim above -- status_view.lua's
+      # module-top-level `require("ui.kit")` means TESTS/status_view_spec.lua
+      # (and reposcope itself, from init.lua's own top-level
+      # require("reposcope.bindings.usrcmds")) cannot load without it.
+      - uses: actions/checkout@v5
+        with:
+          repository: StefanBartl/ui.nvim
+          path: ui.nvim
+
       - uses: rhysd/action-setup-vim@v1
         with:
           neovim: true

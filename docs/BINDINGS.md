@@ -91,8 +91,8 @@ whenever it opens/closes.
 | ------------- | ---- | -------------------------------------------- | ---------------------------------------------------------- |
 | `q`           | n    | [`ui/actions/readme_viewer.lua`](../lua/reposcope/ui/actions/readme_viewer.lua) (`nvim_buf_set_keymap`) | Closes the README viewer, restores prompt autocmds + prompt keymaps |
 | `q`, `<Esc>`  | n    | [`utils/stats.lua`](../lua/reposcope/utils/stats.lua) | Closes the stats popup buffer/window                        |
-| `q`, `<Esc>`  | n    | [`ui/actions/help_view.lua`](../lua/reposcope/ui/actions/help_view.lua) (via `lib.nvim.ui.kit`'s `nice_quit`) | Closes the `?` keymap cheatsheet |
-| `<CR>`, `<2-LeftMouse>` | n | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, on every interactive `--out` backend of `:Reposcope status`) | Prompts to confirm (`lib.nvim.ui.kit`'s button-confirm dialog), then opens the `README.md` of the repository under the cursor (`:edit`). A repository with no readable `README.md` just gets a notification — nothing to confirm |
+| `q`, `<Esc>`  | n    | [`ui/actions/help_view.lua`](../lua/reposcope/ui/actions/help_view.lua) (via `ui.kit`'s `nice_quit`) | Closes the `?` keymap cheatsheet |
+| `<CR>`, `<2-LeftMouse>` | n | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, on every interactive `--out` backend of `:Reposcope status`) | Prompts to confirm (`ui.kit`'s button-confirm dialog), then opens the `README.md` of the repository under the cursor (`:edit`). A repository with no readable `README.md` just gets a notification — nothing to confirm |
 | `m`           | n, x | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Toggles the mark on the repository under the cursor; in Visual mode marks every row the selection spans. Marks are keyed by repository path, so they survive `s` and `R` |
 | `M`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Marks every repository in the overview — or clears all marks when everything is already marked |
 | `p`           | n    | [`ui/actions/status_view.lua`](../lua/reposcope/ui/actions/status_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Pushes the marked repositories (`utils/repo_actions.lua`), or the one under the cursor when nothing is marked. Each row is re-read and redrawn as its push settles |
@@ -119,7 +119,7 @@ over-long legend is truncated by Neovim itself, from the *left*, replacing the
 first entries with a bare `<`.
 
 Every batch (`p`/`P`/`f` with marks set, and all four `g` forms) is confirmed
-through `lib.nvim.ui.kit`'s button dialog before it starts, then runs its
+through `ui.kit`'s button dialog before it starts, then runs its
 repositories one after another through `lib.nvim.progress` — cancelling there
 stops the queue rather than the `git` call in flight. `s` and `R` are refused
 while a batch is running, since both would move rows out from under the

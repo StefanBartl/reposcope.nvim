@@ -10,7 +10,7 @@ local repository_cache = require("reposcope.cache.repository_cache")
 local list_controller = require("reposcope.controllers.list_controller")
 local fetch_readme = require("reposcope.controllers.provider_controller").fetch_readme_for_selected
 local notify = require("reposcope.utils.debug").notify
-local kit = require("lib.nvim.ui.kit")
+local kit = require("ui.kit")
 
 ---Last sort mode applied via `apply_sort` ("relevance" if none/reset)
 ---@type "name"|"owner"|"stars"|"relevance"
