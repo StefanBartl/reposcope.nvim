@@ -6,7 +6,7 @@
 {
   "StefanBartl/reposcope.nvim",
   name = "reposcope",
-  dependencies = { "StefanBartl/lib.nvim" },
+  dependencies = { "StefanBartl/lib.nvim", "StefanBartl/ui.nvim" },
   event = "VeryLazy",
   config = function()
     require("reposcope.init").setup({})
@@ -20,7 +20,7 @@
 use {
   "StefanBartl/reposcope.nvim",
   name = "reposcope",
-  dependencies = { "StefanBartl/lib.nvim" },
+  dependencies = { "StefanBartl/lib.nvim", "StefanBartl/ui.nvim" },
   event = "VeryLazy",
   config = function()
     require("reposcope.init").setup({})

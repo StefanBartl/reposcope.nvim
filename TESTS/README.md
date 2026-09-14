@@ -10,17 +10,20 @@ nvim --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
 Exit 0 is a pass; the runner prints one line per spec and exits non-zero on the
 first failure. CI runs exactly this command.
 
-## lib.nvim
+## lib.nvim and ui.nvim
 
-Several modules require lib.nvim at module load, so the suite cannot run
-without it. `run.lua` resolves it in this order:
+Several modules require lib.nvim at module load, and `status_view.lua`
+(exercised directly by `status_view_spec.lua`) requires `ui.kit` the same
+way, so the suite cannot run without either. `run.lua` resolves each in
+this order:
 
-1. `$LIB_NVIM_PATH`
-2. a sibling checkout, `../lib.nvim`
-3. the lazy.nvim-managed copy under `stdpath("data")/lazy/lib.nvim`
+1. `$LIB_NVIM_PATH` / `$UI_NVIM_PATH`
+2. a sibling checkout, `../lib.nvim` / `../ui.nvim`
+3. the lazy.nvim-managed copy under `stdpath("data")/lazy/lib.nvim` /
+   `stdpath("data")/lazy/ui.nvim`
 
 A sibling wins over the plugin-manager copy on purpose: that one is often older
-than the working checkout, and testing against a stale lib.nvim gives
+than the working checkout, and testing against a stale lib.nvim/ui.nvim gives
 misleading failures.
 
 ## The specs

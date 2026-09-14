@@ -40,7 +40,7 @@
 ---| "statusline"  # headless; read via lib.nvim.progress.styles.statusline.active()
 ---| "fidget"      # fidget.nvim's LSP-style handles
 ---| "float"       # small floating window, focus + <Esc> to abort
----| "kit"         # like "float", themed via lib.nvim.ui.kit
+---| "kit"         # like "float", themed via ui.kit
 
 ---@alias PromptField # The field key (e.g. "keywords", "owner")
 ---| "prefix"

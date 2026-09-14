@@ -115,7 +115,7 @@ missing beyond the indicator itself.
 | `"statusline"` | Draws nothing — publishes the text for your own statusline to read.       |
 | `"fidget"`     | `fidget.nvim`'s LSP-style progress handles.                               |
 | `"float"`      | Small floating window; focus it and press `<Esc>` to abort.               |
-| `"kit"`        | Like `"float"`, themed via `lib.nvim.ui.kit`.                             |
+| `"kit"`        | Like `"float"`, themed via `ui.kit`.                             |
 
 The indicator is **delay-guarded**: it only becomes visible after ~150ms, so
 `status` on two or three repositories never flashes any UI.

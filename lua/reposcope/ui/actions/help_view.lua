@@ -10,9 +10,9 @@
 ---@class ActionHelpView : ActionHelpViewModule
 local M = {}
 
-local kit = require("lib.nvim.ui.kit")
+local kit = require("ui.kit")
 
----@type Lib.UI.Kit.Surface|nil
+---@type Ui.Kit.Surface|nil
 local _surf
 
 ---@return nil

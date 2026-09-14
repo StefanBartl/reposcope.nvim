@@ -5,7 +5,7 @@
 --- a repository-status overview that can easily run to dozens of lines. This
 --- module renders the aligned status table once and then hands it to one of
 --- several output backends, all built on `lib.nvim`:
----   - "popup"     (default) a scrollable floating window via `lib.nvim.ui.kit`
+---   - "popup"     (default) a scrollable floating window via `ui.kit`
 ---   - "buffer"    replaces the current window's buffer with the status buffer
 ---   - "split"     opens (or reuses) a horizontal split
 ---   - "vsplit"    opens (or reuses) a vertical split
@@ -14,7 +14,7 @@
 ---
 --- On every interactive backend (popup/buffer/split/vsplit), the repository row
 --- under the cursor can be opened: `<CR>` or a double-click (`<2-LeftMouse>`)
---- asks for confirmation via `lib.nvim.ui.kit`'s button-confirm dialog, then
+--- asks for confirmation via `ui.kit`'s button-confirm dialog, then
 --- opens that repository's `README.md` (`:edit`). Rows with no readable
 --- `README.md` are a silent no-op past a notification — there is nothing to
 --- confirm opening.
@@ -55,7 +55,7 @@
 ---@class ActionStatusView : ActionStatusViewModule
 local M = {}
 
-local kit = require("lib.nvim.ui.kit")
+local kit = require("ui.kit")
 local map = require("lib.nvim.bindings.keymap")
 local open_named_scratch = require("lib.nvim.window.open_named_scratch")
 local copy_to_clipboard = require("lib.nvim.cross.copy_to_clipboard")

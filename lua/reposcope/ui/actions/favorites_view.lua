@@ -8,7 +8,7 @@
 ---@class ActionFavoritesView : ActionFavoritesViewModule
 local M = {}
 
-local kit = require("lib.nvim.ui.kit")
+local kit = require("ui.kit")
 
 ---@return string[]
 local function build_lines()

@@ -7,9 +7,10 @@ Clone, symlink into your Neovim config, and hack away.
 git clone https://github.com/StefanBartl/reposcope.nvim ~/.config/nvim/reposcope.nvim
 ```
 
-[`lib.nvim`](https://github.com/StefanBartl/lib.nvim) is a real runtime
-dependency — several modules require it at load — so check it out as a
-sibling directory before running anything.
+[`lib.nvim`](https://github.com/StefanBartl/lib.nvim) and
+[`ui.nvim`](https://github.com/StefanBartl/ui.nvim) are real runtime
+dependencies — several modules require them at load — so check both out as
+sibling directories before running anything.
 
 ## Before opening a pull request
 

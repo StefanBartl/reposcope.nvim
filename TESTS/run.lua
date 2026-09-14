@@ -3,35 +3,51 @@
 -- Run from the repo root:
 --   nvim --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
 --
--- lib.nvim has to be reachable: several reposcope modules
--- require it at module load. The runner puts a sibling checkout on the
--- runtimepath, or whatever $LIB_NVIM_PATH points at.
+-- lib.nvim and ui.nvim both have to be reachable: several reposcope
+-- modules require them at module load (status_view.lua's `ui.kit`
+-- notably, exercised directly by TESTS/status_view_spec.lua). The runner
+-- puts a sibling checkout of each on the runtimepath, or whatever
+-- $LIB_NVIM_PATH/$UI_NVIM_PATH point at.
 
 local dir = debug.getinfo(1, "S").source:sub(2):match("(.*[/\\])") or "./"
 
-do
+---@param env_var string
+---@param sibling_name string
+---@param marker_dir string # e.g. "lib" or "ui" -- checked as "<candidate>/lua/<marker_dir>"
+local function add_dep(env_var, sibling_name, marker_dir)
   local candidates = {}
-  if vim.env.LIB_NVIM_PATH and vim.env.LIB_NVIM_PATH ~= "" then candidates[#candidates + 1] = vim.env.LIB_NVIM_PATH end
-  candidates[#candidates + 1] = dir .. "../../lib.nvim"
-  candidates[#candidates + 1] = vim.fn.stdpath("data") .. "/lazy/lib.nvim"
+  local env_val = vim.env[env_var]
+  if env_val and env_val ~= "" then candidates[#candidates + 1] = env_val end
+  candidates[#candidates + 1] = dir .. "../../" .. sibling_name
+  candidates[#candidates + 1] = vim.fn.stdpath("data") .. "/lazy/" .. sibling_name
 
   for _, path in ipairs(candidates) do
     local norm = vim.fs.normalize(path)
-    if vim.fn.isdirectory(norm .. "/lua/lib") == 1 then
+    if vim.fn.isdirectory(norm .. "/lua/" .. marker_dir) == 1 then
       vim.opt.rtp:append(norm)
       package.path = table.concat({
         norm .. "/lua/?.lua",
         norm .. "/lua/?/init.lua",
         package.path,
       }, ";")
-      break
+      return true
     end
   end
+  return false
 end
+
+add_dep("LIB_NVIM_PATH", "lib.nvim", "lib")
+add_dep("UI_NVIM_PATH", "ui.nvim", "ui")
 
 if not pcall(require, "lib.lua.tables") then
   print("FAIL  cannot locate lib.nvim (a runtime dependency of reposcope.nvim).")
   print("      Set $LIB_NVIM_PATH, or check it out next to this repo.")
+  os.exit(1)
+end
+
+if not pcall(require, "ui.kit") then
+  print("FAIL  cannot locate ui.nvim (a runtime dependency of reposcope.nvim).")
+  print("      Set $UI_NVIM_PATH, or check it out next to this repo.")
   os.exit(1)
 end
 
