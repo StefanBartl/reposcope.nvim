@@ -43,6 +43,12 @@ The request log holds one entry per `uuid:type` — `api_success`,
 exists, the actual request or repository `url` in its own field. `log_max`
 caps its size.
 
+It is written compact (no line breaks), so opening it directly is not very
+readable. If you have [`data.nvim`](https://github.com/StefanBartl/data.nvim)
+installed, `:JSON pretty` on the buffer reformats it instantly, and `:JSON
+lines`/`:JSON filter` flatten it down to one `path: value` line per entry —
+handy for spotting which `query` kept missing the cache.
+
 ## Forcing a fresh README
 
 There is no per-repository refresh command. The reset is at the cache
