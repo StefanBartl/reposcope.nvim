@@ -70,7 +70,7 @@ function M.fetch_repositories(query, on_success, on_failure)
     end
 
     local ok, parsed = pcall(vim.json.decode, response)
-    if not ok or not parsed or not parsed.data then
+    if not ok or type(parsed) ~= "table" or not parsed.data then
       notify("[reposcope] Invalid or empty Codeberg API response.", 4)
       repo_cache_clear()
       on_failure()

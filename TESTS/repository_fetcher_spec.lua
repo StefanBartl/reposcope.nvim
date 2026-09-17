@@ -156,44 +156,28 @@ return function(H)
   end
 
   ---------------------------------------------------------------------------
-  -- A body of `null` is valid JSON, and two of the three fetchers die on it
+  -- A body of `null` is valid JSON, and all three fetchers reject it cleanly
   ---------------------------------------------------------------------------
-  -- BUG: `vim.json.decode("null")` succeeds and returns `vim.NIL`, a userdata
-  -- value -- which is *truthy* in Lua. The GitHub and Codeberg guards read
-  -- `if not ok or not parsed or not parsed.items/.data`, so `not parsed` is
-  -- false and the next step indexes a userdata: "attempt to index local
-  -- 'parsed' (a userdata value)", raised from inside the response callback
-  -- rather than reported through `on_failure`. The GitLab fetcher next to
-  -- them checks `type(parsed) ~= "table"` instead and handles the same body
-  -- correctly -- so the fix already exists in this repo, at one of the three
-  -- call sites. The same class of defect as the `vim.NIL` handling
-  -- `utils.core.ensure_string` was written for.
-  for _, module in ipairs({ GITHUB, CODEBERG }) do
+  -- `vim.json.decode("null")` succeeds and returns `vim.NIL`, a userdata
+  -- value -- which is *truthy* in Lua, so a bare `not parsed` guard misses
+  -- it and a later `parsed.items`/`.data` indexes the userdata directly.
+  -- All three guards now check `type(parsed) ~= "table"` instead (the same
+  -- class of defect `utils.core.ensure_string`'s `vim.NIL` check guards
+  -- against), so a `null` body fails cleanly through `on_failure` like any
+  -- other malformed response, on every provider.
+  for _, module in ipairs({ GITHUB, CODEBERG, GITLAB }) do
     with_fetcher(module, function(req) req.callback("null", nil) end, function(fetcher)
       local failed = false
-      local ok, err = pcall(
+      local ok = pcall(
         fetcher.fetch_repositories,
         "nvim",
         function() error("success must not be reported") end,
         function() failed = true end
       )
-      H.falsy(ok, "BUG: a `null` body raises instead of failing cleanly: " .. module)
-      H.contains(tostring(err), "userdata", "BUG: because vim.NIL passes the `not parsed` guard")
-      H.falsy(failed, "BUG: on_failure is never reached, so the UI is left as it was")
+      H.ok(ok, "a `null` body fails cleanly instead of raising: " .. module)
+      H.ok(failed, "and on_failure is reached: " .. module)
     end)
   end
-
-  with_fetcher(GITLAB, function(req) req.callback("null", nil) end, function(fetcher)
-    local failed = false
-    local ok = pcall(
-      fetcher.fetch_repositories,
-      "nvim",
-      function() error("must not succeed") end,
-      function() failed = true end
-    )
-    H.ok(ok, "GitLab's `type(parsed) ~= 'table'` guard handles the same body without raising")
-    H.ok(failed, "and reports it as an ordinary failure")
-  end)
 
   ---------------------------------------------------------------------------
   -- An empty result set is a success, not a failure
