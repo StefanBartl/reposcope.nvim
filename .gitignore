@@ -155,3 +155,10 @@ doc/tags
 # ~40 MB of downloaded artifacts nobody asked for — in several cases larger
 # than the plugin's own code.
 docs/map/
+
+# Spec fixtures. `H.fixture()` creates these inside the repository (not under
+# the system temp directory, whose Windows 8.3 short component several Vim
+# path builtins cannot see through) and removes them again at the end of the
+# spec. A run interrupted halfway would otherwise leave one behind, ready to
+# be staged by accident.
+TESTS/.fixture-*/
