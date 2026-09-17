@@ -53,18 +53,55 @@ end
 
 local H = dofile(dir .. "harness.lua")
 
--- Ordered so a failure points at the smallest layer first.
+-- Ordered so a failure points at the smallest layer first: pure helpers,
+-- then config/state, then the network stack, then the provider layer built on
+-- it, and only afterwards the controllers, bindings and UI-facing actions.
 local specs = {
+  -- Leaf utilities
   "core_utils_spec.lua",
-  "query_builder_spec.lua",
-  "repository_cache_spec.lua",
+  "utils_spec.lua",
+  "encoding_text_spec.lua",
+  "protection_spec.lua",
+  -- Configuration and state
   "config_spec.lua",
+  "config_options_spec.lua",
+  "state_spec.lua",
+  "session_state_spec.lua",
+  "query_stats_spec.lua",
   "favorites_state_spec.lua",
+  -- Caches
+  "repository_cache_spec.lua",
+  "repository_cache_selection_spec.lua",
+  "readme_cache_spec.lua",
+  -- Network stack (no process is ever spawned; see TESTS/README.md)
+  "request_tools_spec.lua",
+  "http_client_spec.lua",
+  -- Provider layer
+  "query_builder_spec.lua",
+  "readme_urls_spec.lua",
+  "repository_fetcher_spec.lua",
+  "readme_fetcher_spec.lua",
+  "readme_manager_spec.lua",
+  "repository_manager_spec.lua",
+  "clone_spec.lua",
+  -- Controllers
+  "controllers_spec.lua",
+  "provider_controller_spec.lua",
+  -- Metrics and the repo-maintenance commands
+  "metrics_spec.lua",
+  "repos_util_spec.lua",
+  -- Bindings, health and UI-facing actions
+  "bindings_spec.lua",
+  "health_spec.lua",
+  "actions_spec.lua",
+  "readme_views_spec.lua",
   "status_view_spec.lua",
   "preview_image_spec.lua",
   "hover_spec.lua",
-  "readme_urls_spec.lua",
   "list_window_spec.lua",
+  -- Last on purpose: the only spec that opens the real UI, so it is the one
+  -- that would leave stray windows behind if it failed halfway.
+  "init_spec.lua",
 }
 
 local failed = 0
