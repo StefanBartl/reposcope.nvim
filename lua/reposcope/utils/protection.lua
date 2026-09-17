@@ -121,7 +121,14 @@ end
 ---@param nec_filename? boolean Optional parameter to toggle testing filename
 ---@return boolean
 function M.is_valid_path(path, nec_filename)
-  path = expand(path)
+  -- Backslash-spelled paths (`vim.fn.expand("~")` and Tab-completion both
+  -- produce them on Windows) must become `/`-separated before `fnamemodify`
+  -- does anything below: its `:h`/`:t` modifiers and this function's own
+  -- trailing-slash check only recognise `/` as a separator, on every
+  -- platform, so a literal backslash would otherwise survive into a real
+  -- filesystem path where it is just an ordinary character, not a
+  -- directory boundary.
+  path = expand(path):gsub("\\", "/")
 
   local filename = nil
   if nec_filename == true then

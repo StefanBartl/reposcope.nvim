@@ -52,7 +52,7 @@ function M.fetch_repositories(query, on_success, on_failure)
     end
 
     local ok, parsed = pcall(vim.json.decode, response)
-    if not ok or not parsed or not parsed.items then
+    if not ok or type(parsed) ~= "table" or not parsed.items then
       notify("[reposcope] Invalid or empty GitHub API response.", 4)
       repo_cache_clear()
       on_failure()
