@@ -42,7 +42,11 @@ local function _apply_background_layout()
     bg = config.color_bg,
   })
 
-  vim.wo[win].winhighlight = "Normal:ReposcopeBackground"
+  -- Window-local, deliberately. `vim.wo[win].winhighlight = ...` behaves
+  -- like `:set` rather than `:setlocal` and writes the global value too,
+  -- so this background would leak into the default every later window
+  -- inherits.
+  require("lib.nvim.ui.winhighlight").apply(win, "Normal:ReposcopeBackground")
 end
 
 ---Opens the background window.
