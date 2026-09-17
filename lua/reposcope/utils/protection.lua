@@ -122,13 +122,14 @@ end
 ---@return boolean
 function M.is_valid_path(path, nec_filename)
   -- Backslash-spelled paths (`vim.fn.expand("~")` and Tab-completion both
-  -- produce them on Windows) must become `/`-separated before `fnamemodify`
-  -- does anything below: its `:h`/`:t` modifiers and this function's own
-  -- trailing-slash check only recognise `/` as a separator, on every
-  -- platform, so a literal backslash would otherwise survive into a real
-  -- filesystem path where it is just an ordinary character, not a
-  -- directory boundary.
-  path = expand(path):gsub("\\", "/")
+  -- produce them on Windows) must become `/`-separated *before* `expand()`
+  -- runs, not after: on Linux, `expand()` treats a bare `\` as an escape
+  -- character and silently swallows it rather than leaving it as an
+  -- ordinary byte, collapsing "\tmp\a\b" into the single mangled token
+  -- "tmpab" with no separators left for `fnamemodify`'s `:h`/`:t` to find.
+  -- Confirmed on real Linux Neovim, not just inferred from the CI log.
+  path = path:gsub("\\", "/")
+  path = expand(path)
 
   local filename = nil
   if nec_filename == true then

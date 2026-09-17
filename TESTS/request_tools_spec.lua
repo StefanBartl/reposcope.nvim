@@ -133,7 +133,7 @@ return function(H)
   end
 
   ---------------------------------------------------------------------------
-  -- curl: GitLab's PRIVATE-TOKEN is a credential that is NOT recognised as one
+  -- curl: GitLab's PRIVATE-TOKEN is a credential too
   ---------------------------------------------------------------------------
   do
     local calls, spawn = spawn_recorder(OK)
@@ -151,16 +151,20 @@ return function(H)
         ["PRIVATE-TOKEN"] = "glpat-s3cret",
       }, false, "ctx", "uuid-3")
 
-      -- BUG: the `-K -` path exists precisely so that "a process's command
-      -- line is readable by any other process on the machine" never holds for
-      -- a credential (curl.lua's own comment). `lib.nvim.net.curl`'s
-      -- `is_secret_header` only knows `authorization`/`proxy-authorization`/
-      -- `cookie`, so GitLab's `PRIVATE-TOKEN` -- which http_client.lua builds
-      -- for every authenticated GitLab request -- is classified as ordinary
-      -- and written straight into argv. Codeberg is unaffected: it uses
-      -- `Authorization: token ...`.
-      H.has(calls[1].argv, "PRIVATE-TOKEN: glpat-s3cret", "BUG: the GitLab token is passed on the command line")
-      H.eq(calls[1].opts.stdin, nil, "BUG: and no curl config is written for it")
+      -- The `-K -` path exists precisely so that "a process's command line
+      -- is readable by any other process on the machine" never holds for a
+      -- credential (curl.lua's own comment). `lib.nvim.net.curl`'s
+      -- `is_secret_header` now knows `private-token` alongside
+      -- `authorization`/`proxy-authorization`/`cookie`, so GitLab's token --
+      -- which http_client.lua builds for every authenticated GitLab request
+      -- -- goes into the curl config on stdin like any other credential,
+      -- same as Codeberg's `Authorization: token ...`.
+      H.lacks(calls[1].argv, "PRIVATE-TOKEN: glpat-s3cret", "the GitLab token does not reach the command line")
+      H.contains(
+        calls[1].opts.stdin,
+        'header = "PRIVATE-TOKEN: glpat-s3cret"',
+        "it goes into the curl config on stdin instead"
+      )
     end)
   end
 
