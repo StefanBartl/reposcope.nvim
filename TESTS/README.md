@@ -143,11 +143,12 @@ lowest thing that broke.
 | `preview_image_spec.lua` | `find_url`, the pure half of the README image preview: badge blocks are skipped and the first real raster URL is picked |
 | `hover_spec.lua` | the hover.nvim contribution — the `owner/repo` slug test, and that the source answers only for repositories reposcope has cached |
 | `list_window_spec.lua` | `list_window`'s viewport handling: `reveal_line` scrolls a selection below the fold into view |
+| `ui_config_spec.lua` | `reposcope.ui.config`, the shared layout/theme singleton every `*_config` module derives its own geometry from: `recompute()`'s editor-size math, `update_layout()`'s width/height pin that survives a later `recompute()` while its own col/row override does not, and `update_theme()`'s dark/light/custom/invalid branches |
 | `init_spec.lua` | `setup()` with each optional step switched off, and a real `open_ui()`/`close_ui()` round trip |
 
 ## Findings pinned here
 
-Six defects are pinned with `BUG:`-marked assertions rather than fixed, so a
+Four defects are pinned with `BUG:`-marked assertions rather than fixed, so a
 change to any of them is a deliberate one. Each is described in full at the
 assertion; in short:
 
@@ -162,24 +163,12 @@ assertion; in short:
    only because `close_ui()` deletes their buffers; the registry itself grows
    by one entry per mapping per field on every open/close cycle. Pinned in
    `bindings_spec.lua`.
-3. **`repository_fetcher.lua` (GitHub and Codeberg) — a body of `null` raises.**
-   `vim.json.decode("null")` returns `vim.NIL`, a *truthy* userdata, so the
-   `not parsed` guard passes and the next line indexes it. The GitLab fetcher
-   next to them checks `type(parsed) ~= "table"` and handles the same body
-   correctly. Pinned in `repository_fetcher_spec.lua`.
-4. **`utils/protection.lua` — `is_valid_path(path)` raises when its documented
+3. **`utils/protection.lua` — `is_valid_path(path)` raises when its documented
    optional second argument is omitted.** `filename` is never assigned, the
    `nec_filename == false` early return does not fire for `nil`, and the error
    path concatenates the nil. No in-repo caller today; it is public API all the
    same. Pinned in `protection_spec.lua`.
-5. **`network/request_tools/curl.lua` — GitLab's `PRIVATE-TOKEN` travels in
-   argv.** The `-K -` config-file path exists so that a credential never
-   reaches a command line, but `lib.nvim.net.curl`'s `is_secret_header` only
-   knows `authorization`/`proxy-authorization`/`cookie`. Every authenticated
-   GitLab request therefore puts the token where any other process on the
-   machine can read it. Codeberg is unaffected (it uses `Authorization`).
-   Pinned in `request_tools_spec.lua`.
-6. **`ui/actions/readme_viewer.lua` — opening the viewer twice raises "Invalid
+4. **`ui/actions/readme_viewer.lua` — opening the viewer twice raises "Invalid
    buffer id".** `_prepare_readme_buffer` reuses the already-open buffer and
    hands it back; `_open_readme_window` then closes the previous window, which
    wipes that buffer (`bufhidden = "wipe"`), and passes the dead handle to
@@ -192,6 +181,15 @@ Two further oddities are pinned as *documented behaviour*, not defects: the
 GitHub search fetcher's "N repositories received" message collapses to the bare
 count (`..` binds tighter than `or`), and `close_ui()` leaves dead buffer
 handles in `ui_state.buffers` — harmless, because every reader validates first.
+
+Two other defects this list used to carry here are fixed, not pinned, as of
+the two commits right after this suite's initial round: `repository_fetcher.lua`
+(GitHub and Codeberg) raising on a `vim.json.decode("null")` body is now the
+same `type(parsed) ~= "table"` check the GitLab fetcher always used, and
+GitLab's `PRIVATE-TOKEN` traveling in curl's argv was `lib.nvim`'s bug, fixed
+upstream and caught up with here. Both specs now assert the corrected
+behaviour instead of the old bug report — see `repository_fetcher_spec.lua`
+and `request_tools_spec.lua`.
 
 ## Deliberately not covered
 
