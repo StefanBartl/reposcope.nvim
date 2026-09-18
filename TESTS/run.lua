@@ -99,6 +99,7 @@ local specs = {
   "preview_image_spec.lua",
   "hover_spec.lua",
   "list_window_spec.lua",
+  "ui_config_spec.lua",
   -- Last on purpose: the only spec that opens the real UI, so it is the one
   -- that would leave stray windows behind if it failed halfway.
   "init_spec.lua",
