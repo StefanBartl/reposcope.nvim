@@ -214,7 +214,9 @@ return function(H)
     -- closed it during the search).
     with_ui_loader({ list_buf = nil, precache = 5, items = { { name = "a" } } }, function(loader, env)
       loader.load_ui_after_fetch()
-      vim.wait(300)
+      -- Same 100ms deferral as above; the only observable outcome on this
+      -- branch is the note, so that is what to wait for, not a stopwatch.
+      vim.wait(500, function() return #env.notes > 0 end)
       H.eq(env.readme_fetches, 0, "with the list window gone, no README is fetched")
       H.eq(#env.prefetched, 0, "and nothing is pre-cached")
       H.contains(table.concat(env.notes, "\n"), "List buffer is not available", "the reason is reported")
