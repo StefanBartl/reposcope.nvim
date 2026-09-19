@@ -98,14 +98,26 @@ local function _load_meta()
     notify("[reposcope] README freshness metadata is corrupt or invalid JSON: " .. tostring(err), 3)
     local raw = fs_read(path)
     if raw then
-      local ok_write = pcall(function()
-        local fh = io.open(path .. ".corrupt", "wb")
-        if fh then
-          fh:write(raw)
+      local backup_path = path .. ".corrupt"
+      -- Keep the earliest backup: a later restart that still finds the
+      -- sidecar corrupt must not clobber a first-corruption copy with a
+      -- second, possibly different one (metrics.lua's log_request() guards
+      -- the same way for request_log.json.corrupt).
+      if not is_readable_file(backup_path) then
+        -- `io.open`/`file:write` report failure through a nil/false return,
+        -- not a Lua error, so wrapping them in `pcall` alone never observes
+        -- it -- check the handle and the write result directly instead.
+        local fh, open_err = io.open(backup_path, "wb")
+        if not fh then
+          notify("[reposcope] Failed to back up corrupt README freshness metadata file: " .. tostring(open_err), 3)
+        else
+          local ok_write, write_err = fh:write(raw)
           fh:close()
+          if not ok_write then
+            notify("[reposcope] Failed to back up corrupt README freshness metadata file: " .. tostring(write_err), 3)
+          end
         end
-      end)
-      if not ok_write then notify("[reposcope] Failed to back up corrupt README freshness metadata file", 3) end
+      end
     end
     _meta = {}
     return _meta

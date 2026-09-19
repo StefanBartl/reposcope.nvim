@@ -138,13 +138,18 @@ local function log_request(uuid, data)
         local raw_content = read_file(log_path)
         if raw_content and raw_content ~= "" then
           local backup_path = log_path .. ".corrupt"
-          if not is_readable_file(backup_path) then write_to_file(backup_path, raw_content) end
+          local backup_note
+          if is_readable_file(backup_path) then
+            backup_note = "original already kept at '" .. backup_path .. "'"
+          else
+            local backed_up, backup_err = write_to_file(backup_path, raw_content)
+            -- The notice must not claim a backup exists when the write
+            -- itself failed (e.g. a full disk or a read-only mount).
+            backup_note = backed_up and ("original kept at '" .. backup_path .. "'")
+              or ("failed to back up original: " .. tostring(backup_err))
+          end
           notify(
-            ("[reposcope] '%s' is not valid JSON (%s); original kept at '%s'"):format(
-              log_path,
-              tostring(read_err),
-              backup_path
-            ),
+            ("[reposcope] '%s' is not valid JSON (%s); %s"):format(log_path, tostring(read_err), backup_note),
             vim.log.levels.ERROR
           )
         end

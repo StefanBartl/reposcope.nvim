@@ -407,9 +407,10 @@ return function(H)
       local argv = calls[1].argv
       H.eq(argv[1], "wget", "wget is invoked directly")
       H.eq(argv[2], "--quiet", "quietly")
-      H.eq(argv[3], "--output-document=-", "writing the body to stdout")
-      H.eq(argv[4], "https://raw.githubusercontent.com/o/r/main/README.md", "and the URL last")
-      H.eq(#argv, 4, "headers are dropped entirely -- wget's parameter is named `_headers` for that reason")
+      H.eq(argv[3], "--limit-rate=1m", "SEC-21: wget has no per-file quota flag, so the rate is throttled instead")
+      H.eq(argv[4], "--output-document=-", "writing the body to stdout")
+      H.eq(argv[5], "https://raw.githubusercontent.com/o/r/main/README.md", "and the URL last")
+      H.eq(#argv, 5, "headers are dropped entirely -- wget's parameter is named `_headers` for that reason")
       H.excludes(table.concat(argv, " "), "ignored", "so a token handed to wget is not leaked, it is discarded")
       H.eq(calls[1].opts.timeout_ms, 20000, "same timeout ceiling")
 
