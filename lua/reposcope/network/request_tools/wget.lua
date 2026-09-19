@@ -14,6 +14,20 @@ local M = {}
 -- reason (a JSON API call or a README fetch, not a large download).
 local DEFAULT_TIMEOUT_MS = 20000
 
+-- SEC-21 also gave curl.lua an explicit `--max-filesize` byte cap, because
+-- spawn_capture buffers the whole response in memory before this module's
+-- callback ever sees it, and readme_fetcher.fetch_raw's
+-- raw.githubusercontent.com URL is exactly the third-party-sized download
+-- that exposes. wget is reached for that same URL whenever `gh` and `curl`
+-- are both unavailable (checks.resolve_request_tool's fallback order), so it
+-- shares the exposure -- but unlike curl, wget has no per-file size flag:
+-- `--quota` explicitly does not apply to a single URL (wget(1): "quota will
+-- never affect downloading a single file"). Throttling the transfer rate
+-- bounds the same buffer indirectly instead: at 1 MiB/s, the existing 20s
+-- timeout above already caps a still-sending response to roughly the ~20
+-- MiB curl.lua enforces directly. It is an approximation, not a hard limit.
+local DEFAULT_RATE_LIMIT = "1m"
+
 -- libuv
 local uv = vim.uv or vim.loop
 -- Async spawn+capture (delegates the pipe/timer/handle bookkeeping)
@@ -44,6 +58,7 @@ function M.request(method, url, callback, _headers, debug, context, uuid)
 
   local args = {
     "--quiet",
+    "--limit-rate=" .. DEFAULT_RATE_LIMIT, -- SEC-21: bounds spawn_capture's buffer indirectly
     "--output-document=-", -- write to stdout
     url,
   }
