@@ -123,14 +123,16 @@ return function(H)
 
       -- Already valid and installed: leave it alone.
       config.options.request_tool = "gh"
-      checks.resolve_request_tool()
+      local ok = checks.resolve_request_tool()
+      H.ok(ok, "resolution reports success")
       H.eq(config.options.request_tool, "gh", "a configured, installed tool is kept")
     end)
 
     with_checks({ curl = true }, function(checks, config)
       -- Configured but not installed: fall through to whatever is there.
       config.options.request_tool = "gh"
-      checks.resolve_request_tool()
+      local ok = checks.resolve_request_tool()
+      H.ok(ok, "resolution reports success")
       H.eq(config.options.request_tool, "curl", "a configured tool that is not installed is replaced")
     end)
 
@@ -138,22 +140,30 @@ return function(H)
       -- A tool that is installed but not in the preference list is still
       -- replaced: the list is the whitelist.
       config.options.request_tool = "httpie"
-      checks.resolve_request_tool({ "gh", "curl", "wget" })
+      local ok = checks.resolve_request_tool({ "gh", "curl", "wget" })
+      H.ok(ok, "resolution reports success")
       H.eq(config.options.request_tool, "wget", "an unlisted tool is replaced by the first listed one that exists")
     end)
 
     with_checks({}, function(checks, config, notes)
       config.options.request_tool = "gh"
-      checks.resolve_request_tool()
+      local ok, err = checks.resolve_request_tool()
       -- Nothing to switch to: the stored value is left as it was rather than
-      -- being nil'd, so the later error names a tool.
-      H.eq(config.options.request_tool, "gh", "with nothing installed the configured value is left in place")
-      H.eq(#notes, 0, "and -- because a tool *was* configured -- nothing is reported here")
+      -- being nil'd, so a later error still names a tool -- but resolution
+      -- itself is reported as failed regardless of whether a tool was
+      -- configured (ERR-03): a configured tool that turns out not to be
+      -- installed, with nothing else available either, is exactly this case.
+      H.falsy(ok, "with nothing installed, resolution reports failure even though a tool was configured")
+      H.contains(err or "", "no request tool available", "and carries a message")
+      H.eq(config.options.request_tool, "gh", "the configured value is left in place")
+      H.eq(#notes, 1, "and the user is told")
     end)
 
     with_checks({}, function(checks, config, notes)
       config.options.request_tool = nil
-      checks.resolve_request_tool()
+      local ok, err = checks.resolve_request_tool()
+      H.falsy(ok, "with nothing configured and nothing installed, resolution reports failure")
+      H.contains(err or "", "no request tool available", "and carries a message")
       H.contains(
         notes[1] or "",
         "no request tool available",
