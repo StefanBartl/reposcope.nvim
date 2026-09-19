@@ -21,23 +21,31 @@ local M = {}
 -- Utility Modules (Protection and Debugging)
 local set_prompt_fields = require("reposcope.ui.prompt.prompt_config").set_fields
 
+-- Deep-copied so this module never writes through to the `DEFAULTS` table
+-- cached in `package.loaded` -- the env resolution below would otherwise
+-- mutate the shared defaults themselves, and every future `require
+-- ("reposcope.config.DEFAULTS")` would answer "what did this machine's
+-- environment resolve to" instead of "what are the defaults".
 ---@type ConfigOptions
-M.options = require("reposcope.config.DEFAULTS")
+local defaults = vim.deepcopy(require("reposcope.config.DEFAULTS"))
 
 -- Via lib.nvim's env snapshot, not env_get("REPOS_DIR"): it's the one
 -- sanctioned place this specific env var is read, so it agrees with the
 -- $REPOS_DIR Tab-completion keyword offered in bindings/usrcmds.lua. Resolved
 -- here, not in DEFAULTS.lua, so requiring that module alone stays pure data
 -- (LUA-06).
-M.options.clone.std_dir = require("lib.nvim.system.env").get().repo_base or M.options.clone.std_dir
+defaults.clone.std_dir = require("lib.nvim.system.env").get().repo_base or defaults.clone.std_dir
 
 -- Same reason as `clone.std_dir` above: resolved here, not inline in
 -- DEFAULTS.lua's table, so requiring that module alone stays pure data
 -- (LUA-06).
 local env_get = require("reposcope.utils.env").get
-M.options.github_token = env_get("GITHUB_TOKEN") or M.options.github_token
-M.options.gitlab_token = env_get("GITLAB_TOKEN") or M.options.gitlab_token
-M.options.codeberg_token = env_get("CODEBERG_TOKEN") or M.options.codeberg_token
+defaults.github_token = env_get("GITHUB_TOKEN") or defaults.github_token
+defaults.gitlab_token = env_get("GITLAB_TOKEN") or defaults.gitlab_token
+defaults.codeberg_token = env_get("CODEBERG_TOKEN") or defaults.codeberg_token
+
+---@type ConfigOptions
+M.options = vim.deepcopy(defaults)
 
 ---@private
 ---Root directory for cache and logs
@@ -60,8 +68,12 @@ function M.setup(opts)
     opts = {}
   end
 
+  -- Rebuilt from the pristine `defaults` on every call, not from the current
+  -- `M.options` -- otherwise setup() accumulates across calls instead of
+  -- applying `opts` on top of the defaults each time, and `setup({})` could
+  -- never reset anything a previous call had set.
   ---@type ConfigOptions
-  M.options = vim.tbl_deep_extend("force", M.options, opts)
+  M.options = vim.tbl_deep_extend("force", {}, defaults, opts)
 
   -- Prompt fields must always be normalized
   set_prompt_fields(M.options.prompt_fields)

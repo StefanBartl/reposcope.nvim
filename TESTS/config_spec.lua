@@ -1,5 +1,5 @@
 -- TESTS/config_spec.lua — reposcope.config: what `setup()` does to the option
--- table, including the part that differs from the sibling plugins.
+-- table.
 
 return function(H)
   local config = require("reposcope.config")
@@ -32,20 +32,18 @@ return function(H)
   H.eq(config.options[key], changed, "a user value wins")
   H.eq(DEFAULTS[key], original, "and DEFAULTS itself is not mutated")
 
-  -- setup() is cumulative -----------------------------------------------------
-  -- Worth stating outright, because it is the opposite of what the sibling
-  -- plugins do. They rebuild from `deepcopy(DEFAULTS)` on every call, so a
-  -- second `setup({})` resets everything. Here the merge target is the *current*
-  -- table:
+  -- setup() rebuilds from defaults ---------------------------------------------
+  -- The merge target is a fresh table on every call:
   --
-  --   M.options = vim.tbl_deep_extend("force", M.options, opts)
+  --   M.options = vim.tbl_deep_extend("force", {}, defaults, opts)
   --
-  -- so a later call can only add to or overwrite what an earlier one set, never
-  -- unset it. That is fine for the normal single-setup() path and surprising for
-  -- anything that reconfigures at runtime; pinned here so a change to it is a
-  -- deliberate one rather than a silent one.
+  -- so a later call cannot inherit anything an earlier one set -- `setup({})`
+  -- is the documented way to get back to the defaults, and it actually does.
   config.setup({})
-  H.eq(config.options[key], changed, "setup({}) does NOT reset -- the merge accumulates")
+  H.eq(config.options[key], original, "setup({}) resets to the defaults")
+
+  config.setup({ [key] = changed })
+  H.eq(config.options[key], changed, "a later setup() call still applies its own value")
 
   config.setup({ [key] = original })
   H.eq(config.options[key], original, "restoring takes an explicit value")
