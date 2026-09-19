@@ -24,10 +24,18 @@ local ui_state = require("reposcope.state.ui.ui_state")
 -- Debugging and Utilities
 local notify = require("reposcope.utils.debug").notify
 local center_text = require("reposcope.utils.text").center_text
+local preview_config = require("reposcope.ui.preview.preview_config")
 
--- Prepare message for empty table preview window
-local preview_width = require("reposcope.ui.preview.preview_config").width
-local empty_tbl_msg = center_text("No results. Try a different keyword or remove filters.", preview_width)
+---@private
+---@internal
+---Builds the "no results" message, centered for the preview window's
+---current width. Read at call time, not once at `require` (PERF-92):
+---`preview_config.width` is re-derived on every UI open, and a value frozen
+---at module load stays wrong for the rest of the session after a resize.
+---@return string
+local function build_empty_tbl_msg()
+  return center_text("No results. Try a different keyword or remove filters.", preview_config.width)
+end
 
 ---Sets the list entries and displays them in the list window
 ---@param entries string[] The list of entries to display
@@ -59,7 +67,7 @@ function M.update_list(lines)
 
   if vim.tbl_isempty(lines) then
     notify("[reposcope] No repositories found for this query.", 3)
-    inject_content(ui_state.buffers.preview, empty_tbl_msg, "text")
+    inject_content(ui_state.buffers.preview, build_empty_tbl_msg(), "text")
     M.clear_list()
     return false
   end
