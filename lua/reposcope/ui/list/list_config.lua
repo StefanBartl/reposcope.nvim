@@ -20,23 +20,30 @@ M.HEIGHT_FRACTION = 0.8
 local explicit_width = nil
 ---@type number|nil
 local explicit_height = nil
+---@type string|nil
+local explicit_highlight_color = nil
+---@type string|nil
+local explicit_normal_color = nil
 
---- Re-derive the list layout from the current editor size.
+--- Re-derive the list layout from the current editor size, and the colors
+--- from the active colortheme -- both pinnable via `update_layout`/
+--- `update_colors`, both re-derived otherwise so a theme/colorscheme switch
+--- via `ui.config.update_theme()` is reflected here too, instead of these
+--- staying pinned to whichever hex values were current when this module
+--- first loaded.
 ---@return nil
 function M.recompute()
   M.width = math.floor(explicit_width or (vim.o.columns * M.WIDTH_FRACTION))
   M.height = math.floor(explicit_height or (vim.o.lines * M.HEIGHT_FRACTION))
   M.row = math.floor((vim.o.lines - M.height) / 2)
   M.col = 0
+
+  M.highlight_color = explicit_highlight_color or ui_config.colortheme.accent_1 -- Color for the selected line
+  M.normal_color = explicit_normal_color or ui_config.colortheme.text -- Default text color
 end
 
 M.recompute()
 
--- Default Colors, sourced from the active colortheme (so a theme/colorscheme
--- switch via `ui.config.update_theme()` is reflected here too, instead of
--- these staying pinned to the original dark-theme hex values)
-M.highlight_color = ui_config.colortheme.accent_1 -- Color for the selected line
-M.normal_color = ui_config.colortheme.text -- Default text color
 M.border = "none"
 
 ---Dynamically updates the layout of the list window
@@ -54,11 +61,15 @@ function M.update_layout(width, height, row, col)
   M.col = col or M.col
 end
 
----Dynamically updates the colors of the list window
+---Dynamically updates the colors of the list window. Pinned like
+---`update_layout`'s width/height: survives a later `recompute()` instead of
+---being overwritten by the active colortheme again.
 ---@param highlight_color? string Optional new highlight color
 ---@param normal_color? string Optional new normal text color
 ---@return nil
 function M.update_colors(highlight_color, normal_color)
+  if highlight_color then explicit_highlight_color = highlight_color end
+  if normal_color then explicit_normal_color = normal_color end
   M.highlight_color = highlight_color or M.highlight_color
   M.normal_color = normal_color or M.normal_color
 end

@@ -85,6 +85,40 @@ return function(H)
       H.contains(notes[1], "Invalid theme", "naming the problem")
       H.contains(notes[1], "neon", "and the value that was rejected")
     end)
+
+    -- A theme switch reaches the derived *_config modules' colors, not just
+    -- `ui.config.colortheme` itself (ERR-53): each one re-derives its colors
+    -- from the active colortheme on every `recompute()`, the same way it
+    -- already re-derives its geometry. Reloaded together with this isolated
+    -- `cfg`, so they bind to it instead of the real shared singleton.
+    H.with_stubs(nil, {
+      "reposcope.ui.list.list_config",
+      "reposcope.ui.background.background_config",
+      "reposcope.ui.preview.preview_config",
+    }, function()
+      cfg.update_theme("light")
+      local list_config = require("reposcope.ui.list.list_config")
+      local background_config = require("reposcope.ui.background.background_config")
+      local preview_config = require("reposcope.ui.preview.preview_config")
+
+      list_config.recompute()
+      background_config.recompute()
+      preview_config.recompute()
+
+      H.eq(list_config.highlight_color, cfg.colortheme.accent_1, "list_config's highlight color tracks the theme")
+      H.eq(list_config.normal_color, cfg.colortheme.text, "and its normal color")
+      H.eq(background_config.color_bg, cfg.colortheme.background, "background_config's color tracks it too")
+      H.eq(preview_config.highlight_color, cfg.colortheme.background, "as does preview_config's highlight color")
+      H.eq(preview_config.normal_color, cfg.colortheme.text, "and its normal color")
+
+      -- update_colors() pins survive a later recompute(), same as
+      -- update_layout()'s width/height.
+      list_config.update_colors("#123456", nil)
+      cfg.update_theme("dark")
+      list_config.recompute()
+      H.eq(list_config.highlight_color, "#123456", "a pinned color is not overwritten by a later theme switch")
+      H.eq(list_config.normal_color, cfg.colortheme.text, "an unpinned one still tracks it")
+    end)
   end)
 
   vim.o.columns, vim.o.lines = saved_columns, saved_lines

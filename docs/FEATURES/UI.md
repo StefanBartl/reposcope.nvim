@@ -126,7 +126,8 @@ colortheme instead of fixed hex values, so a colorscheme switch via
 configuration.
 
 - **Module:** `ui/config.lua` (`colortheme`, `update_theme`),
-  `ui/list/list_config.lua`, `ui/preview/preview_config.lua`
+  `ui/list/list_config.lua`, `ui/preview/preview_config.lua`,
+  `ui/background/background_config.lua`
 
 ## Configurable `prefix` field symbol (`prompt_prefix_symbol`)
 
