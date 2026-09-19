@@ -11,6 +11,7 @@ local M = {}
 -- Vim Utilities
 local api = vim.api
 local nvim_buf_set_lines = api.nvim_buf_set_lines
+local nvim_buf_is_valid = api.nvim_buf_is_valid
 local nvim_win_get_cursor = vim.api.nvim_win_get_cursor
 local nvim_buf_get_lines = vim.api.nvim_buf_get_lines
 -- UI Components
@@ -77,6 +78,11 @@ function M.update_list(lines)
   end
 
   vim.schedule(function()
+    -- The UI can have been closed (buffer deleted) between scheduling this
+    -- and it actually running, e.g. a search still in flight when the user
+    -- quits (LUA-13).
+    if not nvim_buf_is_valid(buf) then return end
+
     vim.bo[buf].modifiable = true
     nvim_buf_set_lines(buf, 0, -1, false, lines)
     vim.bo[buf].modifiable = false
