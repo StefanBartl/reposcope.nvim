@@ -70,11 +70,17 @@ return function(H)
     H.eq(reloaded.load()["neovim plugin"], 3, "and keep accumulating from where they were")
 
     -------------------------------------------------------------------------
-    -- A corrupt file is reported and stepped over
+    -- A corrupt file is reported, backed up, and stepped over
     -------------------------------------------------------------------------
     vim.fn.writefile({ "{not json" }, path)
+    local corrupt_path = path .. ".corrupt"
+    vim.fn.delete(corrupt_path)
+
     local corrupt = reload()
     H.eq(next(corrupt.load()), nil, "a corrupt file loads as empty rather than raising")
+    H.ok(vim.fn.filereadable(corrupt_path) == 1, "corrupt file was backed up to query_stats.json.corrupt")
+    H.eq(H.read(corrupt_path), "{not json", "backup preserves the original corrupt bytes")
+
     corrupt.record("fresh start")
     H.eq(corrupt.load()["fresh start"], 1, "and recording still works afterwards")
 
