@@ -63,6 +63,12 @@ function M.setup_autocmds()
 
   -- Lock cursor to second line
   autocmd.create({ "CursorMoved", "CursorMovedI", "InsertEnter", "InsertLeave" }, function()
+    -- Cheap guard first, same shape as the TextChangedI handler above: this
+    -- is a hot event firing on every cursor move in every buffer, not just
+    -- prompt ones, and the rest of the handler is only meaningful for a
+    -- prompt buffer (PERF-93).
+    if not get_active_prompt_field() then return end
+
     local win = nvim_get_current_win()
     local buf = nvim_win_get_buf(win)
 
