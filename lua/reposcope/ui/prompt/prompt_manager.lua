@@ -48,9 +48,10 @@ local function _add_title_to_prompt_buffer(buf, field, width)
 
   local win_col = math.floor((width - #title) / 2)
 
+  local colortheme = require("reposcope.ui.config").colortheme
   nvim_set_hl(0, "ReposcopePromptTitle", {
-    bg = require("reposcope.ui.config").colortheme.accent_1,
-    fg = require("reposcope.ui.config").colortheme.backg,
+    bg = colortheme.accent_1,
+    fg = colortheme.background,
     bold = true,
   })
 
