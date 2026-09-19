@@ -72,6 +72,17 @@ local _meta = nil
 ---@private
 ---@internal
 ---Loads the freshness-metadata file from disk (cached after first call).
+---
+--- A decode failure on an existing file is not the same situation as no
+--- file existing at all: `_save_meta()` always rewrites the WHOLE file, so
+--- falling straight through to an empty table here means the very next
+--- `set_updated_at()` call silently replaces a corrupt metadata file with a
+--- single-entry table -- every previously recorded freshness marker gone
+--- with no trace it ever existed (each loses its `has_fresh` check and
+--- looks stale until the README is refetched). The original bytes are
+--- backed up once, so "the file was briefly unreadable" never turns into
+--- "the freshness history is gone" (ERR-11, same idiom as
+--- state.favorites_state/state.query_stats).
 ---@return table<string, string>
 local function _load_meta()
   if _meta then return _meta end
@@ -85,6 +96,17 @@ local function _load_meta()
   local decoded, err = fs_json.read(path)
   if not decoded or type(decoded) ~= "table" then
     notify("[reposcope] README freshness metadata is corrupt or invalid JSON: " .. tostring(err), 3)
+    local raw = fs_read(path)
+    if raw then
+      local ok_write = pcall(function()
+        local fh = io.open(path .. ".corrupt", "wb")
+        if fh then
+          fh:write(raw)
+          fh:close()
+        end
+      end)
+      if not ok_write then notify("[reposcope] Failed to back up corrupt README freshness metadata file", 3) end
+    end
     _meta = {}
     return _meta
   end
