@@ -60,6 +60,30 @@ function M.check()
   end
 
   ---------------------------------------------------------------------------
+  -- Numeric option sanity (ERR-22: an invalid value degrades to a default
+  -- rather than crashing its consumer -- checked here so that degradation
+  -- is visible instead of silent)
+  ---------------------------------------------------------------------------
+  local log_max = config.get_option("log_max")
+  if type(log_max) == "number" and log_max > 0 then
+    health.ok("log_max is a positive number (" .. log_max .. ")")
+  else
+    health.warn("log_max is not a positive number: " .. tostring(log_max) .. " (falling back to 1000)", {
+      "Set log_max to a positive integer in setup()",
+    })
+  end
+
+  local precache_count = config.get_option("readme_precache_count")
+  if type(precache_count) == "number" then
+    health.ok("readme_precache_count is a number (" .. precache_count .. ")")
+  else
+    health.warn(
+      "readme_precache_count is not a number: " .. tostring(precache_count) .. " (treated as 0, disabling pre-cache)",
+      { "Set readme_precache_count to a non-negative integer in setup()" }
+    )
+  end
+
+  ---------------------------------------------------------------------------
   -- Environment variables
   ---------------------------------------------------------------------------
   if env_has("GITHUB_TOKEN") then
