@@ -142,17 +142,26 @@ return function(H)
       H.ok(count >= 3, "while still keeping roughly that many entries")
     end)
 
-    -- A corrupt log is started over rather than crashing the next request.
+    -- A corrupt log is started over rather than crashing the next request --
+    -- but the corrupt bytes are backed up first (ERR-11): the load-modify-
+    -- save cycle below would otherwise silently overwrite them with a
+    -- single-entry log and no trace they ever existed.
+    local backup_path = log_path .. ".corrupt"
+    vim.fn.delete(backup_path)
     vim.fn.writefile({ "{not json" }, log_path)
     with_metrics({}, function(metrics, notes)
       metrics.increase_success("after-corruption", "q", "curl", "ctx", 1, 200)
       vim.wait(500, function() return H.read(log_path):find("after-corruption", 1, true) ~= nil end)
-      H.contains(table.concat(notes, "\n"), "Invalid JSON format in log file", "the corruption is reported")
+      H.contains(table.concat(notes, "\n"), "is not valid JSON", "the corruption is reported")
+      H.contains(table.concat(notes, "\n"), backup_path, "naming where the original was kept")
       H.ok(
         vim.json.decode(H.read(log_path))["after-corruption:api_success"],
         "and the new entry is written to a fresh log"
       )
+      H.eq(vim.fn.filereadable(backup_path), 1, "the corrupt original is preserved alongside the fresh log")
+      H.contains(H.read(backup_path), "{not json", "holding the original, unrecoverable-otherwise bytes")
     end)
+    vim.fn.delete(backup_path)
 
     -------------------------------------------------------------------------
     -- Totals read back from the log
