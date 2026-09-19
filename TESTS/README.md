@@ -83,7 +83,7 @@ lowest thing that broke.
 
 | | |
 | --- | --- |
-| `config_spec.lua` | the merge — including that `setup()` here accumulates rather than rebuilding from DEFAULTS, unlike the sibling plugins |
+| `config_spec.lua` | the merge — `setup()` rebuilds from DEFAULTS on every call, so `setup({})` resets |
 | `config_options_spec.lua` | `get_option`'s four computed answers (`request_tool`, `clone`, `logfile_path`, `cache_dir`) and the derived cache paths |
 | `state_spec.lua` | the request registry's two-phase gate, the prompt's per-field text, and `ui_state`'s handles/invocation/reset surface |
 | `session_state_spec.lua` | `:Reposcope session save\|restore\|clear` end to end, including a corrupt and a wrongly-typed session file |
@@ -136,7 +136,7 @@ lowest thing that broke.
 | | |
 | --- | --- |
 | `bindings_spec.lua` | every `:Reposcope` subcommand through a real `:` call, two-level completion through real `getcompletion()`, the keymap layer against real buffers, and the QuitPre autocmd |
-| `health_spec.lua` | `:checkhealth reposcope` against a recorded `vim.health`, with the installed tools/token/images.nvim all scripted — so the result does not depend on the machine running the suite |
+| `health_spec.lua` | `:checkhealth reposcope` against a recorded `vim.health`, with the installed tools/token/images.nvim/prompt fields all scripted — so the result does not depend on the machine running the suite |
 | `actions_spec.lua` | filtering, sorting, the prompt's collect/search path, `prompt_reload`, and the content of the favourites/help/filter floats |
 | `readme_views_spec.lua` | the README editor and viewer: cache fallbacks, the HTML-goes-to-the-browser decision, the real viewer window and its `q` keymap |
 | `status_view_spec.lua` | the status overview's rendering (column offsets, highlights) and that marks add a gutter without shifting the rest of the row |
