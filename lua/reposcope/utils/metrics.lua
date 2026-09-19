@@ -12,6 +12,8 @@ local decode = vim.json.decode
 -- lib.nvim
 local is_readable_file = require("lib.nvim.fs.is_readable_file")
 local fs_json = require("lib.nvim.fs.json")
+local read_file = require("lib.nvim.fs.read")
+local write_to_file = require("lib.nvim.fs.write.to_file")
 -- Project Imports
 local notify = require("reposcope.utils.debug").notify
 local config = require("reposcope.config")
@@ -119,11 +121,33 @@ local function log_request(uuid, data)
 
     -- Read existing log file if available
     if is_readable_file(log_path) then
-      local decoded_logs = fs_json.read(log_path)
+      local decoded_logs, read_err = fs_json.read(log_path)
       if type(decoded_logs) == "table" then
         logs = decoded_logs
       else
-        notify("[reposcope] Invalid JSON format in log file. Starting fresh log.", vim.log.levels.WARN)
+        -- decoded_logs is nil here for two very different reasons: the file
+        -- is empty (nothing lost, nothing to say) or it exists with content
+        -- that failed to decode (genuinely corrupt). This function is a
+        -- load-modify-save cycle -- fs_json.write() below unconditionally
+        -- rewrites the whole file -- so collapsing both onto the same
+        -- "start fresh" path would mean the very next request silently
+        -- replaces a corrupt request_log.json with a single-entry log, with
+        -- no trace the earlier entries ever existed. Back up the original
+        -- bytes once before falling back to an empty log (ERR-11; same
+        -- idiom as cmdlog.nvim's store.lua/favorites.lua).
+        local raw_content = read_file(log_path)
+        if raw_content and raw_content ~= "" then
+          local backup_path = log_path .. ".corrupt"
+          if not is_readable_file(backup_path) then write_to_file(backup_path, raw_content) end
+          notify(
+            ("[reposcope] '%s' is not valid JSON (%s); original kept at '%s'"):format(
+              log_path,
+              tostring(read_err),
+              backup_path
+            ),
+            vim.log.levels.ERROR
+          )
+        end
       end
     end
 
