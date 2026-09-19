@@ -1,5 +1,5 @@
 ---@module 'reposcope.utils.progress'
----@brief Progress indicator for bulk repository operations. Optional dependency.
+---@brief Progress indicator for bulk repository operations.
 ---@description
 --- Thin wrapper over `lib.nvim.progress`, which abstracts "an operation is
 --- running" away from "how that is shown" (notify, statusline, fidget, or a
@@ -8,10 +8,14 @@
 --- per-repository `git` calls are individually fast but collectively take long
 --- enough to look like a hang.
 ---
---- `lib.nvim` is an optional dependency, matching the convention used elsewhere
---- in the plugin: without it `M.create` returns `nil` and every call site's
---- `if handle then` guard skips the indicator entirely. Nothing errors, nothing
---- is missing beyond the indicator itself.
+--- `lib.nvim` itself is a hard, required dependency of this plugin (see
+--- docs/requirements.md): every other module requires it bare, at module
+--- load, with no fallback, so a missing lib.nvim already stops the plugin
+--- long before this module's `M.create` would ever run. The `pcall` below is
+--- local defensive padding for this one indicator, not evidence of a
+--- project-wide soft-dependency convention -- if it ever did trip, `M.create`
+--- returns `nil` and every call site's `if handle then` guard skips the
+--- indicator entirely; nothing else is affected.
 ---
 --- Style comes from `config.options.progress_style` and is read on each call
 --- rather than cached at require time, so `setup()` ordering never matters.

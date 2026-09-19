@@ -20,8 +20,9 @@
 --- Because those per-repository notifications are dev-mode only, a normal user
 --- saw nothing at all between "Updating N repositories" and the final summary —
 --- which for a directory of several dozen clones is minutes of silence. Live
---- feedback therefore goes through `utils.progress` (optional dependency), which
---- has the repository count and the queue index available as exact current/total.
+--- feedback therefore goes through `utils.progress` (nil if its own internal
+--- lib.nvim.progress lookup ever fails; see utils/progress.lua), which has
+--- the repository count and the queue index available as exact current/total.
 
 ---@class RepoUpdater : RepoUpdaterModule
 local M = {}
@@ -38,7 +39,7 @@ local resolve_base_dir = repos_util.resolve_base_dir
 local collect_repos = repos_util.collect_repos
 -- Single-repository git actions (this module is the directory-wide queue over them)
 local repo_actions = require("reposcope.utils.repo_actions")
--- Progress indicator (optional dependency, see utils/progress.lua)
+-- Progress indicator; see utils/progress.lua on why its handle can be nil
 local progress = require("reposcope.utils.progress")
 
 ---Updates every git repository found in the resolved base directory.
