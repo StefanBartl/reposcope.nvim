@@ -1,4 +1,4 @@
----@module 'reposcope.network.request_tools.curl_request'
+---@module 'reposcope.network.request_tools.curl'
 ---@brief Executes HTTP requests using the `curl` CLI.
 ---@description
 --- This module provides an asynchronous wrapper for performing HTTP requests

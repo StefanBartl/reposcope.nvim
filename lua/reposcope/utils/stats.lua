@@ -1,4 +1,4 @@
----@module 'reposcope.ui.stats'
+---@module 'reposcope.utils.stats'
 ---@brief Displays and analyzes API request statistics in a floating UI window.
 ---@description
 --- This module renders session and total API usage statistics such as successful requests,

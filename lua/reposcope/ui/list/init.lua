@@ -1,4 +1,4 @@
----@module 'reposcope.ui.list.list_ui'
+---@module 'reposcope.ui.list.init'
 ---@brief Entry point for initializing and restoring the repository list UI
 ---@description
 --- This module acts as the orchestration layer for the repository list UI.

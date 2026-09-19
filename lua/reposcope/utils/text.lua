@@ -1,4 +1,4 @@
----@module 'reposcope.utils.text_utils'
+---@module 'reposcope.utils.text'
 ---@brief Utilities for centering, cutting, and formatting textual content
 
 ---@class TextUtils : TextUtilsModule
