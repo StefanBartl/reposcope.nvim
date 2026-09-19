@@ -145,14 +145,25 @@ return function(H)
     end
 
     ---------------------------------------------------------------------------
-    -- A corrupt sidecar is survivable
+    -- A corrupt sidecar is survivable -- and backed up rather than silently
+    -- discarded by the next set_updated_at()'s overwrite (ERR-11).
     ---------------------------------------------------------------------------
     do
+      local corrupt_path = meta_path .. ".corrupt"
+      vim.fn.delete(corrupt_path)
       vim.fn.writefile({ "{not json" }, meta_path)
       local cache = reload()
       H.eq(cache.get_cached_updated_at("o", "r"), nil, "a corrupt sidecar reads as empty rather than raising")
+      H.ok(vim.fn.filereadable(corrupt_path) == 1, "corrupt sidecar was backed up to readme_meta.json.corrupt")
+      H.eq(H.read(corrupt_path), "{not json", "backup preserves the original corrupt bytes")
       cache.set_file("o", "r", "x")
       H.ok(cache.has_fresh("o", "r", "anything"), "and degrades to plain `has` -- the content itself is still usable")
+
+      -- The write below (via set_updated_at) rewrites the whole sidecar --
+      -- it must not touch the backup that already preserves the original.
+      cache.set_updated_at("o", "r", "2026-02-02")
+      H.eq(H.read(corrupt_path), "{not json", "a later save does not overwrite the existing backup")
+      vim.fn.delete(corrupt_path)
     end
 
     ---------------------------------------------------------------------------
