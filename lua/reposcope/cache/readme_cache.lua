@@ -95,9 +95,9 @@ local function _load_meta()
 
   local decoded, err = fs_json.read(path)
   if not decoded or type(decoded) ~= "table" then
-    notify("[reposcope] README freshness metadata is corrupt or invalid JSON: " .. tostring(err), 3)
     local raw = fs_read(path)
-    if raw then
+    if raw and raw ~= "" then
+      notify("[reposcope] README freshness metadata is corrupt or invalid JSON: " .. tostring(err), 3)
       local backup_path = path .. ".corrupt"
       -- Keep the earliest backup: a later restart that still finds the
       -- sidecar corrupt must not clobber a first-corruption copy with a
