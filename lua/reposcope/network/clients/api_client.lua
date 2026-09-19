@@ -1,4 +1,4 @@
----@module 'reposcope.network.api_client'
+---@module 'reposcope.network.clients.api_client'
 ---@brief High-level HTTP API request handler for Reposcope
 ---@description
 --- Provides a high-level wrapper around HTTP requests for Reposcope.

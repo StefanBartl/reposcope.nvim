@@ -1,4 +1,4 @@
----@module 'reposcope.ui.prompt.prompt_bffers'
+---@module 'reposcope.ui.prompt.prompt_buffers'
 ---@brief Initializes and registers all prompt input buffers.
 ---@description
 --- This module prepares buffer handles for all possible prompt fields (prefix, keywords, owner, etc.)
