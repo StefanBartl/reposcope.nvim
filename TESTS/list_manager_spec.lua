@@ -15,6 +15,7 @@ return function(H)
   local highlight_calls = 0
   local notes = {}
   local scheduled_errors = {}
+  local injected = {}
 
   local original_schedule = vim.schedule
   vim.schedule = function(fn)
@@ -30,7 +31,7 @@ return function(H)
         highlight_selected = function() highlight_calls = highlight_calls + 1 end,
       },
       ["reposcope.ui.preview.preview_manager"] = {
-        inject_content = function() end,
+        inject_content = function(_, lines) injected[#injected + 1] = lines end,
         update_preview = function() end,
       },
       ["reposcope.ui.preview.preview_config"] = { width = 60 },
@@ -70,6 +71,27 @@ return function(H)
       H.ok(ok2, "update_list still reports success -- the write just never lands")
       H.eq(#scheduled_errors, 0, "a deleted buffer is skipped instead of raising")
       H.eq(highlight_calls, 0, "and never reaches highlight_selected either")
+
+      -----------------------------------------------------------------------
+      -- The "no results" message is centered for the current preview width,
+      -- not one frozen at require time (PERF-92)
+      -----------------------------------------------------------------------
+      local buf3 = vim.api.nvim_create_buf(false, true)
+      ui_state.buffers.list = buf3
+
+      local preview_config = require("reposcope.ui.preview.preview_config")
+
+      preview_config.width = 60
+      list_manager.update_list({})
+      local at_60 = table.concat(injected[#injected], "\n")
+
+      preview_config.width = 20
+      list_manager.update_list({})
+      local at_20 = table.concat(injected[#injected], "\n")
+
+      H.ok(at_60 ~= at_20, "the message is re-centered for the width current at call time, not at require time")
+
+      vim.api.nvim_buf_delete(buf3, { force = true })
     end)
   end)
 
