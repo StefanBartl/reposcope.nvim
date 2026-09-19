@@ -104,9 +104,11 @@ require("reposcope").setup({
 })
 ```
 
-`lib.nvim` is an **optional** dependency. Without it installed the option is
-silently a no-op and both commands behave exactly as before — no error, nothing
-missing beyond the indicator itself.
+`lib.nvim` itself is a hard, required dependency of reposcope (see
+[Requirements](requirements.md)), so it is already present whenever this code
+runs. The indicator is still defensively guarded: if that ever did not hold,
+`progress_style` would silently be a no-op and both commands would behave
+exactly as before — no error, nothing missing beyond the indicator itself.
 
 | Style          | Behaviour                                                                 |
 | -------------- | ------------------------------------------------------------------------- |
