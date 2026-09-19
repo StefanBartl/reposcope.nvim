@@ -18,6 +18,7 @@ cover.
 | `gh` / `curl` / `wget` installed | Each missing binary is reported individually. At least one must be present — that case is called out separately as its own `ERROR` |
 | Configured request tool | `WARN` when `request_tool` is not one of `gh`, `curl`, `wget`. See [configuration.md](configuration.md) |
 | `GITHUB_TOKEN` set | `WARN` only: unauthenticated requests work, at GitHub's lower anonymous rate limit. The `gh` backend needs it explicitly — see [authentication.md](authentication.md) |
+| Prompt fields configured | `WARN` for each `prompt_fields` entry rejected during the last `setup()` (unknown name, or a non-table value); when every entry is rejected the prompt falls back to the defaults instead of opening with no fields at all |
 | images.nvim present | `INFO` when it is missing: the `<C-p>` README image preview is unavailable and nothing else is affected |
 | images.nvim remote images | `INFO` when installed but `display.remote.enabled` is off — the image preview needs it on. When on, the effective download cap is reported |
 | `:Reposcope` command surface | Contributed by `lib.nvim`'s user-command composer: the subcommands actually registered |
