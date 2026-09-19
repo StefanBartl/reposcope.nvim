@@ -306,16 +306,28 @@ function M.check_rate_limit()
       return
     end
 
-    local data = decode(response)
-    if data and data.resources then
-      M.rate_limits.core.limit = data.resources.core.limit
-      M.rate_limits.core.remaining = data.resources.core.remaining
-      M.rate_limits.core.reset = data.resources.core.reset
-
-      M.rate_limits.search.limit = data.resources.search.limit
-      M.rate_limits.search.remaining = data.resources.search.remaining
-      M.rate_limits.search.reset = data.resources.search.reset
+    -- The response body is a network boundary -- decode it inside a pcall,
+    -- same as every other decode site in the plugin (ERR-01).
+    local ok, data = pcall(decode, response)
+    if not ok or type(data) ~= "table" or type(data.resources) ~= "table" then
+      vim.schedule(function() notify("[Reposcope] Invalid rate limit response from GitHub.", 4) end)
+      return
     end
+
+    local core = data.resources.core
+    local search = data.resources.search
+    if type(core) ~= "table" or type(search) ~= "table" then
+      vim.schedule(function() notify("[Reposcope] Rate limit response missing core/search data.", 4) end)
+      return
+    end
+
+    M.rate_limits.core.limit = core.limit
+    M.rate_limits.core.remaining = core.remaining
+    M.rate_limits.core.reset = core.reset
+
+    M.rate_limits.search.limit = search.limit
+    M.rate_limits.search.remaining = search.remaining
+    M.rate_limits.search.reset = search.reset
   end, headers)
 end
 

@@ -281,6 +281,43 @@ return function(H)
       end)
     end)
 
+    -- A response body that isn't JSON at all must not raise out of the
+    -- callback -- it goes through `pcall` and is reported like any other
+    -- failure instead (ERR-01).
+    with_metrics({}, function(metrics, notes)
+      H.with_stubs({
+        ["reposcope.network.clients.api_client"] = {
+          request = function(_, _, callback) callback("<html>not json</html>", nil) end,
+        },
+      }, {}, function()
+        metrics.rate_limits.core = { limit = 0, remaining = 0, reset = 0 }
+        metrics.rate_limits.search = { limit = 0, remaining = 0, reset = 0 }
+        local ok = pcall(metrics.check_rate_limit)
+        vim.wait(50)
+        H.ok(ok, "a non-JSON body does not raise")
+        H.contains(table.concat(notes, "\n"), "Invalid rate limit response", "and is reported instead")
+        H.eq(metrics.rate_limits.core.limit, 0, "and nothing is stored")
+      end)
+    end)
+
+    -- A body that decodes but is missing `resources.core`/`resources.search`
+    -- must not raise on the nested index either.
+    with_metrics({}, function(metrics, notes)
+      H.with_stubs({
+        ["reposcope.network.clients.api_client"] = {
+          request = function(_, _, callback) callback(vim.json.encode({ resources = {} }), nil) end,
+        },
+      }, {}, function()
+        metrics.rate_limits.core = { limit = 0, remaining = 0, reset = 0 }
+        metrics.rate_limits.search = { limit = 0, remaining = 0, reset = 0 }
+        local ok = pcall(metrics.check_rate_limit)
+        vim.wait(50)
+        H.ok(ok, "a response missing core/search does not raise")
+        H.contains(table.concat(notes, "\n"), "missing core/search data", "and is reported instead")
+        H.eq(metrics.rate_limits.core.limit, 0, "and nothing is stored")
+      end)
+    end)
+
     -------------------------------------------------------------------------
     -- utils.stats: the aggregations behind `:Reposcope stats`
     -------------------------------------------------------------------------
