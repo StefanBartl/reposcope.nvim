@@ -282,6 +282,11 @@ return function(H)
       H.eq(argv[5], "GET", "and forwarded")
       H.has(argv, "Accept: application/vnd.github+json", "headers travel as --header pairs")
       H.lacks(argv, "--verbose", "without debug, gh is not asked to be verbose")
+      -- SEC-10: a caller-supplied Authorization header never reaches argv --
+      -- gh already authenticates via GITHUB_TOKEN in the environment below,
+      -- which makes a second, argv-visible copy both redundant and exposed.
+      H.lacks(argv, "Authorization: Bearer gho_s3cret", "the credential does not reach the command line")
+      H.excludes(table.concat(argv, " "), "gho_s3cret", "the token appears nowhere in argv")
       H.eq(calls[1].opts.timeout_ms, 20000, "the same 20s ceiling applies")
       H.eq(env_calls[1].GITHUB_TOKEN, "gho_s3cret", "the configured token is layered onto the child environment")
       H.eq(#appended, 0, "and nothing is written to the debug log while debugging is off")
