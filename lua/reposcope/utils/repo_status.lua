@@ -15,7 +15,8 @@
 --- queries finish, preserving the discovery order.
 ---
 --- Live feedback while the repositories are being read goes through
---- `utils.progress` (optional dependency): a single `git status` is fast, but a
+--- `utils.progress` (nil if its own internal lib.nvim.progress lookup ever
+--- fails; see utils/progress.lua): a single `git status` is fast, but a
 --- directory of several dozen clones adds up to a noticeable wait with no output.
 ---
 --- Notifications follow the Reposcope convention (`utils.debug.notify`): progress
@@ -47,7 +48,7 @@ local repos_util = require("reposcope.utils.repos")
 local resolve_base_dir = repos_util.resolve_base_dir
 local collect_repos = repos_util.collect_repos
 local is_git_repo = repos_util.is_git_repo
--- Progress indicator (optional dependency, see utils/progress.lua)
+-- Progress indicator; see utils/progress.lua on why its handle can be nil
 local progress = require("reposcope.utils.progress")
 
 ---@private

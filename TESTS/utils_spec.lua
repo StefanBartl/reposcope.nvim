@@ -269,7 +269,8 @@ return function(H)
   end
 
   ---------------------------------------------------------------------------
-  -- utils.progress: an optional dependency, absent as well as present
+  -- utils.progress: local defensive fallback, exercised absent as well as
+  -- present (lib.nvim itself is a hard dependency of the plugin as a whole)
   ---------------------------------------------------------------------------
   do
     local created = {}
