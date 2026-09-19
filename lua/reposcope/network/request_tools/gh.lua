@@ -46,13 +46,25 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   -- authenticates through GITHUB_TOKEN in the environment, but `headers` is
   -- caller-supplied and an Authorization header there would otherwise be
   -- written to disk verbatim.
+  --
+  -- A secret header (Authorization, Cookie, ...) never reaches argv at all
+  -- (SEC-10): a process's command line is readable by any other process on
+  -- the machine for the lifetime of the request, unlike GITHUB_TOKEN below,
+  -- which gh reads from the child's environment. Caller-supplied auth is
+  -- therefore always redundant with that env var, never a second credential
+  -- gh would need argv for.
   local curl_secrets = require("lib.nvim.net.curl")
   local redacted = { "api", parsed, "--method", method }
   for k, v in pairs(headers or {}) do
-    args[#args + 1] = "--header"
-    args[#args + 1] = k .. ": " .. v
-    redacted[#redacted + 1] = "--header"
-    redacted[#redacted + 1] = k .. ": " .. (curl_secrets.is_secret_header(k) and "<redacted>" or v)
+    if curl_secrets.is_secret_header(k) then
+      redacted[#redacted + 1] = "--header"
+      redacted[#redacted + 1] = k .. ": <redacted>"
+    else
+      args[#args + 1] = "--header"
+      args[#args + 1] = k .. ": " .. v
+      redacted[#redacted + 1] = "--header"
+      redacted[#redacted + 1] = k .. ": " .. v
+    end
   end
 
   -- Debug CLI output
