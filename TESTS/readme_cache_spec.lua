@@ -33,8 +33,15 @@ return function(H)
     do
       local cache = reload()
 
+      -- The active provider ("github" by default, PERF-46) is the first path
+      -- segment: the same owner/repo_name pair can exist on more than one
+      -- forge with unrelated content, and the cache must not conflate them.
       local normal = cache.file_path("nvim-telescope", "telescope.nvim")
-      H.eq(normal, cache_dir .. "/nvim-telescope__telescope.nvim.md", "an ordinary name maps straight onto the layout")
+      H.eq(
+        normal,
+        cache_dir .. "/github__nvim-telescope__telescope.nvim.md",
+        "an ordinary name maps straight onto the layout"
+      )
 
       -- `owner` and `repo` are fields of an API response and are concatenated
       -- into a filesystem path. A hostile host answering with `..` must not be
@@ -43,12 +50,12 @@ return function(H)
       -- what makes traversal impossible is that every *separator* is. The
       -- result is one flat filename that happens to contain dots.
       local traversal = cache.file_path("../../etc", "passwd")
-      H.eq(traversal, cache_dir .. "/.._.._etc__passwd.md", "the separators are gone, the dots are inert")
+      H.eq(traversal, cache_dir .. "/github__.._.._etc__passwd.md", "the separators are gone, the dots are inert")
       H.eq(traversal:sub(1, #cache_dir + 1), cache_dir .. "/", "so the path still starts inside the cache directory")
       H.excludes(traversal:sub(#cache_dir + 2), "/", "and the remainder is a single name, with no further segment")
 
-      H.eq(cache.file_path("..", "r"), cache_dir .. "/___r.md", "a segment of only dots is refused outright")
-      H.eq(cache.file_path("", "r"), cache_dir .. "/___r.md", "so is an empty one")
+      H.eq(cache.file_path("..", "r"), cache_dir .. "/github_____r.md", "a segment of only dots is refused outright")
+      H.eq(cache.file_path("", "r"), cache_dir .. "/github_____r.md", "so is an empty one")
       H.excludes(cache.file_path("a/../../b", "r"), "/../", "and a compound traversal has no usable separator left")
       H.excludes(cache.file_path("a\\..\\b", "r"), "\\", "a Windows separator is neutralised the same way")
 
@@ -56,7 +63,7 @@ return function(H)
       -- sanitiser is not quietly renaming legitimate repositories.
       H.eq(
         cache.file_path("Stefan-Bartl", "color_my_ascii.nvim"),
-        cache_dir .. "/Stefan-Bartl__color_my_ascii.nvim.md",
+        cache_dir .. "/github__Stefan-Bartl__color_my_ascii.nvim.md",
         "dots, dashes and underscores are legal and are left alone"
       )
     end

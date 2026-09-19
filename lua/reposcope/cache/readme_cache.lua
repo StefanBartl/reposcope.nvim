@@ -33,10 +33,15 @@ M.readme_cache = {}
 
 ---@private
 ---@internal
+---Same `owner/repo_name` pair can exist on more than one provider (GitHub,
+---GitLab, Codeberg) with unrelated content. Without the active provider in
+---the key/path, switching providers would silently serve a cached README
+---fetched from a different backend for the same owner/name (PERF-46: the
+---key must include every parameter that affects the result).
 ---@param owner string
 ---@param repo_name string
 ---@return string
-local function _get_key(owner, repo_name) return owner .. "/" .. repo_name end
+local function _get_key(owner, repo_name) return config.get_option("provider") .. "/" .. owner .. "/" .. repo_name end
 
 ---@private
 ---@internal
@@ -59,11 +64,21 @@ end
 
 ---@private
 ---@internal
+---Provider-qualified for the same reason as `_get_key` above: the on-disk
+---cache must not conflate two different providers' READMEs for the same
+---owner/repo_name.
 ---@param owner string
 ---@param repo_name string
 ---@return string
 local function _get_file_path(owner, repo_name)
-  return get_readme_filecache_dir() .. "/" .. _safe_segment(owner) .. "__" .. _safe_segment(repo_name) .. ".md"
+  return get_readme_filecache_dir()
+    .. "/"
+    .. _safe_segment(config.get_option("provider"))
+    .. "__"
+    .. _safe_segment(owner)
+    .. "__"
+    .. _safe_segment(repo_name)
+    .. ".md"
 end
 
 ---@type table<string, string>|nil
@@ -302,9 +317,17 @@ function M.warm_ram_from_file_cache()
   local ok, files = pcall(readdir, dir)
   if not ok or type(files) ~= "table" then return 0 end
 
+  -- Filenames are `<provider>__<owner>__<repo_name>.md`. `get_ram`/`get_file`
+  -- resolve the active provider from config themselves (PERF-46), so only
+  -- entries for the *currently* active provider can be warmed here -- a file
+  -- left over from a different provider would otherwise be read under the
+  -- wrong key and warm the RAM cache with content for a provider that isn't
+  -- even selected.
+  local active_provider = config.get_option("provider")
+
   for _, file in ipairs(files) do
-    local owner, repo_name = file:match("^(.+)__(.+)%.md$")
-    if owner and repo_name and not M.get_ram(owner, repo_name) then
+    local provider, owner, repo_name = file:match("^(%w+)__(.+)__(.+)%.md$")
+    if provider == active_provider and owner and repo_name and not M.get_ram(owner, repo_name) then
       local content = M.get_file(owner, repo_name) -- also populates RAM as a side effect
       if content then warmed = warmed + 1 end
     end
