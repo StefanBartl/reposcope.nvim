@@ -108,7 +108,15 @@ local function log_request(uuid, data)
     return
   end
 
-  local log_max = config.options.log_max or 1000
+  -- `or 1000` alone only catches nil/false: a wrong-type value (e.g. a
+  -- string typo'd in setup()) would sail through and then crash the
+  -- `vim.tbl_count(logs) > log_max` comparison below with "attempt to
+  -- compare number with string" (ERR-22). A non-positive number is also
+  -- rejected here, not just a non-number, so it degrades the same way a
+  -- missing value does rather than trimming the log to nothing on every
+  -- write.
+  local log_max = config.options.log_max
+  if type(log_max) ~= "number" or log_max <= 0 then log_max = 1000 end
   local log_path = config.get_option("logfile_path")
 
   if not log_path then

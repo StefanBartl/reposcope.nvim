@@ -29,7 +29,11 @@ local notify = require("reposcope.utils.debug").notify
 --- optimization, not a user-facing action.
 ---@return nil
 local function _precache_top_results()
-  local count = get_config_option("readme_precache_count") or 0
+  -- `or 0` alone only catches nil/false: a wrong-type value (e.g. a string
+  -- typo'd in setup()) would sail through and then crash the `count <= 1`
+  -- comparison below with "attempt to compare string with number" (ERR-22).
+  local count = get_config_option("readme_precache_count")
+  if type(count) ~= "number" then count = 0 end
   if count <= 1 then return end
 
   local items = repository_cache_get().items or {}
