@@ -71,6 +71,18 @@ function M.check()
   end
 
   ---------------------------------------------------------------------------
+  -- Prompt field configuration
+  ---------------------------------------------------------------------------
+  local prompt_issues = require("reposcope.ui.prompt.prompt_config").issues()
+  if #prompt_issues == 0 then
+    health.ok("Prompt fields configured")
+  else
+    for i = 1, #prompt_issues do
+      health.warn(prompt_issues[i])
+    end
+  end
+
+  ---------------------------------------------------------------------------
   -- README image preview (optional, images.nvim)
   ---------------------------------------------------------------------------
   local ok_images, images_config = pcall(require, "images.config")

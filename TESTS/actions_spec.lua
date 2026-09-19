@@ -203,6 +203,17 @@ return function(H)
     prompt_config.set_fields({})
     H.eq(#prompt_config.get_fields(), 0, "an empty list is a legitimate configuration")
 
+    -- A non-empty list where every entry is invalid (e.g. a single typo'd
+    -- field name) is a real misconfiguration, not a deliberate empty prompt:
+    -- it must not leave the prompt with no fields and no way to type a query
+    -- (ERR-22).
+    prompt_config.set_fields({ "keyword" })
+    H.eq(
+      table.concat(prompt_config.get_fields(), ","),
+      "prefix,keywords,owner,language",
+      "a wholly invalid non-empty list falls back to the defaults, not to nothing"
+    )
+
     -- Geometry is recomputed from the current editor size, not captured once
     -- at load: a terminal resized mid-session must not leave the prompt at
     -- the old width.

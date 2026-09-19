@@ -127,6 +127,7 @@
 ---@field set_fields fun(fields: PromptField[]): nil Sets the prompt fields with validation and normalization
 ---@field get_fields fun(): string[] Returns the active prompt fields (deduplicated and sorted)
 ---@field get_available_fields fun(): string[] Returns all valid prompt fields (whitelist)
+---@field issues fun(): string[] Returns problems from the most recent `set_fields()` call, for `:checkhealth`
 
 ---@class UIPromptFocusModule
 ---@field set_current_index fun(index: number): nil Sets the current prompt index

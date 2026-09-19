@@ -147,6 +147,30 @@ return function(H)
   end)
 
   ---------------------------------------------------------------------------
+  -- Prompt field configuration (ERR-22): an invalid entry is a warning, and
+  -- when every entry is invalid the fallback to defaults is reported too --
+  -- not just silently swallowed at a notify level invisible outside dev mode.
+  ---------------------------------------------------------------------------
+  local prompt_config = require("reposcope.ui.prompt.prompt_config")
+  local saved_fields = vim.deepcopy(prompt_config.get_fields())
+
+  prompt_config.set_fields({ "prefix", "keywords", "owner" })
+  with_health(
+    { available = { curl = true }, request_tool = "curl", token = true, images = false },
+    function(report) H.ok(entry(report, "ok", "Prompt fields configured"), "an all-valid configuration reports ok") end
+  )
+
+  prompt_config.set_fields({ "not-a-real-field" })
+  with_health({ available = { curl = true }, request_tool = "curl", token = true, images = false }, function(report)
+    local warn = entry(report, "warn", "Ignored invalid prompt field")
+    H.ok(warn, "an invalid field is reported as a warning")
+    H.contains(warn.msg, "not-a-real-field", "naming what was rejected")
+    H.ok(entry(report, "warn", "using defaults"), "and that it fell back to the defaults")
+  end)
+
+  prompt_config.set_fields(saved_fields)
+
+  ---------------------------------------------------------------------------
   -- images.nvim: absent, present-but-off, and present-with-a-large-cap
   ---------------------------------------------------------------------------
   with_health({ available = { curl = true }, request_tool = "curl", token = true, images = false }, function(report)

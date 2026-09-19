@@ -53,6 +53,18 @@ local VALID_FIELDS = {
 ---@type PromptField[]
 local _fields = {}
 
+-- Fallback used when every configured field is invalid; kept as a plain
+-- require (not the config module) to avoid the load-order cycle noted on
+-- `_refresh_prefix_symbol` below.
+---@type PromptField[]
+local DEFAULT_FIELDS = require("reposcope.config.DEFAULTS").prompt_fields
+
+-- Problems from the most recent `set_fields()` call, surfaced by
+-- `:checkhealth` (ERR-22) since `notify()`'s own level-2 messages are
+-- invisible outside dev mode.
+---@type string[]
+local _issues = {}
+
 ---@private
 ---@internal
 ---Checks whether a field name is valid based on the predefined VALID_FIELDS list.
@@ -83,19 +95,24 @@ local function _refresh_prefix_symbol()
 end
 
 ---Sets the active prompt fields with deduplication and prefix reordering.
----Invalid fields are ignored with a warning. Also refreshes the prefix
---- symbol from `config.prompt_prefix_symbol` (called on every `config.setup()`).
+---Invalid fields are ignored with a warning. If a non-empty list ends up
+--- with no valid field at all, degrades to the default fields instead of
+--- leaving the prompt with none at all; an explicitly empty list is left as
+--- the (legitimate) empty configuration it is. Also refreshes the prefix
+--- symbol from `config.prompt_prefix_symbol` (called on every
+--- `config.setup()`).
 ---@param fields PromptField[] List of valid field names
 ---@return nil
 function M.set_fields(fields)
   _refresh_prefix_symbol()
+  _issues = {}
 
   if type(fields) ~= "table" then
-    notify("[reposcope] Expected table for prompt fields, got: " .. type(fields), 3)
+    local msg = "[reposcope] Expected table for prompt fields, got: " .. type(fields)
+    notify(msg, 3)
+    _issues[#_issues + 1] = msg
     return
   end
-
-  local notify_invalid = notify
 
   -- Filter only valid fields
   local filtered = {}
@@ -104,14 +121,34 @@ function M.set_fields(fields)
     if _is_valid_field(field) then
       filtered[#filtered + 1] = field
     else
-      notify_invalid("[reposcope] Ignored invalid field: " .. tostring(field), 2)
+      local msg = "[reposcope] Ignored invalid prompt field: " .. tostring(field)
+      notify(msg, 2)
+      _issues[#_issues + 1] = msg
     end
+  end
+
+  if #fields > 0 and #filtered == 0 then
+    -- Every configured field was invalid (e.g. a single typo'd entry): an
+    -- empty `_fields` leaves the prompt window unopenable with no way to
+    -- type a query, so degrade to the defaults instead (ERR-22). An
+    -- explicitly empty list, unlike this, is a legitimate configuration and
+    -- is left alone below.
+    local msg = "[reposcope] No valid prompt fields configured -- using defaults"
+    notify(msg, 3)
+    _issues[#_issues + 1] = msg
+    _fields = vim.deepcopy(DEFAULT_FIELDS)
+    return
   end
 
   --Remove duplicates and ensure 'prefix' is front if present
   local deduped = dedupe_list(filtered)
   _fields = put_to_front_if_present(deduped, "prefix")
 end
+
+---Returns problems recorded by the most recent `set_fields()` call (e.g. an
+--- invalid `prompt_fields` value passed to `setup()`), for `:checkhealth`.
+---@return string[]
+function M.issues() return _issues end
 
 --- Returns the normalized prompt field list
 ---@return PromptField[]
