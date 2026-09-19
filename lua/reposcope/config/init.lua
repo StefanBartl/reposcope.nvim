@@ -59,6 +59,53 @@ local filecache_path = base_cache .. "/data"
 ---Absolute path to the request log file
 local logfile_path = base_cache .. "/logs/request_log.json"
 
+---@private
+---True when `t` is Lua-array-shaped. Tells a nested config sub-table --
+---like `clone` or `keymap_opts`, which ERR-50 validation below must recurse
+---into -- apart from a list-valued option like `prompt_fields` or
+---`prompt_keymaps.focus_next`, which is a single leaf value, not a namespace
+---of further keys.
+---@param t table
+---@return boolean
+local function is_list(t)
+  local n = 0
+  for _ in pairs(t) do
+    n = n + 1
+  end
+  return n == #t
+end
+
+---@private
+---Recursively drops any key not present in `ref` and records its full
+---dotted path (e.g. "clone.tyep", not just "tyep") in `unknown`. Runs on the
+---raw user `opts` BEFORE the merge into `defaults` (ERR-50) -- once
+---`vim.tbl_deep_extend` has run, a typo'd key is indistinguishable from a
+---legitimate one that merely isn't read anywhere, so validation has to see
+---`opts` on its own. `defaults` (i.e. DEFAULTS.lua) is used as the known-keys
+---table directly, rather than a hand-maintained list beside it, so the two
+---can never drift apart.
+---@param opts table
+---@param ref table
+---@param path string
+---@param unknown string[]
+---@return table
+local function sanitize_opts(opts, ref, path, unknown)
+  local clean = {}
+  for k, v in pairs(opts) do
+    local ref_value = ref[k]
+    local key_path = (path == "") and tostring(k) or (path .. "." .. tostring(k))
+
+    if ref_value == nil then
+      unknown[#unknown + 1] = key_path
+    elseif type(ref_value) == "table" and type(v) == "table" and not is_list(ref_value) then
+      clean[k] = sanitize_opts(v, ref_value, key_path, unknown)
+    else
+      clean[k] = v
+    end
+  end
+  return clean
+end
+
 ---Setup function for configuration
 ---@param opts PartialConfigOptions|nil User configuration options
 ---@return nil
@@ -68,12 +115,26 @@ function M.setup(opts)
     opts = {}
   end
 
+  -- Unknown keys (typos like `resuts_limit`) must be caught here, against the
+  -- raw user table and before the merge below -- otherwise they vanish into
+  -- `vim.tbl_deep_extend`'s output with zero diagnostic, indistinguishable
+  -- from an option that was simply never read (ERR-50).
+  local unknown = {}
+  local clean_opts = sanitize_opts(opts or {}, defaults, "", unknown)
+  if #unknown > 0 then
+    table.sort(unknown)
+    require("reposcope.utils.debug").notify(
+      "[reposcope] Ignoring unknown config option(s), check for typos: " .. table.concat(unknown, ", "),
+      4
+    )
+  end
+
   -- Rebuilt from the pristine `defaults` on every call, not from the current
   -- `M.options` -- otherwise setup() accumulates across calls instead of
   -- applying `opts` on top of the defaults each time, and `setup({})` could
   -- never reset anything a previous call had set.
   ---@type ConfigOptions
-  M.options = vim.tbl_deep_extend("force", {}, defaults, opts)
+  M.options = vim.tbl_deep_extend("force", {}, defaults, clean_opts)
 
   -- Prompt fields must always be normalized
   set_prompt_fields(M.options.prompt_fields)
