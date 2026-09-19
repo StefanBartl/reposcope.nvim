@@ -167,6 +167,22 @@ return function(H)
     end
 
     ---------------------------------------------------------------------------
+    -- An empty sidecar is not "corrupt" -- nothing to report, nothing to back
+    -- up (an empty file just means nothing cached yet, same as a missing one).
+    ---------------------------------------------------------------------------
+    do
+      local corrupt_path = meta_path .. ".corrupt"
+      vim.fn.delete(corrupt_path)
+      vim.fn.writefile({}, meta_path)
+      local cache = reload()
+      H.eq(cache.get_cached_updated_at("o", "r"), nil, "an empty sidecar reads as empty rather than raising")
+      H.eq(vim.fn.filereadable(corrupt_path), 0, "and no backup slot is consumed for it")
+
+      cache.set_updated_at("o", "r", "2026-03-03")
+      H.eq(cache.get_cached_updated_at("o", "r"), "2026-03-03", "recording still works afterwards")
+    end
+
+    ---------------------------------------------------------------------------
     -- Clearing
     ---------------------------------------------------------------------------
     do

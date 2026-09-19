@@ -84,6 +84,26 @@ return function(H)
     corrupt.record("fresh start")
     H.eq(corrupt.load()["fresh start"], 1, "and recording still works afterwards")
 
+    -- The earliest backup must survive a second corruption: a later restart
+    -- that still finds the file corrupt must not clobber the first-corruption
+    -- copy with a second, possibly different one (mirrors readme_cache.lua).
+    vim.fn.writefile({ "{different corruption" }, path)
+    local again = reload()
+    H.eq(next(again.load()), nil, "a second corruption also loads as empty")
+    H.eq(H.read(corrupt_path), "{not json", "but the existing backup is left untouched")
+
+    -------------------------------------------------------------------------
+    -- An empty file is not "corrupt" -- nothing to report, nothing to back up
+    -------------------------------------------------------------------------
+    vim.fn.delete(corrupt_path)
+    vim.fn.writefile({}, path)
+    local empty = reload()
+    H.eq(next(empty.load()), nil, "an empty file loads as empty rather than raising")
+    H.eq(vim.fn.filereadable(corrupt_path), 0, "and no backup slot is consumed for it")
+
+    empty.record("after empty")
+    H.eq(empty.load()["after empty"], 1, "recording still works afterwards")
+
     -------------------------------------------------------------------------
     -- Clearing
     -------------------------------------------------------------------------

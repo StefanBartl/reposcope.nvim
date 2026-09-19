@@ -44,17 +44,28 @@ function M.load()
 
   local decoded, err = fs_json.read(path)
   if not decoded or type(decoded) ~= "table" then
-    notify("[reposcope] Query stats file is corrupt or invalid JSON: " .. tostring(err), 4)
     local raw = fs_read(path)
-    if raw then
-      local ok_write = pcall(function()
-        local fh = io.open(path .. ".corrupt", "wb")
-        if fh then
-          fh:write(raw)
+    if raw and raw ~= "" then
+      notify("[reposcope] Query stats file is corrupt or invalid JSON: " .. tostring(err), 4)
+      local backup_path = path .. ".corrupt"
+      -- Keep the earliest backup: a later restart that still finds the
+      -- file corrupt must not clobber a first-corruption copy with a
+      -- second, possibly different one (mirrors readme_cache.lua/metrics.lua).
+      if not is_readable_file(backup_path) then
+        -- `io.open`/`file:write` report failure through a nil/false return,
+        -- not a Lua error, so wrapping them in `pcall` alone never observes
+        -- it -- check the handle and the write result directly instead.
+        local fh, open_err = io.open(backup_path, "wb")
+        if not fh then
+          notify("[reposcope] Failed to back up corrupt query stats file: " .. tostring(open_err), 4)
+        else
+          local ok_write, write_err = fh:write(raw)
           fh:close()
+          if not ok_write then
+            notify("[reposcope] Failed to back up corrupt query stats file: " .. tostring(write_err), 4)
+          end
         end
-      end)
-      if not ok_write then notify("[reposcope] Failed to back up corrupt query stats file", 4) end
+      end
     end
     _cache = {}
     return _cache
