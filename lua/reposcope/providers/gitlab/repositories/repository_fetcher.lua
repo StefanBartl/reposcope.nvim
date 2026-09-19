@@ -36,6 +36,19 @@ end
 
 ---@private
 ---@internal
+---`vim.json.decode` turns a JSON `null` into `vim.NIL` -- userdata, and
+---therefore truthy, so it silently defeats the usual `a or b` fallback
+---idiom (LUA-16). Returns real Lua `nil` instead, so a caller's own `or`
+---fallback (or `table.sort` numeric comparison) applies as written.
+---@param v any
+---@return any
+local function _denull(v)
+  if v == vim.NIL then return nil end
+  return v
+end
+
+---@private
+---@internal
 ---Normalizes a single GitLab project object into the shared `Repository` shape
 ---@param project table
 ---@return Repository
@@ -45,13 +58,13 @@ local function _normalize(project)
     description = project.description or "",
     -- `.git`-suffixed clone URL (not `web_url`) so clone_command.lua can
     -- reliably parse owner/repo back out of it for zip-archive downloads
-    html_url = project.http_url_to_repo or project.web_url,
+    html_url = _denull(project.http_url_to_repo) or _denull(project.web_url),
     owner = { login = project.namespace and project.namespace.path or "" },
-    default_branch = project.default_branch,
-    stargazers_count = project.star_count,
+    default_branch = _denull(project.default_branch),
+    stargazers_count = _denull(project.star_count),
     -- GitLab projects have no `updated_at`; `last_activity_at` is the closest
     -- equivalent (bumped by pushes, issues, MRs, ...) for README-staleness checks.
-    updated_at = project.last_activity_at,
+    updated_at = _denull(project.last_activity_at),
   }
 end
 
