@@ -17,12 +17,21 @@ local M = {}
 local get_query_stats_path = require("reposcope.config").get_query_stats_path
 local notify = require("reposcope.utils.debug").notify
 local is_readable_file = require("lib.nvim.fs.is_readable_file")
+local fs_read = require("lib.nvim.fs.read")
 local fs_json = require("lib.nvim.fs.json")
 
 ---@type table<string, integer>|nil
 local _cache = nil
 
 ---Loads query run-counts from disk (cached after first call).
+---
+--- A decode failure on an existing file is not the same situation as no
+--- file existing at all: `M.record()` always rewrites the WHOLE file via
+--- `_save()`, so falling straight through to an empty table here means the
+--- very next recorded query silently replaces a corrupt file with a
+--- single-entry table -- the whole query-frequency history gone with no
+--- trace it ever existed. The original bytes are backed up once, so "the
+--- file was briefly unreadable" never turns into "the history is gone".
 ---@return table<string, integer>
 function M.load()
   if _cache then return _cache end
@@ -36,6 +45,17 @@ function M.load()
   local decoded, err = fs_json.read(path)
   if not decoded or type(decoded) ~= "table" then
     notify("[reposcope] Query stats file is corrupt or invalid JSON: " .. tostring(err), 4)
+    local raw = fs_read(path)
+    if raw then
+      local ok_write = pcall(function()
+        local fh = io.open(path .. ".corrupt", "wb")
+        if fh then
+          fh:write(raw)
+          fh:close()
+        end
+      end)
+      if not ok_write then notify("[reposcope] Failed to back up corrupt query stats file", 4) end
+    end
     _cache = {}
     return _cache
   end
