@@ -142,6 +142,7 @@ lowest thing that broke.
 | `status_view_spec.lua` | the status overview's rendering (column offsets, highlights) and that marks add a gutter without shifting the rest of the row |
 | `preview_image_spec.lua` | `find_url`, the pure half of the README image preview: badge blocks are skipped and the first real raster URL is picked |
 | `hover_spec.lua` | the hover.nvim contribution — the `owner/repo` slug test, and that the source answers only for repositories reposcope has cached |
+| `list_manager_spec.lua` | `list_manager.update_list`'s deferred buffer write: the common case, and that a list buffer deleted before the scheduled write runs is skipped rather than raising |
 | `list_window_spec.lua` | `list_window`'s viewport handling: `reveal_line` scrolls a selection below the fold into view |
 | `ui_config_spec.lua` | `reposcope.ui.config`, the shared layout/theme singleton every `*_config` module derives its own geometry from: `recompute()`'s editor-size math, `update_layout()`'s width/height pin that survives a later `recompute()` while its own col/row override does not, and `update_theme()`'s dark/light/custom/invalid branches |
 | `init_spec.lua` | `setup()` with each optional step switched off, and a real `open_ui()`/`close_ui()` round trip |
@@ -206,13 +207,14 @@ and `request_tools_spec.lua`.
   `lib.nvim.window`; the two aggregations they display are covered in
   `metrics_spec`.
 - **The window-building half of `ui/`** — `background_window`,
-  `list/init`, `list_manager`, `preview/{init,manager,window,banner}`,
+  `list/init`, `preview/{init,manager,window,banner}`,
   `prompt/{init,buffers,layout,manager,focus,list_navigate,autocmds}` and the
   `*_config` geometry modules. These are `nvim_open_win` choreography with no
   return value to assert; `init_spec.lua` drives all of them end to end via a
   real `open_ui()`/`close_ui()` round trip, and the parts with real logic
-  (`list_window`'s viewport, `prompt_config`'s field normalization,
-  `prompt_input`'s collection) have their own specs.
+  (`list_window`'s viewport, `list_manager.update_list`'s deferred write,
+  `prompt_config`'s field normalization, `prompt_input`'s collection) have
+  their own specs.
 - **`ui/preview/preview_image.lua` beyond `find_url`** — drawing needs
   images.nvim with remote images enabled and a real terminal graphics
   protocol.
