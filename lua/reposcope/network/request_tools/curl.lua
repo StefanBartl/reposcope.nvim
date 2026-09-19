@@ -13,9 +13,15 @@ local M = {}
 -- and this module never passed one -- every search/README/API request the
 -- plugin makes could hang indefinitely on a stalled connection or an
 -- unresponsive host, with no way for the plugin to give up and report
--- failure. 20s is generous for a JSON API call or a README fetch; it is not
--- meant to bound a large download (this module isn't used for one).
+-- failure. 20s is generous for a JSON API call or a README fetch.
 local DEFAULT_TIMEOUT_MS = 20000
+
+-- SEC-21 also requires a byte cap, not just a timeout: the timeout bounds
+-- time, not memory -- spawn_capture buffers the whole response in a Lua
+-- string before this module's callback ever sees it, and readme_fetcher's
+-- raw.githubusercontent.com fetch has no size guarantee from the server. 20
+-- MiB is generous for a JSON API response or a README.
+local DEFAULT_MAX_BYTES = 20 * 1024 * 1024
 
 -- libuv Utilities
 local hrtime = vim.uv.hrtime
@@ -44,7 +50,7 @@ function M.request(method, url, callback, headers, debug, context, uuid)
   -- never into argv: a process's command line is readable by any other process
   -- on the machine (`ps`, Win32_Process), so an `-H "Authorization: …"` there
   -- is public for the lifetime of the request.
-  local args = { "-s", "-X", method, url }
+  local args = { "-s", "-X", method, "--max-filesize", tostring(DEFAULT_MAX_BYTES), url }
   local config, redacted = {}, {}
   for k, v in pairs(headers or {}) do
     if curl_secrets.is_secret_header(k) then
