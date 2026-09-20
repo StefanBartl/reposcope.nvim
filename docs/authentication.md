@@ -8,7 +8,7 @@ However, if you want to use the `gh` CLI as your request backend, you **must** s
 export GITHUB_TOKEN=ghp_your_token_here
 ```
 
-⚠️ **Important:** Logged-in `gh` sessions (via `gh auth login`) are **not** accessible to child processes started via `uv.spawn()` inside Neovim. Without an explicit `GITHUB_TOKEN`, `gh`-based requests will silently fail.
+**Important:** Logged-in `gh` sessions (via `gh auth login`) are **not** accessible to child processes started via `uv.spawn()` inside Neovim. Without an explicit `GITHUB_TOKEN`, `gh`-based requests will silently fail.
 
 As an alternative, you can use `curl` or `wget` without authentication — but you’ll have lower API rate limits.
 
