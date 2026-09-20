@@ -61,6 +61,27 @@ return function(H)
     -- above, and the very next toggle only has to not error out.
     favs.toggle(repo)
     H.eq(#favs.list(), 1, "toggling after a corrupt load still works and persists")
+
+    -- A later load() while the file is still corrupt must not clobber an
+    -- existing backup with a second, possibly different one (LLS-31: the
+    -- backup write itself is a plain io.open/file:write, whose failure is a
+    -- nil/false return rather than a Lua error, so only a real check of the
+    -- handle and the write result -- not a bare pcall around them -- would
+    -- ever have caught it not firing here).
+    vim.fn.writefile({ "{different corruption" }, favorites_path)
+    favs = reload()
+    favs.load()
+    H.eq(H.read(corrupt_path), "{not valid json", "the first backup survives a second corrupt load")
+    vim.fn.delete(corrupt_path)
+
+    -- An empty file is not "corrupt" -- nothing to report, nothing to back
+    -- up (same as cache.readme_cache's freshness sidecar).
+    vim.fn.writefile({}, favorites_path)
+    favs = reload()
+    local empty_loaded = favs.load()
+    H.eq(type(empty_loaded), "table", "an empty file loads as a table, not an error")
+    H.eq(#empty_loaded, 0, "and as empty")
+    H.eq(vim.fn.filereadable(corrupt_path), 0, "no backup slot is consumed for it")
   end)
 
   config.get_favorites_path = original_get_path
