@@ -9,10 +9,13 @@
 ---
 --- Stored as a single JSON file under the plugin's cache directory, following
 --- the same conventions as `state.session_state` (`safe_mkdir` before
---- writing, `pcall`-wrapped `io.open`/read/write/close, errors reported via
---- `utils.debug.notify`). Loaded once and cached in memory; `toggle()`
---- re-saves immediately, so a crash never loses more than the single most
---- recent change.
+--- writing, errors reported via `utils.debug.notify`). A corrupt file on
+--- load is backed up before being replaced -- `io.open`/`file:write`'s
+--- handle and write result are checked directly rather than trusting a
+--- `pcall` around them, since neither reports failure through a Lua error
+--- (same idiom as `cache.readme_cache`/`utils.metrics`/`state.query_stats`).
+--- Loaded once and cached in memory; `toggle()` re-saves immediately, so a
+--- crash never loses more than the single most recent change.
 
 ---@class FavoritesState : FavoritesStateModule
 local M = {}
@@ -48,17 +51,30 @@ function M.load()
 
   local decoded, err = fs_json.read(path)
   if not decoded or type(decoded) ~= "table" then
-    notify("[reposcope] Favorites file is corrupt or invalid JSON: " .. tostring(err), 4)
     local raw = fs_read(path)
-    if raw then
-      local ok_write = pcall(function()
-        local fh = io.open(path .. ".corrupt", "wb")
-        if fh then
-          fh:write(raw)
+    if raw and raw ~= "" then
+      notify("[reposcope] Favorites file is corrupt or invalid JSON: " .. tostring(err), 4)
+      local backup_path = path .. ".corrupt"
+      -- Keep the earliest backup: a later restart that still finds the
+      -- file corrupt must not clobber a first-corruption copy with a
+      -- second, possibly different one (same idiom as
+      -- readme_cache.lua/metrics.lua/query_stats.lua).
+      if not is_readable_file(backup_path) then
+        -- `io.open`/`file:write` report failure through a nil/false return,
+        -- not a Lua error, so wrapping them in `pcall` alone never observes
+        -- it (LLS-31) -- check the handle and the write result directly
+        -- instead.
+        local fh, open_err = io.open(backup_path, "wb")
+        if not fh then
+          notify("[reposcope] Failed to back up corrupt favorites file: " .. tostring(open_err), 4)
+        else
+          local ok_write, write_err = fh:write(raw)
           fh:close()
+          if not ok_write then
+            notify("[reposcope] Failed to back up corrupt favorites file: " .. tostring(write_err), 4)
+          end
         end
-      end)
-      if not ok_write then notify("[reposcope] Failed to back up corrupt favorites file", 4) end
+      end
     end
     _cache = {}
     return _cache
