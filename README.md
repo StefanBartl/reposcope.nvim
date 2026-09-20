@@ -53,13 +53,13 @@ favorites and session persistence for your searches.
 Start at [docs/README.md](docs/README.md), which says what is where and which
 question each page answers.
 
-**The Basics**
+### The Basics
 
 - [Requirements](docs/requirements.md) — Neovim version, required plugins and CLI tools.
 - [Installation](docs/installation.md) — the spec, for lazy.nvim and packer.nvim.
 - [Quickstart](docs/quickstart.md) — the first thing to run after installing, with the demo.
 
-**Configuration**
+### Configuration
 
 - [What you get with the defaults](docs/what-you-get.md) — the full command surface at a glance.
 - [All options](docs/configuration.md) — every `setup()` option with its default, the progress indicator, README caching, and the image preview.
@@ -67,7 +67,7 @@ question each page answers.
 - [Command reference](docs/commands.md) — every `:Reposcope` subcommand, with syntax, flags and examples.
 - [Bindings](docs/BINDINGS.md) — the authoritative table of keymaps, user commands and autocommands, each pointing at the code that defines it.
 
-**The Rest**
+### The Rest
 
 - [Features](docs/FEATURES/README.md) — what shipped, per feature, with the module and config key behind it: [providers](docs/FEATURES/PROVIDERS.md), [the cache](docs/FEATURES/CACHE.md), [the UI](docs/FEATURES/UI.md).
 - [Workflow](docs/WORKFLOW.md) — how search, caching, cloning, bulk maintenance and sessions combine into a daily routine.

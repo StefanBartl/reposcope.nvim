@@ -75,9 +75,9 @@ typed as `ConfigOptions` in
 | `progress_style` | `string` | `"auto"` | Progress indicator for the bulk repository commands; see [below](#progress-indicator) |
 | `readme_precache_count` | `number` | `5` | After a search, pre-cache READMEs for this many top results in the background (`0` disables); see [README Caching](#readme-caching) |
 
-> ℹ️ You can dynamically reload prompt fields with `:Reposcope prompt prefix topic`.
+> You can dynamically reload prompt fields with `:Reposcope prompt prefix topic`.
 
-> ℹ️ GitLab's and Codeberg's search APIs only support a plain substring match
+> GitLab's and Codeberg's search APIs only support a plain substring match
 > (no `owner:`/`language:`-style qualifiers like GitHub's search) — with
 > `provider = "gitlab"` or `provider = "codeberg"`, every non-empty prompt
 > field is joined into one plain search string instead of being applied as a
@@ -222,7 +222,7 @@ image" would cache something that is free to recompute.
 `:checkhealth reposcope` reports whether images.nvim is installed, whether
 remote images are enabled, and the effective download cap.
 
-> ℹ️ GitHub's **social preview card** was measured alongside this and
+> GitHub's **social preview card** was measured alongside this and
 > rejected: `opengraph.githubassets.com` allows 100 unauthenticated requests
 > per IP and then answers `429` with `Retry-After: 900`. `readme_precache_count`
 > alone spends 5 of those per search.

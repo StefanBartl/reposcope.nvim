@@ -120,7 +120,7 @@ subcommand; remaining arguments are forwarded to it.
 | `:Reposcope skipped-readmes` | Shows number of skipped README fetches (debounced during fast scrolling) |
 | `:Reposcope stats`           | Displays collected request stats and metrics                             |
 
-> ℹ️ Run `:Reposcope` with no subcommand to print this list in Neovim, and use
+> Run `:Reposcope` with no subcommand to print this list in Neovim, and use
 > `<Tab>` completion to cycle through subcommands and their arguments.
 
 ---
@@ -129,7 +129,7 @@ subcommand; remaining arguments are forwarded to it.
 
 Updates the active prompt fields dynamically. It closes and reopens the Reposcope UI to apply the new configuration — the specified fields will then appear in the prompt layout.
 
-> 🧠 Prompt fields must be chosen from: `prefix`, `keywords`, `owner`, `language`, `topic`, `stars`.
+> Prompt fields must be chosen from: `prefix`, `keywords`, `owner`, `language`, `topic`, `stars`.
 > If no fields are given, it defaults to: `keywords`, `owner`, `language`.
 
 Example:
@@ -195,7 +195,7 @@ If no argument is given, the configured clone directory (`clone.std_dir`) is use
 i.e. the place Reposcope clones repositories into. This makes the command the
 natural continuation of the clone lifecycle: *discover → clone → update*.
 
-> ℹ️ Only immediate subdirectories are scanned (non-recursive). The fast-forward-only
+> Only immediate subdirectories are scanned (non-recursive). The fast-forward-only
 > pull never rewrites local history; diverged branches are reported as errors instead.
 
 Examples:
@@ -221,7 +221,7 @@ If the given path is **itself** a git repository, only that single repo is
 reported; otherwise its immediate subdirectories are scanned. This is the
 read-only counterpart to `:Reposcope update` — *discover → clone → status → update*.
 
-> ℹ️ Only immediate subdirectories are scanned (non-recursive). The command never
+> Only immediate subdirectories are scanned (non-recursive). The command never
 > modifies anything; it only reads.
 
 `<Tab>` on the `[dir]` slot offers real directory completion plus two fixed
@@ -396,7 +396,7 @@ URL, stars) *and* its README content if already cached, so the favorite is
 self-contained: viewing it later needs no live re-fetch. Persisted as a
 single JSON file under the plugin's cache directory; survives restarts.
 
-> 🏁 If you have any favorites saved, `:Reposcope start` shows them
+> If you have any favorites saved, `:Reposcope start` shows them
 > immediately (list populated, first entry's preview pre-warmed from its
 > README snapshot) instead of starting from an empty prompt.
 
