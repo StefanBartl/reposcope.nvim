@@ -27,7 +27,7 @@ return function(H)
     H.with_stubs({
       ["reposcope.controllers.provider_controller"] = {
         get_active_provider = function() return env.provider or "github" end,
-        fetch_repositories_and_display = function(query, on_success)
+        search_repositories = function(query, on_success)
           env.searched[#env.searched + 1] = query
           if on_success then on_success() end
         end,

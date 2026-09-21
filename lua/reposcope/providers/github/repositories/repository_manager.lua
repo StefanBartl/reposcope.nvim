@@ -70,7 +70,7 @@ end
 ---@param uuid string
 ---@param on_success? fun(): nil
 ---@param on_failure? fun(): nil
-function M.fetch_and_display(query, uuid, on_success, on_failure)
+function M.refresh_results(query, uuid, on_success, on_failure)
   if not request_state.is_registered(uuid) then
     notify("[reposcope] Skipped fetch: UUID not registered", 3)
     return

@@ -240,7 +240,7 @@ return function(H)
           table.sort(parts)
           return table.concat(parts, " ")
         end,
-        fetch_repositories_and_display = function(query) env.searched[#env.searched + 1] = query end,
+        search_repositories = function(query) env.searched[#env.searched + 1] = query end,
       },
       ["reposcope.state.query_stats"] = {
         record = function(query) env.recorded[#env.recorded + 1] = query end,

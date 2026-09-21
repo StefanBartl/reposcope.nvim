@@ -127,20 +127,20 @@ end
 ---@param query string The search query string for repositories
 ---@param on_success? fun(): nil Called once the fetch and UI update succeed
 ---@return nil
-function M.fetch_repositories_and_display(query, on_success)
+function M.search_repositories(query, on_success)
   local provider = _resolve_provider()
   if not provider then return end
 
   clear_relevance_result()
   local uuid = generate_uuid()
   register_request(uuid)
-  provider.repo_fetcher.fetch_and_display(query, uuid, on_success)
+  provider.repo_fetcher.refresh_results(query, uuid, on_success)
 end
 
 ---Prompts the user for a directory and dispatches a clone request
 ---to the active provider with the given target path.
 ---@return nil
-function M.prompt_and_clone()
+function M.start_clone()
   local clone = get_config_option("clone")
   local clone_dir = (type(clone) == "table" and clone.std_dir) or "./"
 
