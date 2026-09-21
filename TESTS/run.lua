@@ -1,7 +1,7 @@
 -- TESTS/run.lua — headless test runner for reposcope.nvim.
 --
 -- Run from the repo root:
---   nvim --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
+--   nvim -n -i NONE --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
 --
 -- lib.nvim and ui.nvim both have to be reachable: several reposcope
 -- modules require them at module load (dashboard_view.lua's `ui.kit`
