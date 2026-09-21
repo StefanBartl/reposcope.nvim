@@ -14,8 +14,8 @@ reporting every spec that failed. CI runs exactly this command.
 
 ## lib.nvim and ui.nvim
 
-Several modules require lib.nvim at module load, and `status_view.lua`
-(exercised directly by `status_view_spec.lua`) requires `ui.kit` the same
+Several modules require lib.nvim at module load, and `dashboard_view.lua`
+(exercised directly by `dashboard_view_spec.lua`) requires `ui.kit` the same
 way, so the suite cannot run without either. `run.lua` resolves each in
 this order:
 
@@ -50,7 +50,7 @@ later spec.
 | `reposcope.providers.*.repositories.repository_fetcher` | `repository_manager_spec` | the managers' UUID gating |
 | `reposcope.controllers.clone_executor` | `clone_spec` | the clone argv, without cloning |
 | `lib.nvim.cross.run_argv` | `protection_spec` | both shell entry points |
-| `vim.system` | `repos_util_spec` | every `git` call in `repo_actions`/`repo_status` |
+| `vim.system` | `repos_util_spec` | every `git` call in `repo_actions`/`repo_dashboard` |
 | `vim.fn.system` | `protection_spec` | the string form of `safe_execute_shell` |
 | `vim.ui.input` | `provider_controller_spec` | the clone-path prompt |
 | `vim.health` | `health_spec` | `:checkhealth reposcope` |
@@ -129,7 +129,7 @@ lowest thing that broke.
 | | |
 | --- | --- |
 | `metrics_spec.lua` | the session counters, the bounded JSON request log, the totals read back from it, the rate-limit probe, and `utils.stats`' aggregations |
-| `repos_util_spec.lua` | discovery (`.git` directory *and* file), the single-repository git actions, the update queue, and the status reader/parser incl. every derived state |
+| `repos_util_spec.lua` | discovery (`.git` directory *and* file), the single-repository git actions, the update queue, and the dashboard reader/parser incl. every derived state |
 
 ### Wiring, health and the UI-facing actions
 
@@ -139,7 +139,7 @@ lowest thing that broke.
 | `health_spec.lua` | `:checkhealth reposcope` against a recorded `vim.health`, with the installed tools/token/images.nvim/prompt fields all scripted — so the result does not depend on the machine running the suite |
 | `actions_spec.lua` | filtering, sorting, the prompt's collect/search path, `prompt_reload`, and the content of the favourites/help/filter floats |
 | `readme_views_spec.lua` | the README editor and viewer: cache fallbacks, the HTML-goes-to-the-browser decision, the real viewer window and its `q` keymap |
-| `status_view_spec.lua` | the status overview's rendering (column offsets, highlights) and that marks add a gutter without shifting the rest of the row |
+| `dashboard_view_spec.lua` | the dashboard's rendering (column offsets, highlights) and that marks add a gutter without shifting the rest of the row |
 | `preview_image_spec.lua` | `find_url`, the pure half of the README image preview: badge blocks are skipped and the first real raster URL is picked |
 | `hover_spec.lua` | the hover.nvim contribution — the `owner/repo` slug test, and that the source answers only for repositories reposcope has cached |
 | `list_manager_spec.lua` | `list_manager.update_list`'s deferred buffer write: the common case, and that a list buffer deleted before the scheduled write runs is skipped rather than raising |

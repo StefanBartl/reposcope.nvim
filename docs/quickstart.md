@@ -16,10 +16,10 @@ favorites a repository, `?` lists every key, `<Esc>` closes.
 Then, later, for the clones you already have:
 
 ```vim
-:Reposcope status
+:Reposcope dashboard
 ```
 
-An interactive overview of every repository in your clone directory — branch,
+An interactive dashboard of every repository in your clone directory — branch,
 ahead/behind, dirty state, last-commit age. Mark a set with `m` and `p`, `P` or
 `f` to push, pull or fetch all of them; `gu` updates the whole folder.
 

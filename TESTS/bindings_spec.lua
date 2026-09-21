@@ -58,9 +58,9 @@ return function(H)
         get_registered_providers = function() return { "codeberg", "github", "gitlab" } end,
         get_skipped_fetches = function() return 7 end,
       },
-      ["reposcope.ui.actions.status_view"] = {
+      ["reposcope.ui.actions.dashboard_view"] = {
         show = function(records, opts)
-          env.calls[#env.calls + 1] = { what = "status_view", records = records, opts = opts }
+          env.calls[#env.calls + 1] = { what = "dashboard_view", records = records, opts = opts }
         end,
       },
       ["reposcope.ui.actions.favorites_view"] = { show = record("favorites_view") },
@@ -78,9 +78,9 @@ return function(H)
         clear_all = record("queries_clear"),
       },
       ["reposcope.utils.stats"] = { show_stats = record("show_stats") },
-      ["reposcope.utils.repo_status"] = {
-        status_all = function(path, on_complete)
-          env.calls[#env.calls + 1] = { what = "status_all", path = path }
+      ["reposcope.utils.repo_dashboard"] = {
+        dashboard_all = function(path, on_complete)
+          env.calls[#env.calls + 1] = { what = "dashboard_all", path = path }
           on_complete(env.records or {}, env.errors or {})
         end,
       },
@@ -227,7 +227,7 @@ return function(H)
     H.contains(printed, "  codeberg", "but are still listed")
   end)
 
-  -- update / status --------------------------------------------------------
+  -- update / dashboard -----------------------------------------------------
   with_command({ updated = 3 }, function(env)
     vim.cmd("Reposcope update")
     local call = find(env, "update_all")
@@ -244,14 +244,14 @@ return function(H)
   end)
 
   with_command({ records = { { name = "a" } } }, function(env)
-    -- `status` takes a directory argument, which must exist -- the route's
+    -- `dashboard` takes a directory argument, which must exist -- the route's
     -- type validates it, so the repository root itself is used here.
-    vim.cmd("Reposcope status " .. vim.fn.getcwd())
-    local call = find(env, "status_all")
-    H.ok(call, "`status` reads the overview")
+    vim.cmd("Reposcope dashboard " .. vim.fn.getcwd())
+    local call = find(env, "dashboard_all")
+    H.ok(call, "`dashboard` reads the git state")
     H.contains(call.path, "reposcope", "for the directory that was named")
 
-    local view = find(env, "status_view")
+    local view = find(env, "dashboard_view")
     H.ok(view, "and shows it")
     H.eq(#view.records, 1, "with the records it read")
     -- The directory is carried into the view so its own rescan key re-reads
@@ -260,21 +260,21 @@ return function(H)
   end)
 
   with_command({ records = { { name = "a" } } }, function(env)
-    vim.cmd("Reposcope status " .. vim.fn.getcwd() .. " --out=buffer")
-    H.eq(find(env, "status_view").opts.output, "buffer", "the --out flag selects the output backend")
+    vim.cmd("Reposcope dashboard " .. vim.fn.getcwd() .. " --out=buffer")
+    H.eq(find(env, "dashboard_view").opts.output, "buffer", "the --out flag selects the output backend")
   end)
 
   with_command({ records = {}, errors = { "a: unreadable", "b: unreadable" } }, function(env)
-    vim.cmd("Reposcope status " .. vim.fn.getcwd())
-    H.falsy(find(env, "status_view"), "with no readable repository, nothing is shown")
+    vim.cmd("Reposcope dashboard " .. vim.fn.getcwd())
+    H.falsy(find(env, "dashboard_view"), "with no readable repository, nothing is shown")
     local reported = table.concat(env.notes, "\n")
     H.contains(reported, "2 repositories could not be read", "but the failures are reported, in the plural")
     H.contains(reported, "a: unreadable", "naming each one")
   end)
 
   with_command({ records = { { name = "a" } }, errors = { "b: unreadable" } }, function(env)
-    vim.cmd("Reposcope status " .. vim.fn.getcwd())
-    H.ok(find(env, "status_view"), "a partial read still shows what was readable")
+    vim.cmd("Reposcope dashboard " .. vim.fn.getcwd())
+    H.ok(find(env, "dashboard_view"), "a partial read still shows what was readable")
     H.contains(table.concat(env.notes, "\n"), "1 repository could not be read", "and reports the rest, in the singular")
   end)
 
@@ -289,7 +289,7 @@ return function(H)
     for _, expected in ipairs({
       "start",
       "close",
-      "status",
+      "dashboard",
       "update",
       "filter",
       "prompt",

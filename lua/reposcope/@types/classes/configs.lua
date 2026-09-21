@@ -25,7 +25,7 @@
 ---@field prompt_prefix_symbol string Symbol shown in the `prefix` prompt field (default needs a Nerd Font; set e.g. ">" for plain terminals)
 ---@field metrics boolean Enable or disable anonymous usage metrics
 ---@field log_max number Maximum log size (lines)
----@field progress_style ProgressStyle Indicator for bulk repository operations (`update`/`status`); needs lib.nvim, no-op without it
+---@field progress_style ProgressStyle Indicator for bulk repository operations (`update`/`dashboard`); needs lib.nvim, no-op without it
 ---@field readme_precache_count number After a search, pre-cache READMEs for this many top results (0 disables)
 
 ---@class ReposcopeConfigModule

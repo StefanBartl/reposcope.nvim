@@ -1,12 +1,12 @@
----@module 'reposcope.ui.actions.status_view'
----@brief Renders `:Reposcope status` results and displays them in the user's chosen output.
+---@module 'reposcope.ui.actions.dashboard_view'
+---@brief Renders `:Reposcope dashboard` results and displays them in the user's chosen output.
 ---@description
 --- `vim.notify` truncates and can't be scrolled, which makes it a poor fit for
---- a repository-status overview that can easily run to dozens of lines. This
---- module renders the aligned status table once and then hands it to one of
+--- a repository dashboard that can easily run to dozens of lines. This
+--- module renders the aligned dashboard table once and then hands it to one of
 --- several output backends, all built on `lib.nvim`:
 ---   - "popup"     (default) a scrollable floating window via `ui.kit`
----   - "buffer"    replaces the current window's buffer with the status buffer
+---   - "buffer"    replaces the current window's buffer with the dashboard buffer
 ---   - "split"     opens (or reuses) a horizontal split
 ---   - "vsplit"    opens (or reuses) a vertical split
 ---   - "clipboard" copies the raw table to the system clipboard
@@ -22,7 +22,7 @@
 --- The same row also drives git itself: `p`/`P`/`f` push, pull (`--ff-only`)
 --- or fetch the repository under the cursor via `utils.repo_actions`. Each
 --- action reports success/failure via notification and then re-reads just
---- that repository's status (`utils.repo_status.status_one`) and redraws the
+--- that repository's status (`utils.repo_dashboard.dashboard_one`) and redraws the
 --- table in place, so ahead/behind counts and dirty state stay current
 --- without re-scanning the whole directory. A one-line legend of these keys
 --- is shown in the window's `winbar`.
@@ -38,7 +38,7 @@
 ---
 --- `gp`/`gP`/`gf`/`gu` are the whole-directory forms, ignoring marks: push,
 --- pull, fetch, or update (fetch + ff-only pull, the same pair
---- `:Reposcope update` runs) every repository in the overview. Batches run
+--- `:Reposcope update` runs) every repository in the dashboard. Batches run
 --- sequentially and report through `utils.progress` -- these are network
 --- calls, and forty simultaneous pushes are a rate limit or an auth-prompt
 --- storm -- and every batch is confirmed first, because unlike a single row
@@ -46,13 +46,13 @@
 
 ---One highlight span produced by `M.render`. Rows and columns are 0-indexed
 ---byte offsets; `end_col = -1` means "to the end of the line".
----@class StatusHighlight
+---@class DashboardHighlight
 ---@field row integer
 ---@field col integer
 ---@field end_col integer
 ---@field hl string
 
----@class ActionStatusView : ActionStatusViewModule
+---@class ActionDashboardView : ActionDashboardViewModule
 local M = {}
 
 local kit = require("ui.kit")
@@ -62,7 +62,7 @@ local copy_to_clipboard = require("lib.nvim.cross.copy_to_clipboard")
 local write_to_file = require("lib.nvim.fs.write.to_file")
 local expand_path = require("lib.nvim.cross.fs.expand_path")
 local repo_actions = require("reposcope.utils.repo_actions")
-local status_one = require("reposcope.utils.repo_status").status_one
+local dashboard_one = require("reposcope.utils.repo_dashboard").dashboard_one
 local progress = require("reposcope.utils.progress")
 local notify = require("reposcope.utils.debug").notify
 
@@ -86,22 +86,22 @@ local _marks = {}
 ---@type string|nil
 local _bulk_running
 
----The most recent overview, kept so the popup can be restored after it is torn
+---The most recent dashboard, kept so the popup can be restored after it is torn
 ---down to open a README. Without this the records only lived in the popup's
 ---own closure, so closing it meant re-scanning the whole directory to get back.
----@type { records: RepoStatusRecord[], opts: table, line: integer }|nil
+---@type { records: RepoDashboardRecord[], opts: table, line: integer }|nil
 local _last_view
 
 ---Discovery-order snapshot, so the `s` sort cycle can return to the order the
 ---directory scan produced without re-running it.
----@type RepoStatusRecord[]
+---@type RepoDashboardRecord[]
 local _discovery_order = {}
 
 ---Index into `SORT_MODES`; 1 is discovery order.
 local _sort_index = 1
 
-local SCRATCH_NAME = "reposcope://status"
-local DEFAULT_PATH_OUT = vim.fn.stdpath("cache") .. "/reposcope/status.txt"
+local SCRATCH_NAME = "reposcope://dashboard"
+local DEFAULT_PATH_OUT = vim.fn.stdpath("cache") .. "/reposcope/dashboard.txt"
 local SPINNER = "⟳"
 
 ---Mark column, rendered as the first two cells of every row. Present (as two
@@ -109,9 +109,9 @@ local SPINNER = "⟳"
 ---table sideways.
 local MARK_INDICATOR = "✓"
 local MARK_GUTTER = "  "
-local NS = vim.api.nvim_create_namespace("reposcope_status")
+local NS = vim.api.nvim_create_namespace("reposcope_dashboard")
 
----Highlight groups for the status table. Linked with `default = true` so a
+---Highlight groups for the dashboard table. Linked with `default = true` so a
 ---colorscheme (or the user) can override any of them without being clobbered
 ---on the next redraw. The links target semantic diagnostic groups rather than
 ---the small `ui.config.colortheme` palette, which has no notion of
@@ -181,8 +181,8 @@ end
 _define_highlights()
 
 vim.api.nvim_create_autocmd("ColorScheme", {
-  group = vim.api.nvim_create_augroup("ReposcopeStatusHighlights", { clear = true }),
-  desc = "[reposcope] Re-define the status overview's highlight groups",
+  group = vim.api.nvim_create_augroup("ReposcopeDashboardHighlights", { clear = true }),
+  desc = "[reposcope] Re-define the dashboard's highlight groups",
   callback = _define_highlights,
 })
 
@@ -297,7 +297,7 @@ end
 ---Renders a record's upstream divergence. Empty when the branch tracks an
 ---upstream and is exactly in sync — that is the common case, and printing
 ---"+0/-0" on every row was column-wide noise that buried the rows that differ.
----@param r RepoStatusRecord
+---@param r RepoDashboardRecord
 ---@return string
 local function _sync_cell(r)
   if not r.has_upstream then return "no upstream" end
@@ -307,7 +307,7 @@ local function _sync_cell(r)
   return table.concat(parts, " ")
 end
 
----Renders a list of repository status records into an aligned, human-readable block.
+---Renders a list of repository dashboard records into an aligned, human-readable block.
 ---
 ---Only REPOSITORY is left-aligned; every other column is centred under its
 ---header. Names are what the eye scans down looking for one entry, and a
@@ -321,9 +321,9 @@ end
 ---by a syntax file) because the column offsets are only known here, where the
 ---widths are computed — keyword matching would also colour a repository
 ---literally named "clean".
----@param records RepoStatusRecord[] Status records in discovery order
----@return string[] lines Column-aligned overview, one entry per line
----@return StatusHighlight[] highlights Highlight spans, 0-indexed rows and byte columns
+---@param records RepoDashboardRecord[] Dashboard records in discovery order
+---@return string[] lines Column-aligned dashboard, one entry per line
+---@return DashboardHighlight[] highlights Highlight spans, 0-indexed rows and byte columns
 function M.render(records)
   local dw = vim.fn.strdisplaywidth
   local name_cells, branch_cells, sync_cells, state_cells, age_cells = {}, {}, {}, {}, {}
@@ -403,7 +403,7 @@ function M.render(records)
     return table.concat(parts), spans
   end
 
-  ---@type StatusHighlight[]
+  ---@type DashboardHighlight[]
   local hls = {}
 
   local header = build(MARK_GUTTER, cells("REPOSITORY", "BRANCH", "SYNC", "STATE", "LAST COMMIT"))
@@ -432,7 +432,7 @@ function M.render(records)
 end
 
 ---Builds the one-line summary used as the popup title.
----@param records RepoStatusRecord[]
+---@param records RepoDashboardRecord[]
 ---@return string
 function M.summary(records)
   local dirty, out_of_sync, marked = 0, 0, 0
@@ -449,15 +449,15 @@ function M.summary(records)
   -- appending keeps the leading counts from shifting sideways as marks come
   -- and go (see `_redraw`, which re-stamps this onto the float's border).
   if marked > 0 then parts[#parts + 1] = ("%d marked"):format(marked) end
-  return "Reposcope Status — " .. table.concat(parts, " · ")
+  return "Reposcope Dashboard — " .. table.concat(parts, " · ")
 end
 
 ---@private
 ---@internal
----Resolves the status row under the cursor to its record. Line 1 is always
+---Resolves the dashboard row under the cursor to its record. Line 1 is always
 ---the header (see `M.render`), so the record index is `cursor_line - 1`.
----@param records RepoStatusRecord[]
----@return RepoStatusRecord|nil
+---@param records RepoDashboardRecord[]
+---@return RepoDashboardRecord|nil
 local function _record_at_cursor(records)
   local line = vim.api.nvim_win_get_cursor(0)[1]
   return records[line - 1]
@@ -468,7 +468,7 @@ end
 ---Confirms with the user, then opens `record`'s README.md (`:edit`). A
 ---missing README.md is reported and treated as a no-op — there is nothing
 ---to confirm opening.
----@param record RepoStatusRecord
+---@param record RepoDashboardRecord
 ---@param before_open? fun(): nil Called right before the file is opened (e.g. to close a popup)
 ---@return nil
 local function _open_readme(record, before_open)
@@ -479,7 +479,7 @@ local function _open_readme(record, before_open)
   end
 
   -- Remember where we were before the popup is torn down, so `q` can put the
-  -- overview back on the same row.
+  -- dashboard back on the same row.
   if _last_view then _last_view.line = vim.api.nvim_win_get_cursor(0)[1] end
 
   kit.confirm({
@@ -497,8 +497,8 @@ local function _open_readme(record, before_open)
       map("n", "q", function()
         vim.cmd("bwipeout")
         M.reopen()
-      end, { buffer = buf, nowait = true }, "Close README and return to the Reposcope status overview")
-      notify("[reposcope] q returns to the status overview", 3)
+      end, { buffer = buf, nowait = true }, "Close README and return to the Reposcope dashboard")
+      notify("[reposcope] q returns to the dashboard", 3)
     end,
   })
 end
@@ -506,11 +506,11 @@ end
 ---@private
 ---@internal
 ---Replaces `bufnr`'s content with `lines` and applies `highlights`, toggling
----`modifiable` only for the duration of the write so read-only status buffers
+---`modifiable` only for the duration of the write so read-only dashboard buffers
 ---stay locked afterwards.
 ---@param bufnr integer
 ---@param lines string[]
----@param highlights? StatusHighlight[]
+---@param highlights? DashboardHighlight[]
 ---@return nil
 local function _set_buffer_lines(bufnr, lines, highlights)
   if not vim.api.nvim_buf_is_valid(bufnr) then return end
@@ -533,7 +533,7 @@ end
 ---@internal
 ---Redraws the whole table into `bufnr`, preserving the cursor position.
 ---@param bufnr integer
----@param records RepoStatusRecord[]
+---@param records RepoDashboardRecord[]
 ---@return nil
 local function _redraw(bufnr, records)
   local win = vim.fn.bufwinid(bufnr)
@@ -557,7 +557,7 @@ end
 ---@private
 ---@internal
 ---Row indices of the marked records, in row order.
----@param records RepoStatusRecord[]
+---@param records RepoDashboardRecord[]
 ---@return integer[]
 local function _marked_indices(records)
   local out = {}
@@ -571,7 +571,7 @@ end
 ---@internal
 ---Sets or clears the mark on every record whose row falls inside [first, last].
 ---Line 1 is the header, so row N holds record N-1 (see `_record_at_cursor`).
----@param records RepoStatusRecord[]
+---@param records RepoDashboardRecord[]
 ---@param first integer First buffer line, 1-based
 ---@param last integer Last buffer line, 1-based
 ---@param marked boolean Mark when true, unmark when false
@@ -595,14 +595,14 @@ end
 ---cursor position. Called after a push/pull/fetch settles so ahead/behind and
 ---dirty state reflect the outcome without re-scanning every repository.
 ---@param bufnr integer
----@param records RepoStatusRecord[]
+---@param records RepoDashboardRecord[]
 ---@param idx integer
 ---@return nil
 local function _refresh_row(bufnr, records, idx)
   local record = records[idx]
   if not record then return end
 
-  status_one(record.path, function(new_record)
+  dashboard_one(record.path, function(new_record)
     vim.schedule(function()
       if new_record then records[idx] = new_record end
       _redraw(bufnr, records)
@@ -615,7 +615,7 @@ end
 ---Runs a single-repository git action against the row under the cursor,
 ---notifies the outcome, then refreshes that row.
 ---@param bufnr integer
----@param records RepoStatusRecord[]
+---@param records RepoDashboardRecord[]
 ---@param verb string Human-readable action name, used in notifications
 ---@param action_fn fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil One of `repo_actions.push/pull/fetch`
 ---@return nil
@@ -670,7 +670,7 @@ end
 ---rather than killing the one in flight -- interrupting a `pull` mid-write is
 ---the one outcome worth avoiding.
 ---@param bufnr integer
----@param records RepoStatusRecord[]
+---@param records RepoDashboardRecord[]
 ---@param verb string Human-readable action name, used in notifications
 ---@param action_fn fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil
 ---@param indices integer[] Record indices to act on, in row order
@@ -750,7 +750,7 @@ local function _run_bulk(bufnr, records, verb, action_fn, indices)
         -- in flight when `finish()` draws the table and announces the batch as
         -- done, leaving that one row showing the state it had before its own
         -- push.
-        status_one(record.path, function(new_record)
+        dashboard_one(record.path, function(new_record)
           vim.schedule(function()
             if new_record then records[idx] = new_record end
             _redraw(bufnr, records)
@@ -774,7 +774,7 @@ end
 ---that may be scrolled off screen entirely -- so the count is the only thing
 ---that can state what is about to happen, and it has to be stated.
 ---@param bufnr integer
----@param records RepoStatusRecord[]
+---@param records RepoDashboardRecord[]
 ---@param verb string
 ---@param action_fn fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil
 ---@param indices integer[]
@@ -798,7 +798,7 @@ end
 ---@internal
 ---The row keys' two scales: with marks set, act on the marked repositories;
 ---with none set, act on the row under the cursor exactly as before.
----@param ctx StatusRowContext
+---@param ctx DashboardRowContext
 ---@param verb string
 ---@param action_fn fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil
 ---@return nil
@@ -820,8 +820,8 @@ end
 
 ---@private
 ---@internal
----The `g`-prefixed forms: every repository in the overview, marks ignored.
----@param ctx StatusRowContext
+---The `g`-prefixed forms: every repository in the dashboard, marks ignored.
+---@param ctx DashboardRowContext
 ---@param verb string
 ---@param action_fn fun(repo: string, on_done: fun(ok: boolean, err: string|nil): nil): nil
 ---@return nil
@@ -836,23 +836,23 @@ local function _run_all(ctx, verb, action_fn)
     verb,
     action_fn,
     indices,
-    ("repositor%s in this overview"):format(#indices == 1 and "y" or "ies")
+    ("repositor%s in this dashboard"):format(#indices == 1 and "y" or "ies")
   )
 end
 
 ---Context handed to every row keymap handler.
----@class StatusRowContext
+---@class DashboardRowContext
 ---@field bufnr integer
----@field records RepoStatusRecord[]
+---@field records RepoDashboardRecord[]
 ---@field before_open? fun(): nil
 
----One interactive binding on a status row.
----@class StatusRowKeymap
+---One interactive binding on a dashboard row.
+---@class DashboardRowKeymap
 ---@field keys string[] Every lhs that triggers this action
 ---@field label? string Short "key desc" text for the winbar legend; omitted = listed only under `?`
 ---@field desc string Full description, used as the keymap's `desc`
----@field run fun(ctx: StatusRowContext): nil
----@field visual? fun(ctx: StatusRowContext): nil Optional Visual-mode variant, bound on the same keys
+---@field run fun(ctx: DashboardRowContext): nil
+---@field visual? fun(ctx: DashboardRowContext): nil Optional Visual-mode variant, bound on the same keys
 
 ---Sort modes cycled by `s`, in cycle order. "discovery" restores the original
 ---directory order, so the cycle is always reversible without a rescan.
@@ -866,9 +866,9 @@ local STATE_RANK = { diverged = 1, dirty = 2, behind = 3, ahead = 4, clean = 5 }
 ---@private
 ---@internal
 ---Reorders `records` in place according to `mode`.
----@param records RepoStatusRecord[]
+---@param records RepoDashboardRecord[]
 ---@param mode string
----@param original RepoStatusRecord[] Discovery-order snapshot
+---@param original RepoDashboardRecord[] Discovery-order snapshot
 ---@return nil
 local function _sort_records(records, mode, original)
   if mode == "discovery" then
@@ -896,10 +896,10 @@ end
 ---@private
 ---@internal
 ---Shows a repository's full git status and recent commits in a nested popup.
----@param record RepoStatusRecord
+---@param record RepoDashboardRecord
 ---@return nil
 local function _show_detail(record)
-  require("reposcope.utils.repo_status").status_detail(record.path, function(body)
+  require("reposcope.utils.repo_dashboard").dashboard_detail(record.path, function(body)
     vim.schedule(function()
       local lines = { "", (" %s  (%s)"):format(record.name, record.branch), "" }
       vim.list_extend(lines, body)
@@ -913,7 +913,7 @@ local function _show_detail(record)
       kit.viewer({
         lines = lines,
         title = "git status — " .. record.name,
-        filetype = "reposcope-status-detail",
+        filetype = "reposcope-dashboard-detail",
         width = math.min(width + 2, math.floor(vim.o.columns * 0.9)),
         height = math.min(#lines, math.floor(vim.o.lines * 0.8)),
       })
@@ -923,8 +923,8 @@ end
 
 ---@private
 ---@internal
----Re-scans the whole directory the overview was built from and redraws it.
----@param ctx StatusRowContext
+---Re-scans the whole directory the dashboard was built from and redraws it.
+---@param ctx DashboardRowContext
 ---@return nil
 local function _rescan_all(ctx)
   if _bulk_running then
@@ -934,7 +934,7 @@ local function _rescan_all(ctx)
 
   local dir = (_last_view and _last_view.opts and _last_view.opts.dir) or nil
   notify("[reposcope] Re-scanning repositories ...", 3)
-  require("reposcope.utils.repo_status").status_all(dir, function(records)
+  require("reposcope.utils.repo_dashboard").dashboard_all(dir, function(records)
     vim.schedule(function()
       _pending = {}
       _sort_index = 1
@@ -956,7 +956,7 @@ local _show_keymap_help
 ---Row bindings, and the single source of truth for the winbar legend below —
 ---adding a key here makes it live *and* documents it, instead of the legend
 ---being a hand-maintained string that silently drifts out of date.
----@type StatusRowKeymap[]
+---@type DashboardRowKeymap[]
 local ROW_KEYMAPS = {
   {
     keys = { "<CR>", "<2-LeftMouse>" },
@@ -1033,22 +1033,22 @@ local ROW_KEYMAPS = {
   },
   {
     keys = { "gp" },
-    desc = "Push every repository in the overview (marks ignored)",
+    desc = "Push every repository in the dashboard (marks ignored)",
     run = function(ctx) _run_all(ctx, "push", repo_actions.push) end,
   },
   {
     keys = { "gP" },
-    desc = "Pull every repository in the overview (marks ignored)",
+    desc = "Pull every repository in the dashboard (marks ignored)",
     run = function(ctx) _run_all(ctx, "pull", repo_actions.pull) end,
   },
   {
     keys = { "gf" },
-    desc = "Fetch every repository in the overview (marks ignored)",
+    desc = "Fetch every repository in the dashboard (marks ignored)",
     run = function(ctx) _run_all(ctx, "fetch", repo_actions.fetch) end,
   },
   {
     keys = { "gu" },
-    desc = "Update every repository in the overview: fetch + ff-only pull (marks ignored)",
+    desc = "Update every repository in the dashboard: fetch + ff-only pull (marks ignored)",
     run = function(ctx) _run_all(ctx, "update", repo_actions.update) end,
   },
   {
@@ -1107,7 +1107,7 @@ local ROW_KEYMAPS = {
   {
     keys = { "?" },
     label = "? Keys",
-    desc = "Show every key available in the status overview",
+    desc = "Show every key available in the dashboard",
     run = function() _show_keymap_help() end,
   },
 }
@@ -1125,7 +1125,7 @@ _show_keymap_help = function()
     widest = math.max(widest, #lhs)
   end
 
-  local lines = { "", " Status overview keys", "" }
+  local lines = { "", " Dashboard keys", "" }
   for _, row in ipairs(rows) do
     lines[#lines + 1] = ("  %-" .. widest .. "s   %s"):format(row.lhs, row.desc)
   end
@@ -1138,7 +1138,7 @@ _show_keymap_help = function()
   end
   kit.viewer({
     lines = lines,
-    title = "Reposcope Status Keys",
+    title = "Reposcope Dashboard Keys",
     filetype = "reposcope-help",
     width = math.min(width + 2, math.floor(vim.o.columns * 0.9)),
     height = math.min(#lines, math.floor(vim.o.lines * 0.8)),
@@ -1201,7 +1201,7 @@ end
 ---Public only because the `winbar` option has to name something callable from
 ---Vimscript: it is set to a `%!` expression rather than to a fixed string, so
 ---the legend re-fits itself when the window is resized instead of being frozen
----at the width the overview happened to open with.
+---at the width the dashboard happened to open with.
 ---@return string
 function M.legend()
   local win = vim.g.statusline_winid
@@ -1209,16 +1209,16 @@ function M.legend()
   return _legend(vim.api.nvim_win_get_width(win))
 end
 
----The `winbar` value installed on every interactive status window.
-local WINBAR = "%!v:lua.require'reposcope.ui.actions.status_view'.legend()"
+---The `winbar` value installed on every interactive dashboard window.
+local WINBAR = "%!v:lua.require'reposcope.ui.actions.dashboard_view'.legend()"
 
 ---@private
 ---@internal
----Wires every binding in `ROW_KEYMAPS` onto a status buffer, all acting on the
+---Wires every binding in `ROW_KEYMAPS` onto a dashboard buffer, all acting on the
 ---repository row under the cursor. Safe to call repeatedly on a reused buffer —
 ---later calls just overwrite the mappings with closures over the current `records`.
 ---@param bufnr integer
----@param records RepoStatusRecord[]
+---@param records RepoDashboardRecord[]
 ---@param before_open? fun(): nil Passed through to `_open_readme`
 ---@return nil
 local function _attach_row_keymaps(bufnr, records, before_open)
@@ -1235,21 +1235,21 @@ end
 
 ---@private
 ---@internal
----Opens the status overview in a scrollable floating window (default output).
+---Opens the dashboard in a scrollable floating window (default output).
 ---@param lines string[]
----@param hls StatusHighlight[]
----@param records RepoStatusRecord[]
+---@param hls DashboardHighlight[]
+---@param records RepoDashboardRecord[]
 ---@return nil
 local function show_popup(lines, hls, records)
   local surf = kit.surface.open({
     lines = lines,
     title = M.summary(records),
-    filetype = "reposcope-status",
+    filetype = "reposcope-dashboard",
     nice_quit = true,
     enter = true,
     focusable = true,
     -- +1 accounts for the winbar legend, which otherwise eats one row of
-    -- content out of a height sized exactly to the number of status lines
+    -- content out of a height sized exactly to the number of dashboard lines
     -- (make_scratch still clamps this to the editor's available height).
     height = #lines + 1,
     wo = { wrap = false, cursorline = true, winbar = WINBAR },
@@ -1261,10 +1261,10 @@ end
 
 ---@private
 ---@internal
----Replaces the current window's buffer with the (reused) status buffer.
+---Replaces the current window's buffer with the (reused) dashboard buffer.
 ---@param lines string[]
----@param hls StatusHighlight[]
----@param records RepoStatusRecord[]
+---@param hls DashboardHighlight[]
+---@param records RepoDashboardRecord[]
 ---@return nil
 local function show_buffer(lines, hls, records)
   local bufnr = vim.fn.bufnr(SCRATCH_NAME)
@@ -1274,7 +1274,7 @@ local function show_buffer(lines, hls, records)
     vim.bo[bufnr].buftype = "nofile"
     vim.bo[bufnr].bufhidden = "hide"
     vim.bo[bufnr].swapfile = false
-    vim.bo[bufnr].filetype = "reposcope-status"
+    vim.bo[bufnr].filetype = "reposcope-dashboard"
   end
 
   _set_buffer_lines(bufnr, lines, hls)
@@ -1286,15 +1286,15 @@ end
 
 ---@private
 ---@internal
----Opens (or reuses) a split showing the status buffer.
+---Opens (or reuses) a split showing the dashboard buffer.
 ---@param lines string[]
----@param hls StatusHighlight[]
+---@param hls DashboardHighlight[]
 ---@param vertical boolean
----@param records RepoStatusRecord[]
+---@param records RepoDashboardRecord[]
 ---@return nil
 local function show_split(lines, hls, vertical, records)
   local bufnr, winid = open_named_scratch(SCRATCH_NAME, lines, {
-    filetype = "reposcope-status",
+    filetype = "reposcope-dashboard",
     split = vertical and "right" or "below",
   })
   _set_buffer_lines(bufnr, lines, hls)
@@ -1304,21 +1304,21 @@ end
 
 ---@private
 ---@internal
----Copies the raw status table to the system clipboard.
+---Copies the raw dashboard table to the system clipboard.
 ---@param lines string[]
 ---@return nil
 local function show_clipboard(lines)
   local ok = copy_to_clipboard(table.concat(lines, "\n"))
   if ok then
-    notify("[reposcope] Status copied to clipboard", 2)
+    notify("[reposcope] Dashboard copied to clipboard", 2)
   else
-    notify("[reposcope] Failed to copy status to clipboard", 4)
+    notify("[reposcope] Failed to copy dashboard to clipboard", 4)
   end
 end
 
 ---@private
 ---@internal
----Writes the raw status table to a file (custom path, or a default under stdpath("cache")).
+---Writes the raw dashboard table to a file (custom path, or a default under stdpath("cache")).
 ---@param lines string[]
 ---@param path string|nil
 ---@return nil
@@ -1326,15 +1326,15 @@ local function show_path(lines, path)
   local target = (path and path ~= "") and expand_path(path) or DEFAULT_PATH_OUT
   local ok, err = write_to_file(target, table.concat(lines, "\n"))
   if ok then
-    notify("[reposcope] Status written to " .. target, 2)
+    notify("[reposcope] Dashboard written to " .. target, 2)
   else
-    notify("[reposcope] Failed to write status: " .. tostring(err), 4)
+    notify("[reposcope] Failed to write dashboard: " .. tostring(err), 4)
   end
 end
 
 ---Renders `records` and displays them via the requested output backend.
----@param records RepoStatusRecord[]
----@param opts? { output?: StatusOutputMode, path?: string, dir?: string }
+---@param records RepoDashboardRecord[]
+---@param opts? { output?: DashboardOutputMode, path?: string, dir?: string }
 ---@return nil
 function M.show(records, opts)
   opts = opts or {}
@@ -1362,22 +1362,22 @@ function M.show(records, opts)
   elseif mode == "path" then
     show_path(lines, opts.path)
   else
-    notify("[reposcope] Unknown status output mode: " .. tostring(mode), 4)
+    notify("[reposcope] Unknown dashboard output mode: " .. tostring(mode), 4)
   end
 
-  -- Restore the row the user was on before the overview was last torn down.
+  -- Restore the row the user was on before the dashboard was last torn down.
   local win = vim.api.nvim_get_current_win()
   local count = vim.api.nvim_buf_line_count(vim.api.nvim_win_get_buf(win))
   pcall(vim.api.nvim_win_set_cursor, win, { math.min(_last_view.line, count), 0 })
 end
 
----Re-displays the most recent overview, using the cached records rather than
+---Re-displays the most recent dashboard, using the cached records rather than
 ---re-scanning the directory. Used to bring the dashboard back after it was
 ---closed to open a repository's README.
 ---@return boolean shown False when nothing has been displayed yet this session
 function M.reopen()
   if not _last_view then
-    notify("[reposcope] No status overview to return to", 3)
+    notify("[reposcope] No dashboard to return to", 3)
     return false
   end
   M.show(_last_view.records, _last_view.opts)

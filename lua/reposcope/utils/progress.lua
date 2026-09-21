@@ -4,7 +4,7 @@
 --- Thin wrapper over `lib.nvim.progress`, which abstracts "an operation is
 --- running" away from "how that is shown" (notify, statusline, fidget, or a
 --- floating window). Reposcope needs it for the two commands that walk a whole
---- directory of clones — `:Reposcope update` and `:Reposcope status` — where the
+--- directory of clones — `:Reposcope update` and `:Reposcope dashboard` — where the
 --- per-repository `git` calls are individually fast but collectively take long
 --- enough to look like a hang.
 ---

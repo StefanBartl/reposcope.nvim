@@ -63,7 +63,7 @@
 ---| "curl"
 ---| "wget"
 
----@alias StatusOutputMode # How `:Reposcope status` results are displayed
+---@alias DashboardOutputMode # How `:Reposcope dashboard` results are displayed
 ---| "popup"
 ---| "buffer"
 ---| "split"

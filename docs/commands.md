@@ -28,7 +28,7 @@ end, { desc = "Open Reposcope" })
   - [:Reposcope filter {text}](#reposcope-filter-text)
   - [:Reposcope filter-prompt](#reposcope-filter-prompt)
   - [:Reposcope update [dir]](#reposcope-update-dir)
-  - [:Reposcope status [dir] [--out] [--to]](#reposcope-status-dir---out---to)
+  - [:Reposcope dashboard [dir] [--out] [--to]](#reposcope-dashboard-dir---out---to)
   - [:Reposcope providers](#reposcope-providers)
   - [:Reposcope session save|restore|clear](#reposcope-session-saverestoreclear)
   - [:Reposcope favorites list|clear](#reposcope-favorites-listclear)
@@ -86,7 +86,7 @@ subcommand; remaining arguments are forwarded to it.
 | Command                     | Description                                                                       |
 | --------------------------- | --------------------------------------------------------------------------------- |
 | `:Reposcope update [dir]`   | Updates all cloned git repositories (`git fetch --all --prune` + `git pull --ff-only`) in `clone.std_dir` (or the given directory) |
-| `:Reposcope status [dir] [--out] [--to]` | Shows an interactive git status overview (branch, sync, state, last commit) for every repo in `clone.std_dir` (or the given directory / a single repo), with marks and batch push/pull/fetch/update |
+| `:Reposcope dashboard [dir] [--out] [--to]` | Shows an interactive git dashboard (branch, sync, state, last commit) for every repo in `clone.std_dir` (or the given directory / a single repo), with marks and batch push/pull/fetch/update |
 
 ### Providers
 
@@ -207,10 +207,10 @@ Examples:
 
 ---
 
-#### `:Reposcope status [dir] [--out] [--to]`
+#### `:Reposcope dashboard [dir] [--out] [--to]`
 
 Reads the git status of every cloned git repository found **directly inside** a
-directory and displays a compact, aligned overview. For each repository it runs
+directory and displays a compact, aligned dashboard. For each repository it runs
 `git status --porcelain=v2 --branch` asynchronously and distills the output into
 the current branch, ahead/behind counts relative to the upstream, and how many
 files are uncommitted (the *dirty* count) — summarized as one of the states
@@ -219,7 +219,7 @@ files are uncommitted (the *dirty* count) — summarized as one of the states
 If no directory is given, the configured clone directory (`clone.std_dir`) is used.
 If the given path is **itself** a git repository, only that single repo is
 reported; otherwise its immediate subdirectories are scanned. This is the
-read-only counterpart to `:Reposcope update` — *discover → clone → status → update*.
+read-only counterpart to `:Reposcope update` — *discover → clone → dashboard → update*.
 
 > Only immediate subdirectories are scanned (non-recursive). The command never
 > modifies anything; it only reads.
@@ -227,7 +227,7 @@ read-only counterpart to `:Reposcope update` — *discover → clone → status 
 `<Tab>` on the `[dir]` slot offers real directory completion plus two fixed
 keywords up front when resolvable: `$REPOS_DIR` (from the `$REPOS_DIR` env
 var) and `~` (home) — both expand before the directory check, so
-`:Reposcope status $REPOS_DIR` scans every repo under that root in one call.
+`:Reposcope dashboard $REPOS_DIR` scans every repo under that root in one call.
 
 Unlike a plain `vim.notify`, the result is never truncated or unscrollable —
 `--out` picks where it's displayed:
@@ -235,11 +235,11 @@ Unlike a plain `vim.notify`, the result is never truncated or unscrollable —
 | `--out` value | Result |
 | ------------- | ------ |
 | `popup` (default) | Scrollable floating window (`q`/`<Esc>` to close) |
-| `buffer`      | Replaces the current window's buffer with the status buffer |
+| `buffer`      | Replaces the current window's buffer with the dashboard buffer |
 | `split`       | Opens (or reuses) a horizontal split |
 | `vsplit`      | Opens (or reuses) a vertical split |
 | `clipboard`   | Copies the raw table to the system clipboard |
-| `path`        | Writes the raw table to a file (`--to=<path>`, default: `stdpath("cache")/reposcope/status.txt`) |
+| `path`        | Writes the raw table to a file (`--to=<path>`, default: `stdpath("cache")/reposcope/dashboard.txt`) |
 
 Example output:
 
@@ -270,7 +270,7 @@ colorscheme's diagnostic colors and can be overridden. The one exception is
 highlight link cannot carry — and so is resolved from `Title` rather than
 linked to it, re-resolved on every `ColorScheme`, and still skipped entirely if
 you define the group yourself. The popup title
-summarizes the scan, e.g. `Reposcope Status — 54 repos · 3 dirty · 1 out of
+summarizes the scan, e.g. `Reposcope Dashboard — 54 repos · 3 dirty · 1 out of
 sync · 4 marked`, and is re-stamped as rows are marked or refreshed.
 
 On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
@@ -278,12 +278,12 @@ On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
 
 | Key | Action |
 | --- | ------ |
-| `<CR>`, `<2-LeftMouse>` | Confirm, then open that repository's `README.md`. Press `q` in the README to close it and return to the overview |
+| `<CR>`, `<2-LeftMouse>` | Confirm, then open that repository's `README.md`. Press `q` in the README to close it and return to the dashboard |
 | `m` | Toggle the mark on the row; in Visual mode, mark every row the selection spans |
 | `M` | Mark every repository — or clear all marks when everything is already marked |
 | `p` / `P` / `f` | Push / pull (`--ff-only`) / fetch **the marked repositories**, or the row under the cursor when nothing is marked |
-| `gp` / `gP` / `gf` | Push / pull / fetch **every** repository in the overview, marks ignored |
-| `gu` | Update every repository in the overview: `fetch --all --prune` + `pull --ff-only` |
+| `gp` / `gP` / `gf` | Push / pull / fetch **every** repository in the dashboard, marks ignored |
+| `gu` | Update every repository in the dashboard: `fetch --all --prune` + `pull --ff-only` |
 | `S` | Full `git status --short` plus the last five commits, in a nested popup |
 | `s` | Cycle sort order: discovery → name → state → age → discovery |
 | `r` / `R` | Re-read the row under the cursor / re-scan the whole directory |
@@ -314,7 +314,7 @@ actually want to push, press `p`, confirm, done.
 
 `gp` / `gP` / `gf` / `gu` are the whole-directory forms and ignore marks
 entirely: push all, pull all, fetch all, or update all (the same two commands
-`:Reposcope update` runs, without leaving the overview).
+`:Reposcope update` runs, without leaving the dashboard).
 
 * Every batch asks for confirmation first (`Push 4 marked repositories?`),
   because unlike a single row there is nothing on screen that states what is
@@ -328,7 +328,7 @@ entirely: push all, pull all, fetch all, or update all (the same two commands
   stay current without re-scanning the directory. The final summary reports
   how many succeeded, and lists the failures.
 * Marks are stored **by repository path**, so they survive `s` (re-sort), `R`
-  (re-scan) and closing/reopening the overview — a mark stays on the
+  (re-scan) and closing/reopening the dashboard — a mark stays on the
   repository you put it on, not on the row number.
 * `s` and `R` are refused while a batch is running: both would move rows out
   from under the spinners.
@@ -336,13 +336,13 @@ entirely: push all, pull all, fetch all, or update all (the same two commands
 Examples:
 
 ```vim
-:Reposcope status                            "popup with all repos in clone.std_dir
-:Reposcope status ~/projects                 "popup with all repos inside ~/projects
-:Reposcope status ~/projects/foo             "popup with the single repository foo
-:Reposcope status $REPOS_DIR                 "popup with every repo under $REPOS_DIR
-:Reposcope status ~/projects --out=split     "same, in a reusable horizontal split
-:Reposcope status --out=clipboard            "copy the table to the system clipboard
-:Reposcope status --out=path --to=status.txt "write the table to status.txt
+:Reposcope dashboard                            "popup with all repos in clone.std_dir
+:Reposcope dashboard ~/projects                 "popup with all repos inside ~/projects
+:Reposcope dashboard ~/projects/foo             "popup with the single repository foo
+:Reposcope dashboard $REPOS_DIR                 "popup with every repo under $REPOS_DIR
+:Reposcope dashboard ~/projects --out=split     "same, in a reusable horizontal split
+:Reposcope dashboard --out=clipboard            "copy the table to the system clipboard
+:Reposcope dashboard --out=path --to=dashboard.txt "write the table to dashboard.txt
 ```
 
 ---

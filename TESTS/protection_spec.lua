@@ -84,7 +84,7 @@ return function(H)
 
     -- Windows: a path spelled with backslashes and no trailing separator is
     -- the normal shape of `vim.fn.expand("~")` and of anything Tab-completed
-    -- from `:Reposcope status`. The separator normalisation has to cope.
+    -- from `:Reposcope dashboard`. The separator normalisation has to cope.
     local win_style = dir:gsub("/", "\\") .. "\\winstyle"
     H.ok(protection.is_valid_path(win_style, false), "a backslash-spelled directory path is accepted")
     H.eq(vim.fn.isdirectory(dir .. "/winstyle"), 1, "and creates the directory it names")
