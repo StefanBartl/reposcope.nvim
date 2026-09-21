@@ -51,6 +51,37 @@ local is_git_repo = repos_util.is_git_repo
 -- Progress indicator; see utils/progress.lua on why its handle can be nil
 local progress = require("reposcope.utils.progress")
 
+---Ceiling for a single `git` call. A repository that never answers (a network
+---mount, a stuck credential helper) must not hold the whole scan, and its
+---progress indicator, open forever: on expiry `vim.system` kills the process
+---and reports exit code 124.
+local GIT_TIMEOUT_MS = 60000
+local TIMEOUT_EXIT_CODE = 124
+
+---Upper bound on repositories read at the same time. Each read starts two `git`
+---processes, so an unbounded fan-out over a few dozen clones means a hundred
+---simultaneous processes, which starves the machine (Windows in particular).
+local MAX_PARALLEL = 8
+
+---Builds the `git status` argv for one repository.
+---`--no-optional-locks` keeps a read-only overview from taking `index.lock`,
+---which `git status` otherwise does to refresh the index. Without it, scanning
+---a repository somebody is committing in (or that gitsigns/lazygit is polling)
+---makes their `git` fail with "Unable to create index.lock".
+---@param ... string Arguments following `status`
+---@return string[]
+local function status_argv(...) return { "git", "--no-optional-locks", "status", ... } end
+
+---Turns a failed `git` result into a one-line error message.
+---@param res { code: integer, stderr?: string }
+---@param what string Short name of the call, e.g. "git status"
+---@return string
+local function failure_text(res, what)
+  if res.code == TIMEOUT_EXIT_CODE then return ("%s timed out after %ds"):format(what, GIT_TIMEOUT_MS / 1000) end
+  local stderr = res.stderr or ""
+  return stderr ~= "" and stderr or (what .. " failed")
+end
+
 ---@private
 ---@internal
 ---Derives a single summary state from the parsed status fields.
@@ -127,13 +158,17 @@ end
 ---@param on_done fun(ts: integer|nil): nil
 ---@return nil
 local function last_commit_ts(repo, on_done)
-  vim.system({ "git", "log", "-1", "--format=%ct" }, { cwd = repo, text = true }, function(res)
-    if res.code ~= 0 then
-      on_done(nil)
-      return
+  vim.system(
+    { "git", "log", "-1", "--format=%ct" },
+    { cwd = repo, text = true, timeout = GIT_TIMEOUT_MS },
+    function(res)
+      if res.code ~= 0 then
+        on_done(nil)
+        return
+      end
+      on_done(tonumber(vim.trim(res.stdout or "")))
     end
-    on_done(tonumber(vim.trim(res.stdout or "")))
-  end)
+  )
 end
 
 ---@private
@@ -158,15 +193,19 @@ local function status_repo(repo, on_done)
     on_done(record, err)
   end
 
-  vim.system({ "git", "status", "--porcelain=v2", "--branch" }, { cwd = repo, text = true }, function(res)
-    if res.code ~= 0 then
-      err = (res.stderr ~= "" and res.stderr) or "git status failed"
-    else
-      record = parse_status(repo, res.stdout or "")
+  vim.system(
+    status_argv("--porcelain=v2", "--branch"),
+    { cwd = repo, text = true, timeout = GIT_TIMEOUT_MS },
+    function(res)
+      if res.code ~= 0 then
+        err = failure_text(res, "git status")
+      else
+        record = parse_status(repo, res.stdout or "")
+      end
+      got_status = true
+      settle()
     end
-    got_status = true
-    settle()
-  end)
+  )
 
   last_commit_ts(repo, function(value)
     ts = value
@@ -220,15 +259,19 @@ function M.dashboard_detail(repo, on_done)
     on_done(lines)
   end
 
-  vim.system({ "git", "status", "--short", "--branch" }, { cwd = repo, text = true }, function(res)
-    short = (res.code == 0) and vim.trim(res.stdout or "") or ("error: " .. vim.trim(res.stderr or ""))
+  vim.system(status_argv("--short", "--branch"), { cwd = repo, text = true, timeout = GIT_TIMEOUT_MS }, function(res)
+    short = (res.code == 0) and vim.trim(res.stdout or "") or ("error: " .. vim.trim(failure_text(res, "git status")))
     settle()
   end)
 
-  vim.system({ "git", "log", "-5", "--format=%h  %<(18,trunc)%an  %s" }, { cwd = repo, text = true }, function(res)
-    log = (res.code == 0) and vim.trim(res.stdout or "") or ""
-    settle()
-  end)
+  vim.system(
+    { "git", "log", "-5", "--format=%h  %<(18,trunc)%an  %s" },
+    { cwd = repo, text = true, timeout = GIT_TIMEOUT_MS },
+    function(res)
+      log = (res.code == 0) and vim.trim(res.stdout or "") or ""
+      settle()
+    end
+  )
 end
 
 ---Collects the git status of every repository in the resolved base directory.
@@ -273,9 +316,9 @@ function M.dashboard_all(path, on_complete)
   local total = #repos
   local remaining = total
 
-  -- Countable by completions, not by index: these run in parallel, so "how many
-  -- have come back" is the only meaningful number — there is no single repository
-  -- that is currently being read.
+  -- Countable by completions, not by index: reads overlap (up to MAX_PARALLEL at
+  -- a time), so "how many have come back" is the only meaningful number — there
+  -- is no single repository that is currently being read.
   local handle = progress.create(("reading git state of %d repositories"):format(total), total)
 
   local function finish()
@@ -300,7 +343,13 @@ function M.dashboard_all(path, on_complete)
     end)
   end
 
-  for i = 1, total do
+  -- A bounded worker pool: MAX_PARALLEL reads start up front, and every
+  -- completion starts the next repository in discovery order.
+  local next_index = 1
+  local function launch_next()
+    if next_index > total then return end
+    local i = next_index
+    next_index = next_index + 1
     local repo = repos[i]
     status_repo(repo, function(record, err)
       if record then
@@ -309,7 +358,12 @@ function M.dashboard_all(path, on_complete)
         errors[#errors + 1] = fnamemodify(repo, ":t") .. ": " .. (err or "unknown error")
       end
       finish()
+      launch_next()
     end)
+  end
+
+  for _ = 1, math.min(MAX_PARALLEL, total) do
+    launch_next()
   end
 end
 

@@ -211,7 +211,7 @@ Examples:
 
 Reads the git status of every cloned git repository found **directly inside** a
 directory and displays a compact, aligned dashboard. For each repository it runs
-`git status --porcelain=v2 --branch` asynchronously and distills the output into
+`git --no-optional-locks status --porcelain=v2 --branch` asynchronously and distills the output into
 the current branch, ahead/behind counts relative to the upstream, and how many
 files are uncommitted (the *dirty* count) — summarized as one of the states
 `clean`, `dirty`, `ahead`, `behind` or `diverged`.
@@ -221,8 +221,12 @@ If the given path is **itself** a git repository, only that single repo is
 reported; otherwise its immediate subdirectories are scanned. This is the
 read-only counterpart to `:Reposcope update` — *discover → clone → dashboard → update*.
 
-> Only immediate subdirectories are scanned (non-recursive). The command never
-> modifies anything; it only reads.
+> Only immediate subdirectories are scanned (non-recursive). The scan never
+> modifies anything; it only reads — including no `index.lock` (it runs `git`
+> with `--no-optional-locks`), so scanning a repository someone is committing in
+> never makes their `git` fail. At most 8 repositories are read at the same
+> time, and each `git` call is cut off after 60 seconds; a repository that
+> times out is listed with the unreadable ones instead of stalling the scan.
 
 `<Tab>` on the `[dir]` slot offers real directory completion plus two fixed
 keywords up front when resolvable: `$REPOS_DIR` (from the `$REPOS_DIR` env

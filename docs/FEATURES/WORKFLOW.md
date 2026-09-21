@@ -25,7 +25,7 @@ branches are reported as errors rather than rewritten.
 
 ## Git dashboard of cloned repositories (`:Reposcope dashboard`)
 
-Reads `git status --porcelain=v2 --branch` for every repo directly inside
+Reads `git --no-optional-locks status --porcelain=v2 --branch` for every repo directly inside
 a directory (or a single repo) and shows branch, ahead/behind counts, and
 dirty state (`clean`/`dirty`/`ahead`/`behind`/`diverged`) in a compact
 table. The scan is the read-only counterpart to `update`; the rows are not

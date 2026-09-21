@@ -94,7 +94,7 @@ Treat `dashboard` as the read-only preview of what `update` is about to do:
 
 1. `:Reposcope dashboard` — shows branch, sync state, working-tree state
    (`clean`/`dirty`/`ahead`/`behind`/`diverged`) and the age of `HEAD` per
-   repo, read via `git status --porcelain=v2 --branch`. Nothing is modified by
+   repo, read via `git --no-optional-locks status --porcelain=v2 --branch`. Nothing is modified by
    the scan itself; the row and batch keys in the dashboard are what modify,
    and each batch asks first (see *Marks turn the row keys into batch keys*).
    `gu` in that dashboard is `update` applied to the same directory, so in

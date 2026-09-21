@@ -300,7 +300,7 @@ See also |reposcope-clone|.
 Reads the git status of every cloned git repository found directly inside a
 directory and displays a compact, aligned dashboard. For each repository it
 runs, asynchronously: >
-    git status --porcelain=v2 --branch
+    git --no-optional-locks status --porcelain=v2 --branch
 <
 The machine-readable output is distilled into the current branch, ahead/behind
 counts relative to the upstream, and the number of uncommitted files (the
@@ -420,7 +420,12 @@ dashboard.
 Notes:
 - Only immediate subdirectories are scanned (non-recursive).
 - The scan itself only reads; the row and batch keys above are the only
-  things that modify a repository, and every batch asks first.
+  things that modify a repository, and every batch asks first. It also
+  takes no `index.lock` (`--no-optional-locks`), so scanning a repository
+  someone is committing in never makes their `git` fail.
+- At most 8 repositories are read at the same time, and each `git` call is
+  cut off after 60 seconds; a repository that times out is reported in the
+  list of unreadable ones instead of stalling the scan.
 - Requires `git` to be available in $PATH.
 
 - Example: >
