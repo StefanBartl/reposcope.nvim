@@ -322,7 +322,11 @@ return function(H)
           local record
           dashboard.dashboard_one(dir .. "/normal", function(r) record = r end)
 
-          H.eq(table.concat(calls[1].cmd, " "), "git status --porcelain=v2 --branch", "status is read machine-readably")
+          H.eq(
+            table.concat(calls[1].cmd, " "),
+            "git --no-optional-locks status --porcelain=v2 --branch",
+            "status is read machine-readably, without taking index.lock"
+          )
           H.eq(calls[1].opts.cwd, dir .. "/normal", "in the repository")
           H.eq(table.concat(calls[2].cmd, " "), "git log -1 --format=%ct", "and HEAD's date is read separately")
 
@@ -478,7 +482,11 @@ return function(H)
           local lines
           dashboard.dashboard_detail(dir .. "/normal", function(l) lines = l end)
 
-          H.eq(table.concat(calls[1].cmd, " "), "git status --short --branch", "the detail view uses the short format")
+          H.eq(
+            table.concat(calls[1].cmd, " "),
+            "git --no-optional-locks status --short --branch",
+            "the detail view uses the short format, again without taking index.lock"
+          )
           H.eq(
             table.concat(calls[2].cmd, " "),
             "git log -5 --format=%h  %<(18,trunc)%an  %s",
@@ -521,6 +529,71 @@ return function(H)
           )
         end)
       end)
+
+      -- Every git call carries a timeout, and one that runs into it (vim.system
+      -- kills the process and reports exit code 124) says so instead of showing
+      -- an empty message -- otherwise a hung repository would look like a
+      -- silent failure, or stall the scan forever.
+      with_dashboard({}, function(dashboard)
+        with_git(function() return { code = 124, stdout = "", stderr = "" } end, function(calls)
+          local record, err
+          dashboard.dashboard_one(dir .. "/normal", function(r, e)
+            record = r
+            err = e
+          end)
+          H.eq(record, nil, "a repository whose git call timed out yields no record")
+          H.contains(err, "timed out", "and the reason names the timeout")
+          for _, call in ipairs(calls) do
+            H.ok(call.opts.timeout and call.opts.timeout > 0, "every git call is given a timeout: " .. call.cmd[2])
+          end
+        end)
+      end)
+
+      -- The scan is bounded: a few dozen clones must not become a few dozen
+      -- simultaneous git processes (two per repository), yet every repository
+      -- must still be read once the running ones answer.
+      do
+        local many = dir .. "/many"
+        for i = 1, 20 do
+          vim.fn.mkdir(("%s/repo%02d/.git"):format(many, i), "p")
+        end
+
+        with_dashboard({}, function(dashboard)
+          local pending, active, peak = {}, 0, 0
+          local original = vim.system
+          ---@diagnostic disable-next-line: duplicate-set-field
+          vim.system = function(cmd, _, on_exit)
+            active = active + 1
+            peak = math.max(peak, active)
+            pending[#pending + 1] = function()
+              active = active - 1
+              local out = cmd[2] == "log" and "1700000000\n" or porcelain("main", "+0 -0", true)
+              on_exit({ code = 0, stdout = out, stderr = "" })
+            end
+            return { wait = function() end, kill = function() end }
+          end
+
+          local result
+          local ok, err = pcall(function()
+            dashboard.dashboard_all(many, function(records) result = records end)
+            H.eq(peak, 16, "the first wave is eight repositories wide -- two git calls each")
+            while #pending > 0 do
+              table.remove(pending, 1)()
+            end
+            vim.wait(500, function() return result ~= nil end)
+          end)
+          vim.system = original
+          if not ok then error(err, 0) end
+
+          H.eq(peak, 16, "and the limit holds while the rest are read")
+          H.eq(#result, 20, "all twenty repositories are still reported")
+          local names = {}
+          for _, record in ipairs(result) do
+            names[record.name] = true
+          end
+          H.eq(vim.tbl_count(names), 20, "each exactly once")
+        end)
+      end
     end
   end)
 
