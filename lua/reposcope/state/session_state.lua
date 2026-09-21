@@ -90,7 +90,7 @@ function M.restore()
     return true
   end
 
-  provider_controller.fetch_repositories_and_display(query, function()
+  provider_controller.search_repositories(query, function()
     if type(data.filter_text) == "string" and data.filter_text ~= "" then
       filter_repos.apply_filter(data.filter_text)
     end

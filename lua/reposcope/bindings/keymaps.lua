@@ -22,7 +22,7 @@ local nvim_replace_termcodes = vim.api.nvim_replace_termcodes
 local cfg_get_option = require("reposcope.config").get_option
 local ui_state = require("reposcope.state.ui.ui_state")
 local fetch_readme_for_selected = require("reposcope.controllers.provider_controller").fetch_readme_for_selected
-local prompt_and_clone = require("reposcope.controllers.provider_controller").prompt_and_clone
+local start_clone = require("reposcope.controllers.provider_controller").start_clone
 local open_viewer = require("reposcope.ui.actions.readme_viewer").open_viewer
 local open_editor = require("reposcope.ui.actions.readme_editor").open_editor
 local navigate_list_in_prompt = require("reposcope.ui.prompt.prompt_list_navigate").navigate_list_in_prompt
@@ -166,7 +166,7 @@ local prompt_keymap_actions = {
   clone = {
     mode = { "n", "i" },
     desc = "Clone selected repository",
-    rhs = function() prompt_and_clone() end,
+    rhs = function() start_clone() end,
   },
   backspace = {
     mode = { "n", "i" },

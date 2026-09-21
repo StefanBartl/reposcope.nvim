@@ -40,7 +40,7 @@ end
 ---Sets the list entries and displays them in the list window
 ---@param entries string[] The list of entries to display
 ---@return nil
-function M.set_and_display_list(entries)
+function M.show_list(entries)
   if not entries then
     notify("[reposcope] 'entries'-table is missed", 4)
     return

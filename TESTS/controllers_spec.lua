@@ -27,7 +27,7 @@ return function(H)
         },
         ["reposcope.ui.list.list_manager"] = {
           clear_list = function() env.cleared = env.cleared + 1 end,
-          set_and_display_list = function(lines) env.displayed = lines end,
+          show_list = function(lines) env.displayed = lines end,
           reset_selected_line = function() end,
         },
         ["reposcope.ui.list.list_config"] = { width = env.width or 60, recompute = function() end },
@@ -128,7 +128,7 @@ return function(H)
       ["reposcope.ui.list.list_manager"] = {
         reset_selected_line = function() env.reset = env.reset + 1 end,
         clear_list = function() end,
-        set_and_display_list = function() end,
+        show_list = function() end,
       },
       ["reposcope.controllers.list_controller"] = {
         display_repositories = function() env.displayed = env.displayed + 1 end,

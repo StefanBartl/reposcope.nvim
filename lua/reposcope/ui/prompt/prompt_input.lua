@@ -9,7 +9,7 @@ local get_fields = require("reposcope.ui.prompt.prompt_config").get_fields
 local get_field_text = require("reposcope.state.ui.prompt_state").get_field_text
 -- Providers
 local provider_controller = require("reposcope.controllers.provider_controller")
-local fetch_repositories_and_display = provider_controller.fetch_repositories_and_display
+local search_repositories = provider_controller.search_repositories
 local build_query = provider_controller.build_query
 -- Query frequency tracking (":Reposcope queries")
 local record_query = require("reposcope.state.query_stats").record
@@ -51,7 +51,7 @@ function M.on_enter()
 
   _last_query = query
   record_query(query)
-  fetch_repositories_and_display(query)
+  search_repositories(query)
 end
 
 ---Returns the last search query string built by `on_enter` ("" if none yet)

@@ -34,7 +34,7 @@
 
 ---@class RepositoryManagerModule
 ---@field fetch fun(query: string, uuid: string, on_success: (fun(): nil) | nil, on_failure: (fun(): nil) | nil): nil
----@field fetch_and_display fun(query: string, uuid: string, on_success: (fun(): nil) | nil, on_failure: (fun(): nil) | nil): nil Fetches repositories and updates the list UI
+---@field refresh_results fun(query: string, uuid: string, on_success: (fun(): nil) | nil, on_failure: (fun(): nil) | nil): nil Fetches repositories and updates the list UI
 
 ---@class ProviderEntrypoint The shape every `providers/<name>/entrypoint.lua` must export
 ---@field readme_manager ReadmeManagerModule

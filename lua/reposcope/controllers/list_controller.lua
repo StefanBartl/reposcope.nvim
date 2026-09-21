@@ -11,7 +11,7 @@ local M = {}
 -- UI Components (List Window and Management)
 local open_window = require("reposcope.ui.list.list_window").open_window
 local clear_list = require("reposcope.ui.list.list_manager").clear_list
-local set_and_display_list = require("reposcope.ui.list.list_manager").set_and_display_list
+local show_list = require("reposcope.ui.list.list_manager").show_list
 local list_config = require("reposcope.ui.list.list_config")
 -- State Management (Repositories State)
 local repository_cache_get = require("reposcope.cache.repository_cache").get
@@ -60,7 +60,7 @@ function M.display_repositories()
     linebuf[#linebuf + 1] = cut(0, list_width, line)
   end
 
-  set_and_display_list(linebuf)
+  show_list(linebuf)
 end
 
 return M

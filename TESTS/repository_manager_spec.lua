@@ -36,7 +36,7 @@ return function(H)
       },
       ["reposcope.ui.list.list_manager"] = {
         clear_list = function() env.cleared[#env.cleared + 1] = "list" end,
-        set_and_display_list = function() end,
+        show_list = function() end,
         reset_selected_line = function() end,
       },
       ["reposcope.ui.preview.preview_manager"] = {
@@ -65,7 +65,7 @@ return function(H)
   end
 
   for _, m in ipairs(MANAGERS) do
-    for _, entry in ipairs({ "fetch", "fetch_and_display" }) do
+    for _, entry in ipairs({ "fetch", "refresh_results" }) do
       -----------------------------------------------------------------------
       -- Gating
       -----------------------------------------------------------------------
@@ -135,7 +135,7 @@ return function(H)
     end
 
     -------------------------------------------------------------------------
-    -- Only `fetch_and_display` rebuilds the UI
+    -- Only `refresh_results` rebuilds the UI
     -------------------------------------------------------------------------
     with_manager(m.name, m.module, function(manager, env, request_state)
       request_state.register_request("e")
@@ -144,8 +144,8 @@ return function(H)
       H.eq(env.loaded, 0, m.name .. ": `fetch` is the headless entry point -- it never loads the UI")
 
       request_state.register_request("f")
-      manager.fetch_and_display("nvim", "f")
-      H.eq(env.loaded, 1, "`fetch_and_display` does")
+      manager.refresh_results("nvim", "f")
+      H.eq(env.loaded, 1, "`refresh_results` does")
     end)
 
     -- Ordering matters: the list has to exist before a caller's continuation
@@ -155,7 +155,7 @@ return function(H)
       env.outcome = "success"
       local order = {}
       env.loaded = 0
-      manager.fetch_and_display("nvim", "g", function() order[#order + 1] = "callback" end)
+      manager.refresh_results("nvim", "g", function() order[#order + 1] = "callback" end)
       H.eq(env.loaded, 1, m.name .. ": the UI loader ran")
       H.eq(order[1], "callback", "and the caller's continuation ran after it")
     end)
@@ -170,7 +170,7 @@ return function(H)
     H.ok(type(entry.repo_fetcher) == "table", provider .. " exposes a repo_fetcher")
     H.ok(type(entry.cloner) == "table", provider .. " exposes a cloner")
     H.ok(type(entry.query_builder) == "table", provider .. " exposes a query_builder")
-    H.ok(type(entry.repo_fetcher.fetch_and_display) == "function", provider .. "'s fetcher can search and display")
+    H.ok(type(entry.repo_fetcher.refresh_results) == "function", provider .. "'s fetcher can search and display")
     H.ok(
       type(entry.readme_manager.fetch_for_selected) == "function",
       provider .. "'s readme manager answers for a selection"

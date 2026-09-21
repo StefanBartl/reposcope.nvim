@@ -60,7 +60,7 @@
 ---@field update_border fun(border_layout: "none"|"single"|"double"): nil Dynamically updates the list border --NIUY LAYOUTS
 
 ---@class ListManagerModule
----@field set_and_display_list fun(entries: string[]): nil Sets the list entries and displays them
+---@field show_list fun(entries: string[]): nil Sets the list entries and displays them
 ---@field update_list fun(lines: string[]): boolean Updates the list content and returns status
 ---@field clear_list fun(): nil Clears the list content
 ---@field get_selected fun(): string|nil Returns the currently selected list entry  --NUIY

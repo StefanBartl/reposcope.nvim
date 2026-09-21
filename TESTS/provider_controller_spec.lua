@@ -21,7 +21,7 @@ return function(H)
           prefetch = function(repo) env.calls[#env.calls + 1] = { p = name, what = "prefetch", repo = repo } end,
         },
         repo_fetcher = {
-          fetch_and_display = function(query, uuid, on_success)
+          refresh_results = function(query, uuid, on_success)
             env.calls[#env.calls + 1] =
               { p = name, what = "search", query = query, uuid = uuid, on_success = on_success }
           end,
@@ -86,7 +86,7 @@ return function(H)
     H.contains(env.notes[1], "Unknown provider 'sourcehut'", "with the configured name in the message")
     H.contains(env.notes[1], "codeberg, github, gitlab", "and the list of ones that do exist")
 
-    controller.fetch_repositories_and_display("x")
+    controller.search_repositories("x")
     controller.prefetch_readme({ name = "r", owner = { login = "o" } })
     for _, call in ipairs(env.calls) do
       H.ok(call.what == "clear_relevance" or false, "nothing was dispatched to a provider")
@@ -113,7 +113,7 @@ return function(H)
   with_controller(function(controller, env, config)
     config.options.provider = "gitlab"
     local continued = false
-    controller.fetch_repositories_and_display("runner", function() continued = true end)
+    controller.search_repositories("runner", function() continued = true end)
 
     -- The previous relevance snapshot has to go *before* the new search, or
     -- `:Reposcope sort relevance` would restore the previous query's results.
@@ -150,7 +150,7 @@ return function(H)
     H.with_stubs({
       ["reposcope.providers.github.entrypoint"] = {
         readme_manager = { fetch_for_selected = function() end },
-        repo_fetcher = { fetch_and_display = function() end },
+        repo_fetcher = { refresh_results = function() end },
         cloner = { clone = function() end },
         query_builder = { build = function() return "" end },
       },
@@ -210,7 +210,7 @@ return function(H)
   end)
 
   ---------------------------------------------------------------------------
-  -- prompt_and_clone
+  -- start_clone
   ---------------------------------------------------------------------------
   do
     -- `vim.ui.input` is captured into a file-local when the controller loads,
@@ -228,7 +228,7 @@ return function(H)
     local ok, err = pcall(function()
       with_controller(function(controller, env, config)
         config.options.provider = "github"
-        controller.prompt_and_clone()
+        controller.start_clone()
         vim.wait(200, function()
           for _, call in ipairs(env.calls) do
             if call.what == "clone" then return true end
@@ -257,7 +257,7 @@ return function(H)
         -- Cancelling the prompt must not start anything.
         local before = #env.calls
         answer = nil
-        controller.prompt_and_clone()
+        controller.start_clone()
         vim.wait(100)
         H.eq(#env.calls, before, "cancelling the prompt dispatches nothing")
         H.contains(env.notes[#env.notes], "Cloning canceled", "and says so")
