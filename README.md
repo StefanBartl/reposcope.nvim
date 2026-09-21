@@ -21,7 +21,7 @@
 
 Search, preview and clone repositories from GitHub, GitLab or Codeberg without
 leaving Neovim. It does not stop at discovery: reposcope also manages what you
-have already cloned, with a bulk git-status overview and a fetch-and-pull
+have already cloned, with a bulk git dashboard and a fetch-and-pull
 update across a whole folder of repositories — plus filtering, sorting,
 favorites and session persistence for your searches.
 

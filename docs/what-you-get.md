@@ -3,7 +3,7 @@
 | Command | Does |
 | --- | --- |
 | `:Reposcope start` | Search, preview and clone across GitHub, GitLab and Codeberg, with README caching and precaching |
-| `:Reposcope status [dir]` | The git-status overview across a folder of clones; push, pull or fetch a row inline, `m` to mark a set, or `gp` / `gP` / `gf` / `gu` for the whole folder |
+| `:Reposcope dashboard [dir]` | The git dashboard across a folder of clones; push, pull or fetch a row inline, `m` to mark a set, or `gp` / `gP` / `gf` / `gu` for the whole folder |
 | `:Reposcope update [dir]` | Bulk `git fetch` plus a fast-forward-only `pull` across a folder |
 | `:Reposcope filter` / `filter-prompt` / `sort` | Narrow and reorder the current results |
 | `:Reposcope favorites` | Saved repositories, including a README snapshot for offline viewing |

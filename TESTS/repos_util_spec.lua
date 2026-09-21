@@ -3,9 +3,9 @@
 -- guards LuaLS asks for below would hide the very failure it exists to report.
 ---@diagnostic disable: need-check-nil
 -- TESTS/repos_util_spec.lua — the repository-maintenance stack behind
--- `:Reposcope update` and `:Reposcope status`: discovery (`utils.repos`),
+-- `:Reposcope update` and `:Reposcope dashboard`: discovery (`utils.repos`),
 -- the single-repository git actions, the directory-wide update queue, and the
--- status reader.
+-- dashboard reader.
 --
 -- Discovery runs against a real fixture tree (handmade `.git` entries, no
 -- actual repositories). Everything that would run `git` goes through
@@ -269,12 +269,12 @@ return function(H)
     end
 
     ---------------------------------------------------------------------------
-    -- repo_status: reading, parsing and aggregating
+    -- repo_dashboard: reading, parsing and aggregating
     ---------------------------------------------------------------------------
     do
       ---@param env table
-      ---@param fn fun(status: table, env: table): nil
-      local function with_status(env, fn)
+      ---@param fn fun(dashboard: table, env: table): nil
+      local function with_dashboard(env, fn)
         env.notes = {}
         env.progress = {}
 
@@ -300,7 +300,7 @@ return function(H)
             debugf = function() end,
             options = { dev_mode = false },
           },
-        }, { "reposcope.utils.repo_status" }, function() fn(require("reposcope.utils.repo_status"), env) end)
+        }, { "reposcope.utils.repo_dashboard" }, function() fn(require("reposcope.utils.repo_dashboard"), env) end)
       end
 
       local function porcelain(branch, ab, upstream, entries)
@@ -314,13 +314,13 @@ return function(H)
       end
 
       -- A clean, up-to-date repository.
-      with_status({}, function(status)
+      with_dashboard({}, function(dashboard)
         with_git(function(cmd)
           if cmd[2] == "log" then return { code = 0, stdout = "1700000000\n", stderr = "" } end
           return { code = 0, stdout = porcelain("main", "+0 -0", true), stderr = "" }
         end, function(calls)
           local record
-          status.status_one(dir .. "/normal", function(r) record = r end)
+          dashboard.dashboard_one(dir .. "/normal", function(r) record = r end)
 
           H.eq(table.concat(calls[1].cmd, " "), "git status --porcelain=v2 --branch", "status is read machine-readably")
           H.eq(calls[1].opts.cwd, dir .. "/normal", "in the repository")
@@ -349,13 +349,13 @@ return function(H)
         { ab = "+1 -1", entries = { "? untracked.lua" }, state = "dirty", dirty = 1 },
       }
       for _, case in ipairs(cases) do
-        with_status({}, function(status)
+        with_dashboard({}, function(dashboard)
           with_git(function(cmd)
             if cmd[2] == "log" then return { code = 0, stdout = "1", stderr = "" } end
             return { code = 0, stdout = porcelain("main", case.ab, true, case.entries), stderr = "" }
           end, function()
             local record
-            status.status_one(dir .. "/normal", function(r) record = r end)
+            dashboard.dashboard_one(dir .. "/normal", function(r) record = r end)
             H.eq(record.state, case.state, "the derived state is " .. case.state)
             if case.ahead then H.eq(record.ahead, case.ahead, "with the ahead count") end
             if case.behind then H.eq(record.behind, case.behind, "with the behind count") end
@@ -365,26 +365,26 @@ return function(H)
       end
 
       -- A detached HEAD, a repository with no upstream, and one with no commits.
-      with_status({}, function(status)
+      with_dashboard({}, function(dashboard)
         with_git(function(cmd)
           if cmd[2] == "log" then return { code = 128, stdout = "", stderr = "fatal: bad default revision" } end
           return { code = 0, stdout = "# branch.oid abc\n# branch.head (detached)\n", stderr = "" }
         end, function()
           local record
-          status.status_one(dir .. "/normal", function(r) record = r end)
+          dashboard.dashboard_one(dir .. "/normal", function(r) record = r end)
           H.eq(record.branch, "(detached)", "a detached HEAD is reported as such")
           H.falsy(record.has_upstream, "with no upstream")
           H.eq(record.last_commit, nil, "and an empty repository has no commit date rather than an error")
         end)
       end)
 
-      with_status({}, function(status)
+      with_dashboard({}, function(dashboard)
         with_git(function(cmd)
           if cmd[2] == "log" then return { code = 0, stdout = "1", stderr = "" } end
           return { code = 128, stdout = "", stderr = "fatal: not a git repository" }
         end, function()
           local record, err
-          status.status_one(dir .. "/not-a-repo", function(r, e)
+          dashboard.dashboard_one(dir .. "/not-a-repo", function(r, e)
             record = r
             err = e
           end)
@@ -393,35 +393,35 @@ return function(H)
         end)
       end)
 
-      -- status_all: validation, discovery and the stable ordering
-      with_status({ has_git = false }, function(status, env)
+      -- dashboard_all: validation, discovery and the stable ordering
+      with_dashboard({ has_git = false }, function(dashboard, env)
         local called = false
-        status.status_all(dir, function() called = true end)
-        H.falsy(called, "without git, status_all aborts before reading anything")
+        dashboard.dashboard_all(dir, function() called = true end)
+        H.falsy(called, "without git, dashboard_all aborts before reading anything")
         H.contains(env.notes[1], "'git' is not available", "and reports why")
       end)
 
-      with_status({}, function(status, env)
+      with_dashboard({}, function(dashboard, env)
         local called = false
-        status.status_all(dir .. "/loose-file.txt", function() called = true end)
+        dashboard.dashboard_all(dir .. "/loose-file.txt", function() called = true end)
         H.falsy(called, "a file instead of a directory aborts")
         H.contains(env.notes[1], "not accessible", "with a reason")
       end)
 
-      with_status({}, function(status, env)
+      with_dashboard({}, function(dashboard, env)
         local called = false
-        status.status_all(dir .. "/not-a-repo", function() called = true end)
+        dashboard.dashboard_all(dir .. "/not-a-repo", function() called = true end)
         H.falsy(called, "a directory with no repositories aborts")
         H.contains(env.notes[1], "No git repositories found", "with a reason")
       end)
 
-      with_status({}, function(status, env)
+      with_dashboard({}, function(dashboard, env)
         with_git(function(cmd)
           if cmd[2] == "log" then return { code = 0, stdout = "1", stderr = "" } end
           return { code = 0, stdout = porcelain("main", "+0 -0", true), stderr = "" }
         end, function()
           local result
-          status.status_all(dir, function(records, errors) result = { records = records, errors = errors } end)
+          dashboard.dashboard_all(dir, function(records, errors) result = { records = records, errors = errors } end)
           vim.wait(500, function() return result ~= nil end)
 
           H.eq(#result.records, 2, "both repositories in the directory are reported")
@@ -439,13 +439,13 @@ return function(H)
 
       -- A path that is itself a repository is reported on its own rather than
       -- having its children scanned.
-      with_status({}, function(status)
+      with_dashboard({}, function(dashboard)
         with_git(function(cmd)
           if cmd[2] == "log" then return { code = 0, stdout = "1", stderr = "" } end
           return { code = 0, stdout = porcelain("main", "+0 -0", true), stderr = "" }
         end, function()
           local result
-          status.status_all(dir .. "/normal", function(records) result = records end)
+          dashboard.dashboard_all(dir .. "/normal", function(records) result = records end)
           vim.wait(500, function() return result ~= nil end)
           H.eq(#result, 1, "a single repository path reports exactly that repository")
           H.eq(result[1].name, "normal", "the one that was asked for")
@@ -453,14 +453,14 @@ return function(H)
       end)
 
       -- Errored repositories leave gaps that must be compacted away.
-      with_status({}, function(status)
+      with_dashboard({}, function(dashboard)
         with_git(function(cmd, opts)
           if cmd[2] == "log" then return { code = 0, stdout = "1", stderr = "" } end
           if opts.cwd:find("worktree", 1, true) then return { code = 128, stdout = "", stderr = "broken" } end
           return { code = 0, stdout = porcelain("main", "+0 -0", true), stderr = "" }
         end, function()
           local result
-          status.status_all(dir, function(records, errors) result = { records = records, errors = errors } end)
+          dashboard.dashboard_all(dir, function(records, errors) result = { records = records, errors = errors } end)
           vim.wait(500, function() return result ~= nil end)
           H.eq(#result.records, 1, "the readable repository is still reported")
           H.eq(result.records[1].name, "normal", "and it is the right one -- the gap is compacted, not left as a hole")
@@ -469,14 +469,14 @@ return function(H)
         end)
       end)
 
-      -- status_detail: shown verbatim, so what matters is the shape
-      with_status({}, function(status)
+      -- dashboard_detail: shown verbatim, so what matters is the shape
+      with_dashboard({}, function(dashboard)
         with_git(function(cmd)
           if cmd[2] == "log" then return { code = 0, stdout = "abc123  Someone  a commit\n", stderr = "" } end
           return { code = 0, stdout = "## main...origin/main\n M file.lua\n?? new.lua\n", stderr = "" }
         end, function(calls)
           local lines
-          status.status_detail(dir .. "/normal", function(l) lines = l end)
+          dashboard.dashboard_detail(dir .. "/normal", function(l) lines = l end)
 
           H.eq(table.concat(calls[1].cmd, " "), "git status --short --branch", "the detail view uses the short format")
           H.eq(
@@ -494,7 +494,7 @@ return function(H)
         end)
       end)
 
-      with_status({}, function(status)
+      with_dashboard({}, function(dashboard)
         with_git(function(cmd)
           if cmd[2] == "log" then return { code = 0, stdout = "", stderr = "" } end
           -- `--branch` always prints a `##` line, so an otherwise empty output
@@ -503,17 +503,17 @@ return function(H)
           return { code = 0, stdout = "## main\n", stderr = "" }
         end, function()
           local lines
-          status.status_detail(dir .. "/normal", function(l) lines = l end)
+          dashboard.dashboard_detail(dir .. "/normal", function(l) lines = l end)
           local joined = table.concat(lines, "\n")
           H.contains(joined, "working tree clean", "only the branch header means the tree is clean")
           H.contains(joined, "(no commits yet)", "and no log output means there are no commits")
         end)
       end)
 
-      with_status({}, function(status)
+      with_dashboard({}, function(dashboard)
         with_git(function() return { code = 128, stdout = "", stderr = "fatal: not a git repository" } end, function()
           local lines
-          status.status_detail(dir .. "/not-a-repo", function(l) lines = l end)
+          dashboard.dashboard_detail(dir .. "/not-a-repo", function(l) lines = l end)
           H.contains(
             table.concat(lines, "\n"),
             "error:",

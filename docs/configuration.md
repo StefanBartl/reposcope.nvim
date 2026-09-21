@@ -36,7 +36,7 @@ require("reposcope").setup({
     type = "git",                           -- Clone method: "git", "gh", "wget", "curl"
   },
   metrics = true,                           -- Enables request timing and logging (for debugging)
-  progress_style = "auto",                  -- Indicator for `:Reposcope update`/`status`; needs lib.nvim, no-op without it
+  progress_style = "auto",                  -- Indicator for `:Reposcope update`/`dashboard`; needs lib.nvim, no-op without it
   readme_precache_count = 5,                -- Pre-cache READMEs for this many top search results (0 disables)
 })
 ```
@@ -68,7 +68,7 @@ typed as `ConfigOptions` in
 | `keymap_opts` | `table` | `{ silent = true, noremap = true }` | Options passed to the two global keymaps above |
 | `prompt_keymaps` | `table` | see [BINDINGS.md](BINDINGS.md#12-prompt-buffers) | Per-action keymaps for the prompt buffers; set an action to `false`/`""` to disable it |
 | `prompt_prefix_symbol` | `string` | a Nerd Font glyph | Symbol shown in the `prefix` field; e.g. `"> "` for terminals without an icon font |
-| `clone.std_dir` | `string` | `$REPOS_DIR` or `"~/temp"` | Base path for cloning — and the default target of `:Reposcope status`/`update` |
+| `clone.std_dir` | `string` | `$REPOS_DIR` or `"~/temp"` | Base path for cloning — and the default target of `:Reposcope dashboard`/`update` |
 | `clone.type` | `string` | `""` (→ `git`) | Tool used to perform the clone: `""`/`"git"`, `"gh"`, `"wget"`, or `"curl"` (the latter two pull a `.zip`) |
 | `metrics` | `boolean` | `false` | Enable internal request logging and performance tracking; see [troubleshooting.md](troubleshooting.md) |
 | `log_max` | `number` | `1000` | Cap on the request log's size, in entries |
@@ -87,7 +87,7 @@ typed as `ConfigOptions` in
 
 ## Progress Indicator
 
-`:Reposcope update` and `:Reposcope status` walk a whole directory of clones and
+`:Reposcope update` and `:Reposcope dashboard` walk a whole directory of clones and
 run `git` once (or twice) per repository. Each individual call is quick, but over
 a few dozen repositories that adds up to a wait long enough to look like a hang —
 and `update`'s per-repository notifications are dev-mode only, so without an
@@ -120,7 +120,7 @@ exactly as before — no error, nothing missing beyond the indicator itself.
 | `"kit"`        | Like `"float"`, themed via `ui.kit`.                             |
 
 The indicator is **delay-guarded**: it only becomes visible after ~150ms, so
-`status` on two or three repositories never flashes any UI.
+`dashboard` on two or three repositories never flashes any UI.
 
 Cancelling (`"float"`/`"kit"`) stops `update` after the repository currently
 being fetched, rather than killing `git` mid-write — the repositories already

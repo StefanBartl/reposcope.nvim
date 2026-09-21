@@ -34,10 +34,10 @@ the floating UI:
   `gh`/`curl`/`wget`), via `controllers/clone_executor.lua`.
 
 That "discover → clone" pair is also where the maintenance commands pick up:
-`:Reposcope status`/`:Reposcope update` treat `clone.std_dir` as their own
+`:Reposcope dashboard`/`:Reposcope update` treat `clone.std_dir` as their own
 default target, so a directory you only ever populate via `<C-c>` is the
 same directory those commands sweep later. Point `clone.std_dir` at one
-place and the whole loop — search, clone, update, status — stays coherent
+place and the whole loop — search, clone, update, dashboard — stays coherent
 without ever passing an explicit path.
 
 ## Debounce and background pre-caching change what "instant" means
@@ -85,19 +85,19 @@ knowing if you script your own "force refresh this repo" keymap. The exact
 snippets are in
 [`docs/troubleshooting.md`](troubleshooting.md#forcing-a-fresh-readme).
 
-## Bulk update and status are a pair, not two separate features
+## Bulk update and dashboard are a pair, not two separate features
 
-`:Reposcope status` and `:Reposcope update` operate on the same directory
+`:Reposcope dashboard` and `:Reposcope update` operate on the same directory
 (`clone.std_dir` by default, or a given path) and the same repository
 discovery (`utils/repos.lua`, immediate subdirectories only, non-recursive).
-Treat `status` as the read-only preview of what `update` is about to do:
+Treat `dashboard` as the read-only preview of what `update` is about to do:
 
-1. `:Reposcope status` — shows branch, sync state, working-tree state
+1. `:Reposcope dashboard` — shows branch, sync state, working-tree state
    (`clean`/`dirty`/`ahead`/`behind`/`diverged`) and the age of `HEAD` per
    repo, read via `git status --porcelain=v2 --branch`. Nothing is modified by
-   the scan itself; the row and batch keys in the overview are what modify,
+   the scan itself; the row and batch keys in the dashboard are what modify,
    and each batch asks first (see *Marks turn the row keys into batch keys*).
-   `gu` in that overview is `update` applied to the same directory, so in
+   `gu` in that dashboard is `update` applied to the same directory, so in
    practice step 2 is usually one keystroke away rather than a second
    command. The `SYNC` column carries arrows (`↑2 ↓1`) only for
    branches that have actually diverged, and disappears entirely when no
@@ -105,22 +105,22 @@ Treat `status` as the read-only preview of what `update` is about to do:
    `+0/-0` on every row would bury the two that matter.
 2. `:Reposcope update [dir]` — runs `git fetch --all --prune` then `git pull
    --ff-only` per repo, sequentially, asynchronously. A repo already shown
-   as `diverged` in `status` will fail (not rewrite) in `update` — the
+   as `diverged` in `dashboard` will fail (not rewrite) in `update` — the
    fast-forward-only pull refuses to rewrite local history, so `diverged`
    repos need manual attention regardless of how many times `update` runs.
 
 Both scan **only immediate subdirectories** of the target — nested clones
 (a repo inside a repo) are invisible to either command. If you organize
 clones into per-provider or per-org subfolders under `clone.std_dir`, point
-`status`/`update` at the specific subfolder rather than the root, or they'll
+`dashboard`/`update` at the specific subfolder rather than the root, or they'll
 report "no repositories found."
 
-`status --out=path` is worth knowing for anything beyond eyeballing the
+`dashboard --out=path` is worth knowing for anything beyond eyeballing the
 popup: it writes the raw table to a file instead, which is the natural
 input to a shell script if you want "list every dirty repo" outside Neovim
 entirely.
 
-## The status overview is a dashboard, not a printout
+## The dashboard is a workbench, not a printout
 
 Every row is actionable, and that is the difference between checking on
 thirty clones and maintaining them.
@@ -128,7 +128,7 @@ thirty clones and maintaining them.
 `p` pushes, `P` pulls (`--ff-only`), `f` fetches (`--prune`) the repository
 under the cursor. After each one the row is re-read and redrawn in place, so
 the table stays true without a rescan. `r` re-reads one row, `R` re-scans the
-whole directory — and `:Reposcope status <dir>` passes that directory through,
+whole directory — and `:Reposcope dashboard <dir>` passes that directory through,
 so `R` re-reads what you actually asked for rather than the configured default.
 
 ## Marks turn the row keys into batch keys
@@ -160,7 +160,7 @@ Three deliberate constraints:
   interrupting the `git` call in flight — a half-done fetch is harmless, an
   interrupted `pull` is not.
 - **Marks belong to repositories, not rows.** They are stored by path, so
-  `s` (re-sort), `R` (re-scan) and closing/reopening the overview all leave
+  `s` (re-sort), `R` (re-scan) and closing/reopening the dashboard all leave
   them where you put them. The reverse — `s` or `R` *during* a batch — is
   refused outright, since both would slide rows out from under the
   in-flight spinners.
@@ -181,7 +181,7 @@ them. The winbar legend deliberately shows only some of them — `r`, `R` and `y
 are left out so it does not overflow, and `?` is where the full list lives.
 
 **Opening a README from a row is reversible.** The README buffer carries a
-buffer-local `q` that wipes it and restores the overview on the same row, so
+buffer-local `q` that wipes it and restores the dashboard on the same row, so
 reading one is not a one-way trip out of the dashboard.
 
 ## Session persistence restores search state, not window layout
@@ -298,7 +298,7 @@ it is the reason to reach for `<Tab>` here rather than typing.
 - [`docs/FEATURES/UI.md`](FEATURES/UI.md) — the floating windows, keymaps,
   viewer/editor, help cheatsheet.
 - [`docs/FEATURES/WORKFLOW.md`](FEATURES/WORKFLOW.md) — the
-  `update`/`status`/`session`/`queries`/diagnostics command catalog this
+  `update`/`dashboard`/`session`/`queries`/diagnostics command catalog this
   file assumes you've already skimmed.
 - [`docs/commands.md`](commands.md) — full command reference with syntax
   and examples.

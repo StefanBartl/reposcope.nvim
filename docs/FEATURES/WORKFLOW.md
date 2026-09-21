@@ -23,22 +23,22 @@ branches are reported as errors rather than rewritten.
 - **Usercmds:** `:Reposcope update [dir]` (see
   [commands.md](../commands.md#reposcope-update-dir))
 
-## Git status overview of cloned repositories (`:Reposcope status`)
+## Git dashboard of cloned repositories (`:Reposcope dashboard`)
 
 Reads `git status --porcelain=v2 --branch` for every repo directly inside
 a directory (or a single repo) and shows branch, ahead/behind counts, and
 dirty state (`clean`/`dirty`/`ahead`/`behind`/`diverged`) in a compact
 table. The scan is the read-only counterpart to `update`; the rows are not
 — `m` marks repositories and `p`/`P`/`f` then act on the marked set, while
-`gp`/`gP`/`gf`/`gu` act on every repository in the overview.
+`gp`/`gP`/`gf`/`gu` act on every repository in the dashboard.
 
-- **Module:** `utils/repo_status.lua` (`M.status_all`, `M.status_one`),
+- **Module:** `utils/repo_dashboard.lua` (`M.dashboard_all`, `M.dashboard_one`),
   `utils/repo_actions.lua` (per-repo push/pull/fetch/update),
-  `ui/actions/status_view.lua`, `bindings/usrcmds.lua` (`run_status`,
-  `status_route`)
+  `ui/actions/dashboard_view.lua`, `bindings/usrcmds.lua` (`run_dashboard`,
+  `dashboard_route`)
 - **Config:** `clone.std_dir`, `progress_style`
-- **Usercmds:** `:Reposcope status [dir] [--out] [--to]` (see
-  [commands.md](../commands.md#reposcope-status-dir---out---to))
+- **Usercmds:** `:Reposcope dashboard [dir] [--out] [--to]` (see
+  [commands.md](../commands.md#reposcope-dashboard-dir---out---to))
 
 ## Persistent session save/restore (last search, filters, sort)
 

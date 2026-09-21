@@ -23,21 +23,21 @@ local reload_prompt = require("reposcope.ui.actions.prompt_reload").reload_promp
 local prompt_filter = require("reposcope.ui.actions.filter_prompt").prompt_filter
 local apply_filter = require("reposcope.ui.actions.filter_repos").apply_filter
 local fetch_readme_for_selected = require("reposcope.controllers.provider_controller").fetch_readme_for_selected
-local status_view = require("reposcope.ui.actions.status_view")
+local dashboard_view = require("reposcope.ui.actions.dashboard_view")
 -- Debugging
 local notify = require("reposcope.utils.debug").notify
 
 ---@internal
----Reads and displays the git status overview for a directory (or single repository).
+---Reads and displays the git dashboard for a directory (or single repository).
 ---@param path string|nil Optional directory or single-repo override
----@param output StatusOutputMode|nil Output backend (default: "popup")
+---@param output DashboardOutputMode|nil Output backend (default: "popup")
 ---@param out_path string|nil Target file path, only used when output == "path"
 ---@return nil
-local function run_status(path, output, out_path)
-  require("reposcope.utils.repo_status").status_all(path, function(records, errors)
-    -- `dir` is carried through so the overview's own rescan key re-reads the
+local function run_dashboard(path, output, out_path)
+  require("reposcope.utils.repo_dashboard").dashboard_all(path, function(records, errors)
+    -- `dir` is carried through so the dashboard's own rescan key re-reads the
     -- directory that was actually asked for, not the configured default.
-    if #records > 0 then status_view.show(records, { output = output, path = out_path, dir = path }) end
+    if #records > 0 then dashboard_view.show(records, { output = output, path = out_path, dir = path }) end
     if #errors > 0 then
       notify(
         ("[reposcope] %d repositor%s could not be read:\n\n%s"):format(
@@ -330,9 +330,9 @@ local function build_routes()
   return routes
 end
 
----`dir`'s completion for `status`: real directory listings plus a couple of
+---`dir`'s completion for `dashboard`: real directory listings plus a couple of
 --- fixed, well-known path keywords (`$REPOS_DIR`, `~`) offered up front, so
---- e.g. `:Reposcope status $REPOS_DIR<Tab>` and a bare `:Reposcope status
+--- e.g. `:Reposcope dashboard $REPOS_DIR<Tab>` and a bare `:Reposcope dashboard
 --- <Tab>` both surface them without having to know/type them out fully.
 --- Validation is unchanged from the built-in `DIR` type (expand, then must
 --- be an existing directory) -- only completion candidates are extended.
@@ -351,7 +351,7 @@ local function fixed_dir_keywords()
   return keywords
 end
 
-composer.register_type("REPOSCOPE_STATUS_DIR", {
+composer.register_type("REPOSCOPE_DASHBOARD_DIR", {
   validate = function(raw)
     local expanded = expand_path(raw)
     if not is_dir(vim.fn.fnamemodify(expanded, ":p")) then
@@ -369,25 +369,25 @@ composer.register_type("REPOSCOPE_STATUS_DIR", {
   end,
 })
 
----Dedicated route for `status`: it needs `--out`/`--to` flags, which the
+---Dedicated route for `dashboard`: it needs `--out`/`--to` flags, which the
 --- generic per-subcommand wrapper above (single optional positional) can't
 --- express, so it is built by hand instead of going through `subcommands`.
 ---@type table
-local status_route = {
-  path = { "status" },
-  desc = "Show the git status overview of all repositories in a directory (or one repository)",
-  args = { { name = "dir", type = "REPOSCOPE_STATUS_DIR", optional = true } },
+local dashboard_route = {
+  path = { "dashboard" },
+  desc = "Show the git dashboard of all repositories in a directory (or one repository)",
+  args = { { name = "dir", type = "REPOSCOPE_DASHBOARD_DIR", optional = true } },
   flags = {
     { name = "out", type = "STRING", enum = { "popup", "buffer", "split", "vsplit", "clipboard", "path" } },
     { name = "to", type = "PATH" },
   },
-  run = function(ctx) run_status(ctx.args.dir, ctx.flags.out, ctx.flags.to) end,
+  run = function(ctx) run_dashboard(ctx.args.dir, ctx.flags.out, ctx.flags.to) end,
 }
 
 ---Registers the single dispatching `:Reposcope` user command.
 local routes = build_routes()
-routes[#routes + 1] = status_route
+routes[#routes + 1] = dashboard_route
 composer.verb("Reposcope", {
-  desc = "Reposcope: <subcommand> [args] (start, close, status, update, filter, prompt, ...)",
+  desc = "Reposcope: <subcommand> [args] (start, close, dashboard, update, filter, prompt, ...)",
   routes = routes,
 })

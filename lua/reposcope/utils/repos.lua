@@ -3,7 +3,7 @@
 ---@description
 --- Small, dependency-light utilities used by every command that operates on a
 --- directory of cloned repositories (e.g. `:Reposcope update`, `:Reposcope
---- status`). Keeping the scanning logic in one place guarantees that all repo
+--- dashboard`). Keeping the scanning logic in one place guarantees that all repo
 --- maintenance commands agree on what counts as a repository, how the base
 --- directory is resolved, and which subdirectories are considered.
 ---

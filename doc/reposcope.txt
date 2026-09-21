@@ -68,7 +68,7 @@ Advanced setup:
       type = "git",                    -- "git", "gh", "wget", or "curl"
     },
     metrics = true,                    -- enable request logging & metrics
-    progress_style = "auto",           -- indicator for `update`/`status`
+    progress_style = "auto",           -- indicator for `update`/`dashboard`
     readme_precache_count = 5,         -- pre-cache top N search results' READMEs (0 disables)
     results_limit = 25,                -- maximum search results per query
     hover = true,                      -- register the hover.nvim source (no-op without it)
@@ -79,7 +79,7 @@ progress_style ~
     Type: `"auto"|"notify"|"statusline"|"fidget"|"float"|"kit"`
     Default: `"auto"`
     Progress indicator for the two bulk commands, |:Reposcope| `update` and
-    |:Reposcope| `status`. Both walk a whole directory of clones and run
+    |:Reposcope| `dashboard`. Both walk a whole directory of clones and run
     `git` once or twice per repository — quick individually, but over a few
     dozen repositories long enough to look like a hang.
 
@@ -97,7 +97,7 @@ progress_style ~
     updated stays updated.
 
     The indicator is delay-guarded: it only becomes visible after ~150ms,
-    so `status` over two or three repositories never flashes any UI.
+    so `dashboard` over two or three repositories never flashes any UI.
 
 Note: GitLab's and Codeberg's search APIs only support a plain substring
 match (no `owner:`/`language:`-style qualifiers like GitHub's search) — with
@@ -194,7 +194,7 @@ The following subcommands are available:
 | `:Reposcope filter-prompt`    | Prompt input for interactive filtering       |
 | `:Reposcope filter-clear`     | Resets the filter and restores full list     |
 | `:Reposcope update [dir]`     | Updates all cloned git repositories          |
-| `:Reposcope status [dir] [--out] [--to]` | Git status overview, with batch actions |
+| `:Reposcope dashboard [dir] [--out] [--to]` | Git dashboard, with batch actions |
 | `:Reposcope providers`        | Lists providers and marks the active one     |
 | `:Reposcope session ...`      | Save, restore, or clear the search session   |
 | `:Reposcope favorites ...`    | Lists favorited repositories, or clears them |
@@ -294,11 +294,11 @@ Notes:
 See also |reposcope-clone|.
 
 ------------------------------------------------------------------------------
-                                                          *:Reposcope-status*
-:Reposcope status [dir] [--out] [--to]
+                                                       *:Reposcope-dashboard*
+:Reposcope dashboard [dir] [--out] [--to]
 
 Reads the git status of every cloned git repository found directly inside a
-directory and displays a compact, aligned overview. For each repository it
+directory and displays a compact, aligned dashboard. For each repository it
 runs, asynchronously: >
     git status --porcelain=v2 --branch
 <
@@ -373,7 +373,7 @@ On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
 
 A repository with no readable `README.md` just prints a notification —
 nothing to confirm opening. Inside a README opened this way, `q` closes it
-and restores the overview on the same row.
+and restores the dashboard on the same row.
 
 A push/pull/fetch marks its row with a spinner while it runs, notifies the
 outcome, and re-reads just that repository afterwards. The operation is also
@@ -387,7 +387,7 @@ window's width, dropping entries from the right as it narrows — except
 `? Keys`, which is pinned, since it is how everything dropped stays
 reachable. The legend is a `%!` expression, so it re-fits on resize.
 
-                                                    *reposcope-status-marks*
+                                                 *reposcope-dashboard-marks*
 Marks and batches ~
 
 `m` marks the repository under the cursor with a `✓` in the gutter; over a
@@ -400,7 +400,7 @@ on the row under the cursor: mark the four repositories you want to push,
 press `p`, confirm. `gp`, `gP`, `gf` and `gu` are the whole-directory forms
 and ignore marks entirely — push all, pull all, fetch all, or update all
 (the same two commands |:Reposcope-update| runs) without leaving the
-overview.
+dashboard.
 
 - Every batch is confirmed first ("Push 4 marked repositories?"): unlike a
   single row, nothing on screen states what a batch is about to touch. A
@@ -411,10 +411,10 @@ overview.
 - Each row is re-read as its action settles, and the closing summary reports
   how many succeeded and lists the failures.
 - Marks are keyed by repository path, so they survive `s`, `R` and
-  closing/reopening the overview.
+  closing/reopening the dashboard.
 - `s` and `R` are refused while a batch runs: both would move rows out from
   under the in-flight spinners.
-- Inside the status buffer, `gp`/`gP`/`gf`/`gu` shadow the built-in commands
+- Inside the dashboard buffer, `gp`/`gP`/`gf`/`gu` shadow the built-in commands
   of the same name, which are meaningless in a non-modifiable table anyway.
 
 Notes:
@@ -424,13 +424,13 @@ Notes:
 - Requires `git` to be available in $PATH.
 
 - Example: >
-    :Reposcope status
-    :Reposcope status ~/projects
-    :Reposcope status ~/projects/foo
-    :Reposcope status $REPOS_DIR
-    :Reposcope status ~/projects --out=split
-    :Reposcope status --out=clipboard
-    :Reposcope status --out=path --to=status.txt
+    :Reposcope dashboard
+    :Reposcope dashboard ~/projects
+    :Reposcope dashboard ~/projects/foo
+    :Reposcope dashboard $REPOS_DIR
+    :Reposcope dashboard ~/projects --out=split
+    :Reposcope dashboard --out=clipboard
+    :Reposcope dashboard --out=path --to=dashboard.txt
 <
 See also |reposcope-clone|.
 
@@ -545,7 +545,7 @@ Repositories can be cloned using:
 Cloning requires a valid `clone.std_dir` and tool configuration.
 
 Already cloned repositories can be updated in bulk with |:Reposcope-update|,
-and inspected read-only with |:Reposcope-status|.
+and inspected read-only with |:Reposcope-dashboard|.
 
 ==============================================================================
 TROUBLESHOOTING                                    *reposcope-troubleshooting*

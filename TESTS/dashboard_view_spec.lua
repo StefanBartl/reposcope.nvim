@@ -1,4 +1,4 @@
--- TESTS/status_view_spec.lua — the status overview's rendering and its marks.
+-- TESTS/dashboard_view_spec.lua — the dashboard's rendering and its marks.
 --
 -- Rendering is where the column offsets are computed by hand (byte offsets for
 -- the highlights, display cells for the alignment), and marks add a gutter in
@@ -6,16 +6,16 @@
 -- change what the first two cells say and nothing else about the row.
 --
 -- The keys are exercised through `:normal`, not by calling the handlers, since
--- what is being checked is that they are actually bound to the status buffer.
+-- what is being checked is that they are actually bound to the dashboard buffer.
 
 return function(H)
-  local sv = require("reposcope.ui.actions.status_view")
+  local sv = require("reposcope.ui.actions.dashboard_view")
 
   ---@param name string
   ---@param branch string
   ---@param state string
   ---@param ahead integer
-  ---@return RepoStatusRecord
+  ---@return RepoDashboardRecord
   local function rec(name, branch, state, ahead)
     return {
       name = name,
@@ -161,14 +161,14 @@ return function(H)
 
   vim.cmd("vsplit")
   local filler = vim.api.nvim_get_current_win()
-  local status_win = vim.fn.bufwinid(buf)
-  vim.api.nvim_set_current_win(status_win)
+  local dashboard_win = vim.fn.bufwinid(buf)
+  vim.api.nvim_set_current_win(dashboard_win)
   vim.o.winminwidth = 1
 
   for _, want in ipairs({ 74, 55, 30 }) do
-    vim.api.nvim_win_set_width(status_win, want)
-    local width = vim.api.nvim_win_get_width(status_win)
-    local text = vim.api.nvim_eval_statusline(winbar, { winid = status_win, use_winbar = true }).str
+    vim.api.nvim_win_set_width(dashboard_win, want)
+    local width = vim.api.nvim_win_get_width(dashboard_win)
+    local text = vim.api.nvim_eval_statusline(winbar, { winid = dashboard_win, use_winbar = true }).str
     H.ok(vim.fn.strdisplaywidth(text) <= width, ("the legend fits a window of %d"):format(width))
     H.contains(text, "? Keys", ("? Keys survives a window of %d"):format(width))
     if text:match("^%s*(.)") == "<" then
