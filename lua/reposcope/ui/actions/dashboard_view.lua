@@ -1061,6 +1061,24 @@ local ROW_KEYMAPS = {
     end,
   },
   {
+    keys = { "L" },
+    label = "L Lazygit",
+    desc = "Open lazygit for the repository under cursor (gitsuite.nvim, optional)",
+    run = function(ctx)
+      local record = _record_at_cursor(ctx.records)
+      if not record then return end
+      local ok, ui = pcall(require, "gitsuite.features.ui")
+      if not ok then
+        notify(
+          '[reposcope] gitsuite.nvim is not installed -- install "StefanBartl/gitsuite.nvim" to use L (lazygit)',
+          3
+        )
+        return
+      end
+      ui.lazygit(record.path)
+    end,
+  },
+  {
     keys = { "s" },
     label = "s Sort",
     desc = "Cycle sort order (discovery / name / state / age)",
