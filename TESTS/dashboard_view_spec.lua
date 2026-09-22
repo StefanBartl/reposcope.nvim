@@ -141,8 +141,35 @@ return function(H)
   for _, m in ipairs(vim.api.nvim_buf_get_keymap(buf, "n")) do
     normal_maps[m.lhs] = true
   end
-  for _, lhs in ipairs({ "p", "P", "f", "m", "M", "gp", "gP", "gf", "gu", "S", "s", "r", "R", "y", "?" }) do
+  for _, lhs in ipairs({ "p", "P", "f", "m", "M", "gp", "gP", "gf", "gu", "S", "L", "s", "r", "R", "y", "?" }) do
     H.ok(normal_maps[lhs], "normal-mode key " .. lhs .. " is bound")
+  end
+
+  -- L: gitsuite.nvim's lazygit, for the repository under the cursor (GS-27).
+  -- gitsuite.nvim is an optional soft dependency, faked here via
+  -- package.loaded -- same treatment as every other optional integration.
+  do
+    local calls = {}
+    local saved = package.loaded["gitsuite.features.ui"]
+    package.loaded["gitsuite.features.ui"] = {
+      lazygit = function(dir) calls[#calls + 1] = dir end,
+    }
+    vim.api.nvim_win_set_cursor(0, { 2, 0 }) -- alpha, after the "s" (name) re-sort above
+    vim.cmd("normal L")
+    H.eq(#calls, 1, "L calls gitsuite.features.ui.lazygit exactly once")
+    H.contains(calls[1], "alpha", "...with the path of the repository under the cursor")
+    package.loaded["gitsuite.features.ui"] = saved
+  end
+
+  do
+    local saved = package.loaded["gitsuite.features.ui"]
+    local orig_preload = package.preload["gitsuite.features.ui"]
+    package.loaded["gitsuite.features.ui"] = nil
+    package.preload["gitsuite.features.ui"] = function() error("no gitsuite.nvim here") end
+    local ok = pcall(vim.cmd, "normal L")
+    package.preload["gitsuite.features.ui"] = orig_preload
+    package.loaded["gitsuite.features.ui"] = saved
+    H.ok(ok, "L without gitsuite.nvim does not error (just notifies)")
   end
 
   local visual_maps = {}

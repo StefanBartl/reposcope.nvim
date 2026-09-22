@@ -19,6 +19,7 @@ Each detected at runtime and degrading to nothing when absent:
 | `GITHUB_TOKEN` | Raises the GitHub API rate limit from 60 requests an hour to 5000. Not required, but the anonymous limit is easy to reach — see [authentication.md](authentication.md) |
 | [hover.nvim](https://github.com/StefanBartl/hover.nvim) | `owner/repo` previews anywhere in any buffer |
 | [images.nvim](https://github.com/StefanBartl/images.nvim) | The images a README references, drawn in the preview pane |
+| [gitsuite.nvim](https://github.com/StefanBartl/gitsuite.nvim) | `L` in the dashboard opens its lazygit float for the repository under the cursor |
 
 `:checkhealth reposcope` reports which request tools resolved, which one is
 configured, whether a token is set, and how the image preview is wired.
