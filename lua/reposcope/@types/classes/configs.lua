@@ -6,6 +6,10 @@
 ---@field std_dir string Directory to clone repositories into
 ---@field type string Tool used for cloning (e.g. 'curl', 'wget')
 
+---@class DashboardOptions
+---@brief `:Reposcope dashboard` settings
+---@field extra_paths string[] Repository paths shown in addition to the normal `clone.std_dir`/`$REPOS_DIR` scan (e.g. a Neovim config that is a git repo but not a cloned checkout); each is expanded, deduplicated against the scan and validated as a git repository
+
 ---@class ConfigOptions
 ---@brief All configurable options accepted by `reposcope.setup()`
 ---@field prompt_fields PromptField[] Default fields shown in the prompt UI
@@ -19,6 +23,7 @@
 ---@field hover boolean Register a hover.nvim source for `owner/repo` slugs whose README is cached (a no-op without hover.nvim)
 ---@field layout LayoutType Default layout for result view
 ---@field clone CloneOptions Options related to downloading/cloning repositories
+---@field dashboard DashboardOptions Options for `:Reposcope dashboard` (extra repository paths shown alongside the scan)
 ---@field keymaps table<string, string> Custom key mappings for plugin actions
 ---@field keymap_opts table Options passed to all keymaps (e.g. `noremap`, `silent`)
 ---@field prompt_keymaps table<PromptKeymapAction, string|string[]|false> Custom key mappings for prompt-buffer actions. Set an action to `false` or `""` to disable it.
@@ -51,6 +56,7 @@
 ---@field hover? boolean
 ---@field layout? LayoutType
 ---@field clone? CloneOptions
+---@field dashboard? DashboardOptions
 ---@field keymaps? table<string, string>
 ---@field keymap_opts? table
 ---@field prompt_keymaps? table<PromptKeymapAction, string|string[]|false>

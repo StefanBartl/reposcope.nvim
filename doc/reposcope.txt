@@ -67,6 +67,9 @@ Advanced setup:
       std_dir = "~/projects",          -- directory to clone into
       type = "git",                    -- "git", "gh", "wget", or "curl"
     },
+    dashboard = {
+      extra_paths = { "~/.config/nvim" }, -- extra repos shown in `:Reposcope dashboard`
+    },
     metrics = true,                    -- enable request logging & metrics
     progress_style = "auto",           -- indicator for `update`/`dashboard`
     readme_precache_count = 5,         -- pre-cache top N search results' READMEs (0 disables)
@@ -337,6 +340,14 @@ If no {dir} argument is given, the configured clone directory (`clone.std_dir`,
 see |reposcope-config|) is used. If {dir} is itself a git repository, only that
 single repository is reported; otherwise its immediate subdirectories are
 scanned. This is the read-only counterpart to |:Reposcope-update|.
+
+`dashboard.extra_paths` (see |reposcope-config|) adds repository paths
+outside that scan — e.g. a Neovim config, which is a git repository of its
+own but never one of the checkouts cloned into `clone.std_dir`. Configured
+entries are merged in on every dashboard read (including a re-scan with
+`R`), deduplicated against whatever the scan already found, and validated
+as real git repositories — an entry that is not is reported and skipped
+rather than aborting the dashboard.
 
 `<Tab>` on {dir} offers `$REPOS_DIR` and `~` ahead of real directory
 completion, when resolvable.

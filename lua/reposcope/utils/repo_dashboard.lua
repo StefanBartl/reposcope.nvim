@@ -40,9 +40,11 @@ local M = {}
 -- Vim Utilities
 local fnamemodify = vim.fn.fnamemodify
 local uv = vim.uv or vim.loop
+local expand = require("lib.nvim.cross.fs.expand_path")
 -- Utils
 local has_binary = require("reposcope.utils.checks").has_binary
 local notify = require("reposcope.utils.debug").notify
+local config = require("reposcope.config")
 -- Shared repository discovery helpers
 local repos_util = require("reposcope.utils.repos")
 local resolve_base_dir = repos_util.resolve_base_dir
@@ -274,8 +276,54 @@ function M.dashboard_detail(repo, on_done)
   )
 end
 
----Collects the git status of every repository in the resolved base directory.
----If the resolved path is itself a repository, only that one is reported.
+---@private
+---@internal
+---Repository paths configured outside the normal `base_dir` scan
+---(`config.options.dashboard.extra_paths`) that should still show up in the
+---dashboard -- e.g. a Neovim config, which is a git repository in its own
+---right but is never itself one of the checkouts cloned into
+---`clone.std_dir`/`$REPOS_DIR`, so the scan above never finds it.
+---
+---Returned paths are absolute, deduplicated against `existing` (an entry
+---already discovered by the scan is not repeated) and validated as actual
+---git repositories -- one that no longer exists, or never was a repository,
+---is reported and skipped rather than aborting the whole dashboard over a
+---single stale config entry.
+---@param existing string[] Absolute repository paths already collected by the scan
+---@return string[] extra Absolute paths to add
+local function extra_repo_paths(existing)
+  local configured = (config.options.dashboard and config.options.dashboard.extra_paths) or {}
+  if #configured == 0 then return {} end
+
+  ---@type table<string, boolean>
+  local seen = {}
+  for _, p in ipairs(existing) do
+    seen[fnamemodify(p, ":p"):gsub("[\\/]+$", "")] = true
+  end
+
+  ---@type string[]
+  local extra = {}
+  for _, raw in ipairs(configured) do
+    local resolved = fnamemodify(expand(raw), ":p"):gsub("[\\/]+$", "")
+    if not seen[resolved] then
+      seen[resolved] = true
+      if is_git_repo(resolved) then
+        extra[#extra + 1] = resolved
+      else
+        notify("[reposcope] dashboard.extra_paths entry is not a git repository, skipped: " .. resolved, 3)
+      end
+    end
+  end
+  return extra
+end
+
+---Collects the git status of every repository in the resolved base directory,
+---plus whatever `config.options.dashboard.extra_paths` adds (see
+---`extra_repo_paths` above) -- those are merged in regardless of whether the
+---scan found anything at all, so a directory with no plugin checkouts but a
+---configured extra path still produces a dashboard.
+---If the resolved path is itself a repository, only that one is reported
+---(extra_paths are still merged in on top of it).
 ---Validation failures (missing git, inaccessible directory, no repositories) are
 ---reported via notification and abort early without invoking `on_complete`.
 ---@param path string|nil Optional directory or single-repo override (defaults to the clone directory)
@@ -301,6 +349,7 @@ function M.dashboard_all(path, on_complete)
 
   -- A path that is itself a repository is reported on its own; otherwise scan children.
   local repos = is_git_repo(base_dir) and { base_dir } or collect_repos(base_dir)
+  vim.list_extend(repos, extra_repo_paths(repos))
   if #repos == 0 then
     notify("[reposcope] No git repositories found in " .. base_dir, 3)
     return

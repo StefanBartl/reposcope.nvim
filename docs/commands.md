@@ -221,6 +221,14 @@ If the given path is **itself** a git repository, only that single repo is
 reported; otherwise its immediate subdirectories are scanned. This is the
 read-only counterpart to `:Reposcope update` — *discover → clone → dashboard → update*.
 
+`dashboard.extra_paths` (see [configuration.md](configuration.md)) adds
+repository paths outside that scan — e.g. a Neovim config, which is a git
+repo of its own but never one of the checkouts cloned into `clone.std_dir`.
+Configured entries are merged in on every dashboard read (including a
+re-scan with `R`), deduplicated against whatever the scan already found, and
+validated as real git repositories — an entry that isn't is reported and
+skipped rather than aborting the dashboard.
+
 > Only immediate subdirectories are scanned (non-recursive). The scan never
 > modifies anything; it only reads — including no `index.lock` (it runs `git`
 > with `--no-optional-locks`), so scanning a repository someone is committing in

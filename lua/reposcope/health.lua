@@ -84,6 +84,36 @@ function M.check()
   end
 
   ---------------------------------------------------------------------------
+  -- Dashboard extra_paths (repositories shown in `:Reposcope dashboard`
+  -- outside the normal clone.std_dir/$REPOS_DIR scan)
+  ---------------------------------------------------------------------------
+  local dashboard_opts = config.get_option("dashboard")
+  local extra_paths = (dashboard_opts and dashboard_opts.extra_paths) or {}
+  if #extra_paths == 0 then
+    health.info("dashboard.extra_paths is empty (no extra repositories configured)")
+  else
+    local repos_util = require("reposcope.utils.repos")
+    local expand = require("lib.nvim.cross.fs.expand_path")
+    local bad = {}
+    for _, raw in ipairs(extra_paths) do
+      local resolved = vim.fn.fnamemodify(expand(raw), ":p"):gsub("[\\/]+$", "")
+      if not repos_util.is_git_repo(resolved) then bad[#bad + 1] = raw end
+    end
+    if #bad == 0 then
+      health.ok(
+        ("dashboard.extra_paths: %d configured repositor%s resolve to real git repositories"):format(
+          #extra_paths,
+          #extra_paths == 1 and "y" or "ies"
+        )
+      )
+    else
+      health.warn("dashboard.extra_paths entries that are not git repositories: " .. table.concat(bad, ", "), {
+        "Check the path exists and has a .git directory/file",
+      })
+    end
+  end
+
+  ---------------------------------------------------------------------------
   -- Environment variables
   ---------------------------------------------------------------------------
   if env_has("GITHUB_TOKEN") then

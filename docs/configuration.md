@@ -35,6 +35,9 @@ require("reposcope").setup({
     std_dir = "~/projects",                 -- Default directory to clone into
     type = "git",                           -- Clone method: "git", "gh", "wget", "curl"
   },
+  dashboard = {
+    extra_paths = { "~/.config/nvim" },     -- Extra repos shown in :Reposcope dashboard, in addition to the clone.std_dir scan
+  },
   metrics = true,                           -- Enables request timing and logging (for debugging)
   progress_style = "auto",                  -- Indicator for `:Reposcope update`/`dashboard`; needs lib.nvim, no-op without it
   readme_precache_count = 5,                -- Pre-cache READMEs for this many top search results (0 disables)
@@ -70,6 +73,7 @@ typed as `ConfigOptions` in
 | `prompt_prefix_symbol` | `string` | a Nerd Font glyph | Symbol shown in the `prefix` field; e.g. `"> "` for terminals without an icon font |
 | `clone.std_dir` | `string` | `$REPOS_DIR` or `"~/temp"` | Base path for cloning — and the default target of `:Reposcope dashboard`/`update` |
 | `clone.type` | `string` | `""` (→ `git`) | Tool used to perform the clone: `""`/`"git"`, `"gh"`, `"wget"`, or `"curl"` (the latter two pull a `.zip`) |
+| `dashboard.extra_paths` | `string[]` | `{}` | Repository paths shown in `:Reposcope dashboard` in addition to whatever the `clone.std_dir`/`$REPOS_DIR` scan finds — e.g. a Neovim config, which is a git repo but not itself a cloned checkout. Each entry is expanded (`~`, env vars), deduplicated against the scan and validated as a real git repository; an invalid entry is reported and skipped |
 | `metrics` | `boolean` | `false` | Enable internal request logging and performance tracking; see [troubleshooting.md](troubleshooting.md) |
 | `log_max` | `number` | `1000` | Cap on the request log's size, in entries |
 | `progress_style` | `string` | `"auto"` | Progress indicator for the bulk repository commands; see [below](#progress-indicator) |
