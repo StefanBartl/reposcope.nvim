@@ -27,6 +27,17 @@ local defaults = {
     std_dir = "~/temp",
     type = "", -- Tool for cloning repositories (choose 'curl' or 'wget' for .zip repositories. 'gh' is possible. Default is 'git'.)
   },
+  dashboard = {
+    -- Repository paths shown in `:Reposcope dashboard` in addition to
+    -- whatever the normal `clone.std_dir`/`$REPOS_DIR` scan finds --
+    -- e.g. a Neovim config, which is a git repository of its own but is
+    -- never itself one of the checkouts cloned into `clone.std_dir`, so
+    -- the scan never sees it. Each entry is expanded (`~`, env vars),
+    -- deduplicated against the scan's own results and validated as an
+    -- actual git repository; an entry that fails validation is reported
+    -- and skipped rather than aborting the dashboard.
+    extra_paths = {},
+  },
   -- Register a hover.nvim source, so resting the cursor on `owner/repo`
   -- anywhere -- a plugin spec, a lockfile, a note -- previews that
   -- repository's cached README. Answers only for repositories reposcope has

@@ -456,6 +456,74 @@ return function(H)
         end)
       end)
 
+      -- dashboard.extra_paths: repository paths configured outside the
+      -- normal scan, merged in on top of whatever it found.
+      do
+        local config = require("reposcope.config")
+        local saved_extra = config.options.dashboard.extra_paths
+        -- Two levels deep, so it's never among `dir`'s own immediate
+        -- children -- exactly the "outside the normal scan" shape a real
+        -- extra_paths entry (a Neovim config, say) has.
+        vim.fn.mkdir(dir .. "/nested/extra-repo/.git", "p")
+
+        with_dashboard({}, function(dashboard)
+          config.options.dashboard.extra_paths = { dir .. "/nested/extra-repo" }
+          with_git(function(cmd)
+            if cmd[2] == "log" then return { code = 0, stdout = "1", stderr = "" } end
+            return { code = 0, stdout = porcelain("main", "+0 -0", true), stderr = "" }
+          end, function()
+            local result
+            dashboard.dashboard_all(dir .. "/normal", function(records) result = records end)
+            vim.wait(500, function() return result ~= nil end)
+            H.eq(#result, 2, "the single-repo override still gets the extra path merged in on top")
+            local names = { result[1].name, result[2].name }
+            table.sort(names)
+            H.eq(
+              table.concat(names, ","),
+              "extra-repo,normal",
+              "both the requested repo and the extra one are reported"
+            )
+          end)
+        end)
+
+        -- Deduplication: an extra_paths entry the scan already found is not
+        -- reported a second time.
+        with_dashboard({}, function(dashboard)
+          config.options.dashboard.extra_paths = { dir .. "/normal" }
+          with_git(function(cmd)
+            if cmd[2] == "log" then return { code = 0, stdout = "1", stderr = "" } end
+            return { code = 0, stdout = porcelain("main", "+0 -0", true), stderr = "" }
+          end, function()
+            local result
+            dashboard.dashboard_all(dir, function(records) result = records end)
+            vim.wait(500, function() return result ~= nil end)
+            H.eq(#result, 2, "a duplicate extra path is not added twice -- still just the two scanned repos")
+          end)
+        end)
+
+        -- An extra_paths entry that is not a git repository is reported and
+        -- skipped, not fatal to the rest of the dashboard.
+        with_dashboard({}, function(dashboard, env)
+          config.options.dashboard.extra_paths = { dir .. "/not-a-repo" }
+          with_git(function(cmd)
+            if cmd[2] == "log" then return { code = 0, stdout = "1", stderr = "" } end
+            return { code = 0, stdout = porcelain("main", "+0 -0", true), stderr = "" }
+          end, function()
+            local result
+            dashboard.dashboard_all(dir .. "/normal", function(records) result = records end)
+            vim.wait(500, function() return result ~= nil end)
+            H.eq(#result, 1, "an invalid extra path contributes nothing")
+            H.contains(
+              table.concat(env.notes, "\n"),
+              "not a git repository",
+              "and is reported instead of silently vanishing"
+            )
+          end)
+        end)
+
+        config.options.dashboard.extra_paths = saved_extra
+      end
+
       -- Errored repositories leave gaps that must be compacted away.
       with_dashboard({}, function(dashboard)
         with_git(function(cmd, opts)

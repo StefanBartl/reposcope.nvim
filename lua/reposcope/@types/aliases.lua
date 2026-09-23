@@ -22,6 +22,7 @@
 ---| "results_limit"
 ---| "layout"
 ---| "clone"
+---| "dashboard"
 ---| "hover"
 ---| "keymaps"
 ---| "keymap_opts"
