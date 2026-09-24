@@ -41,10 +41,12 @@ local M = {}
 local fnamemodify = vim.fn.fnamemodify
 local uv = vim.uv or vim.loop
 local expand = require("lib.nvim.cross.fs.expand_path")
+local unify_slashes = require("lib.nvim.cross.fs.separators.unify_slashes")
 -- Utils
 local has_binary = require("reposcope.utils.checks").has_binary
 local notify = require("reposcope.utils.debug").notify
 local config = require("reposcope.config")
+local is_windows = require("reposcope.utils.os").is_windows
 -- Shared repository discovery helpers
 local repos_util = require("reposcope.utils.repos")
 local resolve_base_dir = repos_util.resolve_base_dir
@@ -295,18 +297,33 @@ local function extra_repo_paths(existing)
   local configured = (config.options.dashboard and config.options.dashboard.extra_paths) or {}
   if #configured == 0 then return {} end
 
+  -- Comparison key only: `collect_repos` always joins with "/", while a
+  -- configured entry may be typed with "\" (or copy-pasted from Explorer),
+  -- so raw string equality on `fnamemodify(...)`'s output -- which preserves
+  -- whichever separator the input used -- misses that they are the same
+  -- directory. Folding case too on Windows, where the filesystem itself is
+  -- case-insensitive, so e.g. "C:\repos\x" and "c:/repos/x" dedupe as one.
+  ---@param path string
+  ---@return string
+  local function dedup_key(path)
+    local key = unify_slashes(path)
+    if is_windows() then key = key:lower() end
+    return key
+  end
+
   ---@type table<string, boolean>
   local seen = {}
   for _, p in ipairs(existing) do
-    seen[fnamemodify(p, ":p"):gsub("[\\/]+$", "")] = true
+    seen[dedup_key(fnamemodify(p, ":p"):gsub("[\\/]+$", ""))] = true
   end
 
   ---@type string[]
   local extra = {}
   for _, raw in ipairs(configured) do
     local resolved = fnamemodify(expand(raw), ":p"):gsub("[\\/]+$", "")
-    if not seen[resolved] then
-      seen[resolved] = true
+    local key = dedup_key(resolved)
+    if not seen[key] then
+      seen[key] = true
       if is_git_repo(resolved) then
         extra[#extra + 1] = resolved
       else
