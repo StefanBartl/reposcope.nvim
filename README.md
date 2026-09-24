@@ -18,6 +18,9 @@
 [![Lua](https://img.shields.io/badge/Lua-5.1%2FLuaJIT-2C2D72?logo=lua&logoColor=white)](https://www.lua.org)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 [![CI](https://github.com/StefanBartl/reposcope.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/StefanBartl/reposcope.nvim/actions/workflows/ci.yml)
+[![wkd](https://img.shields.io/badge/wkd-family-c6ff3d)](https://stefanbartl.github.io/wkd/p/reposcope/)
+
+> Part of the [wkd](https://stefanbartl.github.io/wkd/) family — see this plugin's [page](https://stefanbartl.github.io/wkd/p/reposcope/) on the site.
 
 Search, preview and clone repositories from GitHub, GitLab or Codeberg without
 leaving Neovim. It does not stop at discovery: reposcope also manages what you
