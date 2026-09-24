@@ -501,6 +501,23 @@ return function(H)
           end)
         end)
 
+        -- Deduplication survives a separator mismatch: `collect_repos` always
+        -- joins with "/", but a configured entry may be typed with "\" (e.g.
+        -- pasted from Explorer on Windows). The same repository must not
+        -- appear twice just because the two strings look different.
+        with_dashboard({}, function(dashboard)
+          config.options.dashboard.extra_paths = { (dir .. "/normal"):gsub("/", "\\") }
+          with_git(function(cmd)
+            if cmd[2] == "log" then return { code = 0, stdout = "1", stderr = "" } end
+            return { code = 0, stdout = porcelain("main", "+0 -0", true), stderr = "" }
+          end, function()
+            local result
+            dashboard.dashboard_all(dir, function(records) result = records end)
+            vim.wait(500, function() return result ~= nil end)
+            H.eq(#result, 2, "an extra path written with the other separator still dedupes against the scan")
+          end)
+        end)
+
         -- An extra_paths entry that is not a git repository is reported and
         -- skipped, not fatal to the rest of the dashboard.
         with_dashboard({}, function(dashboard, env)
