@@ -18,8 +18,9 @@ small popup in the top-right corner instead of `:messages` / a more-prompt, so
 a long failure such as a rejected `git push` never steals focus. The popup is
 colored by level and wraps long text. Every message is also kept in a history:
 `:Reposcope messages` opens it in a buffer (`q` closes) so you can yank the
-full text; `:Reposcope messages clear` forgets it. Without `ui.nvim`/a UI the
-message falls back to plain `vim.notify`.
+full text; `:Reposcope messages clear` forgets it. The popup and history come from [`lib.nvim.notify.popup`](https://github.com/StefanBartl/lib.nvim)
+(toast from ui.nvim). Without `ui.nvim`/a UI, or when `ui.notify` is enabled, the
+message goes through plain `vim.notify`.
 
 ## Developer mode
 
