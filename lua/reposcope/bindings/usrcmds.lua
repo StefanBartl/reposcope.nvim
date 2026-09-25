@@ -272,11 +272,11 @@ local subcommands = {
   messages = {
     desc = "Show reposcope's message history in a buffer (yankable); `clear` forgets it",
     run = function(args)
-      local toast = require("reposcope.utils.toast")
+      local popup = require("lib.nvim.notify.popup")
       if args[1] == "clear" then
-        toast.clear()
+        popup.clear("reposcope")
       else
-        toast.show_history()
+        popup.show_history("reposcope")
       end
     end,
     complete = function() return { "clear" } end,

@@ -9,10 +9,10 @@
 ---@class DebugUtils : DebugUtilsModule
 local M = {}
 
--- Messages are shown as an in-plugin popup (see reposcope.utils.toast), not
--- through vim.notify, so they never surface as a :messages / more-prompt.
+-- Messages are shown as a corner popup with a yankable history (lib.nvim.notify.popup)
+-- instead of through vim.notify, so they never surface as a :messages / more-prompt.
 ---@type fun(msg: string, level?: integer)
-local function notify(msg, level) require("reposcope.utils.toast").notify(msg, level) end
+local function notify(msg, level) require("lib.nvim.notify.popup").deliver(msg, level, { source = "reposcope" }) end
 
 ---@class DebugOptions
 ---@field dev_mode boolean Enables developer mode (default: false)
