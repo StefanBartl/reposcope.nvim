@@ -154,6 +154,7 @@ available for subcommand names and, where noted, their arguments.
 | `queries`           | `list`\|`clear`        | Print your top-10 most-frequent search queries, or clear the stats    |
 | `stats`             | –                      | Display collected request stats and metrics                           |
 | `skipped-readmes`   | –                      | Print the number of debounced (skipped) README fetches                |
+| `messages`          | `clear`                | Show reposcope's message history in a buffer (yankable); `clear` forgets it |
 | `toggle-dev`        | –                      | Toggle developer mode (debug logging, internal info)                  |
 | `print-dev`         | –                      | Print whether developer mode is currently active                      |
 

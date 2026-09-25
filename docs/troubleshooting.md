@@ -11,6 +11,16 @@
 | A repository never leaves `diverged` | `pull --ff-only` refuses to rewrite local history. That one needs manual attention |
 | Something is missing from the environment | `:checkhealth reposcope` — see [health.md](health.md) for what each line means |
 
+## Messages
+
+Reposcope's notifications (errors, warnings, push/pull results) appear as a
+small popup in the top-right corner instead of `:messages` / a more-prompt, so
+a long failure such as a rejected `git push` never steals focus. The popup is
+colored by level and wraps long text. Every message is also kept in a history:
+`:Reposcope messages` opens it in a buffer (`q` closes) so you can yank the
+full text; `:Reposcope messages clear` forgets it. Without `ui.nvim`/a UI the
+message falls back to plain `vim.notify`.
+
 ## Developer mode
 
 - `:Reposcope toggle-dev` enables debug logging and internal info printing;

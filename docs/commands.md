@@ -115,6 +115,7 @@ subcommand; remaining arguments are forwarded to it.
 
 | Command                      | Description                                                              |
 | ---------------------------- | ------------------------------------------------------------------------ |
+| `:Reposcope messages [clear]` | Opens reposcope's message history in a buffer (yankable), or forgets it |
 | `:Reposcope toggle-dev`      | Toggles developer mode (enables debug logging, internal info, etc.)      |
 | `:Reposcope print-dev`       | Prints whether developer mode is currently active                        |
 | `:Reposcope skipped-readmes` | Shows number of skipped README fetches (debounced during fast scrolling) |

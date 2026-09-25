@@ -9,9 +9,10 @@
 ---@class DebugUtils : DebugUtilsModule
 local M = {}
 
--- Vim Utilities
----@type fun(msg: string, level?: integer, opts?: table)
-local notify = vim.notify
+-- Messages are shown as an in-plugin popup (see reposcope.utils.toast), not
+-- through vim.notify, so they never surface as a :messages / more-prompt.
+---@type fun(msg: string, level?: integer)
+local function notify(msg, level) require("reposcope.utils.toast").notify(msg, level) end
 
 ---@class DebugOptions
 ---@field dev_mode boolean Enables developer mode (default: false)

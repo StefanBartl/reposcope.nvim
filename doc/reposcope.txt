@@ -204,6 +204,7 @@ The following subcommands are available:
 | `:Reposcope queries ...`      | Prints top-10 frequent queries, or clears stats |
 | `:Reposcope skipped-readmes`  | Prints number of debounced README fetches    |
 | `:Reposcope stats`            | Displays request statistics (metrics)        |
+| `:Reposcope messages [clear]` | Message history in a buffer / forget it      |
 | `:Reposcope toggle-dev`       | Toggles developer mode (logging, mocking)    |
 | `:Reposcope print-dev`        | Prints current developer mode status         |
 
