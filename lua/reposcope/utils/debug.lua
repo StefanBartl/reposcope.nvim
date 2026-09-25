@@ -15,7 +15,12 @@ local M = {}
 local function notify(msg, level)
   local ok, config = pcall(require, "reposcope.config")
   local messages = ok and config.options and config.options.notify_messages
-  require("lib.nvim.notify.popup").deliver(msg, level, { source = "reposcope", messages = messages })
+  local delivered = pcall(
+    function() require("lib.nvim.notify.popup").deliver(msg, level, { source = "reposcope", messages = messages }) end
+  )
+  -- lib.nvim is a hard dependency, but a message must survive its absence:
+  -- this is also how "lib.nvim is missing" itself would be reported.
+  if not delivered then vim.notify(msg, level) end
 end
 
 ---@class DebugOptions
