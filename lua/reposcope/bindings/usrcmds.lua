@@ -269,6 +269,19 @@ local subcommands = {
     end,
   },
 
+  messages = {
+    desc = "Show reposcope's message history in a buffer (yankable); `clear` forgets it",
+    run = function(args)
+      local toast = require("reposcope.utils.toast")
+      if args[1] == "clear" then
+        toast.clear()
+      else
+        toast.show_history()
+      end
+    end,
+    complete = function() return { "clear" } end,
+  },
+
   ["toggle-dev"] = {
     desc = "Toggle developer mode (debug logging, internal info)",
     run = function() require("reposcope.utils.debug").toggle_dev_mode() end,

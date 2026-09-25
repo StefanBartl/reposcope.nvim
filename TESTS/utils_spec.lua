@@ -218,10 +218,10 @@ return function(H)
   do
     local seen = {}
     local original_notify = vim.notify
-    -- Installed before the module is reloaded: `utils/debug.lua` binds
-    -- `vim.notify` to a file-local at load time, so swapping it afterwards
-    -- would change nothing.
-    vim.notify = function(msg, level) seen[#seen + 1] = { msg = msg, level = level } end
+    -- Messages are delivered through `reposcope.utils.toast`, not vim.notify.
+    local toast = require("reposcope.utils.toast")
+    local toast_notify = toast.notify
+    toast.notify = function(msg, level) seen[#seen + 1] = { msg = msg, level = level } end
 
     local ok, err = pcall(function()
       H.with_stubs({}, { "reposcope.utils.debug" }, function()
@@ -274,8 +274,56 @@ return function(H)
     end)
 
     vim.notify = original_notify
+    toast.notify = toast_notify
     require("reposcope.utils.debug").set_dev_mode(false)
     if not ok then error(err, 0) end
+  end
+
+  ---------------------------------------------------------------------------
+  -- utils.toast: history + fallback, never a :messages popup
+  ---------------------------------------------------------------------------
+  do
+    local toast = require("reposcope.utils.toast")
+    toast.clear()
+
+    local native = {}
+    local original_notify = vim.notify
+    vim.notify = function(msg, level) native[#native + 1] = { msg = msg, level = level } end
+
+    H.with_stubs(
+      { ["ui.kit.toast"] = { open = function() error("no ui") end } },
+      {},
+      function() toast.notify("first line\nsecond line", vim.log.levels.ERROR) end
+    )
+    vim.notify = original_notify
+
+    H.eq(#toast.history(), 1, "a message is recorded in the history")
+    H.eq(toast.history()[1].message, "first line\nsecond line", "verbatim, so it can be yanked")
+    H.eq(#native, 1, "a toast that cannot be shown falls back to vim.notify")
+
+    local opened
+    H.with_stubs({
+      ["ui.kit.toast"] = {
+        open = function(o)
+          opened = o
+          return {}
+        end,
+      },
+    }, {}, function()
+      toast.notify(("word "):rep(60), vim.log.levels.WARN)
+      H.ok(opened, "the popup is used when available")
+      H.ok(#opened.message > 1, "long text is wrapped")
+      for _, line in ipairs(opened.message) do
+        H.ok(vim.fn.strdisplaywidth(line) <= 38, "wrapped lines fit the toast")
+      end
+      H.contains(opened.title, "warn", "the title names the level")
+
+      toast.notify(("x\n"):rep(40), vim.log.levels.ERROR)
+      H.eq(#opened.message, 12, "very long text is capped")
+    end)
+
+    toast.clear()
+    H.eq(#toast.history(), 0, "clear forgets the history")
   end
 
   ---------------------------------------------------------------------------
