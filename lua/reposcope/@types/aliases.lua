@@ -32,6 +32,7 @@
 ---| "cache_dir"
 ---| "logfile_path"
 ---| "log_max"
+---| "notify_messages"
 ---| "progress_style"
 ---| "readme_precache_count"
 

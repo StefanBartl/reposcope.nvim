@@ -71,6 +71,7 @@ Advanced setup:
       extra_paths = { "~/.config/nvim" }, -- extra repos shown in `:Reposcope dashboard`
     },
     metrics = true,                    -- enable request logging & metrics
+    notify_messages = true,            -- also record popups in :messages (silently)
     progress_style = "auto",           -- indicator for `update`/`dashboard`
     readme_precache_count = 5,         -- pre-cache top N search results' READMEs (0 disables)
     results_limit = 25,                -- maximum search results per query
