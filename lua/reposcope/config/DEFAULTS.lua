@@ -73,6 +73,7 @@ local defaults = {
   -- Only change the following values in your setup({}) if you fully understand the impact; incorrect values may cause incomplete data or plugin crashes.
   metrics = false,
   log_max = 1000, -- Controls the size of the log file
+  notify_messages = true, -- Also record popup notifications in `:messages` (without showing them there); false for noice-like UIs
   progress_style = "auto", -- Indicator for `:Reposcope update`/`dashboard` over many repositories; needs lib.nvim, no-op without it
   readme_precache_count = 5, -- After a search, pre-cache READMEs for this many top results (0 disables) so scrolling feels instant
 }

@@ -30,6 +30,7 @@
 ---@field prompt_prefix_symbol string Symbol shown in the `prefix` prompt field (default needs a Nerd Font; set e.g. ">" for plain terminals)
 ---@field metrics boolean Enable or disable anonymous usage metrics
 ---@field log_max number Maximum log size (lines)
+---@field notify_messages boolean Also record popup notifications in `:messages` (without displaying them there)
 ---@field progress_style ProgressStyle Indicator for bulk repository operations (`update`/`dashboard`); needs lib.nvim, no-op without it
 ---@field readme_precache_count number After a search, pre-cache READMEs for this many top results (0 disables)
 
@@ -63,5 +64,6 @@
 ---@field prompt_prefix_symbol? string
 ---@field metrics? boolean
 ---@field log_max? number
+---@field notify_messages? boolean
 ---@field progress_style? ProgressStyle
 ---@field readme_precache_count? number

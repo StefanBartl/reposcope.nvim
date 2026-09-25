@@ -22,6 +22,11 @@ full text; `:Reposcope messages clear` forgets it. The popup and history come fr
 (toast from ui.nvim). Without `ui.nvim`/a UI, or when `ui.notify` is enabled, the
 message goes through plain `vim.notify`.
 
+Every message is also written to `:messages` (silently, no more-prompt) unless
+`notify_messages = false`. A message UI that hooks Neovim's `ext_messages`
+(noice.nvim and similar) still receives that write as an `echomsg` and may show
+it as its own popup — set `notify_messages = false` there.
+
 ## Developer mode
 
 - `:Reposcope toggle-dev` enables debug logging and internal info printing;

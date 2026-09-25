@@ -12,7 +12,11 @@ local M = {}
 -- Messages are shown as a corner popup with a yankable history (lib.nvim.notify.popup)
 -- instead of through vim.notify, so they never surface as a :messages / more-prompt.
 ---@type fun(msg: string, level?: integer)
-local function notify(msg, level) require("lib.nvim.notify.popup").deliver(msg, level, { source = "reposcope" }) end
+local function notify(msg, level)
+  local ok, config = pcall(require, "reposcope.config")
+  local messages = ok and config.options and config.options.notify_messages
+  require("lib.nvim.notify.popup").deliver(msg, level, { source = "reposcope", messages = messages })
+end
 
 ---@class DebugOptions
 ---@field dev_mode boolean Enables developer mode (default: false)
