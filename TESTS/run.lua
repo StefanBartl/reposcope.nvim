@@ -4,8 +4,8 @@
 --   nvim -n -i NONE --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
 --
 -- lib.nvim and ui.nvim both have to be reachable: several reposcope
--- modules require them at module load (dashboard_view.lua's `ui.kit`
--- notably, exercised directly by TESTS/dashboard_view_spec.lua). The runner
+-- modules require them at module load (favorites_view.lua's `ui.kit`
+-- notably, exercised directly by TESTS/actions_spec.lua). The runner
 -- puts a sibling checkout of each on the runtimepath, or whatever
 -- $LIB_NVIM_PATH/$UI_NVIM_PATH point at.
 
