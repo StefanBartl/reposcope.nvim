@@ -67,41 +67,12 @@ Advanced setup:
       std_dir = "~/projects",          -- directory to clone into
       type = "git",                    -- "git", "gh", "wget", or "curl"
     },
-    dashboard = {
-      extra_paths = { "~/.config/nvim" }, -- extra repos shown in `:Reposcope dashboard`
-    },
     metrics = true,                    -- enable request logging & metrics
     notify_messages = true,            -- also record popups in :messages (silently)
-    progress_style = "auto",           -- indicator for `update`/`dashboard`
     readme_precache_count = 5,         -- pre-cache top N search results' READMEs (0 disables)
     results_limit = 25,                -- maximum search results per query
     hover = true,                      -- register the hover.nvim source (no-op without it)
   })
-
-                                             *reposcope-config-progress_style*
-progress_style ~
-    Type: `"auto"|"notify"|"statusline"|"fidget"|"float"|"kit"`
-    Default: `"auto"`
-    Progress indicator for the two bulk commands, |:Reposcope| `update` and
-    |:Reposcope| `dashboard`. Both walk a whole directory of clones and run
-    `git` once or twice per repository — quick individually, but over a few
-    dozen repositories long enough to look like a hang.
-
-    Requires `lib.nvim`, which provides the indicator via its
-    `lib.nvim.progress` module. Without `lib.nvim` installed the option is
-    silently a no-op and both commands behave exactly as before.
-
-    `"auto"` prefers `fidget.nvim` when installed and falls back to
-    `vim.notify`. `"statusline"` draws nothing and instead publishes the
-    text for your own statusline to read via
-    `require("lib.nvim.progress.styles.statusline").active()`. `"float"`
-    and `"kit"` open a small window that can be focused and `<Esc>`-ed to
-    abort — `update` then stops after the repository currently being
-    fetched instead of killing `git` mid-write, so everything already
-    updated stays updated.
-
-    The indicator is delay-guarded: it only becomes visible after ~150ms,
-    so `dashboard` over two or three repositories never flashes any UI.
 
 Note: GitLab's and Codeberg's search APIs only support a plain substring
 match (no `owner:`/`language:`-style qualifiers like GitHub's search) — with
@@ -197,8 +168,6 @@ The following subcommands are available:
 | `:Reposcope filter {text}`    | Filters list by substring                    |
 | `:Reposcope filter-prompt`    | Prompt input for interactive filtering       |
 | `:Reposcope filter-clear`     | Resets the filter and restores full list     |
-| `:Reposcope update [dir]`     | Updates all cloned git repositories          |
-| `:Reposcope dashboard [dir] [--out] [--to]` | Git dashboard, with batch actions |
 | `:Reposcope providers`        | Lists providers and marks the active one     |
 | `:Reposcope session ...`      | Save, restore, or clear the search session   |
 | `:Reposcope favorites ...`    | Lists favorited repositories, or clears them |
@@ -268,189 +237,6 @@ This command is functionally equivalent to calling: >
     :Reposcope filter
 <
 Use this as a shortcut when you want to reset filtering explicitly.
-
-------------------------------------------------------------------------------
-                                                          *:Reposcope-update*
-:Reposcope update [dir]
-
-Bulk-updates every cloned git repository found directly inside a directory.
-For each repository it runs, sequentially and asynchronously: >
-    git fetch --all --prune
-    git pull --ff-only
-<
-Non-git subdirectories are skipped. Errors (e.g. diverged branches that cannot
-be fast-forwarded) are collected and reported together in a summary once the
-run finishes.
-
-If no {dir} argument is given, the configured clone directory (`clone.std_dir`,
-see |reposcope-config|) is used — i.e. the directory Reposcope clones into.
-This makes the command the natural continuation of the clone lifecycle:
-discover -> clone -> update.
-
-Notes:
-- Only immediate subdirectories are scanned (non-recursive).
-- The fast-forward-only pull never rewrites local history.
-- Requires `git` to be available in $PATH.
-
-- Example: >
-    :Reposcope update
-    :Reposcope update ~/projects
-<
-See also |reposcope-clone|.
-
-------------------------------------------------------------------------------
-                                                       *:Reposcope-dashboard*
-:Reposcope dashboard [dir] [--out] [--to]
-
-Reads the git status of every cloned git repository found directly inside a
-directory and displays a compact, aligned dashboard. For each repository it
-runs, asynchronously: >
-    git --no-optional-locks status --porcelain=v2 --branch
-<
-The machine-readable output is distilled into the current branch, ahead/behind
-counts relative to the upstream, and the number of uncommitted files (the
-dirty count), summarized as one of the states `clean`, `dirty`, `ahead`,
-`behind` or `diverged`. A second, concurrent `git log -1` supplies the age of
-`HEAD` for the LAST COMMIT column.
-
-The SYNC column reports only branches that have actually diverged from their
-upstream (`↑2 ↓1`), and is dropped entirely when no repository has anything
-to report there. Repository, branch, state and age are highlighted through
-`ReposcopeStatus*` groups, which link to the colorscheme's diagnostic colors
-with `default = true` and can therefore be overridden freely. The exception is
-`ReposcopeStatusHeader`: bold cannot ride along on a highlight link, so it is
-resolved from `Title` instead and re-resolved on `ColorScheme` (still
-`default = true`, so your own definition wins). Example: >
-
-      REPOSITORY       BRANCH     SYNC      STATE      LAST COMMIT
-      reposcope.nvim    main                clean          15h
-    ✓ my-fork          feature   ↑2 ↓1    dirty (3)        4d
-      some-lib          main       ↓4       behind         10mo
-<
-The two leading cells are the mark gutter (see "Marks and batches" below).
-They are blank on unmarked rows, so marking never shifts the table sideways.
-
-REPOSITORY is left-aligned — it is the column you scan down looking for one
-entry. Every other column is centred under its heading. The header row is
-set apart by weight (bold, in `Title`'s colour) rather than by a rule: a
-full-width underline read as a hard line cutting the table in half, and a
-box around the header would need side rules that cannot meet the popup's
-frame, which is the window's own border and lives outside the buffer.
-
-
-If no {dir} argument is given, the configured clone directory (`clone.std_dir`,
-see |reposcope-config|) is used. If {dir} is itself a git repository, only that
-single repository is reported; otherwise its immediate subdirectories are
-scanned. This is the read-only counterpart to |:Reposcope-update|.
-
-`dashboard.extra_paths` (see |reposcope-config|) adds repository paths
-outside that scan — e.g. a Neovim config, which is a git repository of its
-own but never one of the checkouts cloned into `clone.std_dir`. Configured
-entries are merged in on every dashboard read (including a re-scan with
-`R`), deduplicated against whatever the scan already found, and validated
-as real git repositories — an entry that is not is reported and skipped
-rather than aborting the dashboard.
-
-`<Tab>` on {dir} offers `$REPOS_DIR` and `~` ahead of real directory
-completion, when resolvable.
-
-`--out` picks where the result is displayed (never truncated/unscrollable
-like a plain notification):
-
-| `--out` value      | Result                                                |
-|---------------------|-------------------------------------------------------|
-| `popup` (default)   | Scrollable floating window (`q`/`<Esc>` to close)     |
-| `buffer`            | Replaces the current window's buffer                  |
-| `split`             | Opens (or reuses) a horizontal split                  |
-| `vsplit`            | Opens (or reuses) a vertical split                    |
-| `clipboard`         | Copies the raw table to the system clipboard          |
-| `path`              | Writes the raw table to a file (`--to=<path>`)        |
-
-On every interactive backend (`popup`, `buffer`, `split`, `vsplit` — not
-`clipboard`/`path`), the row under the cursor is interactive:
-
-| Key                     | Action                                          |
-|-------------------------|-------------------------------------------------|
-| `<CR>`, `<2-LeftMouse>` | Confirm, then open that repo's `README.md`      |
-| `m`                     | Toggle the mark (Visual: mark the selection)    |
-| `M`                     | Mark everything / clear all marks               |
-| `p` / `P` / `f`         | Push / pull (`--ff-only`) / fetch the marked    |
-|                         | repos, or the row under the cursor if none      |
-| `gp` / `gP` / `gf`      | Push / pull / fetch every repo, marks ignored   |
-| `gu`                    | Update every repo: fetch --all + pull --ff-only |
-| `S`                     | Full `git status` + last 5 commits, in a popup  |
-| `s`                     | Cycle sort: discovery / name / state / age      |
-| `r` / `R`               | Re-read the row / re-scan the whole directory   |
-| `y`                     | Yank the repository's path                      |
-| `?`                     | List every one of these keys                    |
-
-A repository with no readable `README.md` just prints a notification —
-nothing to confirm opening. Inside a README opened this way, `q` closes it
-and restores the dashboard on the same row.
-
-A push/pull/fetch marks its row with a spinner while it runs, notifies the
-outcome, and re-reads just that repository afterwards. The operation is also
-published via `lib.nvim.progress`, so a statusline component using its
-`statusline` style can display it. Sorting by state ranks worst-first
-(diverged, dirty, behind, ahead, clean).
-
-A legend of these keys is shown centred in the window's `winbar`. `M`, the
-`g` forms, `r`, `R` and `y` are never listed there; the rest is fitted to the
-window's width, dropping entries from the right as it narrows — except
-`? Keys`, which is pinned, since it is how everything dropped stays
-reachable. The legend is a `%!` expression, so it re-fits on resize.
-
-                                                 *reposcope-dashboard-marks*
-Marks and batches ~
-
-`m` marks the repository under the cursor with a `✓` in the gutter; over a
-Visual selection it marks every row the selection spans, so `Vjjm` marks
-four at once. `M` marks everything, or clears everything once everything is
-marked.
-
-While anything is marked, `p`, `P` and `f` act on the marked set instead of
-on the row under the cursor: mark the four repositories you want to push,
-press `p`, confirm. `gp`, `gP`, `gf` and `gu` are the whole-directory forms
-and ignore marks entirely — push all, pull all, fetch all, or update all
-(the same two commands |:Reposcope-update| runs) without leaving the
-dashboard.
-
-- Every batch is confirmed first ("Push 4 marked repositories?"): unlike a
-  single row, nothing on screen states what a batch is about to touch. A
-  single-row action with no marks set stays unconfirmed.
-- Batches run sequentially, not in parallel — forty simultaneous pushes are
-  a rate limit, forty credential prompts, or both. Cancelling through
-  |lib.nvim.progress| stops the queue rather than the `git` call in flight.
-- Each row is re-read as its action settles, and the closing summary reports
-  how many succeeded and lists the failures.
-- Marks are keyed by repository path, so they survive `s`, `R` and
-  closing/reopening the dashboard.
-- `s` and `R` are refused while a batch runs: both would move rows out from
-  under the in-flight spinners.
-- Inside the dashboard buffer, `gp`/`gP`/`gf`/`gu` shadow the built-in commands
-  of the same name, which are meaningless in a non-modifiable table anyway.
-
-Notes:
-- Only immediate subdirectories are scanned (non-recursive).
-- The scan itself only reads; the row and batch keys above are the only
-  things that modify a repository, and every batch asks first. It also
-  takes no `index.lock` (`--no-optional-locks`), so scanning a repository
-  someone is committing in never makes their `git` fail.
-- At most 8 repositories are read at the same time, and each `git` call is
-  cut off after 60 seconds; a repository that times out is reported in the
-  list of unreadable ones instead of stalling the scan.
-- Requires `git` to be available in $PATH.
-
-- Example: >
-    :Reposcope dashboard
-    :Reposcope dashboard ~/projects
-    :Reposcope dashboard ~/projects/foo
-    :Reposcope dashboard $REPOS_DIR
-    :Reposcope dashboard ~/projects --out=split
-    :Reposcope dashboard --out=clipboard
-    :Reposcope dashboard --out=path --to=dashboard.txt
-<
-See also |reposcope-clone|.
 
 ------------------------------------------------------------------------------
                                                        *:Reposcope-providers*
@@ -562,8 +348,9 @@ Repositories can be cloned using:
 
 Cloning requires a valid `clone.std_dir` and tool configuration.
 
-Already cloned repositories can be updated in bulk with |:Reposcope-update|,
-and inspected read-only with |:Reposcope-dashboard|.
+Already cloned repositories can be maintained (a multi-repo git-status
+dashboard, bulk fetch/pull) with gitsuite.nvim's `:Git dashboard` — see
+https://github.com/StefanBartl/gitsuite.nvim.
 
 ==============================================================================
 TROUBLESHOOTING                                    *reposcope-troubleshooting*
