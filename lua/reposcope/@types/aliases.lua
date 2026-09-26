@@ -22,7 +22,6 @@
 ---| "results_limit"
 ---| "layout"
 ---| "clone"
----| "dashboard"
 ---| "hover"
 ---| "keymaps"
 ---| "keymap_opts"
@@ -33,16 +32,7 @@
 ---| "logfile_path"
 ---| "log_max"
 ---| "notify_messages"
----| "progress_style"
 ---| "readme_precache_count"
-
----@alias ProgressStyle # Renderer for the progress indicator (see lib.nvim.progress)
----| "auto"        # fidget.nvim when installed, else vim.notify
----| "notify"      # vim.notify, replaced in place by backends that support it
----| "statusline"  # headless; read via lib.nvim.progress.styles.statusline.active()
----| "fidget"      # fidget.nvim's LSP-style handles
----| "float"       # small floating window, focus + <Esc> to abort
----| "kit"         # like "float", themed via ui.kit
 
 ---@alias PromptField # The field key (e.g. "keywords", "owner")
 ---| "prefix"
@@ -64,14 +54,6 @@
 ---| "gh"
 ---| "curl"
 ---| "wget"
-
----@alias DashboardOutputMode # How `:Reposcope dashboard` results are displayed
----| "popup"
----| "buffer"
----| "split"
----| "vsplit"
----| "clipboard"
----| "path"
 
 ---@alias PromptKeymapAction # A configurable prompt-buffer action (see `keymaps.lua`)
 ---| "confirm"

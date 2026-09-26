@@ -92,41 +92,10 @@ whenever it opens/closes.
 | `q`           | n    | [`ui/actions/readme_viewer.lua`](../lua/reposcope/ui/actions/readme_viewer.lua) (`nvim_buf_set_keymap`) | Closes the README viewer, restores prompt autocmds + prompt keymaps |
 | `q`, `<Esc>`  | n    | [`utils/stats.lua`](../lua/reposcope/utils/stats.lua) | Closes the stats popup buffer/window                        |
 | `q`, `<Esc>`  | n    | [`ui/actions/help_view.lua`](../lua/reposcope/ui/actions/help_view.lua) (via `ui.kit`'s `nice_quit`) | Closes the `?` keymap cheatsheet |
-| `<CR>`, `<2-LeftMouse>` | n | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, on every interactive `--out` backend of `:Reposcope dashboard`) | Prompts to confirm (`ui.kit`'s button-confirm dialog), then opens the `README.md` of the repository under the cursor (`:edit`). A repository with no readable `README.md` just gets a notification — nothing to confirm |
-| `m`           | n, x | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Toggles the mark on the repository under the cursor; in Visual mode marks every row the selection spans. Marks are keyed by repository path, so they survive `s` and `R` |
-| `M`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Marks every repository in the dashboard — or clears all marks when everything is already marked |
-| `p`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Pushes the marked repositories (`utils/repo_actions.lua`), or the one under the cursor when nothing is marked. Each row is re-read and redrawn as its push settles |
-| `P`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Pulls (`git pull --ff-only`) the marked repositories, or the one under the cursor when nothing is marked |
-| `f`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Fetches (`git fetch --prune`) the marked repositories, or the one under the cursor when nothing is marked |
-| `gp` / `gP` / `gf` | n | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Pushes / pulls / fetches **every** repository in the dashboard, marks ignored |
-| `gu`          | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Updates every repository in the dashboard: `git fetch --all --prune` + `git pull --ff-only`, the same pair `:Reposcope update` runs |
-| `S`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Opens a nested popup with the repository's `git status --short` and its last five commits |
-| `L`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Opens [gitsuite.nvim](https://github.com/StefanBartl/gitsuite.nvim)'s lazygit float for the repository under the cursor (optional — a notification names the plugin when it is not installed) |
-| `s`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Cycles the sort order: discovery → name → state (worst first) → last-commit age → discovery |
-| `r`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Re-reads the repository under the cursor and redraws that row |
-| `R`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Re-scans every repository in the directory the dashboard was built from |
-| `y`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Yanks the path of the repository under the cursor into `+` and `"` |
-| `?`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, same backends as above) | Lists every dashboard key, generated from the same table that installs them |
-| `q`           | n    | [`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua) (`lib.nvim.bindings.keymap`, buffer-local on a README opened from a status row) | Wipes the README buffer and restores the dashboard on the same row |
-
-The dashboard keys above are declared in one table in
-[`dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua), which also
-generates the `winbar` legend and the `?` cheatsheet, so the three can't drift
-apart. `M`, the `g` forms, `r`, `R` and `y` carry no legend label and appear
-only under `?`. The labelled rest is fitted to the window width and centred in
-it, dropping entries from the right when the window is too narrow — `? Keys`
-excepted, which is pinned so the dropped keys stay reachable. Left whole, an
-over-long legend is truncated by Neovim itself, from the *left*, replacing the
-first entries with a bare `<`.
-
-Every batch (`p`/`P`/`f` with marks set, and all four `g` forms) is confirmed
-through `ui.kit`'s button dialog before it starts, then runs its
-repositories one after another through `lib.nvim.progress` — cancelling there
-stops the queue rather than the `git` call in flight. `s` and `R` are refused
-while a batch is running, since both would move rows out from under the
-in-flight spinners. `gp`, `gP`, `gf` and `gu` shadow the built-in `gp`, `gP`,
-`gf` and `gu` inside the dashboard buffer only, where a non-modifiable table
-makes the originals meaningless anyway.
+The multi-repo git dashboard's own component-local keys (`m`/`M`/`p`/`P`/`f`/
+`gp`/`gP`/`gf`/`gu`/`S`/`L`/`s`/`r`/`R`/`y`/`?`) moved along with the feature
+itself to gitsuite.nvim's `:Git dashboard` — see that plugin's
+[BINDINGS.md](https://github.com/StefanBartl/gitsuite.nvim/blob/main/docs/BINDINGS.md).
 
 ---
 
@@ -146,8 +115,6 @@ available for subcommand names and, where noted, their arguments.
 | `filter`            | `[text]`               | Filter the repository list by substring (no args resets the list). Completes against the names and owners actually on screen |
 | `filter-prompt`     | –                      | Open a floating prompt to filter repositories interactively            |
 | `filter-clear`      | –                      | Clear the active filter and show the full list again                   |
-| `update`            | `[dir]`                | Update (fetch + ff-only pull) all cloned repositories in a directory   |
-| `dashboard`         | `[dir] [--out] [--to]` | Show the git dashboard of repositories in a directory, with marks and batch push/pull/fetch/update (see below) |
 | `providers`         | –                      | List available providers and mark the active one                      |
 | `session`           | `save`\|`restore`\|`clear` | Save, restore, or clear the persisted search session (provider, prompt input, query, filter, sort) |
 | `favorites`         | `list`\|`clear`        | List favorited repositories in a popup, or clear all favorites        |
@@ -157,14 +124,6 @@ available for subcommand names and, where noted, their arguments.
 | `messages`          | `clear`                | Show reposcope's message history in a buffer (yankable); `clear` forgets it |
 | `toggle-dev`        | –                      | Toggle developer mode (debug logging, internal info)                  |
 | `print-dev`         | –                      | Print whether developer mode is currently active                      |
-
-`dashboard`'s `--out` selects the output backend (`popup` default, `buffer`,
-`split`, `vsplit`, `clipboard`, `path`), and `--to=<file>` sets the target
-file for `--out=path`. `<Tab>` on `[dir]` offers `$REPOS_DIR` and `~` ahead of
-real directory completion (see `fixed_dir_keywords` in
-[`bindings/usrcmds.lua`](../lua/reposcope/bindings/usrcmds.lua)). See
-[`ui/actions/dashboard_view.lua`](../lua/reposcope/ui/actions/dashboard_view.lua)
-and [commands.md](commands.md#reposcope-dashboard-dir---out---to) for details.
 
 `favorites`/`queries` are backed by
 [`state/favorites_state.lua`](../lua/reposcope/state/favorites_state.lua) and

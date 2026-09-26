@@ -1,44 +1,17 @@
 # Workflow
 
-Repository maintenance, session persistence, and diagnostics — everything
-reached through `:Reposcope <subcommand>` that isn't search/browse itself.
+Session persistence and diagnostics — everything reached through
+`:Reposcope <subcommand>` that isn't search/browse itself. The multi-repo
+git dashboard and bulk-update commands (`:Reposcope dashboard`/`update`)
+moved to gitsuite.nvim's `:Git dashboard`/`:Git dashboard update` — git
+tooling belongs there, not in a repository-discovery plugin.
 
 > **Not to be confused with [`docs/WORKFLOW.md`](../WORKFLOW.md).** This
 > file is one theme of the feature catalog: a per-feature entry naming the
 > module, config key and command behind each of these subcommands. The
 > top-level `docs/WORKFLOW.md` is the other question entirely — how search,
-> caching, cloning, maintenance and sessions *combine* into a routine worth
-> reaching for daily. Catalog here, narrative there.
-
-## Bulk-update all cloned repositories (`:Reposcope update`)
-
-Runs `git fetch --all --prune` followed by `git pull --ff-only` for every
-immediate subdirectory of a directory (default: `clone.std_dir`),
-sequentially and asynchronously so Neovim stays responsive. Diverged
-branches are reported as errors rather than rewritten.
-
-- **Module:** `utils/repo_updater.lua` (`M.update_all`),
-  `bindings/usrcmds.lua` (`run_update`)
-- **Config:** `clone.std_dir`
-- **Usercmds:** `:Reposcope update [dir]` (see
-  [commands.md](../commands.md#reposcope-update-dir))
-
-## Git dashboard of cloned repositories (`:Reposcope dashboard`)
-
-Reads `git --no-optional-locks status --porcelain=v2 --branch` for every repo directly inside
-a directory (or a single repo) and shows branch, ahead/behind counts, and
-dirty state (`clean`/`dirty`/`ahead`/`behind`/`diverged`) in a compact
-table. The scan is the read-only counterpart to `update`; the rows are not
-— `m` marks repositories and `p`/`P`/`f` then act on the marked set, while
-`gp`/`gP`/`gf`/`gu` act on every repository in the dashboard.
-
-- **Module:** `utils/repo_dashboard.lua` (`M.dashboard_all`, `M.dashboard_one`),
-  `utils/repo_actions.lua` (per-repo push/pull/fetch/update),
-  `ui/actions/dashboard_view.lua`, `bindings/usrcmds.lua` (`run_dashboard`,
-  `dashboard_route`)
-- **Config:** `clone.std_dir`, `progress_style`
-- **Usercmds:** `:Reposcope dashboard [dir] [--out] [--to]` (see
-  [commands.md](../commands.md#reposcope-dashboard-dir---out---to))
+> caching, cloning and sessions *combine* into a routine worth reaching for
+> daily. Catalog here, narrative there.
 
 ## Persistent session save/restore (last search, filters, sort)
 

@@ -23,10 +23,10 @@
 > Part of the [wkd](https://stefanbartl.github.io/wkd/) family — see this plugin's [page](https://stefanbartl.github.io/wkd/p/reposcope/) on the site.
 
 Search, preview and clone repositories from GitHub, GitLab or Codeberg without
-leaving Neovim. It does not stop at discovery: reposcope also manages what you
-have already cloned, with a bulk git dashboard and a fetch-and-pull
-update across a whole folder of repositories — plus filtering, sorting,
-favorites and session persistence for your searches.
+leaving Neovim — plus filtering, sorting, favorites and session persistence
+for your searches. Maintaining what you've already cloned (a multi-repo git
+dashboard, bulk fetch/pull) is [gitsuite.nvim](https://github.com/StefanBartl/gitsuite.nvim)'s
+`:Git dashboard`.
 
 ---
 

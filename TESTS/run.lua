@@ -87,15 +87,13 @@ local specs = {
   -- Controllers
   "controllers_spec.lua",
   "provider_controller_spec.lua",
-  -- Metrics and the repo-maintenance commands
+  -- Metrics
   "metrics_spec.lua",
-  "repos_util_spec.lua",
   -- Bindings, health and UI-facing actions
   "bindings_spec.lua",
   "health_spec.lua",
   "actions_spec.lua",
   "readme_views_spec.lua",
-  "dashboard_view_spec.lua",
   "preview_image_spec.lua",
   "hover_spec.lua",
   "list_manager_spec.lua",

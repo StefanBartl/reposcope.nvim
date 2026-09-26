@@ -1,14 +1,12 @@
 # Features
 
 Finding a plugin, reading its README and cloning it is three context switches
-out of the editor, and keeping thirty clones current is a fourth. This one
-covers both ends of that.
+out of the editor. This one covers all three.
 
 | Area | Does |
 | --- | --- |
 | **Search** | Across GitHub, GitLab and Codeberg, in a modular Telescope-inspired interface, with the selected repository's README rendered in the preview as you move |
 | **Clone** | Straight from the result list into your clone directory |
-| **Maintenance** | A git dashboard across a whole folder of clones — branch, ahead/behind, dirty state, last-commit age — with push, pull and fetch per row, per marked set, or for the whole folder |
 | **The cache** | READMEs are cached and precached, which is what makes moving through results feel instant and what the hover integration reads from |
 | **Narrowing** | Filter and sort the current results, save favorites with an offline README snapshot, and track your most-frequent queries |
 | **Sessions** | The last search, filter and sort mode restored across restarts |
@@ -31,5 +29,5 @@ list, see [`docs/WORKFLOW.md`](../WORKFLOW.md).
   detection, pre-warming, pre-caching, debouncing, and what the request
   log records.
 - **[WORKFLOW.md](WORKFLOW.md)** — everything reached through
-  `:Reposcope <subcommand>`: repo maintenance (`update`/`dashboard`),
-  sessions, favorites, query history, and diagnostics/metrics.
+  `:Reposcope <subcommand>`: sessions, favorites, query history, and
+  diagnostics/metrics.
