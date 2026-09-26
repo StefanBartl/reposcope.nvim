@@ -58,11 +58,6 @@ return function(H)
         get_registered_providers = function() return { "codeberg", "github", "gitlab" } end,
         get_skipped_fetches = function() return 7 end,
       },
-      ["reposcope.ui.actions.dashboard_view"] = {
-        show = function(records, opts)
-          env.calls[#env.calls + 1] = { what = "dashboard_view", records = records, opts = opts }
-        end,
-      },
       ["reposcope.ui.actions.favorites_view"] = { show = record("favorites_view") },
       ["reposcope.state.favorites_state"] = { clear_all = record("favorites_clear"), list = function() return {} end },
       ["reposcope.state.session_state"] = {
@@ -78,18 +73,6 @@ return function(H)
         clear_all = record("queries_clear"),
       },
       ["reposcope.utils.stats"] = { show_stats = record("show_stats") },
-      ["reposcope.utils.repo_dashboard"] = {
-        dashboard_all = function(path, on_complete)
-          env.calls[#env.calls + 1] = { what = "dashboard_all", path = path }
-          on_complete(env.records or {}, env.errors or {})
-        end,
-      },
-      ["reposcope.utils.repo_updater"] = {
-        update_all = function(path, on_complete)
-          env.calls[#env.calls + 1] = { what = "update_all", path = path }
-          on_complete(env.updated or 0, env.update_errors or {})
-        end,
-      },
       ["reposcope.utils.debug"] = {
         notify = function(msg) env.notes[#env.notes + 1] = msg end,
         toggle_dev_mode = record("toggle_dev"),
@@ -227,58 +210,9 @@ return function(H)
     H.contains(printed, "  codeberg", "but are still listed")
   end)
 
-  -- update / dashboard -----------------------------------------------------
-  with_command({ updated = 3 }, function(env)
-    vim.cmd("Reposcope update")
-    local call = find(env, "update_all")
-    H.ok(call, "`update` runs the directory-wide update")
-    H.eq(call.path, nil, "with no path, meaning the configured clone directory")
-    H.contains(table.concat(env.notes, "\n"), "Updated 3 repositories successfully", "and reports the count")
-  end)
-
-  with_command({ updated = 1, update_errors = { "broken: fatal" } }, function(env)
-    vim.cmd("Reposcope update")
-    local reported = table.concat(env.notes, "\n")
-    H.contains(reported, "Updated 1 repository, 1 failed", "a partial result reports both halves, in the singular")
-    H.contains(reported, "broken: fatal", "and lists what failed")
-  end)
-
-  with_command({ records = { { name = "a" } } }, function(env)
-    -- `dashboard` takes a directory argument, which must exist -- the route's
-    -- type validates it, so the repository root itself is used here.
-    vim.cmd("Reposcope dashboard " .. vim.fn.getcwd())
-    local call = find(env, "dashboard_all")
-    H.ok(call, "`dashboard` reads the git state")
-    H.contains(call.path, "reposcope", "for the directory that was named")
-
-    local view = find(env, "dashboard_view")
-    H.ok(view, "and shows it")
-    H.eq(#view.records, 1, "with the records it read")
-    -- The directory is carried into the view so its own rescan key re-reads
-    -- what was asked for, not the configured default.
-    H.contains(view.opts.dir, "reposcope", "carrying the directory through, for the view's own rescan")
-  end)
-
-  with_command({ records = { { name = "a" } } }, function(env)
-    vim.cmd("Reposcope dashboard " .. vim.fn.getcwd() .. " --out=buffer")
-    H.eq(find(env, "dashboard_view").opts.output, "buffer", "the --out flag selects the output backend")
-  end)
-
-  with_command({ records = {}, errors = { "a: unreadable", "b: unreadable" } }, function(env)
-    vim.cmd("Reposcope dashboard " .. vim.fn.getcwd())
-    H.falsy(find(env, "dashboard_view"), "with no readable repository, nothing is shown")
-    local reported = table.concat(env.notes, "\n")
-    H.contains(reported, "2 repositories could not be read", "but the failures are reported, in the plural")
-    H.contains(reported, "a: unreadable", "naming each one")
-  end)
-
-  with_command({ records = { { name = "a" } }, errors = { "b: unreadable" } }, function(env)
-    vim.cmd("Reposcope dashboard " .. vim.fn.getcwd())
-    H.ok(find(env, "dashboard_view"), "a partial read still shows what was readable")
-    H.contains(table.concat(env.notes, "\n"), "1 repository could not be read", "and reports the rest, in the singular")
-  end)
-
   -- Completion -------------------------------------------------------------
+  -- `dashboard`/`update` moved to gitsuite.nvim's `:Git dashboard`/`:Git
+  -- dashboard update` -- no longer part of this command tree.
   with_command({
     items = {
       { name = "telescope.nvim", owner = { login = "nvim-telescope" } },
@@ -289,8 +223,6 @@ return function(H)
     for _, expected in ipairs({
       "start",
       "close",
-      "dashboard",
-      "update",
       "filter",
       "prompt",
       "session",

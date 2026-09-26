@@ -13,15 +13,10 @@ Type into a prompt field, `<CR>` to search, `<Up>`/`<Down>` through the results
 and `<C-c>` to clone the one you want. `<Tab>` cycles prompt fields, `<C-f>`
 favorites a repository, `?` lists every key, `<Esc>` closes.
 
-Then, later, for the clones you already have:
-
-```vim
-:Reposcope dashboard
-```
-
-An interactive dashboard of every repository in your clone directory — branch,
-ahead/behind, dirty state, last-commit age. Mark a set with `m` and `p`, `P` or
-`f` to push, pull or fetch all of them; `gu` updates the whole folder.
+Then, later, for the clones you already have — a git-status dashboard
+across the whole folder, push/pull/fetch per row or per marked set — see
+[gitsuite.nvim](https://github.com/StefanBartl/gitsuite.nvim)'s `:Git
+dashboard`.
 
 Verify your setup any time with:
 

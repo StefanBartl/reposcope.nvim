@@ -3,8 +3,7 @@
 -- guards LuaLS asks for below would hide the very failure it exists to report.
 ---@diagnostic disable: need-check-nil
 -- TESTS/utils_spec.lua — the small support modules: typed errors, environment
--- reads, the request-tool resolver, the OS helper, the notification gate and
--- the optional progress indicator.
+-- reads, the request-tool resolver, the OS helper and the notification gate.
 
 return function(H)
   ---------------------------------------------------------------------------
@@ -277,50 +276,5 @@ return function(H)
     popup.deliver = popup_deliver
     require("reposcope.utils.debug").set_dev_mode(false)
     if not ok then error(err, 0) end
-  end
-
-  ---------------------------------------------------------------------------
-  -- utils.progress: local defensive fallback, exercised absent as well as
-  -- present (lib.nvim itself is a hard dependency of the plugin as a whole)
-  ---------------------------------------------------------------------------
-  do
-    local created = {}
-    H.with_stubs({
-      ["lib.nvim.progress"] = {
-        create = function(opts)
-          created[#created + 1] = opts
-          return {
-            update = function(_, payload) created[#created].last = payload end,
-            finish = function() end,
-            on_cancel = function() end,
-          }
-        end,
-      },
-    }, { "reposcope.utils.progress" }, function()
-      local config = require("reposcope.config")
-      local saved = config.options.progress_style
-      config.options.progress_style = "notify"
-
-      local handle = require("reposcope.utils.progress").create("reading 3 repositories", 3)
-      H.ok(handle, "a handle is returned when lib.nvim.progress is available")
-      H.eq(created[1].title, "[reposcope]", "the indicator is titled for the plugin")
-      -- The style is read per call, not cached at require time, so setup()
-      -- ordering never matters.
-      H.eq(created[1].style, "notify", "and takes its style from the current configuration")
-      H.eq(created[1].last.total, 3, "the handle is primed with the total")
-      H.eq(created[1].last.current, 0, "starting at zero")
-
-      config.options.progress_style = saved
-    end)
-
-    -- Without lib.nvim.progress every call site's `if handle then` guard has
-    -- to see a nil, not an error.
-    H.with_stubs({}, { "reposcope.utils.progress", "lib.nvim.progress" }, function()
-      package.preload["lib.nvim.progress"] = function() error("not installed", 0) end
-      local ok_call, handle = pcall(function() return require("reposcope.utils.progress").create("x", 1) end)
-      package.preload["lib.nvim.progress"] = nil
-      H.ok(ok_call, "a missing progress module does not raise")
-      H.eq(handle, nil, "it yields nil, which every call site already guards for")
-    end)
   end
 end

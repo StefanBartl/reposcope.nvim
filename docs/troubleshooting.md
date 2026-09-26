@@ -7,8 +7,7 @@
 | The preview stays empty | The repository has no README at the expected path, or the API request failed. `:Reposcope stats` shows whether the fetch was attempted |
 | `gh`-backed requests fail silently | A `gh auth login` session is not visible to Neovim's child processes. Set `github_token` explicitly — see [`authentication.md`](authentication.md) |
 | A README looks out of date after fast scrolling | The fetch was debounced, not the cache stale. `:Reposcope skipped-readmes` prints the count |
-| `:Reposcope dashboard`/`update` report "no repositories found" | Both scan only *immediate* subdirectories. Point them at the folder that directly contains the clones |
-| A repository never leaves `diverged` | `pull --ff-only` refuses to rewrite local history. That one needs manual attention |
+| A repository never leaves `diverged` in gitsuite.nvim's `:Git dashboard` | `pull --ff-only` refuses to rewrite local history. That one needs manual attention |
 | Something is missing from the environment | `:checkhealth reposcope` — see [health.md](health.md) for what each line means |
 
 ## Messages

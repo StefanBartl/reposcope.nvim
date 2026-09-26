@@ -2,10 +2,16 @@
 
 Every feature here is documented on its own elsewhere (`docs/FEATURES/*.md`,
 `docs/commands.md`, `docs/authentication.md`). This is the different
-question: once search, README caching, cloning, bulk maintenance and session
-persistence all exist at once, *how do they actually combine* into something
-worth reaching for daily, rather than a one-off "find a repo, clone it,
-forget the plugin exists" tool.
+question: once search, README caching, cloning and session persistence all
+exist at once, *how do they actually combine* into something worth reaching
+for daily, rather than a one-off "find a repo, clone it, forget the plugin
+exists" tool.
+
+> Multi-repo git maintenance (a status dashboard, bulk fetch/pull/update
+> across a whole folder of clones) used to live here too, as `:Reposcope
+> dashboard`/`:Reposcope update`. It moved to gitsuite.nvim's `:Git
+> dashboard`/`:Git dashboard update` — git tooling belongs there, not in a
+> repository-discovery plugin.
 
 > **There is a second file called `WORKFLOW.md`, and it is not this one.**
 > [`docs/FEATURES/WORKFLOW.md`](FEATURES/WORKFLOW.md) is one theme of the
@@ -32,13 +38,6 @@ the floating UI:
 - `<C-c>` clones the currently selected repository into `clone.std_dir`
   using whatever `clone.type` is configured (`git` by default, or
   `gh`/`curl`/`wget`), via `controllers/clone_executor.lua`.
-
-That "discover → clone" pair is also where the maintenance commands pick up:
-`:Reposcope dashboard`/`:Reposcope update` treat `clone.std_dir` as their own
-default target, so a directory you only ever populate via `<C-c>` is the
-same directory those commands sweep later. Point `clone.std_dir` at one
-place and the whole loop — search, clone, update, dashboard — stays coherent
-without ever passing an explicit path.
 
 ## Debounce and background pre-caching change what "instant" means
 
@@ -84,105 +83,6 @@ layer:
 knowing if you script your own "force refresh this repo" keymap. The exact
 snippets are in
 [`docs/troubleshooting.md`](troubleshooting.md#forcing-a-fresh-readme).
-
-## Bulk update and dashboard are a pair, not two separate features
-
-`:Reposcope dashboard` and `:Reposcope update` operate on the same directory
-(`clone.std_dir` by default, or a given path) and the same repository
-discovery (`utils/repos.lua`, immediate subdirectories only, non-recursive).
-Treat `dashboard` as the read-only preview of what `update` is about to do:
-
-1. `:Reposcope dashboard` — shows branch, sync state, working-tree state
-   (`clean`/`dirty`/`ahead`/`behind`/`diverged`) and the age of `HEAD` per
-   repo, read via `git --no-optional-locks status --porcelain=v2 --branch`. Nothing is modified by
-   the scan itself; the row and batch keys in the dashboard are what modify,
-   and each batch asks first (see *Marks turn the row keys into batch keys*).
-   `gu` in that dashboard is `update` applied to the same directory, so in
-   practice step 2 is usually one keystroke away rather than a second
-   command. The `SYNC` column carries arrows (`↑2 ↓1`) only for
-   branches that have actually diverged, and disappears entirely when no
-   repository has anything to report there — which is the normal case. A
-   `+0/-0` on every row would bury the two that matter.
-2. `:Reposcope update [dir]` — runs `git fetch --all --prune` then `git pull
-   --ff-only` per repo, sequentially, asynchronously. A repo already shown
-   as `diverged` in `dashboard` will fail (not rewrite) in `update` — the
-   fast-forward-only pull refuses to rewrite local history, so `diverged`
-   repos need manual attention regardless of how many times `update` runs.
-
-Both scan **only immediate subdirectories** of the target — nested clones
-(a repo inside a repo) are invisible to either command. If you organize
-clones into per-provider or per-org subfolders under `clone.std_dir`, point
-`dashboard`/`update` at the specific subfolder rather than the root, or they'll
-report "no repositories found."
-
-`dashboard --out=path` is worth knowing for anything beyond eyeballing the
-popup: it writes the raw table to a file instead, which is the natural
-input to a shell script if you want "list every dirty repo" outside Neovim
-entirely.
-
-## The dashboard is a workbench, not a printout
-
-Every row is actionable, and that is the difference between checking on
-thirty clones and maintaining them.
-
-`p` pushes, `P` pulls (`--ff-only`), `f` fetches (`--prune`) the repository
-under the cursor. After each one the row is re-read and redrawn in place, so
-the table stays true without a rescan. `r` re-reads one row, `R` re-scans the
-whole directory — and `:Reposcope dashboard <dir>` passes that directory through,
-so `R` re-reads what you actually asked for rather than the configured default.
-
-## Marks turn the row keys into batch keys
-
-The interesting unit of maintenance is rarely one repository and rarely all
-of them: it is *these six*. So `m` marks the row under the cursor (`Vjjm`
-marks a run of them), and while anything is marked `p`, `P` and `f` act on
-the marked set instead of on the cursor row. Same keys, same meaning, one
-scale up — which is why there is no second alphabet of uppercase batch verbs
-to learn, and why unmarking everything silently gives you the old
-single-row behaviour back.
-
-`gp`, `gP`, `gf` and `gu` are the whole-directory forms, marks ignored:
-push all, pull all, fetch all, update all. `gu` is `:Reposcope update`
-without leaving the dashboard — the same `fetch --all --prune` +
-`pull --ff-only`, run through the same code path — so the loop closes where
-you are already looking: scan, see what is behind, update it, watch the rows
-go clean.
-
-Three deliberate constraints:
-
-- **Batches confirm; single rows do not.** A row action names its target by
-  the line the cursor is on. A batch may touch repositories scrolled off
-  screen, so the count is the only thing that can state what is about to
-  happen — and it has to be stated before, not after.
-- **Batches are sequential.** Forty parallel `git push`es are a rate limit,
-  forty credential prompts, or both. Cancelling through the progress
-  indicator stops the queue from starting the next repository rather than
-  interrupting the `git` call in flight — a half-done fetch is harmless, an
-  interrupted `pull` is not.
-- **Marks belong to repositories, not rows.** They are stored by path, so
-  `s` (re-sort), `R` (re-scan) and closing/reopening the dashboard all leave
-  them where you put them. The reverse — `s` or `R` *during* a batch — is
-  refused outright, since both would slide rows out from under the
-  in-flight spinners.
-
-`S` opens a nested popup with the full `git status --short` and the last five
-commits: the natural next step when a row says `dirty` and you want to know
-whether that is a stray build artifact or real work.
-
-`s` cycles the sort order — discovery / name / state / age. **`state` ranks
-worst-first** (diverged, dirty, behind, ahead, clean) rather than
-alphabetically, so what needs attention floats up; that is the one to reach for
-on a directory you have not looked at in a while. Discovery order is kept as a
-snapshot, so the cycle is reversible without a rescan.
-
-`y` yanks the repository path, which is how you leave the dashboard for a
-terminal. `?` lists every binding, generated from the same table that installs
-them. The winbar legend deliberately shows only some of them — `r`, `R` and `y`
-are left out so it does not overflow, and `?` is where the full list lives.
-
-**Opening a README from a row is reversible.** The README buffer carries a
-buffer-local `q` that wipes it and restores the dashboard on the same row, so
-reading one is not a one-way trip out of the dashboard.
 
 ## Session persistence restores search state, not window layout
 
@@ -298,8 +198,8 @@ it is the reason to reach for `<Tab>` here rather than typing.
 - [`docs/FEATURES/UI.md`](FEATURES/UI.md) — the floating windows, keymaps,
   viewer/editor, help cheatsheet.
 - [`docs/FEATURES/WORKFLOW.md`](FEATURES/WORKFLOW.md) — the
-  `update`/`dashboard`/`session`/`queries`/diagnostics command catalog this
-  file assumes you've already skimmed.
+  `session`/`queries`/diagnostics command catalog this file assumes you've
+  already skimmed.
 - [`docs/commands.md`](commands.md) — full command reference with syntax
   and examples.
 - [`docs/authentication.md`](authentication.md) — token setup per provider.
