@@ -20,6 +20,7 @@ return function(H)
     env.calls = {}
     env.notes = {}
     env.printed = {}
+    env.dumped = nil
 
     local function record(what)
       return function(...) env.calls[#env.calls + 1] = { what = what, args = { ... } } end
@@ -79,6 +80,9 @@ return function(H)
         is_dev_mode = function() return false end,
         debugf = function() end,
         options = { dev_mode = true },
+      },
+      ["lib.nvim.output.viewer"] = {
+        show_lines = function(title, lines) env.dumped = { title = title, lines = lines } end,
       },
     }, { "reposcope.bindings.usrcmds" }, function()
       local original_print = _G.print
@@ -195,19 +199,21 @@ return function(H)
 
   with_command({ top = { { query = "nvim", count = 3 }, { query = "telescope", count = 1 } } }, function(env)
     vim.cmd("Reposcope queries")
-    local printed = table.concat(env.printed, "\n")
-    H.contains(printed, "(3x) nvim", "each query is listed with its count")
-    H.contains(printed, "(1x) telescope", "for every entry")
+    H.ok(env.dumped, "`queries` opens a viewer dump")
+    local dumped = table.concat(env.dumped.lines, "\n")
+    H.contains(dumped, "(3x) nvim", "each query is listed with its count")
+    H.contains(dumped, "(1x) telescope", "for every entry")
     vim.cmd("Reposcope queries clear")
     H.ok(find(env, "queries_clear"), "`queries clear` clears them")
   end)
 
   with_command({}, function(env)
     vim.cmd("Reposcope providers")
-    local printed = table.concat(env.printed, "\n")
-    H.contains(printed, "* github", "the active provider is marked")
-    H.contains(printed, "  gitlab", "and the others are not")
-    H.contains(printed, "  codeberg", "but are still listed")
+    H.ok(env.dumped, "`providers` opens a viewer dump")
+    local dumped = table.concat(env.dumped.lines, "\n")
+    H.contains(dumped, "* github", "the active provider is marked")
+    H.contains(dumped, "  gitlab", "and the others are not")
+    H.contains(dumped, "  codeberg", "but are still listed")
   end)
 
   -- Completion -------------------------------------------------------------

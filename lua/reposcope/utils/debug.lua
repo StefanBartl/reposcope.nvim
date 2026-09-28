@@ -88,11 +88,15 @@ function M.debugf(msg, level, log_level, schedule)
   end
 end
 
----Prints actual state for debugging to the console
+---Shows the current window/buffer state for debugging, in a read-only viewer
+---panel (yankable) instead of the console.
 ---@return nil
 function M.print_win_buf_state()
-  print("State Buffers:", vim.inspect(require("reposcope.state.ui.ui_state").get_buffers()))
-  print("State Windows:", vim.inspect(require("reposcope.state.ui.ui_state").get_windows()))
+  local ui_state = require("reposcope.state.ui.ui_state")
+  local lines = {}
+  vim.list_extend(lines, vim.split("Buffers: " .. vim.inspect(ui_state.get_buffers()), "\n", { plain = true }))
+  vim.list_extend(lines, vim.split("Windows: " .. vim.inspect(ui_state.get_windows()), "\n", { plain = true }))
+  require("lib.nvim.output.viewer").show_lines("reposcope: window/buffer state", lines)
 end
 
 return M

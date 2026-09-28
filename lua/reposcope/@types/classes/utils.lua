@@ -37,7 +37,7 @@
 ---@field toggle_dev_mode fun(): nil Toggle dev mode (standard: false)
 ---@field notify fun(message: string, level?: number): nil Sends a notification message with an optional log level.
 ---@field debugf fun(msg: string, level?: number, log_level?: number, _schedule?: boolean): nil Enhanced debugging function for logging
----@field print_win_buf_state fun(): nil Prints actual state for debugging to the console
+---@field print_win_buf_state fun(): nil Shows window/buffer state for debugging in a viewer panel
 
 ---@class EncodingUtilsModule
 ---@field urlencode fun(str: string): string Encodes a string for safe URL usage

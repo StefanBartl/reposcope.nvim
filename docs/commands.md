@@ -104,7 +104,7 @@ subcommand; remaining arguments are forwarded to it.
 | ---------------------------------- | --------------------------------------------------------------- |
 | `:Reposcope favorites` / `favorites list` | Lists favorited repositories in a popup                 |
 | `:Reposcope favorites clear`       | Removes all favorites                                            |
-| `:Reposcope queries` / `queries list`     | Prints your top-10 most-frequent search queries          |
+| `:Reposcope queries` / `queries list`     | Shows your top-10 most-frequent search queries in a viewer panel |
 | `:Reposcope queries clear`         | Clears the recorded query stats                                  |
 
 ### Debugging, Stats & Metrics
@@ -183,7 +183,8 @@ Examples:
 #### `:Reposcope providers`
 
 Lists every registered provider (`github`, `gitlab`, `codeberg`) and marks
-the currently active one (set via the `provider` config option) with `*`.
+the currently active one (set via the `provider` config option) with `*`, in
+a read-only viewer panel (`q`/`<Esc>` closes).
 
 Example output:
 
@@ -248,8 +249,9 @@ Examples:
 #### `:Reposcope queries list|clear`
 
 Every real search (pressing `<CR>` in the prompt) increments a persisted
-run-count for the exact query that was built. `queries list` prints the
-top 10, most-frequent first; `queries clear` resets the counts. Recorded
+run-count for the exact query that was built. `queries list` shows the
+top 10, most-frequent first, in a read-only viewer panel; `queries clear`
+resets the counts. Recorded
 automatically — no opt-in needed, since it's local-only and never leaves
 the plugin's cache directory.
 
