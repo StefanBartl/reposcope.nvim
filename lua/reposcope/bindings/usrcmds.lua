@@ -135,7 +135,7 @@ local subcommands = {
       for _, name in ipairs(pc.get_registered_providers()) do
         lines[#lines + 1] = (name == active and "* " or "  ") .. name
       end
-      print(table.concat(lines, "\n"))
+      require("lib.nvim.output.viewer").show_lines("reposcope: providers", lines)
     end,
   },
 
@@ -189,7 +189,7 @@ local subcommands = {
         for i, entry in ipairs(top) do
           lines[#lines + 1] = ("%2d. (%dx) %s"):format(i, entry.count, entry.query)
         end
-        print(table.concat(lines, "\n"))
+        require("lib.nvim.output.viewer").show_lines("reposcope: top queries", lines)
       elseif action == "clear" then
         query_stats.clear_all()
         notify("[reposcope] Query stats cleared.", 2)
