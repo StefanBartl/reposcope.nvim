@@ -18,7 +18,9 @@ return function(H)
       local base = {
         readme_manager = {
           fetch_for_selected = function(uuid) env.calls[#env.calls + 1] = { p = name, what = "readme", uuid = uuid } end,
-          prefetch = function(repo) env.calls[#env.calls + 1] = { p = name, what = "prefetch", repo = repo } end,
+          prefetch = function(repo, on_done)
+            env.calls[#env.calls + 1] = { p = name, what = "prefetch", repo = repo, on_done = on_done }
+          end,
         },
         repo_fetcher = {
           refresh_results = function(query, uuid, on_success)
@@ -142,6 +144,10 @@ return function(H)
     controller.prefetch_readme(repo)
     H.eq(env.calls[1].what, "prefetch", "a pre-cache is dispatched")
     H.eq(env.calls[1].repo.name, "telescope.nvim", "for the given repository")
+
+    local done = function() end
+    controller.prefetch_readme(repo, done)
+    H.eq(env.calls[2].on_done, done, "the completion callback is handed through to the provider")
   end)
 
   -- A provider whose README manager has no `prefetch` must be skipped rather
@@ -166,6 +172,16 @@ return function(H)
         end
       )
       H.ok(ok, "a provider without a prefetch implementation is a silent no-op, not an error")
+
+      -- A caller that waits for the result must still hear back.
+      local told
+      require("reposcope.controllers.provider_controller").prefetch_readme(
+        { name = "r", owner = { login = "o" } },
+        function(done) told = done end
+      )
+      H.eq(told, nil, "the callback is asynchronous, not called before prefetch_readme returns")
+      vim.wait(500, function() return told ~= nil end, 10)
+      H.eq(told, false, "and reports that nothing was cached")
       config.options.provider = saved
     end)
   end

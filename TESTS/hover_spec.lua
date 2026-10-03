@@ -93,78 +93,147 @@ return function(H)
 
   -- --------------------------------------------- on-request fetch source ---
   -- An uncached slug is fetched only for an explicit request, once, remembered
-  -- when it fails, and shown (hover re-asked) when it arrives.
+  -- (for a while) when it fails, and shown (hover re-asked) when it arrives.
   do
     local fetch_source = captured.contribution.sources[2].fn
-    local real_controller = package.loaded["reposcope.controllers.provider_controller"]
-    local real_config = package.loaded["reposcope.config"]
-    local real_hover = package.loaded["hover"]
     local real_notify = vim.notify
+    local env = { provider = "github", fetched = {}, done = nil, shown = 0, show_opts = nil, notes = {} }
 
-    local env = { provider = "github", fetched = {}, done = nil, shown = 0, notes = {} }
-    package.loaded["reposcope.config"] = { get_option = function() return env.provider end }
-    package.loaded["reposcope.controllers.provider_controller"] = {
-      prefetch_readme = function(repo, on_done)
-        env.fetched[#env.fetched + 1] = repo
-        env.done = on_done
-      end,
-    }
-    package.loaded["hover"] = { show = function() env.shown = env.shown + 1 end }
-    vim.notify = function(msg) env.notes[#env.notes + 1] = msg end
+    -- "Cached" means "on disk" to the callback, which checks the file.
+    local cached_file = vim.fn.tempname() .. ".md"
+    vim.fn.writefile({ "# cached" }, cached_file)
+    env.ram = nil -- text the RAM cache holds, when the file is missing
+    env.written = {}
 
     local fbuf = vim.api.nvim_create_buf(false, true)
-    vim.api.nvim_buf_set_lines(fbuf, 0, -1, false, { "see new/thing here", "and/or", "../.. x" })
-    vim.api.nvim_set_current_buf(fbuf)
-    vim.api.nvim_win_set_cursor(0, { 1, 6 })
 
-    hover._reset()
-    H.eq(fetch_source(fbuf, 1, 6), nil, "the fetch source never answers synchronously")
-    H.eq(#env.fetched, 1, "an uncached slug starts a fetch")
-    H.eq(env.fetched[1].owner.login, "new", "for that owner")
-    H.eq(env.fetched[1].name, "thing", "and repository")
-    H.eq(env.fetched[1].default_branch, "HEAD", "on the default branch, which is unknown here")
-    H.eq(env.fetched[1].prefer_api, true, "through the API, which finds whatever the README is called")
+    local ok, err = pcall(H.with_stubs, {
+      ["reposcope.config"] = { get_option = function() return env.provider end },
+      ["reposcope.controllers.provider_controller"] = {
+        prefetch_readme = function(repo, on_done)
+          env.fetched[#env.fetched + 1] = repo
+          env.done = on_done
+        end,
+      },
+      ["reposcope.cache.readme_cache"] = {
+        has = function() return false end,
+        file_path = function() return env.file or cached_file end,
+        get_ram = function() return env.ram end,
+        set_file = function(o, r, text)
+          env.written[#env.written + 1] = { o, r, text }
+          return true
+        end,
+      },
+      ["hover"] = {
+        show = function(o)
+          env.shown, env.show_opts = env.shown + 1, o
+        end,
+      },
+    }, {}, function()
+      vim.notify = function(msg) env.notes[#env.notes + 1] = msg end
 
-    fetch_source(fbuf, 1, 6)
-    H.eq(#env.fetched, 1, "a second ask while it is in flight does not start another")
+      vim.api.nvim_buf_set_lines(
+        fbuf,
+        0,
+        -1,
+        false,
+        { "see new/thing here", "and/or", "../.. x", "see lua/plugins here" }
+      )
+      vim.api.nvim_set_current_buf(fbuf)
+      vim.api.nvim_win_set_cursor(0, { 1, 6 })
 
-    env.done(true)
-    H.eq(env.shown, 1, "when it arrives under the cursor, hover is asked again")
+      hover._reset()
+      H.eq(fetch_source(fbuf, 1, 6), nil, "the fetch source never answers synchronously")
+      H.eq(#env.fetched, 1, "an uncached slug starts a fetch")
+      H.eq(env.fetched[1].owner.login, "new", "for that owner")
+      H.eq(env.fetched[1].name, "thing", "and repository")
+      H.eq(env.fetched[1].default_branch, "HEAD", "on the default branch, which is unknown here")
+      H.eq(env.fetched[1].prefer_api, true, "through the API, which finds whatever the README is called")
 
-    -- A different place in the meantime: no float for text the reader left.
-    hover._reset()
-    env.fetched, env.shown = {}, 0
-    fetch_source(fbuf, 1, 6)
-    vim.api.nvim_win_set_cursor(0, { 2, 1 })
-    env.done(true)
-    H.eq(env.shown, 0, "if the cursor moved on, no float opens")
-    H.contains(env.notes[#env.notes], "ask again", "the reader is told it is cached")
+      fetch_source(fbuf, 1, 6)
+      H.eq(#env.fetched, 1, "a second ask while it is in flight does not start another")
 
-    -- A failed fetch is remembered, not retried on every request.
-    hover._reset()
-    env.fetched = {}
-    vim.api.nvim_win_set_cursor(0, { 1, 6 })
-    fetch_source(fbuf, 1, 6)
-    env.done(false)
-    fetch_source(fbuf, 1, 6)
-    H.eq(#env.fetched, 1, "a slug that failed is not fetched again this session")
-    H.contains(env.notes[#env.notes], "no README found", "and the reader is told")
+      env.done(true)
+      H.eq(env.shown, 1, "when it arrives under the cursor, hover is asked again")
+      H.eq(env.show_opts and env.show_opts.force, true, "with force, so the re-ask is not declined by the volume gates")
 
-    -- Declined without any request: prose-shaped text is still asked about,
-    -- but `..` is never a namespace, and other providers have no known branch.
-    hover._reset()
-    env.fetched = {}
-    fetch_source(fbuf, 3, 1)
-    H.eq(#env.fetched, 0, "dot-only components are never fetched")
-    env.provider = "gitlab"
-    fetch_source(fbuf, 1, 6)
-    H.eq(#env.fetched, 0, "another provider than GitHub is declined")
+      -- A different place in the meantime: no float for text the reader left.
+      hover._reset()
+      env.fetched, env.shown = {}, 0
+      fetch_source(fbuf, 1, 6)
+      vim.api.nvim_win_set_cursor(0, { 2, 1 })
+      env.done(true)
+      H.eq(env.shown, 0, "if the cursor moved on, no float opens")
+      H.contains(env.notes[#env.notes], "ask again", "the reader is told it is cached")
+
+      -- A README that is only in RAM must not send hover round in circles: the
+      -- cache source needs the file, so the callback writes it out first ...
+      hover._reset()
+      vim.api.nvim_win_set_cursor(0, { 1, 6 })
+      env.fetched, env.shown, env.written = {}, 0, {}
+      env.file = cached_file .. ".missing"
+      env.ram = "# only in RAM"
+      fetch_source(fbuf, 1, 6)
+      env.done(true)
+      H.eq(#env.written, 1, "a RAM-only README is written to disk before hover is asked again")
+      H.eq(env.written[1][3], "# only in RAM", "with the text the RAM cache held")
+      H.eq(env.shown, 1, "and then shown, once")
+
+      -- ... and counts as a failure when there is nothing to write (no loop).
+      hover._reset()
+      env.fetched, env.shown, env.written = {}, 0, {}
+      env.ram = nil
+      fetch_source(fbuf, 1, 6)
+      env.done(true)
+      H.eq(env.shown, 0, "'cached' without any file or RAM copy never re-asks hover")
+      H.contains(env.notes[#env.notes], "could not fetch", "and the reader is told")
+      env.file, env.ram = nil, nil
+
+      -- A failed fetch is remembered for a while, not retried on every request,
+      -- and a repeat ask says why nothing happens.
+      hover._reset()
+      env.fetched = {}
+      fetch_source(fbuf, 1, 6)
+      env.done(false)
+      H.contains(env.notes[#env.notes], "could not fetch", "a failure is reported")
+      fetch_source(fbuf, 1, 6)
+      H.eq(#env.fetched, 1, "a slug that failed is not fetched again right away")
+      H.contains(env.notes[#env.notes], "no README found", "and a repeat ask is answered, not silent")
+
+      -- ... but not forever: offline or rate-limited is transient.
+      local real_now = vim.uv.now
+      vim.uv.now = function() return real_now() + 6 * 60 * 1000 end
+      local ok_later, err_later = pcall(fetch_source, fbuf, 1, 6)
+      vim.uv.now = real_now
+      H.ok(ok_later, tostring(err_later))
+      H.eq(#env.fetched, 2, "after the cool-down the slug is fetched again")
+
+      -- Declined without any request: `..` is never a namespace, an existing
+      -- path is that path, and other providers have no known branch.
+      hover._reset()
+      env.fetched = {}
+      fetch_source(fbuf, 3, 1)
+      H.eq(#env.fetched, 0, "dot-only components are never fetched")
+
+      local base = vim.fn.tempname()
+      vim.fn.mkdir(base .. "/lua/plugins", "p")
+      local real_cwd = vim.uv.cwd()
+      vim.uv.chdir(base)
+      local ok_path, err_path = pcall(fetch_source, fbuf, 4, 6)
+      vim.uv.chdir(real_cwd)
+      vim.fn.delete(base, "rf")
+      H.ok(ok_path, tostring(err_path))
+      H.eq(#env.fetched, 0, "text that is an existing relative path is not fetched")
+
+      env.provider = "gitlab"
+      fetch_source(fbuf, 1, 6)
+      H.eq(#env.fetched, 0, "another provider than GitHub is declined")
+    end)
 
     vim.notify = real_notify
-    package.loaded["reposcope.config"] = real_config
-    package.loaded["reposcope.controllers.provider_controller"] = real_controller
-    package.loaded["hover"] = real_hover
-    vim.api.nvim_buf_delete(fbuf, { force = true })
+    vim.fn.delete(cached_file)
+    if vim.api.nvim_buf_is_valid(fbuf) then vim.api.nvim_buf_delete(fbuf, { force = true }) end
+    if not ok then error(err, 0) end
   end
 
   -- ------------------------------------------------------- degradation ------
