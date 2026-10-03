@@ -25,7 +25,7 @@
 --- prose. Two things keep this from becoming the noise those rules exist to
 --- prevent:
 ---
----   * **It answers only for slugs reposcope has actually cached.** Not for
+---   * **The automatic trigger answers only for slugs reposcope has actually cached.** Not for
 ---     anything slug-shaped. An unknown `foo/bar` is declined by the cache
 ---     source and falls through to whatever hover.nvim would have done anyway
 ---     -- unless the reader explicitly asks (`:Hover show`), which also
@@ -33,6 +33,11 @@
 ---   * **It runs before the bare-path source**, which registration order
 ---     already guarantees, so a slug that is *also* a real directory is read
 ---     as the repository. That is the more specific reading of the same text.
+---
+--- A second source, registered with `on_request = true`, is asked only for an
+--- explicit `:Hover show`. It fetches the README of an uncached slug (GitHub
+--- only), caches it, then re-asks hover; see `fetch_for_request` and
+--- docs/hover.md.
 ---
 ---@see reposcope.cache.readme_cache
 
@@ -49,6 +54,11 @@ local _registered = false
 ---`RETRY_AFTER_MS` rather than for the whole session.
 ---@type table<string, true>
 local _pending = {}
+---At most this many fetches run at once: `:g/^/Hover show` over a lockfile
+---would otherwise spawn one process per line and burn the unauthenticated rate
+---limit in one burst.
+local MAX_PENDING = 4
+local _pending_count = 0
 ---@type table<string, integer>
 local _failed = {}
 local RETRY_AFTER_MS = 5 * 60 * 1000
@@ -96,6 +106,24 @@ local function slug_at(line, col)
 end
 
 ---@internal
+--- Tell the reader something, through the plugin's own popup (and its
+--- `:Reposcope messages` history, honouring `notify_messages`) like every other
+--- message of this plugin. `reposcope.utils.debug.notify` is not the right
+--- door: it drops anything below WARN unless dev mode is on, and these notices
+--- are the whole feedback of an explicit request.
+---@param msg string
+---@param level integer vim.log.levels
+---@return nil
+local function say(msg, level)
+  local ok_cfg, cfg = pcall(require, "reposcope.config")
+  local messages = ok_cfg and type(cfg.options) == "table" and cfg.options.notify_messages or nil
+  local delivered = pcall(
+    function() require("lib.nvim.notify.popup").deliver(msg, level, { source = "reposcope", messages = messages }) end
+  )
+  if not delivered then vim.notify(msg, level) end
+end
+
+---@internal
 --- Fetch the README of an uncached slug and, when it arrives, ask hover.nvim
 --- again -- if the cursor is still on that slug. Sources answer synchronously,
 --- so this one answers nothing now and the second ask gets the file.
@@ -110,6 +138,11 @@ end
 local function fetch_for_request(bufnr, owner, repo)
   -- `..` and friends are slug-shaped but never a namespace or a project.
   if owner:match("^%.+$") or repo:match("^%.+$") then return end
+  -- The cache file is `<provider>__<owner>__<repo>.md`, so `a__b/c` and
+  -- `a/b__c` share one file. A buffer's text must not be able to pick which
+  -- cached README a different slug is answered with; such slugs are left to
+  -- the cache source's existing entries.
+  if owner:find("__", 1, true) or repo:find("__", 1, true) then return end
   -- The cache layout is per provider, and only GitHub's README endpoint is
   -- known to take an unknown default branch ("HEAD") -- decline elsewhere.
   if require("reposcope.config").get_option("provider") ~= "github" then return end
@@ -118,14 +151,19 @@ local function fetch_for_request(bufnr, owner, repo)
   if _pending[key] then return end
   local failed_at = _failed[key]
   if failed_at and vim.uv.now() - failed_at < RETRY_AFTER_MS then
-    vim.notify(
+    say(
       ("[reposcope] no README found for %s (failed earlier, ask again in a few minutes)"):format(key),
       vim.log.levels.WARN
     )
     return
   end
+  if _pending_count >= MAX_PENDING then
+    say("[reposcope] too many README fetches in flight, try again in a moment", vim.log.levels.WARN)
+    return
+  end
   _pending[key] = true
-  vim.notify(("[reposcope] fetching the README of %s ..."):format(key), vim.log.levels.INFO)
+  _pending_count = _pending_count + 1
+  say(("[reposcope] fetching the README of %s ..."):format(key), vim.log.levels.INFO)
 
   require("reposcope.controllers.provider_controller").prefetch_readme({
     name = repo,
@@ -135,7 +173,10 @@ local function fetch_for_request(bufnr, owner, repo)
     default_branch = "HEAD",
     prefer_api = true,
   }, function(ok)
-    _pending[key] = nil
+    if _pending[key] then
+      _pending[key] = nil
+      _pending_count = _pending_count - 1
+    end
 
     -- "Cached" has to mean "on disk" here: the cache source hands hover.nvim
     -- a FILE. A README that is only in RAM (a favorite whose cache file was
@@ -152,7 +193,7 @@ local function fetch_for_request(bufnr, owner, repo)
 
     if not ok then
       _failed[key] = vim.uv.now()
-      vim.notify(
+      say(
         ("[reposcope] could not fetch a README for %s (no such repository, no README, offline or rate-limited)"):format(
           key
         ),
@@ -177,7 +218,7 @@ local function fetch_for_request(bufnr, owner, repo)
         return
       end
     end
-    vim.notify(("[reposcope] README of %s cached -- ask again to see it"):format(key), vim.log.levels.INFO)
+    say(("[reposcope] README of %s cached -- ask again to see it"):format(key), vim.log.levels.INFO)
   end)
 end
 
@@ -262,6 +303,7 @@ function M.slug_at(line, col) return slug_at(line, col) end
 function M._reset()
   _registered = false
   _pending = {}
+  _pending_count = 0
   _failed = {}
 end
 

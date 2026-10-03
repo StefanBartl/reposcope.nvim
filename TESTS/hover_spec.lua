@@ -96,7 +96,6 @@ return function(H)
   -- (for a while) when it fails, and shown (hover re-asked) when it arrives.
   do
     local fetch_source = captured.contribution.sources[2].fn
-    local real_notify = vim.notify
     local env = { provider = "github", fetched = {}, done = nil, shown = 0, show_opts = nil, notes = {} }
 
     -- "Cached" means "on disk" to the callback, which checks the file.
@@ -129,9 +128,11 @@ return function(H)
           env.shown, env.show_opts = env.shown + 1, o
         end,
       },
+      -- The plugin's own message door; vim.notify is only its fallback.
+      ["lib.nvim.notify.popup"] = {
+        deliver = function(msg) env.notes[#env.notes + 1] = msg end,
+      },
     }, {}, function()
-      vim.notify = function(msg) env.notes[#env.notes + 1] = msg end
-
       vim.api.nvim_buf_set_lines(
         fbuf,
         0,
@@ -225,12 +226,38 @@ return function(H)
       H.ok(ok_path, tostring(err_path))
       H.eq(#env.fetched, 0, "text that is an existing relative path is not fetched")
 
+      hover._reset()
+      env.fetched = {}
+      vim.api.nvim_buf_set_lines(fbuf, 4, -1, false, { "a__b/c here", "a/b__c here" })
+      fetch_source(fbuf, 5, 1)
+      fetch_source(fbuf, 6, 1)
+      H.eq(#env.fetched, 0, "slugs the cache file name cannot tell apart are never fetched")
+
       env.provider = "gitlab"
       fetch_source(fbuf, 1, 6)
       H.eq(#env.fetched, 0, "another provider than GitHub is declined")
+      env.provider = "github"
+
+      -- At most four at a time: a burst over many slugs is bounded.
+      hover._reset()
+      env.fetched, env.notes = {}, {}
+      local burst = {}
+      for i = 1, 5 do
+        burst[i] = ("burst%d/repo%d here"):format(i, i)
+      end
+      vim.api.nvim_buf_set_lines(fbuf, 4, -1, false, burst)
+      local dones = {}
+      for i = 1, 5 do
+        fetch_source(fbuf, 4 + i, 1)
+        dones[i] = env.done
+      end
+      H.eq(#env.fetched, 4, "the fifth concurrent fetch is not started")
+      H.contains(env.notes[#env.notes], "too many", "and the reader is told")
+      dones[1](false)
+      fetch_source(fbuf, 9, 1)
+      H.eq(#env.fetched, 5, "a finished fetch frees its slot")
     end)
 
-    vim.notify = real_notify
     vim.fn.delete(cached_file)
     if vim.api.nvim_buf_is_valid(fbuf) then vim.api.nvim_buf_delete(fbuf, { force = true }) end
     if not ok then error(err, 0) end
