@@ -35,6 +35,7 @@ return function(H)
         has_binary = function(name) return opts.available[name] == true end,
         first_available = function() return nil end,
         resolve_request_tool = function() end,
+        ensure_request_tool = function() end,
       },
       ["reposcope.config"] = {
         options = {},

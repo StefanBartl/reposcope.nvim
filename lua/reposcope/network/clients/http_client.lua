@@ -62,6 +62,9 @@ function M.request(method, url, callback, headers, debug, metrics_context)
     return
   end
 
+  -- Resolved here, not in setup(): once per configuration, on the first request.
+  require("reposcope.utils.checks").ensure_request_tool()
+
   local uuid = require("reposcope.utils.core").generate_uuid()
   local request_module
   local default_tool = get_option("request_tool")

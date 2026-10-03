@@ -19,6 +19,7 @@
 ---@field has_binary fun(name: string): boolean Returns true if the given binary is executable on the system.
 ---@field first_available fun(binaries: string[]): string|nil Returns the first available binary from a list or nil if none found.
 ---@field resolve_request_tool fun(requesters?: string[]): boolean, string? Selects the preferred available request tool and sets it in config; returns (ok, err).
+---@field ensure_request_tool fun(): boolean, string? Runs `resolve_request_tool` once per configuration (the first request, not `setup()`); returns (ok, err).
 ---@field has_env fun(name: string): boolean Returns true if the given environment variable is set and non-empty.
 
 ---@class CoreUtilsModule

@@ -97,9 +97,9 @@ this feature, also tracked for **freshness**:
   — a repo that hasn't changed is never re-fetched, one that has always gets
   fresh content. Repos/providers without the field fall back to the old
   "trust the cache" behavior (nothing to compare against).
-- **RAM pre-warming.** On `setup()`, every already file-cached README is
-  loaded into the RAM cache, so a fresh Neovim session doesn't pay a disk
-  read on the first visit to a repository you'd already cached before.
+- **File cache.** READMEs cached on disk survive a restart and are read back
+  on the first visit to a repository (one small file read). `setup()` does
+  not pre-load them: that would read the whole cache, unbounded, on every start.
 - **Result pre-caching.** `readme_precache_count` (default `5`) — after a
   search, the top N results' READMEs are fetched in the background (RAM +
   file only, no preview/UI interaction), so scrolling through them feels

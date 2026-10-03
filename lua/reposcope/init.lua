@@ -26,7 +26,6 @@ local nvim_win_set_cursor = vim.api.nvim_win_set_cursor
 local nvim_win_is_valid = vim.api.nvim_win_is_valid
 -- Project-specific Configuration and Utility Modules
 local config = require("reposcope.config")
-local checks = require("reposcope.utils.checks")
 local notify = require("reposcope.utils.debug").notify
 -- State Modules (State Management)
 local ui_state = require("reposcope.state.ui.ui_state")
@@ -50,15 +49,16 @@ require("reposcope.bindings.usrcmds")
 ---@param opts PartialConfigOptions Optional configuration options to override defaults
 function M.setup(opts)
   config.setup(opts or {})
-  checks.resolve_request_tool()
+  -- The request tool is resolved by the first request (checks.ensure_request_tool,
+  -- called from the HTTP client): a PATH probe costs about 14 ms on Windows and
+  -- no request has been made yet.
 
   local keymaps_opt = config.get_option("keymaps")
   if keymaps_opt ~= false then keymaps.set_user_keymaps(keymaps_opt, config.get_option("keymap_opts")) end
 
-  -- Preload file-cached READMEs into RAM: the file cache survives restarts,
-  -- but without this a fresh session still pays a disk read on the first
-  -- navigation to each repository even though the content was already there.
-  require("reposcope.cache.readme_cache").warm_ram_from_file_cache()
+  -- No README pre-warming here: it reads EVERY file-cached README
+  -- (unbounded, about 1 ms each) and setup() runs in the plugin's load path.
+  -- `readme_cache.get`/`has` fall back to the file cache on first use anyway.
 
   -- Tell hover.nvim that `owner/repo` is a target, when it is one reposcope
   -- has cached. Soft: without hover.nvim this does nothing, and hover.nvim

@@ -26,6 +26,7 @@ return function(H)
       },
       ["reposcope.utils.checks"] = {
         resolve_request_tool = function() env.resolved = env.resolved + 1 end,
+        ensure_request_tool = function() env.resolved = env.resolved + 1 end,
         has_binary = function() return true end,
         first_available = function() return "curl" end,
       },
@@ -57,13 +58,12 @@ return function(H)
     init.setup({ provider = "gitlab" })
 
     H.eq(env.setup_opts.provider, "gitlab", "the user's options are handed to config.setup")
-    H.eq(env.resolved, 1, "the request tool is resolved once")
+    H.eq(env.resolved, 0, "setup() does not probe PATH: the first request resolves the request tool")
     H.eq(#env.keymaps, 1, "the two global keymaps are registered")
     H.eq(env.keymaps[1].cfg.open, "<leader>rs", "from the configuration")
     H.eq(env.keymaps[1].opts.silent, true, "with the configured options")
-    -- The file cache survives a restart; without this, a fresh session still
-    -- pays a disk read on the first navigation to each repository.
-    H.eq(env.warmed, 1, "the file cache is warmed into RAM")
+    -- Pre-warming reads EVERY cached README (unbounded); setup() must not.
+    H.eq(env.warmed, 0, "setup() does not read the README file cache")
     H.eq(env.hover, 1, "and the hover.nvim source is contributed")
   end)
 
@@ -80,7 +80,7 @@ return function(H)
     init.setup({})
     H.eq(#env.keymaps, 0, "`keymaps = false` registers no global keymaps at all")
     H.eq(env.hover, 0, "and `hover = false` contributes nothing to hover.nvim")
-    H.eq(env.warmed, 1, "while the cache warm-up still happens -- it is not an integration")
+    H.eq(env.warmed, 0, "and the README cache is not walked either")
   end)
 
   ---------------------------------------------------------------------------

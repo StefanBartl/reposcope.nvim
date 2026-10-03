@@ -169,6 +169,24 @@ return function(H)
         "with nothing configured and nothing installed, the user is told"
       )
     end)
+
+    -- ensure_request_tool(): the lazy entry point the HTTP client calls. It
+    -- must resolve exactly once per configuration (config.setup() replaces
+    -- config.options), not once per request.
+    with_checks({ curl = true }, function(checks, config)
+      config.options.request_tool = "gh"
+      checks.ensure_request_tool()
+      H.eq(config.options.request_tool, "curl", "the first request resolves the tool")
+
+      config.options.request_tool = "gh"
+      checks.ensure_request_tool()
+      H.eq(config.options.request_tool, "gh", "later requests of the same configuration do not resolve again")
+
+      -- A new configuration (setup() swaps the options table) is resolved anew.
+      config.options = { request_tool = "gh", preferred_requesters = { "gh", "curl", "wget" } }
+      checks.ensure_request_tool()
+      H.eq(config.options.request_tool, "curl", "a fresh configuration is resolved again")
+    end)
   end
 
   ---------------------------------------------------------------------------
