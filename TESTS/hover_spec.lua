@@ -53,7 +53,8 @@ return function(H)
   H.ok(hover.setup(), "setup registers when hover.nvim is there")
   H.eq(captured.name, "reposcope.nvim", "under this plugin's name")
   H.ok(type(captured.contribution.sources) == "table", "as a source, not a position")
-  H.eq(#captured.contribution.sources, 1, "exactly one")
+  H.eq(#captured.contribution.sources, 2, "the cache source, then the on-request fetch source")
+  H.eq(captured.contribution.sources[2].on_request, true, "the fetch source is only asked on an explicit request")
 
   local answer = captured.contribution.sources[1]
 
@@ -89,6 +90,82 @@ return function(H)
 
   vim.fn.delete(tmp)
   vim.api.nvim_buf_delete(buf, { force = true })
+
+  -- --------------------------------------------- on-request fetch source ---
+  -- An uncached slug is fetched only for an explicit request, once, remembered
+  -- when it fails, and shown (hover re-asked) when it arrives.
+  do
+    local fetch_source = captured.contribution.sources[2].fn
+    local real_controller = package.loaded["reposcope.controllers.provider_controller"]
+    local real_config = package.loaded["reposcope.config"]
+    local real_hover = package.loaded["hover"]
+    local real_notify = vim.notify
+
+    local env = { provider = "github", fetched = {}, done = nil, shown = 0, notes = {} }
+    package.loaded["reposcope.config"] = { get_option = function() return env.provider end }
+    package.loaded["reposcope.controllers.provider_controller"] = {
+      prefetch_readme = function(repo, on_done)
+        env.fetched[#env.fetched + 1] = repo
+        env.done = on_done
+      end,
+    }
+    package.loaded["hover"] = { show = function() env.shown = env.shown + 1 end }
+    vim.notify = function(msg) env.notes[#env.notes + 1] = msg end
+
+    local fbuf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_buf_set_lines(fbuf, 0, -1, false, { "see new/thing here", "and/or", "../.. x" })
+    vim.api.nvim_set_current_buf(fbuf)
+    vim.api.nvim_win_set_cursor(0, { 1, 6 })
+
+    hover._reset()
+    H.eq(fetch_source(fbuf, 1, 6), nil, "the fetch source never answers synchronously")
+    H.eq(#env.fetched, 1, "an uncached slug starts a fetch")
+    H.eq(env.fetched[1].owner.login, "new", "for that owner")
+    H.eq(env.fetched[1].name, "thing", "and repository")
+    H.eq(env.fetched[1].default_branch, "HEAD", "on the default branch, which is unknown here")
+    H.eq(env.fetched[1].prefer_api, true, "through the API, which finds whatever the README is called")
+
+    fetch_source(fbuf, 1, 6)
+    H.eq(#env.fetched, 1, "a second ask while it is in flight does not start another")
+
+    env.done(true)
+    H.eq(env.shown, 1, "when it arrives under the cursor, hover is asked again")
+
+    -- A different place in the meantime: no float for text the reader left.
+    hover._reset()
+    env.fetched, env.shown = {}, 0
+    fetch_source(fbuf, 1, 6)
+    vim.api.nvim_win_set_cursor(0, { 2, 1 })
+    env.done(true)
+    H.eq(env.shown, 0, "if the cursor moved on, no float opens")
+    H.contains(env.notes[#env.notes], "ask again", "the reader is told it is cached")
+
+    -- A failed fetch is remembered, not retried on every request.
+    hover._reset()
+    env.fetched = {}
+    vim.api.nvim_win_set_cursor(0, { 1, 6 })
+    fetch_source(fbuf, 1, 6)
+    env.done(false)
+    fetch_source(fbuf, 1, 6)
+    H.eq(#env.fetched, 1, "a slug that failed is not fetched again this session")
+    H.contains(env.notes[#env.notes], "no README found", "and the reader is told")
+
+    -- Declined without any request: prose-shaped text is still asked about,
+    -- but `..` is never a namespace, and other providers have no known branch.
+    hover._reset()
+    env.fetched = {}
+    fetch_source(fbuf, 3, 1)
+    H.eq(#env.fetched, 0, "dot-only components are never fetched")
+    env.provider = "gitlab"
+    fetch_source(fbuf, 1, 6)
+    H.eq(#env.fetched, 0, "another provider than GitHub is declined")
+
+    vim.notify = real_notify
+    package.loaded["reposcope.config"] = real_config
+    package.loaded["reposcope.controllers.provider_controller"] = real_controller
+    package.loaded["hover"] = real_hover
+    vim.api.nvim_buf_delete(fbuf, { force = true })
+  end
 
   -- ------------------------------------------------------- degradation ------
   package.loaded["hover.registry"] = nil

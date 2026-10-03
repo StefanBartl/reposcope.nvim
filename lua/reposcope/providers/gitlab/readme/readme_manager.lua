@@ -115,19 +115,26 @@ local function is_valid_url(url) return type(url) == "string" and url:match("^ht
 --- current selection. No-op if already fresh, or if the raw fetch fails
 --- (silent: this is a background optimization, not a user-facing action —
 --- a normal fetch still happens if/when the repository is actually selected).
+---`on_done` (optional) is told how it ended: `true` when the README is cached
+--- afterwards, `false` when it is not; always called on the main loop.
 ---@param repo Repository
+---@param on_done? fun(ok: boolean): nil
 ---@return nil
-function M.prefetch(repo)
-  if not repo or not repo.name or not repo.owner or not repo.owner.login then return end
+function M.prefetch(repo, on_done)
+  local function finish(ok)
+    if on_done then vim.schedule(function() on_done(ok) end) end
+  end
+
+  if not repo or not repo.name or not repo.owner or not repo.owner.login then return finish(false) end
 
   local owner = repo.owner.login
   local repo_name = repo.name
   local branch = repo.default_branch or "main"
 
-  if has_fresh(owner, repo_name, repo.updated_at) then return end
+  if has_fresh(owner, repo_name, repo.updated_at) then return finish(true) end
 
   local urls = require("reposcope.providers.gitlab.readme.readme_urls").get_urls(owner, repo_name, branch)
-  if not is_valid_url(urls.raw) then return end
+  if not is_valid_url(urls.raw) then return finish(false) end
 
   readme_fetch_raw(owner, repo_name, branch, function(success, content)
     if success and content then
@@ -135,7 +142,10 @@ function M.prefetch(repo)
         set_ram(owner, repo_name, content)
         set_file(owner, repo_name, content)
         set_updated_at(owner, repo_name, repo.updated_at)
+        if on_done then on_done(true) end
       end)
+    else
+      finish(false)
     end
   end)
 end

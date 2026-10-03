@@ -17,8 +17,11 @@ repository's README.
 └───────────────────────────────────────┘
 ```
 
-Only for repositories reposcope has already fetched. Everything it needs is
-local: the README cache survives restarts, so the answer costs a file read.
+For repositories reposcope has already fetched, the answer is local: the
+README cache survives restarts, so it costs a file read. For any other
+`owner/repo`, an **explicit** request (`:Hover show`, or a key bound to it)
+fetches the README, caches it and shows it — see
+[Fetching an uncached repository](#fetching-an-uncached-repository).
 
 ## How it works, and why it needs nothing on hover.nvim's side
 
@@ -33,7 +36,7 @@ alternative was a `repository` target type with a preview to match, which
 would have needed a change on hover.nvim's side and reimplemented what it
 already does.
 
-## The hazard, and the two things that contain it
+## The hazard, and the things that contain it
 
 **A slug is spelled exactly like prose.** `owner/repo` is two components, no
 extension, no root — the same shape as `and/or`, `input/output`,
@@ -55,6 +58,27 @@ The second is what makes this safe, and it is the one no shape test could
 replace. A dangling cache entry — the record is there, the file is gone —
 is declined too, rather than handed over as a path that would preview
 "no such file".
+
+## Fetching an uncached repository
+
+A second source, registered with `on_request = true`, is asked only when the
+reader asks (`:Hover show`), never by the automatic trigger. Fetching
+discloses the text under the cursor to a host, and a trigger that fires while
+scrolling would turn every `and/or` into a request.
+
+1. The first request for an uncached slug starts the fetch (GitHub API, which
+   finds whatever the README is called, on the repository's default branch)
+   and says so. The source itself cannot wait: hover.nvim sources answer
+   synchronously.
+2. When the README arrives it is written to the same cache, and — if the
+   cursor is still on that slug — hover.nvim is asked again, now answered by
+   the cache source. If the reader has moved on, a notice says it is cached.
+3. A slug that fails (no such repository, no README) is remembered for the
+   session and not asked again.
+
+Limits: GitHub only (the cache layout is per provider, and only GitHub's
+README endpoint takes an unknown default branch); unauthenticated requests
+are rate-limited unless `github_token` is set.
 
 ## Ordering
 
@@ -78,9 +102,10 @@ require("reposcope").setup({ hover = false })
 
 ## What it does not do
 
-- **It does not fetch.** A repository reposcope has never shown has no cached
-  README, and this will not go and get one — a float that made a network
-  request because the cursor drifted over a slug would be exactly the
-  disclosure hover.nvim's `links web fetch` is off by default to prevent.
+- **It does not fetch on its own.** The automatic trigger only ever reads the
+  cache: a float that made a network request because the cursor drifted over
+  a slug would be exactly the disclosure hover.nvim's `links web fetch` is off
+  by default to prevent. Fetching happens only for an explicit request, see
+  above.
 - **It does not refresh.** The cached README is whatever was fetched last.
   `:Reposcope start` is what updates it.

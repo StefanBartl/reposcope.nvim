@@ -41,6 +41,14 @@ local api = vim.api
 ---@type boolean
 local _registered = false
 
+---Slugs being fetched right now, and slugs whose fetch failed this session
+---(a repository without a README, or no such repository, is not asked again
+---until Neovim restarts or `_reset`).
+---@type table<string, true>
+local _pending = {}
+---@type table<string, true>
+local _failed = {}
+
 ---@internal
 --- The `owner/repo` the cursor is inside, or nil.
 ---
@@ -83,6 +91,63 @@ local function slug_at(line, col)
   return owner, repo
 end
 
+---@internal
+--- Fetch the README of an uncached slug and, when it arrives, ask hover.nvim
+--- again -- if the cursor is still on that slug. Sources answer synchronously,
+--- so this one answers nothing now and the second ask gets the file.
+---
+--- Only reached for an explicit request (`on_request`): fetching discloses the
+--- text under the cursor to a host, and a trigger that fires while scrolling
+--- would turn every `and/or` into a request.
+---@param bufnr integer
+---@param owner string
+---@param repo string
+---@return nil
+local function fetch_for_request(bufnr, owner, repo)
+  -- `..` and friends are slug-shaped but never a namespace or a project.
+  if owner:match("^%.+$") or repo:match("^%.+$") then return end
+  -- The cache layout is per provider, and only GitHub's README endpoint is
+  -- known to take an unknown default branch ("HEAD") -- decline elsewhere.
+  if require("reposcope.config").get_option("provider") ~= "github" then return end
+
+  local key = owner .. "/" .. repo
+  if _failed[key] or _pending[key] then return end
+  _pending[key] = true
+  vim.notify(("[reposcope] fetching the README of %s ..."):format(key), vim.log.levels.INFO)
+
+  require("reposcope.controllers.provider_controller").prefetch_readme({
+    name = repo,
+    owner = { login = owner },
+    default_branch = "HEAD",
+    prefer_api = true,
+  }, function(ok)
+    _pending[key] = nil
+    if not ok then
+      _failed[key] = true
+      vim.notify(("[reposcope] no README found for %s"):format(key), vim.log.levels.WARN)
+      return
+    end
+
+    -- Ask again only where the reader still is: a float for text they have
+    -- since left would be a question nobody asked.
+    local still_there = false
+    if api.nvim_buf_is_valid(bufnr) and api.nvim_get_current_buf() == bufnr then
+      local pos = api.nvim_win_get_cursor(0)
+      local line = api.nvim_buf_get_lines(bufnr, pos[1] - 1, pos[1], false)[1]
+      local o, r = slug_at(line, pos[2])
+      still_there = o == owner and r == repo
+    end
+    if still_there then
+      local shown, hover = pcall(require, "hover")
+      if shown and type(hover.show) == "function" then
+        pcall(hover.show, { force = true })
+        return
+      end
+    end
+    vim.notify(("[reposcope] README of %s cached -- ask again to see it"):format(key), vim.log.levels.INFO)
+  end)
+end
+
 --- Register the source with hover.nvim, if it is installed.
 ---@return boolean registered
 function M.setup()
@@ -112,6 +177,25 @@ function M.setup()
         if vim.uv.fs_stat(path) then return path end
         return nil
       end,
+
+      -- Second, and only for an explicit request (`:Hover show`): a slug that
+      -- is not cached is fetched, then shown. Declines now, answers on the
+      -- re-ask the fetch triggers -- see `fetch_for_request`.
+      {
+        on_request = true,
+        ---@param bufnr integer
+        ---@param row integer 1-based
+        ---@param col integer 0-based
+        ---@return nil
+        fn = function(bufnr, row, col)
+          if not api.nvim_buf_is_valid(bufnr) then return nil end
+          local line = api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
+          local owner, repo = slug_at(line, col)
+          if not owner or not repo then return nil end
+          fetch_for_request(bufnr, owner, repo)
+          return nil
+        end,
+      },
     },
   })
 
@@ -130,6 +214,10 @@ function M.slug_at(line, col) return slug_at(line, col) end
 ---@internal
 --- Forget the registration. Tests only.
 ---@return nil
-function M._reset() _registered = false end
+function M._reset()
+  _registered = false
+  _pending = {}
+  _failed = {}
+end
 
 return M

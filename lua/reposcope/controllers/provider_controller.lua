@@ -106,10 +106,15 @@ end
 --- navigation. Silent no-op if the provider can't be resolved or the repo
 --- is invalid.
 ---@param repo Repository
+---@param on_done? fun(ok: boolean): nil  Told how it ended (`false` when no provider could run it)
 ---@return nil
-function M.prefetch_readme(repo)
+function M.prefetch_readme(repo, on_done)
   local provider = _resolve_provider()
-  if provider and provider.readme_manager.prefetch then provider.readme_manager.prefetch(repo) end
+  if provider and provider.readme_manager.prefetch then
+    provider.readme_manager.prefetch(repo, on_done)
+  elseif on_done then
+    vim.schedule(function() on_done(false) end)
+  end
 end
 
 ---Builds a provider-specific search query string from prompt input, using
