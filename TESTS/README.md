@@ -138,7 +138,7 @@ lowest thing that broke.
 | `actions_spec.lua` | filtering, sorting, the prompt's collect/search path, `prompt_reload`, and the content of the favourites/help/filter floats |
 | `readme_views_spec.lua` | the README editor and viewer: cache fallbacks, the HTML-goes-to-the-browser decision, the real viewer window and its `q` keymap |
 | `preview_image_spec.lua` | `find_url`, the pure half of the README image preview: badge blocks are skipped and the first real raster URL is picked |
-| `hover_spec.lua` | the hover.nvim contribution — the `owner/repo` slug test, and that the source answers only for repositories reposcope has cached |
+| `hover_spec.lua` | the hover.nvim contribution — the `owner/repo` slug test, that the cache source answers only for cached repositories, and the on-request fetch source (starts once per slug, at most four at a time, remembers failures for a while, re-asks hover only while the cursor is still on the slug, never loops on a RAM-only README, declines `..`, `__`, real paths and non-GitHub providers) |
 | `list_manager_spec.lua` | `list_manager.update_list`'s deferred buffer write: the common case, and that a list buffer deleted before the scheduled write runs is skipped rather than raising |
 | `list_window_spec.lua` | `list_window`'s viewport handling: `reveal_line` scrolls a selection below the fold into view |
 | `ui_config_spec.lua` | `reposcope.ui.config`, the shared layout/theme singleton every `*_config` module derives its own geometry from: `recompute()`'s editor-size math, `update_layout()`'s width/height pin that survives a later `recompute()` while its own col/row override does not, and `update_theme()`'s dark/light/custom/invalid branches |

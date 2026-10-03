@@ -49,7 +49,7 @@ So the slug test is only half of it:
 1. **The shape test.** Exactly two components, made of the characters GitHub,
    GitLab and Codeberg actually allow. `owner/repo/tree/main` is a path into a
    repository, not a slug; `just-a-word` is a word.
-2. **The cache check.** It answers only for repositories reposcope has
+2. **The cache check (automatic trigger).** It answers only for repositories reposcope has
    *actually cached*, never for arbitrary slug-shaped text. `and/or` is
    declined not because it looks wrong but because there is no such
    repository in the cache.
@@ -79,6 +79,10 @@ scrolling would turn every `and/or` into a request.
 4. Text that is an existing path relative to the buffer or the working
    directory (`lua/plugins`) is that path, never a repository: nothing is
    fetched for it.
+
+At most four fetches run at once; a fifth ask says so instead of starting
+another. Slugs containing `__` are never fetched (the cache file name cannot
+tell `a__b/c` from `a/b__c`).
 
 Limits: GitHub only (the cache layout is per provider, and only GitHub's
 README endpoint takes an unknown default branch); unauthenticated requests

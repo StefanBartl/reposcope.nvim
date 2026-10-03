@@ -22,7 +22,7 @@ for finding the page that answers a specific question.
 | [commands.md](commands.md) | Every `:Reposcope` subcommand, with syntax, flags and examples |
 | [BINDINGS.md](BINDINGS.md) | The authoritative table of keymaps, user commands and autocommands, each pointing at the code that defines it |
 | [FEATURES/](FEATURES/README.md) | What shipped, per feature, with the module and config key behind it |
-| [hover.md](hover.md) | The hover.nvim integration: `owner/repo` under the cursor previews that repository's cached README |
+| [hover.md](hover.md) | The hover.nvim integration: `owner/repo` under the cursor previews that repository's cached README, or fetches it on an explicit `:Hover show` |
 
 ## When it misbehaves
 
