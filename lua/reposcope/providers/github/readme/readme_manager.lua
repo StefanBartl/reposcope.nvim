@@ -164,9 +164,14 @@ function M.prefetch(repo, on_done)
     if not success or not content then return finish(false) end
     vim.schedule(function()
       set_ram(owner, repo_name, content)
-      set_file(owner, repo_name, content)
-      set_updated_at(owner, repo_name, repo.updated_at)
-      if on_done then on_done(true) end
+      -- "cached" means "on disk" for `on_done`: a failed write is reported as such.
+      local written = set_file(owner, repo_name, content) ~= false
+      -- A record without `updated_at` (a caller with no repository record, see
+      -- `prefer_api`) still gets a stamp: with none, a later search result
+      -- carrying a real `updated_at` would find nothing to compare against and
+      -- trust this entry forever.
+      set_updated_at(owner, repo_name, repo.updated_at or (repo.prefer_api and "unknown" or nil))
+      if on_done then on_done(written) end
     end)
   end
 

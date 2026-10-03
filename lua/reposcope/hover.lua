@@ -26,8 +26,10 @@
 --- prevent:
 ---
 ---   * **It answers only for slugs reposcope has actually cached.** Not for
----     anything slug-shaped. An unknown `foo/bar` is declined here and falls
----     through to whatever hover.nvim would have done anyway.
+---     anything slug-shaped. An unknown `foo/bar` is declined by the cache
+---     source and falls through to whatever hover.nvim would have done anyway
+---     -- unless the reader explicitly asks (`:Hover show`), which also
+---     starts a fetch (see `fetch_for_request`).
 ---   * **It runs before the bare-path source**, which registration order
 ---     already guarantees, so a slug that is *also* a real directory is read
 ---     as the repository. That is the more specific reading of the same text.
@@ -41,13 +43,15 @@ local api = vim.api
 ---@type boolean
 local _registered = false
 
----Slugs being fetched right now, and slugs whose fetch failed this session
----(a repository without a README, or no such repository, is not asked again
----until Neovim restarts or `_reset`).
+---Slugs being fetched right now, and the time (ms, `vim.uv.now()`) at which a
+---fetch of a slug last failed. A failure covers a missing repository or README
+---but also being offline or rate-limited, so it is remembered for
+---`RETRY_AFTER_MS` rather than for the whole session.
 ---@type table<string, true>
 local _pending = {}
----@type table<string, true>
+---@type table<string, integer>
 local _failed = {}
+local RETRY_AFTER_MS = 5 * 60 * 1000
 
 ---@internal
 --- The `owner/repo` the cursor is inside, or nil.
@@ -111,20 +115,49 @@ local function fetch_for_request(bufnr, owner, repo)
   if require("reposcope.config").get_option("provider") ~= "github" then return end
 
   local key = owner .. "/" .. repo
-  if _failed[key] or _pending[key] then return end
+  if _pending[key] then return end
+  local failed_at = _failed[key]
+  if failed_at and vim.uv.now() - failed_at < RETRY_AFTER_MS then
+    vim.notify(
+      ("[reposcope] no README found for %s (failed earlier, ask again in a few minutes)"):format(key),
+      vim.log.levels.WARN
+    )
+    return
+  end
   _pending[key] = true
   vim.notify(("[reposcope] fetching the README of %s ..."):format(key), vim.log.levels.INFO)
 
   require("reposcope.controllers.provider_controller").prefetch_readme({
     name = repo,
+    description = "",
+    html_url = "https://github.com/" .. key,
     owner = { login = owner },
     default_branch = "HEAD",
     prefer_api = true,
   }, function(ok)
     _pending[key] = nil
+
+    -- "Cached" has to mean "on disk" here: the cache source hands hover.nvim
+    -- a FILE. A README that is only in RAM (a favorite whose cache file was
+    -- cleaned, a file deleted mid-session, an unwritable cache dir) would make
+    -- the re-ask below decline, fetch again, be told "cached" again, and so on
+    -- without end. Write the RAM copy out, or count it as a failure.
+    if ok then
+      local cache = require("reposcope.cache.readme_cache")
+      if not vim.uv.fs_stat(cache.file_path(owner, repo)) then
+        local text = cache.get_ram(owner, repo)
+        ok = text ~= nil and cache.set_file(owner, repo, text) == true
+      end
+    end
+
     if not ok then
-      _failed[key] = true
-      vim.notify(("[reposcope] no README found for %s"):format(key), vim.log.levels.WARN)
+      _failed[key] = vim.uv.now()
+      vim.notify(
+        ("[reposcope] could not fetch a README for %s (no such repository, no README, offline or rate-limited)"):format(
+          key
+        ),
+        vim.log.levels.WARN
+      )
       return
     end
 
@@ -192,6 +225,18 @@ function M.setup()
           local line = api.nvim_buf_get_lines(bufnr, row - 1, row, false)[1]
           local owner, repo = slug_at(line, col)
           if not owner or not repo then return nil end
+
+          -- A path that exists is that path, not a repository: hover.nvim
+          -- reads `lua/plugins` as the directory, and a request to GitHub
+          -- (plus two notices) for it would be noise at best, and at worst a
+          -- late README that replaces the file the reader pointed at.
+          local name = api.nvim_buf_get_name(bufnr)
+          local bases = { vim.uv.cwd() }
+          if name ~= "" then table.insert(bases, 1, vim.fs.dirname(name)) end
+          for _, base in ipairs(bases) do
+            if base and vim.uv.fs_stat(base .. "/" .. owner .. "/" .. repo) then return nil end
+          end
+
           fetch_for_request(bufnr, owner, repo)
           return nil
         end,

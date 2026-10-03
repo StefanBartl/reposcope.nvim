@@ -73,8 +73,12 @@ scrolling would turn every `and/or` into a request.
 2. When the README arrives it is written to the same cache, and — if the
    cursor is still on that slug — hover.nvim is asked again, now answered by
    the cache source. If the reader has moved on, a notice says it is cached.
-3. A slug that fails (no such repository, no README) is remembered for the
-   session and not asked again.
+3. A slug that fails (no such repository, no README, but also offline or
+   rate-limited) is remembered for about five minutes and not asked again in
+   that time; asking meanwhile says so.
+4. Text that is an existing path relative to the buffer or the working
+   directory (`lua/plugins`) is that path, never a repository: nothing is
+   fetched for it.
 
 Limits: GitHub only (the cache layout is per provider, and only GitHub's
 README endpoint takes an unknown default branch); unauthenticated requests

@@ -34,6 +34,7 @@
 -- the language server, not as the field name the GitHub API actually uses.
 ---@field ["private"]? boolean Whether the repository is private (GitHub only; the other providers' normalizers do not carry it). Decides whether a raw README fetch is worth attempting — see the GitHub readme manager.
 ---@field stargazers_count? number
+---@field prefer_api? boolean Force the API route for the README fetch (callers without a repository record, e.g. the hover source)
 ---@field updated_at? string ISO8601 timestamp of the repository's last update (GitHub: `updated_at`, GitLab: `last_activity_at`, Codeberg: `updated_at`); used to detect a stale cached README
 
 ---@class RepositoryResponse

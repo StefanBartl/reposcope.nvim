@@ -328,6 +328,39 @@ return function(H)
       H.eq(#env.preview, 0, "without touching the preview at all")
     end)
 
+    -- on_done: told exactly once, asynchronously, how it ended.
+    with_manager(p.name, p.manager, function(manager, env)
+      local calls = {}
+      local function on_done(ok) calls[#calls + 1] = ok end
+
+      manager.prefetch({ name = "r" }, on_done)
+      H.eq(#calls, 0, p.name .. ": on_done is not called before prefetch returns")
+      H.drain()
+      H.eq(calls[1], false, "an incomplete repository reports failure")
+      H.eq(#calls, 1, "exactly once")
+
+      calls = {}
+      env.fresh = true
+      manager.prefetch(repo_of(), on_done)
+      H.drain()
+      H.eq(calls[1], true, "an already-fresh README reports success")
+
+      calls = {}
+      env.fresh = false
+      env.answer_raw = { false, nil, "404" }
+      manager.prefetch(repo_of(), on_done)
+      H.drain()
+      H.eq(calls[1], false, "a failed fetch reports failure")
+      H.eq(#calls, 1, "exactly once")
+
+      calls = {}
+      env.answer_raw = { true, "# prefetched" }
+      manager.prefetch(repo_of(), on_done)
+      H.drain()
+      H.eq(calls[1], true, "a successful fetch reports success")
+      H.eq(#calls, 1, "exactly once")
+    end)
+
     with_manager(p.name, p.manager, function(manager, env)
       env.answer_raw = { false, nil, "404" }
       manager.prefetch(repo_of())
@@ -366,6 +399,23 @@ return function(H)
         "api",
         "prefetch takes the same shortcut -- before it, private repos were never pre-cached"
       )
+    end)
+
+    -- `prefer_api`: a caller without a repository record (the hover source)
+    -- takes the API route, which finds whatever the README is called, and its
+    -- entry gets a freshness stamp so a later search can compare against it.
+    with_manager("github", module, function(manager, env)
+      env.answer_api = { true, "# from the api" }
+      local told
+      manager.prefetch(repo_of({ prefer_api = true, updated_at = false }), function(ok) told = ok end)
+      H.drain()
+      H.eq(env.fetched[1].kind, "api", "prefer_api takes the API route")
+      H.eq(told, true, "and reports success")
+      local stamp
+      for _, c in ipairs(env.cached) do
+        if c.kind == "updated_at" then stamp = c.updated_at end
+      end
+      H.eq(stamp, "unknown", "a record without updated_at still gets a stamp")
     end)
 
     -- `private` is a tri-state in practice (absent for most search results);
