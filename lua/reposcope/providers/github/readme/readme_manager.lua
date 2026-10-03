@@ -136,30 +136,41 @@ local function needs_api(repo) return repo.private == true end
 --- host rather than in addition to it (see `needs_api`) — before that they
 --- were never pre-cached at all, because the only request they made was the
 --- one that always 404s.
+---`on_done` (optional) is told how it ended: `true` when the README is cached
+--- afterwards (fetched now, or already fresh), `false` when it is not. Always
+--- called on the main loop. `repo.prefer_api` forces the API route (the raw
+--- host only knows the one spelling `README.md`, the API resolves whatever the
+--- repository calls its README), for a caller that has no repository record.
 ---@param repo Repository
+---@param on_done? fun(ok: boolean): nil
 ---@return nil
-function M.prefetch(repo)
-  if not repo or not repo.name or not repo.owner or not repo.owner.login then return end
+function M.prefetch(repo, on_done)
+  local function finish(ok)
+    if on_done then vim.schedule(function() on_done(ok) end) end
+  end
+
+  if not repo or not repo.name or not repo.owner or not repo.owner.login then return finish(false) end
 
   local owner = repo.owner.login
   local repo_name = repo.name
   local branch = repo.default_branch or "main"
 
-  if has_fresh(owner, repo_name, repo.updated_at) then return end
+  if has_fresh(owner, repo_name, repo.updated_at) then return finish(true) end
 
   local urls = require("reposcope.providers.github.readme.readme_urls").get_urls(owner, repo_name, branch)
-  if not is_valid_url(urls.raw) then return end
+  if not is_valid_url(urls.raw) then return finish(false) end
 
   local function store(success, content)
-    if not success or not content then return end
+    if not success or not content then return finish(false) end
     vim.schedule(function()
       set_ram(owner, repo_name, content)
       set_file(owner, repo_name, content)
       set_updated_at(owner, repo_name, repo.updated_at)
+      if on_done then on_done(true) end
     end)
   end
 
-  if needs_api(repo) then
+  if needs_api(repo) or repo.prefer_api == true then
     readme_fetch_api(owner, repo_name, branch, store)
   else
     readme_fetch_raw(owner, repo_name, branch, store)

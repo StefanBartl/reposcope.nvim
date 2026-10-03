@@ -11,4 +11,4 @@
 ---@field fetch_readme_for_selected fun(): nil Triggers a README fetch using the active provider
 ---@field search_repositories fun(query: string): nil Triggers a repository search query using the active provider
 ---@field start_clone fun(): nil Prompts user for path and triggers clone using the active provider
----@field prefetch_readme fun(repo: Repository): nil Pre-caches a repository's README in the background via the active provider, without touching selection/preview
+---@field prefetch_readme fun(repo: Repository, on_done?: fun(ok: boolean): nil): nil Pre-caches a repository's README in the background via the active provider, without touching selection/preview
