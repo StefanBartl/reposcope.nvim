@@ -450,7 +450,8 @@ function M.set_user_keymaps(map_cfg, opts)
 
   return require("lib.nvim.bindings.keymap").register("Reposcope", {
     prefix = "<leader>r",
-    which_key = { group = "Reposcope" },
+    -- No which-key group: <leader>r is shared with other plugins' rename
+    -- bindings, so the per-key descriptions label the two keys instead.
     order = { "open", "close" },
     actions = {
       open = { default = "<leader>rs", rhs = ui("open", "open_ui"), desc = "open the UI", opts = opts },

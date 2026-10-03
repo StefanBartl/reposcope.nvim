@@ -50,6 +50,7 @@ function M.check()
   ---------------------------------------------------------------------------
   -- Configured request tool
   ---------------------------------------------------------------------------
+  require("reposcope.utils.checks").ensure_request_tool()
   local request_tool = config.get_option("request_tool")
   if vim.tbl_contains(tools, request_tool) then
     health.ok("Configured request tool: " .. request_tool)

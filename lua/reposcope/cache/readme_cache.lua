@@ -294,10 +294,10 @@ function M.has_fresh(owner, repo_name, updated_at)
   return true, source
 end
 
----Preloads every file-cached README into the RAM cache. Intended to run once
---- during `setup()`: the file cache survives restarts, but a fresh Neovim
---- session otherwise still pays a disk read on the first navigation to each
---- repository even though the content was already on disk.
+---Preloads every file-cached README into the RAM cache. NOT called from
+--- `setup()` any more: it reads every cached file (O(N), unbounded, about 1 ms
+--- each), while `get`/`has` already fall back to the file cache on first use.
+--- Kept as an on-demand API.
 ---@return integer warmed Number of entries loaded into RAM
 function M.warm_ram_from_file_cache()
   local dir = get_readme_filecache_dir()

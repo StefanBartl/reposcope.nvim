@@ -22,8 +22,9 @@ Three related mechanisms around the README cache:
   README was cached, treating the cache as a miss when the repo changed
   since.
 - **RAM pre-warming** (`warm_ram_from_file_cache`) loads every file-cached
-  README into RAM once at startup, so the first navigation to an
-  already-cached repo in a fresh session is not a disk read.
+  README into RAM. It is an on-demand API and no longer runs in `setup()`
+  (it read the whole cache on every start); the first navigation to a
+  file-cached repo costs one small file read instead.
 - **Background pre-caching** fetches READMEs for the top N search results
   right after a search completes, so scrolling into them feels instant.
 

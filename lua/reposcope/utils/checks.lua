@@ -51,4 +51,19 @@ function M.resolve_request_tool(requesters)
   return true
 end
 
+---@type table|nil
+local resolved_for
+
+---Resolves the request tool once per configuration generation (`config.setup()`
+---replaces `config.options`, so the table's identity marks a fresh one).
+---Called by the first request instead of from `setup()`, so loading the plugin
+---does not pay the PATH probe (`vim.fn.executable`, about 14 ms on Windows).
+---@return boolean ok
+---@return string? err Set only when `ok` is false
+function M.ensure_request_tool()
+  if resolved_for == config.options then return true end
+  resolved_for = config.options
+  return M.resolve_request_tool()
+end
+
 return M

@@ -40,6 +40,9 @@ return function(H)
       ["reposcope.network.request_tools.gh"] = gh,
       ["reposcope.network.request_tools.curl"] = curl,
       ["reposcope.network.request_tools.wget"] = wget,
+      -- The first request would otherwise resolve against the host PATH and
+      -- rewrite a configured "gh" to "curl" on a box without gh.
+      ["reposcope.utils.checks"] = { ensure_request_tool = function() return true end },
     }, { "reposcope.network.clients.http_client" }, function()
       local config = require("reposcope.config")
       local saved = {
