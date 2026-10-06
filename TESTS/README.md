@@ -6,26 +6,34 @@ what it returns, on the request it *would* have made, or on the lines it would
 have rendered.
 
 ```
-nvim --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
+bash scripts/test.sh                 # every spec
+bash scripts/test.sh --file config   # only spec files whose name contains "config"
+bash scripts/test.sh --json ir.json  # also write the machine-readable result
 ```
 
-Exit 0 is a pass; the runner prints one line per spec and exits non-zero after
-reporting every spec that failed. CI runs exactly this command.
+The specs are run by [testing.nvim](https://github.com/StefanBartl/testing.nvim)
+(configured in `.testing.lua`, dialect `h` = the project harness in
+`TESTS/harness.lua`). Exit 0 is a pass; the runner prints one line per spec,
+exits non-zero after reporting every spec that failed, and prints
+`REPOSCOPE_TESTS_OK` as the last line of a complete green run. CI runs exactly
+`scripts/test.sh`.
 
 ## lib.nvim and ui.nvim
 
 Several modules require lib.nvim at module load, and `favorites_view.lua`
 (exercised directly by `actions_spec.lua`) requires `ui.kit` the same
-way, so the suite cannot run without either. `run.lua` resolves each in
-this order:
+way, so the suite cannot run without either (nor without testing.nvim itself).
+`scripts/test.sh` resolves each dependency in this order and exits 1, naming
+all four places, when one is missing:
 
-1. `$LIB_NVIM_PATH` / `$UI_NVIM_PATH`
-2. a sibling checkout, `../lib.nvim` / `../ui.nvim`
-3. the lazy.nvim-managed copy under `stdpath("data")/lazy/lib.nvim` /
-   `stdpath("data")/lazy/ui.nvim`
+1. `$TESTING_NVIM_DIR` / `$LIB_NVIM_DIR` / `$UI_NVIM_DIR`
+2. `.deps/<name>` (what CI checks out)
+3. a sibling checkout, `../<name>`
+4. the lazy.nvim-managed copy under `stdpath("data")/lazy/<name>`
 
-A sibling wins over the plugin-manager copy on purpose: that one is often older
-than the working checkout, and testing against a stale lib.nvim/ui.nvim gives
+An override that is set but invalid is an error, never skipped. A sibling wins
+over the plugin-manager copy on purpose: that one is often older than the
+working checkout, and testing against a stale lib.nvim/ui.nvim gives
 misleading failures.
 
 ## No network, no processes
@@ -66,7 +74,8 @@ The user's real `stdpath("cache")` is never touched.
 
 ## The specs
 
-Run order (see `run.lua`) goes smallest layer first, so a failure points at the
+Run order (the list in `run.lua`, which testing.nvim reads for the order and the
+sentinel but never executes) goes smallest layer first, so a failure points at the
 lowest thing that broke.
 
 ### Leaf utilities
@@ -222,7 +231,9 @@ and `request_tools_spec.lua`.
 ## Adding a spec
 
 Write `TESTS/<name>_spec.lua` returning `function(H) ... end`, then list it in
-`run.lua` at the layer it belongs to. `H` is the harness:
+`run.lua` at the layer it belongs to (a spec missing there still runs, last,
+with a note). The order matters: with plain alphabetical order `utils_spec.lua`
+fails (see `run.lua`). `H` is the harness:
 
 - assertions: `eq`, `ok`, `falsy`, `contains`, `excludes`, `has`, `lacks`
   (`has`/`lacks` are for list membership, e.g. argv tables)

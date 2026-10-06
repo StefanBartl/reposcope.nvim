@@ -9,8 +9,9 @@ git clone https://github.com/StefanBartl/reposcope.nvim ~/.config/nvim/reposcope
 
 [`lib.nvim`](https://github.com/StefanBartl/lib.nvim) and
 [`ui.nvim`](https://github.com/StefanBartl/ui.nvim) are real runtime
-dependencies — several modules require them at load — so check both out as
-sibling directories before running anything.
+dependencies — several modules require them at load — and the specs are run
+by [`testing.nvim`](https://github.com/StefanBartl/testing.nvim), so check all
+three out as sibling directories before running anything.
 
 ## Before opening a pull request
 
@@ -19,7 +20,7 @@ CI runs three gates, and each is one command locally:
 ```sh
 stylua --check lua plugin TESTS
 luacheck lua plugin TESTS
-nvim --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
+bash scripts/test.sh
 ```
 
 The spec suite is described in [`../TESTS/README.md`](../TESTS/README.md),

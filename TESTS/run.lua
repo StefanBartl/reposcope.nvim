@@ -1,6 +1,10 @@
--- TESTS/run.lua — headless test runner for reposcope.nvim.
+-- TESTS/run.lua — spec ORDER (and sentinel) list for reposcope.nvim.
 --
--- Run from the repo root:
+-- The specs are run by testing.nvim: `bash scripts/test.sh`. testing.nvim never
+-- executes this file; it only takes the spec order from `specs` below and the
+-- sentinel from the last print. The order is load-bearing: in alphabetical
+-- order utils_spec.lua fails (it depends on state an earlier spec leaves).
+-- The code below still works as the old standalone runner:
 --   nvim -n -i NONE --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
 --
 -- lib.nvim and ui.nvim both have to be reachable: several reposcope
