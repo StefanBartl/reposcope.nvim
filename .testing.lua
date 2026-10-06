@@ -13,7 +13,35 @@ return {
   deps = { "lib.nvim", "ui.nvim" },
   -- "none" = all specs in one nvim, "file" = one nvim per spec file
   -- (nothing leaks from one file into the next).
-  isolated = "none",
+  -- "file" here because the specs call setup() and open floating windows, buffers and highlight
+  -- groups they never close (148 state findings in one shared editor); one editor per file keeps
+  -- that from reaching the next file.
+  isolated = "file",
   -- Environment variables the specs read; a child editor inherits an allowlist only (never secrets).
   env_allow = { "MAGICK_*" },
+  -- Guards (docs/GUARDS.md): the suite is clean for all of them, so every one is an error.
+  guards = {
+    fs = "error",
+    state = "error",
+    scheduled_error = "error",
+    prompt = "error",
+    deprecation = "error",
+    process_net = "error",
+  },
+  -- What the guards let through on purpose. Paths are relative to the project root (the runner is
+  -- started from it by scripts/test.sh).
+  guard_allow = {
+    fs = {
+      -- The specs create and remove these fixture directories inside the repository on purpose
+      -- (one per spec that needs a cache, session or log file on disk).
+      "TESTS/.fixture-clone",
+      "TESTS/.fixture-config_options",
+      "TESTS/.fixture-favorites_state",
+      "TESTS/.fixture-metrics",
+      "TESTS/.fixture-protection",
+      "TESTS/.fixture-query_stats",
+      "TESTS/.fixture-readme_cache",
+      "TESTS/.fixture-session_state",
+    },
+  },
 }
