@@ -40,6 +40,7 @@ end
 ---@field desc string Short description shown in the usage listing
 ---@field run fun(args: string[]): nil Handler receiving the arguments after the subcommand
 ---@field complete? fun(arglead: string): string[] Optional argument completion
+---@field arg_name? string Name of the argument in the option float (default "arg"; only with `complete`)
 ---@field arg_desc? string One line for the option float: what the argument `complete` serves is (required with `complete`)
 
 ---Subcommand registry. Each entry is dispatched by `:Reposcope <name>`.
@@ -65,6 +66,7 @@ local subcommands = {
     desc = "Reload visible prompt fields (e.g. :Reposcope prompt prefix keywords)",
     run = function(args) reload_prompt(args) end,
     arg_desc = "Prompt fields to show (default: keywords owner language)",
+    arg_name = "fields",
     complete = function()
       local fields = get_available_fields()
       table.insert(fields, "default: keywords owner language")
@@ -81,6 +83,7 @@ local subcommands = {
     desc = "Filter the repository list by substring (no args resets the list)",
     run = function(args) apply_filter(table.concat(args, " ")) end,
     arg_desc = "Substring of owner/name: description (omit to reset)",
+    arg_name = "text",
     -- Completes against the list actually on screen. The filter is a
     -- substring over `owner/name: description`, so the owners and names in
     -- the current result set are the only candidates that can match anything
@@ -158,6 +161,7 @@ local subcommands = {
       end
     end,
     arg_desc = "Save, restore or clear the persisted search session",
+    arg_name = "action",
     complete = function() return { "save", "restore", "clear" } end,
   },
 
@@ -175,6 +179,7 @@ local subcommands = {
       end
     end,
     arg_desc = "list (default) shows the favorites, clear forgets them",
+    arg_name = "action",
     complete = function() return { "list", "clear" } end,
   },
 
@@ -203,6 +208,7 @@ local subcommands = {
       end
     end,
     arg_desc = "list (default) shows the top queries, clear forgets them",
+    arg_name = "action",
     complete = function() return { "list", "clear" } end,
   },
 
@@ -224,6 +230,7 @@ local subcommands = {
       end
     end,
     arg_desc = "Omit to show the message history, clear forgets it",
+    arg_name = "action",
     complete = function() return { "clear" } end,
   },
 
@@ -270,7 +277,7 @@ local function build_routes()
           return (ok and list) or {}
         end,
       })
-      args = { { name = "a1", type = type_name, optional = true } }
+      args = { { name = entry.arg_name or "arg", type = type_name, optional = true } }
     end
     routes[#routes + 1] = {
       path = { name },
@@ -278,7 +285,7 @@ local function build_routes()
       desc = entry.desc,
       run = function(ctx)
         local fargs = {}
-        if args and ctx.args.a1 ~= nil then fargs[1] = ctx.args.a1 end
+        if args and ctx.args[args[1].name] ~= nil then fargs[1] = ctx.args[args[1].name] end
         for _, t in ipairs(ctx.rest) do
           fargs[#fargs + 1] = t
         end
