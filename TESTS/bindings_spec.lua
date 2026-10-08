@@ -264,6 +264,51 @@ return function(H)
     H.has(vim.fn.getcompletion("Reposcope prompt ", "cmdline"), "keywords", "`prompt` completes field names")
   end)
 
+  -- The option float --------------------------------------------------------
+  -- lib.nvim's help float (the option cheatsheet on the command line) shows one line for the next
+  -- positional argument, taken from the argument's own `desc` or the text of its type. Every
+  -- subcommand that completes an argument serves it through a type of its own (REPOSCOPE_<NAME>),
+  -- whose text is the subcommand's `arg_desc`. Skipped on a lib.nvim without argument texts.
+  with_command({}, function()
+    local composer = require("lib.nvim.bindings.usercmd.composer")
+    local ok_entries, entries = pcall(require, "lib.nvim.bindings.usercmd.composer.help.entries")
+    if
+      not (
+        type(composer.help) == "table"
+        and type(composer.help.undocumented) == "function"
+        and ok_entries
+        and type(entries.arg_desc) == "function"
+      )
+    then
+      print("  skip :Reposcope option float tests (lib.nvim has no argument texts)")
+      return
+    end
+
+    local missing = {}
+    for _, m in ipairs(composer.help.undocumented("Reposcope", { args = true })) do
+      missing[#missing + 1] = ("%s %s %s"):format(m.route, m.kind, m.name)
+    end
+    H.eq(table.concat(missing, ", "), "", "every :Reposcope flag and argument has a text in the option float")
+
+    local handle = composer.registry().Reposcope
+    H.ok(handle, "the option float is read off the registered :Reposcope")
+    local walked, bad = 0, {}
+    for _, route in ipairs(handle and handle:spec().routes or {}) do
+      for _, arg in ipairs(route.args or {}) do
+        walked = walked + 1
+        local text = entries.arg_desc(arg)
+        local one_line = type(text) == "string"
+          and text ~= ""
+          and not text:find("\n", 1, true)
+          and #text <= 80
+          and not text:find("%.$")
+        if not one_line then bad[#bad + 1] = ":Reposcope " .. table.concat(route.path, " ") end
+      end
+    end
+    H.ok(walked > 0, "the routes' arguments were walked")
+    H.eq(table.concat(bad, ", "), "", "every argument text is one short line without a trailing full stop")
+  end)
+
   ---------------------------------------------------------------------------
   -- keymaps
   ---------------------------------------------------------------------------
