@@ -40,6 +40,7 @@ end
 ---@field desc string Short description shown in the usage listing
 ---@field run fun(args: string[]): nil Handler receiving the arguments after the subcommand
 ---@field complete? fun(arglead: string): string[] Optional argument completion
+---@field arg_desc? string One line for the option float: what the argument `complete` serves is (required with `complete`)
 
 ---Subcommand registry. Each entry is dispatched by `:Reposcope <name>`.
 ---@type table<string, ReposcopeSubcommand>
@@ -63,6 +64,7 @@ local subcommands = {
   prompt = {
     desc = "Reload visible prompt fields (e.g. :Reposcope prompt prefix keywords)",
     run = function(args) reload_prompt(args) end,
+    arg_desc = "Prompt fields to show (default: keywords owner language)",
     complete = function()
       local fields = get_available_fields()
       table.insert(fields, "default: keywords owner language")
@@ -78,6 +80,7 @@ local subcommands = {
   filter = {
     desc = "Filter the repository list by substring (no args resets the list)",
     run = function(args) apply_filter(table.concat(args, " ")) end,
+    arg_desc = "Substring of owner/name: description (omit to reset)",
     -- Completes against the list actually on screen. The filter is a
     -- substring over `owner/name: description`, so the owners and names in
     -- the current result set are the only candidates that can match anything
@@ -154,6 +157,7 @@ local subcommands = {
         notify("[reposcope] Usage: :Reposcope session save|restore|clear", vim.log.levels.WARN)
       end
     end,
+    arg_desc = "Save, restore or clear the persisted search session",
     complete = function() return { "save", "restore", "clear" } end,
   },
 
@@ -170,6 +174,7 @@ local subcommands = {
         notify("[reposcope] Usage: :Reposcope favorites list|clear", vim.log.levels.WARN)
       end
     end,
+    arg_desc = "list (default) shows the favorites, clear forgets them",
     complete = function() return { "list", "clear" } end,
   },
 
@@ -197,6 +202,7 @@ local subcommands = {
         notify("[reposcope] Usage: :Reposcope queries list|clear", vim.log.levels.WARN)
       end
     end,
+    arg_desc = "list (default) shows the top queries, clear forgets them",
     complete = function() return { "list", "clear" } end,
   },
 
@@ -217,6 +223,7 @@ local subcommands = {
         popup.show_history("reposcope")
       end
     end,
+    arg_desc = "Omit to show the message history, clear forgets it",
     complete = function() return { "clear" } end,
   },
 
@@ -256,6 +263,7 @@ local function build_routes()
     if entry.complete then
       local type_name = "REPOSCOPE_" .. name:upper():gsub("%-", "_")
       composer.register_type(type_name, {
+        desc = entry.arg_desc,
         validate = function(raw) return true, raw, nil end,
         complete = function(arg_lead)
           local ok, list = pcall(entry.complete, arg_lead)
