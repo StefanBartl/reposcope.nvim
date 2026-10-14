@@ -106,6 +106,47 @@ local function sanitize_opts(opts, ref, path, unknown)
   return clean
 end
 
+---@private
+---Expected Lua type of the scalar options that code reads without a guard.
+---`readme_precache_count` and `log_max` are left out on purpose: `:checkhealth`
+---reports a wrong type there itself.
+---@type table<string, type>
+local OPTION_TYPES = {
+  provider = "string",
+  request_tool = "string",
+  layout = "string",
+  github_token = "string",
+  gitlab_token = "string",
+  codeberg_token = "string",
+  results_limit = "number",
+  notify_messages = "boolean",
+  prompt_prefix_symbol = "string",
+}
+
+---@private
+---Drops every option whose value has the wrong type (so the default applies)
+---and reports each one, instead of letting a wrong type fail later and far from
+---`setup()`. Runs on the sanitized user table, before the merge.
+---@param clean table
+---@return nil
+local function validate_option_types(clean)
+  local wrong = {}
+  for key, expected in pairs(OPTION_TYPES) do
+    local value = clean[key]
+    if value ~= nil and type(value) ~= expected then
+      wrong[#wrong + 1] = ("%s (expected %s, got %s)"):format(key, expected, type(value))
+      clean[key] = nil
+    end
+  end
+  if #wrong > 0 then
+    table.sort(wrong)
+    require("reposcope.utils.debug").notify(
+      "[reposcope] Ignoring config option(s) of the wrong type, using the default: " .. table.concat(wrong, ", "),
+      4
+    )
+  end
+end
+
 ---Setup function for configuration
 ---@param opts PartialConfigOptions|nil User configuration options
 ---@return nil
@@ -128,6 +169,8 @@ function M.setup(opts)
       4
     )
   end
+
+  validate_option_types(clean_opts)
 
   -- Rebuilt from the pristine `defaults` on every call, not from the current
   -- `M.options` -- otherwise setup() accumulates across calls instead of

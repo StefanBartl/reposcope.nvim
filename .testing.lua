@@ -45,5 +45,23 @@ return {
     },
   },
   -- gated: a failed conformance check makes `scripts/test.sh conformance` exit 1 (docs/CONFORMANCE.md of testing.nvim)
-  conformance = { gate = true },
+  conformance = {
+    gate = true,
+    waivers = {
+      {
+        check = "K1",
+        level = "warn",
+        file = "lua/reposcope/init.lua",
+        reason = "requiring the entry module registers :Reposcope; the command must exist for users who never call setup(), so it cannot move into setup()",
+        expires = "2027-04-14",
+      },
+      {
+        check = "K6",
+        level = "warn",
+        text = "GITHUB_TOKEN not set",
+        reason = "environment: the token is optional and the minimal conformance editor has none; the health hint is correct",
+        expires = "2027-04-14",
+      },
+    },
+  },
 }
