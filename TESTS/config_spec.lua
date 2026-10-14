@@ -54,4 +54,9 @@ return function(H)
   local ok = pcall(config.setup, "not a table")
   H.ok(ok, "a non-table argument does not raise")
   H.eq(config.options[key], original, "and changes nothing")
+
+  -- A wrong type is reported and falls back to the default.
+  config.setup({ results_limit = "many" })
+  H.eq(config.options.results_limit, DEFAULTS.results_limit, "a wrong-typed option falls back to its default")
+  config.setup({})
 end
