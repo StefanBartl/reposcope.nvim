@@ -139,6 +139,15 @@ function M.check()
     end
   end
 
+  ---------------------------------------------------------------------------
+  -- README highlighting (optional, nvim-treesitter)
+  ---------------------------------------------------------------------------
+  if pcall(require, "nvim-treesitter") then
+    health.ok("nvim-treesitter found: syntax highlighting in the README viewer")
+  else
+    health.info("nvim-treesitter not installed: the README viewer shows plain markdown without TS highlighting")
+  end
+
   require("lib.nvim.bindings.usercmd.composer").checkhealth("Reposcope")
 end
 
