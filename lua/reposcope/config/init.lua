@@ -147,42 +147,52 @@ local function validate_option_types(clean)
   end
 end
 
----Setup function for configuration
+--- To the schema that `lib.lua.config` infers from `defaults`, every option is open: the checks are
+--- `sanitize_opts` and `validate_option_types` above, run before the merge (they notify by
+--- themselves). An unknown top-level key is caught there as well.
+local ANY = "boolean|number|string|table|function"
+---@type table<string, string>
+local SCHEMA = {}
+for key in pairs(defaults) do
+  SCHEMA[key] = ANY
+end
+
+local cfg = require("lib.lua.config").new(defaults, {
+  name = "reposcope",
+  schema = SCHEMA,
+  normalize = function(opts)
+    -- Unknown keys (typos like `resuts_limit`) must be caught against the raw user table and
+    -- before the merge, otherwise they vanish into its result with zero diagnostic (ERR-50).
+    local unknown = {}
+    local clean_opts = sanitize_opts(opts, defaults, "", unknown)
+    if #unknown > 0 then
+      table.sort(unknown)
+      require("reposcope.utils.debug").notify(
+        "[reposcope] Ignoring unknown config option(s), check for typos: " .. table.concat(unknown, ", "),
+        4
+      )
+    end
+    validate_option_types(clean_opts)
+    for key in pairs(opts) do
+      opts[key] = nil
+    end
+    for key, value in pairs(clean_opts) do
+      opts[key] = value
+    end
+  end,
+  on_change = function(current) M.options = current end,
+})
+
+---Setup function for configuration. Every call starts from the (environment-resolved) defaults, so
+---`setup({})` resets whatever a previous call had set.
 ---@param opts PartialConfigOptions|nil User configuration options
 ---@return nil
 function M.setup(opts)
   if type(opts) ~= "table" and opts ~= nil then
     require("reposcope.utils.debug").notify("[reposcope] Ignoring config: expected table, got " .. type(opts), 4)
-    opts = {}
+    opts = nil
   end
-
-  -- Unknown keys (typos like `resuts_limit`) must be caught here, against the
-  -- raw user table and before the merge below -- otherwise they vanish into
-  -- `vim.tbl_deep_extend`'s output with zero diagnostic, indistinguishable
-  -- from an option that was simply never read (ERR-50).
-  local unknown = {}
-  local clean_opts = sanitize_opts(opts or {}, defaults, "", unknown)
-  if #unknown > 0 then
-    table.sort(unknown)
-    require("reposcope.utils.debug").notify(
-      "[reposcope] Ignoring unknown config option(s), check for typos: " .. table.concat(unknown, ", "),
-      4
-    )
-  end
-
-  validate_option_types(clean_opts)
-
-  -- Rebuilt from the pristine `defaults` on every call, not from the current
-  -- `M.options` -- otherwise setup() accumulates across calls instead of
-  -- applying `opts` on top of the defaults each time, and `setup({})` could
-  -- never reset anything a previous call had set.
-  -- `deep_merge` shares no table with `defaults` (nor with the caller's opts):
-  -- `vim.tbl_deep_extend("force", {}, defaults, opts)` takes a section the user
-  -- did not override by reference, so a later write into `M.options.keymaps`
-  -- would have changed `defaults` and the next setup() would not have started
-  -- from the real ones.
-  ---@type ConfigOptions
-  M.options = require("lib.lua.config").deep_merge(defaults, clean_opts)
+  cfg.setup(opts)
 
   -- Prompt fields must always be normalized
   set_prompt_fields(M.options.prompt_fields)
