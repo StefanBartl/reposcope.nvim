@@ -176,8 +176,13 @@ function M.setup(opts)
   -- `M.options` -- otherwise setup() accumulates across calls instead of
   -- applying `opts` on top of the defaults each time, and `setup({})` could
   -- never reset anything a previous call had set.
+  -- `deep_merge` shares no table with `defaults` (nor with the caller's opts):
+  -- `vim.tbl_deep_extend("force", {}, defaults, opts)` takes a section the user
+  -- did not override by reference, so a later write into `M.options.keymaps`
+  -- would have changed `defaults` and the next setup() would not have started
+  -- from the real ones.
   ---@type ConfigOptions
-  M.options = vim.tbl_deep_extend("force", {}, defaults, clean_opts)
+  M.options = require("lib.lua.config").deep_merge(defaults, clean_opts)
 
   -- Prompt fields must always be normalized
   set_prompt_fields(M.options.prompt_fields)

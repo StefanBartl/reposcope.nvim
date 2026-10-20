@@ -59,4 +59,28 @@ return function(H)
   config.setup({ results_limit = "many" })
   H.eq(config.options.results_limit, DEFAULTS.results_limit, "a wrong-typed option falls back to its default")
   config.setup({})
+
+  -- The options share no table with the defaults ------------------------------
+  -- A write into a section the user never overrode must not reach the defaults
+  -- the next setup() starts from.
+  local baseline = vim.deepcopy(config.options.prompt_keymaps)
+  config.setup({})
+  config.options.prompt_keymaps.confirm = "<C-y>"
+  config.options.prompt_keymaps.focus_next[1] = "<C-y>"
+  config.options.clone.type = "wget"
+  config.setup({})
+  H.eq(config.options.prompt_keymaps.confirm, baseline.confirm, "a scalar written into a section is gone after setup()")
+  H.eq(
+    config.options.prompt_keymaps.focus_next[1],
+    baseline.focus_next[1],
+    "a list element written into a section is gone"
+  )
+  H.eq(config.options.clone.type, DEFAULTS.clone.type, "a nested option written is gone")
+  H.eq(DEFAULTS.prompt_keymaps.confirm, baseline.confirm, "and the DEFAULTS module was never touched")
+
+  local given = { prompt_keymaps = { focus_next = { "<C-j>" } } }
+  config.setup(given)
+  config.options.prompt_keymaps.focus_next[1] = "<C-k>"
+  H.eq(given.prompt_keymaps.focus_next[1], "<C-j>", "the caller's opts are not shared with the options")
+  config.setup({})
 end
